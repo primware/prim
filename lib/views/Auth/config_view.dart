@@ -265,6 +265,8 @@ class _ConfigPageState extends State<ConfigPage> {
                         )
                       : ButtonPrimary(
                           texto: 'Continuar',
+                          bgcolor: ColorTheme.accentLight,
+                          textcolor: ColorTheme.textDark,
                           fullWidth: true,
                           onPressed: _onContinue,
                         ),

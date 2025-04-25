@@ -102,7 +102,7 @@ class _RegisterUserState extends State<RegisterUser> {
         builder: (context) => AlertDialog(
           title: Text('Creacion de empresa exitosa'),
           content: Text(
-              'Puede iniciar sesion con el usuario: ${orgValueController.text}${adminUserNameController.text} y clave: ${orgValueController.text}${adminUserNameController.text}'),
+              'Puede iniciar sesion con el usuario: ${orgValueController.text}${adminUserNameController.text} y clave: ${orgValueController.text}${adminUserNameController.text} \nEl usuario y clave son sensibles a mayusculas y minusculas\nRecuerde cambiar la clave al iniciar sesion'),
           actions: [
             TextButton(
               onPressed: () {
