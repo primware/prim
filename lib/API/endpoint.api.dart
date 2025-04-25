@@ -1,12 +1,12 @@
 class Base {
-  static bool prod = false;
-  static bool local = true;
+  static bool prod = true;
+  static bool local = false;
   static String title = prod ? 'Prod' : 'Test';
 
   static String baseURL = local
       ? 'https://localhost:8480'
       : prod
-          ? 'https://idempiere.com'
+          ? 'https://fe.primware.net'
           : 'https://testidempiere.com';
 }
 
