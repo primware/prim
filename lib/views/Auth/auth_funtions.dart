@@ -1,9 +1,8 @@
-// ignore_for_file: unused_local_variable, unused_element, deprecated_member_use, use_build_context_synchronously, avoid_print
+// ignore_for_file: unused_local_variable, unused_element, deprecated_member_use, use_build_context_synchronously, avoid_print, depend_on_referenced_packages
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../API/endpoint.api.dart';
 import '../../API/token.api.dart';
 import '../../main.dart';
@@ -18,9 +17,6 @@ Future<void> handle401(BuildContext context) async {
   UserData.imageBytes = null;
   usuarioController.clear();
   claveController.clear();
-
-  final prefs = await SharedPreferences.getInstance();
-  bool isDark = prefs.getBool('isDarkMode') ?? false;
 
   Navigator.push(
     context,

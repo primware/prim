@@ -6,7 +6,7 @@ import '../../../theme/fonts.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
-import '../../shared/loadingContainer.dart';
+import '../../shared/loading_container.dart';
 import 'register_controller.dart';
 import 'register_funtions.dart';
 
