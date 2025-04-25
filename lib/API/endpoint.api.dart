@@ -24,9 +24,6 @@ class EndPoints {
   static String salesRep =
       '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
 
-  static String customStateSales =
-      '${Base.baseURL}/api/v1/models/AMP_CustomStates?\$expand=AMP_CustomStates_Info(\$select=Name,Description)&\$select=Name,IsSOTrx,IsInTransit,Description&\$filter=IsSOTrx eq \'SO\'';
-
   static String getOrganizationsAfterLogin =
       '${Base.baseURL}/api/v1/models/AD_Org';
 
