@@ -2,7 +2,6 @@ class Base {
   static bool prod = false;
   static bool local = true;
   static String title = prod ? 'Prod' : 'Test';
-  static int rolEstudiante = 1000005;
 
   static String baseURL = local
       ? 'https://localhost:8480'
