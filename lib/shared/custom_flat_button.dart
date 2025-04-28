@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../theme/fonts.dart';
-
 class CustomFlatButton extends StatefulWidget {
   final String text;
-  final Color fontcolor, backgroundcolor;
   final Function onPressed;
 
   const CustomFlatButton({
     super.key,
     required this.text,
     required this.onPressed,
-    required this.fontcolor,
-    required this.backgroundcolor,
   });
 
   @override
@@ -26,17 +21,19 @@ class _CustomFlatButtonState extends State<CustomFlatButton> {
       padding: const EdgeInsets.only(left: 8),
       child: TextButton(
           style: TextButton.styleFrom(
-            backgroundColor: widget.backgroundcolor,
+            backgroundColor: Theme.of(context).primaryColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
           ),
           onPressed: () => widget.onPressed(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Text(
               widget.text,
-              style: FontsTheme.h5(color: widget.fontcolor),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.surface,
+                  ),
             ),
           )),
     );

@@ -96,25 +96,28 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool mobile = MediaQuery.of(context).size.width < 750 ? true : false;
-    final double maxWidthContainer = mobile ? 360 : 400;
+    final bool isMobile =
+        MediaQuery.of(context).size.width < 750 ? true : false;
+    final double maxWidthContainer = isMobile ? 360 : 400;
 
     return Scaffold(
       backgroundColor: ColorTheme.backgroundLight,
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.all(isMobile ? 12 : 8),
         child: Center(
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Logo(
-                  width: 320,
+                Logo(
+                  width: isMobile ? 200 : 320,
                 ),
-                const SizedBox(
-                    height: CustomSpacer.xlarge + CustomSpacer.medium),
+                SizedBox(
+                    height: CustomSpacer.medium +
+                        (!isMobile ? CustomSpacer.xlarge : 0)),
                 CustomContainer(
                   maxWidthContainer: maxWidthContainer,
+                  padding: isMobile ? 12 : 24,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -151,14 +154,10 @@ class _LoginPageState extends State<LoginPage> {
                         child: isLoading
                             ? ButtonLoading(
                                 fullWidth: true,
-                                bgcolor: ColorTheme.aL700,
-                                textcolor: ColorTheme.textDark,
                               )
                             : ButtonPrimary(
                                 texto: 'Iniciar sesión',
                                 fullWidth: true,
-                                bgcolor: ColorTheme.accentLight,
-                                textcolor: ColorTheme.textDark,
                                 onPressed: () {
                                   _funcionLogin(usuarioController.text.trim(),
                                       claveController.text.trim());
@@ -168,9 +167,6 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: CustomSpacer.medium),
                       ButtonSecondary(
                         texto: 'Crear cuenta',
-                        bgcolor: ColorTheme.textDark,
-                        borderColor: ColorTheme.accentLight,
-                        textcolor: ColorTheme.accentLight,
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(

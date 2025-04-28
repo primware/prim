@@ -85,6 +85,10 @@ class _ConfigPageState extends State<ConfigPage> {
             selectedRoleId = roles[0]['id'];
             _onRoleSelected(selectedRoleId);
           }
+
+          final selectClient =
+              clients.firstWhere((client) => client['id'] == clientId);
+          UserData.clientName = selectClient['name'];
         });
       }
     }
@@ -148,10 +152,6 @@ class _ConfigPageState extends State<ConfigPage> {
     setState(() {
       selectedOrganizationId = organizationId;
     });
-
-    final selecteOrg =
-        organizations.firstWhere((org) => org['id'] == organizationId);
-    UserData.orgName = selecteOrg['name'];
   }
 
   Future<void> _onContinue() async {
@@ -203,17 +203,19 @@ class _ConfigPageState extends State<ConfigPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool mobile = MediaQuery.of(context).size.width < 750 ? true : false;
-    final double maxWidthContainer = mobile ? 360 : 400;
+    final bool isMobile =
+        MediaQuery.of(context).size.width < 750 ? true : false;
+    final double maxWidthContainer = isMobile ? 360 : 400;
 
     return Scaffold(
       backgroundColor: ColorTheme.backgroundLight,
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.all(isMobile ? 12 : 8),
         child: Center(
             child: SingleChildScrollView(
           child: CustomContainer(
             maxWidthContainer: maxWidthContainer,
+            padding: isMobile ? 12 : 24,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -260,13 +262,9 @@ class _ConfigPageState extends State<ConfigPage> {
                   child: isLoading
                       ? ButtonLoading(
                           fullWidth: true,
-                          bgcolor: ColorTheme.aL700,
-                          textcolor: Colors.white,
                         )
                       : ButtonPrimary(
                           texto: 'Continuar',
-                          bgcolor: ColorTheme.accentLight,
-                          textcolor: ColorTheme.textDark,
                           fullWidth: true,
                           onPressed: _onContinue,
                         ),

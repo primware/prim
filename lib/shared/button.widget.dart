@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
-import '../theme/fonts.dart';
 
 class ButtonPrimary extends StatefulWidget {
   const ButtonPrimary({
@@ -9,14 +7,11 @@ class ButtonPrimary extends StatefulWidget {
     this.onLongPress,
     this.texto,
     this.icono,
-    this.bgcolor = ColorTheme.textDark,
-    this.textcolor = ColorTheme.accentLight,
     this.fullWidth = false,
   });
 
   final Function()? onPressed, onLongPress;
   final String? texto;
-  final Color bgcolor, textcolor;
   final IconData? icono;
   final bool fullWidth;
 
@@ -32,7 +27,7 @@ class _ButtonPrimaryState extends State<ButtonPrimary> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          backgroundColor: widget.bgcolor,
+          backgroundColor: Theme.of(context).primaryColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -50,14 +45,16 @@ class _ButtonPrimaryState extends State<ButtonPrimary> {
             if (widget.icono != null)
               Icon(
                 widget.icono,
-                color: widget.textcolor,
+                color: Theme.of(context).primaryColor,
               ),
             if (widget.icono != null && widget.texto != null)
               const SizedBox(width: 6),
             if (widget.texto != null)
               Text(
                 widget.texto!,
-                style: FontsTheme.h4Bold(color: widget.textcolor),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Theme.of(context).cardColor,
+                    ),
               ),
           ],
         ),
@@ -72,15 +69,11 @@ class ButtonSecondary extends StatefulWidget {
     this.onPressed,
     this.texto,
     this.icono,
-    this.borderColor = ColorTheme.accentLight,
-    this.textcolor = ColorTheme.accentLight,
-    this.bgcolor = ColorTheme.backgroundLight,
     this.fullWidth = false,
   });
 
   final Function()? onPressed;
   final String? texto;
-  final Color borderColor, textcolor, bgcolor;
   final IconData? icono;
   final bool fullWidth;
 
@@ -96,8 +89,8 @@ class _ButtonSecondaryState extends State<ButtonSecondary> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          backgroundColor: widget.bgcolor,
-          side: BorderSide(color: widget.borderColor),
+          backgroundColor: Theme.of(context).cardColor,
+          side: BorderSide(color: Theme.of(context).primaryColor),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -112,14 +105,16 @@ class _ButtonSecondaryState extends State<ButtonSecondary> {
             if (widget.icono != null)
               Icon(
                 widget.icono,
-                color: widget.textcolor,
+                color: Theme.of(context).primaryColor,
               ),
             if (widget.icono != null && widget.texto != null)
               const SizedBox(width: 6),
             if (widget.texto != null)
               Text(
                 widget.texto!,
-                style: FontsTheme.h4Bold(color: widget.textcolor),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Theme.of(context).primaryColor,
+                    ),
               ),
           ],
         ),
@@ -131,12 +126,9 @@ class _ButtonSecondaryState extends State<ButtonSecondary> {
 class ButtonLoading extends StatelessWidget {
   const ButtonLoading({
     super.key,
-    this.bgcolor = ColorTheme.textDark,
-    this.textcolor = ColorTheme.accentLight,
     this.fullWidth = false,
   });
 
-  final Color bgcolor, textcolor;
   final bool fullWidth;
 
   @override
@@ -146,7 +138,7 @@ class ButtonLoading extends StatelessWidget {
       child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-            backgroundColor: bgcolor,
+            backgroundColor: Theme.of(context).primaryColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -156,8 +148,8 @@ class ButtonLoading extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: LinearProgressIndicator(
               minHeight: 6,
-              color: textcolor,
-              backgroundColor: bgcolor,
+              color: Theme.of(context).cardColor,
+              backgroundColor: Theme.of(context).primaryColor,
               borderRadius: BorderRadius.circular(4),
             ),
           )),

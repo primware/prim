@@ -200,15 +200,10 @@ class _RegisterUserState extends State<RegisterUser> {
                     Container(
                       child: isValid
                           ? isLoading
-                              ? ButtonLoading(
-                                  bgcolor: ColorTheme.aL700,
-                                  textcolor: ColorTheme.textDark,
-                                )
+                              ? ButtonLoading()
                               : ButtonPrimary(
                                   texto: 'Crear Empresa',
                                   fullWidth: true,
-                                  bgcolor: ColorTheme.aL700,
-                                  textcolor: ColorTheme.textDark,
                                   onPressed: _funcionRegister,
                                 )
                           : Center(

@@ -3,10 +3,9 @@
 import 'package:flutter/material.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
-import '../../../main.dart';
 import '../../../shared/button.widget.dart';
-import '../../../theme/colors.dart';
-import '../../../theme/fonts.dart';
+import '../../../shared/custom_app_menu.dart';
+import '../../../shared/custom_spacer.dart';
 import '../../Auth/login_view.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -24,97 +23,69 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool ismobile = MediaQuery.of(context).size.width <= 750;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      drawer: ismobile ? MenuDrawer() : null,
       body: SingleChildScrollView(
         child: Center(
           child: Column(
             children: [
+              CustomAppMenu(),
               Container(
                 constraints: BoxConstraints(maxWidth: 800),
                 padding:
-                    const EdgeInsets.symmetric(vertical: 76, horizontal: 10),
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Hola, ${UserData.name}',
-                          style: MediaQuery.of(context).size.width <= 750
-                              ? FontsTheme.h4Bold()
-                              : FontsTheme.h3Bold(),
-                        ),
-                        const SizedBox(width: 12),
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: ColorTheme.aL100,
-                          backgroundImage: UserData.imageBytes != null
-                              ? MemoryImage(UserData.imageBytes!)
-                              : null,
-                          child: UserData.imageBytes == null
-                              ? const Icon(
-                                  Icons.people_alt_outlined,
-                                  color: ColorTheme.accentLight,
-                                  size: 20,
-                                )
-                              : null,
-                        ),
-                      ],
+                    Text(
+                      'Hola, ${UserData.name} - ${UserData.clientName}',
+                      style: Theme.of(context).textTheme.headlineLarge,
+                      overflow: TextOverflow.visible,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: CustomSpacer.medium),
                     GridView.count(
                       shrinkWrap: true,
-                      crossAxisCount: 4,
+                      crossAxisCount: ismobile ? 2 : 4,
                       childAspectRatio: 1.5,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
+                      crossAxisSpacing: ismobile ? 6 : 16,
+                      mainAxisSpacing: ismobile ? 6 : 16,
                       children: [
                         _buildDashboardCard(
                           context,
-                          'Modificar perfil',
-                          Icons.person_outline,
+                          'Facturar',
+                          Icons.attach_money_rounded,
                           () {
                             null;
                           },
                         ),
                       ],
                     ),
-                    const SizedBox(height: 32),
-                    ButtonSecondary(
-                      texto: 'Cerrar sesión',
-                      icono: Icons.logout_outlined,
-                      bgcolor: ColorTheme.textDark,
-                      borderColor: ColorTheme.accentLight,
-                      textcolor: ColorTheme.accentLight,
-                      onPressed: () {
-                        Token.auth = null;
-                        usuarioController.clear();
-                        claveController.clear();
+                    if (!ismobile) ...[
+                      SizedBox(
+                          height: CustomSpacer.xlarge + CustomSpacer.xlarge),
+                      ButtonSecondary(
+                        texto: 'Cerrar sesión',
+                        icono: Icons.logout_outlined,
+                        onPressed: () {
+                          Token.auth = null;
+                          usuarioController.clear();
+                          claveController.clear();
 
-                        UserData.rolName = null;
-                        UserData.imageBytes = null;
+                          UserData.rolName = null;
+                          UserData.imageBytes = null;
 
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(height: 24),
-                    ButtonSecondary(
-                      texto: 'Cambiar tema',
-                      icono: Icons.brightness_6,
-                      bgcolor: ColorTheme.textDark,
-                      borderColor: ColorTheme.accentLight,
-                      textcolor: ColorTheme.accentLight,
-                      onPressed: () {
-                        ThemeManager.themeNotifier.toggleTheme();
-                      },
-                    ),
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ]
                   ],
                 ),
               ),
@@ -136,7 +107,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: GestureDetector(
         onTap: onTap,
         child: Card(
-          color: ColorTheme.accentLight,
+          color: Theme.of(context).primaryColor,
           elevation: 4,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -146,8 +117,8 @@ class _DashboardPageState extends State<DashboardPage> {
             children: [
               Icon(
                 icon,
-                size: 48,
-                color: ColorTheme.textDark,
+                size: 40,
+                color: Theme.of(context).colorScheme.surface,
               ),
               const SizedBox(height: 4),
               Padding(
@@ -156,7 +127,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   title,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
-                  style: FontsTheme.h5Bold(color: ColorTheme.textDark),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
                 ),
               ),
             ],

@@ -23,7 +23,7 @@ class ColorTheme {
   static Color get tL200 => _getLighterColor(textLight, 0.8);
   static Color get tL300 => _getLighterColor(textLight, 0.7);
 
-  static const Color backgroundLight = Color(0xFFFAFAFA);
+  static const Color backgroundLight = Color.fromARGB(255, 240, 240, 240);
 
   //* Colores Modo Oscuro
   static const Color accentDark = Color.fromARGB(255, 85, 166, 236);
@@ -39,7 +39,7 @@ class ColorTheme {
   static Color get aD800 => _getDarkerColor(accentDark, 0.4);
   static Color get aD900 => _getDarkerColor(accentDark, 0.6);
 
-  static const Color textDark = Color(0xFFFAFAFA);
+  static const Color textDark = Color(0xFFFFFFFF);
   //? colores mas oscuros que el text
   static Color get tD100 => _getDarkerColor(textDark, 0.9);
   static Color get tD200 => _getDarkerColor(textDark, 0.8);

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 class UserData {
   static int? id;
   static String? rolName;
-  static String? orgName;
+  static String? clientName;
   static String? name;
   static String? email;
   static String? phone;

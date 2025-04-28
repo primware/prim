@@ -9,7 +9,7 @@ class AppThemes {
       brightness: Brightness.light,
       primaryColor: ColorTheme.accentLight,
       scaffoldBackgroundColor: ColorTheme.backgroundLight,
-      cardColor: Colors.white,
+      cardColor: ColorTheme.textDark,
       appBarTheme: AppBarTheme(
         backgroundColor: ColorTheme.accentLight,
         foregroundColor: ColorTheme.textDark,
@@ -51,6 +51,11 @@ class AppThemes {
         surface: Colors.white,
         onPrimary: ColorTheme.textDark,
         onSecondary: ColorTheme.textLight,
+      ),
+      listTileTheme: ListTileThemeData(
+        textColor: ColorTheme.textDark,
+        iconColor: ColorTheme.textDark,
+        tileColor: ColorTheme.accentLight,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -109,9 +114,14 @@ class AppThemes {
       colorScheme: ColorScheme.dark(
         primary: ColorTheme.accentDark,
         secondary: ColorTheme.aD200,
-        surface: ColorTheme.tD100,
+        surface: ColorTheme.textDark,
         onPrimary: ColorTheme.textLight,
         onSecondary: ColorTheme.textDark,
+      ),
+      listTileTheme: ListTileThemeData(
+        textColor: ColorTheme.textDark,
+        iconColor: ColorTheme.textDark,
+        tileColor: ColorTheme.accentLight,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
