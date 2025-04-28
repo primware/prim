@@ -49,7 +49,8 @@ Future<List<Map<String, dynamic>>> fetchProduct(
       context: context,
     );
     final response = await http.get(
-      Uri.parse(EndPoints.product),
+      Uri.parse(
+          '${EndPoints.product}?\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -63,6 +64,11 @@ Future<List<Map<String, dynamic>>> fetchProduct(
         return {
           'id': record['id'],
           'name': record['Name'],
+          'sku': record['SKU'],
+          'price': record['M_ProductPrice'] != null &&
+                  record['M_ProductPrice'].isNotEmpty
+              ? record['M_ProductPrice'][0]['PriceStd']
+              : null,
         };
       }).toList();
     } else {

@@ -15,6 +15,7 @@ dependencies:
   top_snackbar_flutter: ^3.2.0
   intl: ^0.20.2
   dropdown_search: ^6.0.2
+  searchfield: ^1.2.7
 
 dev_dependencies:
   flutter_test:

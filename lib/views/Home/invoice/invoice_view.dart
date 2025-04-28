@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:primware/shared/button.widget.dart';
-
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_dropdown.dart';
+import '../../../shared/custom_searchfield.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/loading_container.dart';
-import '../../../shared/textfield.widget.dart';
-import '../../../theme/colors.dart';
-import 'invoice_controller.dart';
 import 'invoice_funtions.dart';
 
 class InvoicePage extends StatefulWidget {
@@ -104,43 +99,36 @@ class _InvoicePageState extends State<InvoicePage> {
                           },
                         ),
                         SizedBox(height: CustomSpacer.medium),
-                        SearchableDropdown<int>(
-                          value: selectedProductID,
+                        CustomSearchField(
                           options: productOptions,
-                          labelText: 'Producto',
-                          onCreate: (p0) => null,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedProductID = value;
-                              // _validateForm();
-                            });
+                          labelText: "Producto",
+                          searchBy: "sku",
+                          onItemSelected: (item) {
+                            print('Seleccionaste: ${item['name']}');
                           },
+                          itemBuilder: (item) => Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                '\$${item['price'] ?? '0.00'}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
                         SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextfieldTheme(
-                                texto: 'Cantidad',
-                                controlador: qtyProductController,
-                                inputType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                                onChanged: (value) {
-                                  // _validateForm();
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: CustomSpacer.medium),
-                            IconButton(
-                              onPressed: () {},
-                              icon: Icon(Icons.add_circle_outline_rounded),
-                              iconSize: 36,
-                              color: Theme.of(context).primaryColor,
-                            )
-                          ],
-                        ),
                         Divider(
                           color: Theme.of(context).dividerColor,
                           height: 60,
