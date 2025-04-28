@@ -101,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
     final double maxWidthContainer = isMobile ? 360 : 400;
 
     return Scaffold(
-      backgroundColor: ColorTheme.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 8),
         child: Center(

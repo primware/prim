@@ -1,6 +1,6 @@
 // ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
+import 'package:primware/views/Home/invoice/invoice_view.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/button.widget.dart';
@@ -55,10 +55,15 @@ class _DashboardPageState extends State<DashboardPage> {
                       children: [
                         _buildDashboardCard(
                           context,
-                          'Facturar',
+                          'Orden de venta',
                           Icons.attach_money_rounded,
                           () {
-                            null;
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const InvoicePage(),
+                              ),
+                            );
                           },
                         ),
                       ],
@@ -73,7 +78,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           Token.auth = null;
                           usuarioController.clear();
                           claveController.clear();
-
                           UserData.rolName = null;
                           UserData.imageBytes = null;
 

@@ -148,9 +148,7 @@ class _RegisterUserState extends State<RegisterUser> {
                 child: Column(
                   children: [
                     Text('Crear Empresa',
-                        style: FontsTheme.h2Bold(
-                          color: ColorTheme.accentLight,
-                        )),
+                        style: Theme.of(context).textTheme.headlineLarge),
                     const SizedBox(height: CustomSpacer.medium),
                     TextfieldTheme(
                       texto: 'Nombre de la empresa',

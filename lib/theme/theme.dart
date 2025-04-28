@@ -45,6 +45,7 @@ class AppThemes {
             fontSize: 14,
             fontWeight: FontWeight.w400),
       ),
+      dividerColor: ColorTheme.aL500,
       colorScheme: ColorScheme.light(
         primary: ColorTheme.accentLight,
         secondary: ColorTheme.aL200,
@@ -111,6 +112,7 @@ class AppThemes {
             fontSize: 14,
             fontWeight: FontWeight.w400),
       ),
+      dividerColor: ColorTheme.aD500,
       colorScheme: ColorScheme.dark(
         primary: ColorTheme.accentDark,
         secondary: ColorTheme.aD200,

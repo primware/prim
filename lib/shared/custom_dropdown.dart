@@ -1,7 +1,5 @@
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
-
-import '../theme/colors.dart';
 import '../theme/fonts.dart';
 
 class SearchableDropdown<T> extends StatelessWidget {
@@ -11,6 +9,8 @@ class SearchableDropdown<T> extends StatelessWidget {
   final void Function(T?)? onChanged;
   final bool isEnabled;
 
+  final void Function(String)? onCreate;
+
   const SearchableDropdown({
     super.key,
     required this.value,
@@ -18,6 +18,7 @@ class SearchableDropdown<T> extends StatelessWidget {
     required this.labelText,
     required this.onChanged,
     this.isEnabled = true,
+    this.onCreate,
   });
 
   @override
@@ -49,24 +50,65 @@ class SearchableDropdown<T> extends StatelessWidget {
         );
       },
       decoratorProps: DropDownDecoratorProps(
+        baseStyle: Theme.of(context).textTheme.bodyMedium,
         decoration: InputDecoration(
           labelText: labelText,
-          labelStyle: FontsTheme.h5(),
+          labelStyle: Theme.of(context).textTheme.bodyMedium,
           contentPadding: const EdgeInsets.all(16),
           filled: true,
-          fillColor: ColorTheme.textDark,
+          fillColor: Theme.of(context).cardColor,
           border: OutlineInputBorder(
-            borderSide: BorderSide(color: ColorTheme.accentLight),
+            borderSide: BorderSide(color: Theme.of(context).primaryColor),
             borderRadius: BorderRadius.circular(8),
           ),
         ),
       ),
-      popupProps: const PopupProps.menu(
+      popupProps: PopupProps.menu(
         showSearchBox: true,
+        emptyBuilder: (context, searchEntry) {
+          // Si no hay datos
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$labelText no encontrado',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (onCreate != null && searchEntry.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
+                    onPressed: () {
+                      onCreate!(searchEntry);
+                    },
+                    child: Text('Crear "$searchEntry"'),
+                  ),
+                ]
+              ],
+            ),
+          );
+        },
+        itemBuilder: (context, item, isDisabled, isSelected) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Text(
+              item['name'],
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          );
+        },
         searchFieldProps: TextFieldProps(
           decoration: InputDecoration(
             hintText: "Buscar...",
-            contentPadding: EdgeInsets.all(12),
+            contentPadding: const EdgeInsets.all(12),
           ),
         ),
       ),

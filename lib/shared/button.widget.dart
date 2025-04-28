@@ -45,7 +45,7 @@ class _ButtonPrimaryState extends State<ButtonPrimary> {
             if (widget.icono != null)
               Icon(
                 widget.icono,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).cardColor,
               ),
             if (widget.icono != null && widget.texto != null)
               const SizedBox(width: 6),

@@ -10,13 +10,13 @@ Future<List<Map<String, dynamic>>> fetchCurrency() async {
     final response = await http.get(
       Uri.parse(EndPoints.currency),
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.tokenRegister,
       },
     );
 
     if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
       final records = jsonResponse['records'] as List;
       return records.map((record) {
         return {
@@ -38,13 +38,13 @@ Future<List<Map<String, dynamic>>> fetchCountry() async {
     final response = await http.get(
       Uri.parse(EndPoints.country),
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.tokenRegister,
       },
     );
 
     if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
       final records = jsonResponse['records'] as List;
       return records.map((record) {
         return {

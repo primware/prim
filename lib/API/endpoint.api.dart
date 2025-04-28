@@ -33,6 +33,8 @@ class EndPoints {
 
   static String initialclientsetup =
       '${Base.baseURL}/api/v1/processes/initialclientsetup';
+
+  static String product = '${Base.baseURL}/api/v1/models/M_Product';
 }
 
 class GetCustomerData {

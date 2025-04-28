@@ -49,89 +49,89 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      maxLength: widget.maxLength,
-      onSubmitted: widget.onSubmitted,
-      onChanged: widget.onChanged,
-      obscureText: widget.obscure,
-      controller: widget.controlador,
-      readOnly: widget.readOnly,
-      inputFormatters: widget.inputFormatters ?? [],
-      keyboardType: widget.inputType,
-      decoration: InputDecoration(
-        counterText: '',
-        hintText: widget.pista,
-        hintStyle: TextStyle(color: ColorTheme.tL300),
-        filled: true, // Habilita el relleno del fondo
-        fillColor: ColorTheme.aL100, // Color de fondo deseado
-        hoverColor: ColorTheme.aL200,
-        focusedBorder: OutlineInputBorder(
-          //Cuando estoy en el control
-          borderSide: BorderSide(
-              width: 1,
-              color: widget.colorEmpty ??
-                  ColorTheme
-                      .accentLight), // Color del borde cuando está enfocado
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          //Cuando no estoy en el control
-          borderSide: BorderSide(
-              color: widget.colorEmpty ??
-                  ColorTheme.aL200), // Color del borde cuando no está enfocado
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
-        ),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(4),
+        maxLength: widget.maxLength,
+        onSubmitted: widget.onSubmitted,
+        onChanged: widget.onChanged,
+        obscureText: widget.obscure,
+        controller: widget.controlador,
+        readOnly: widget.readOnly,
+        inputFormatters: widget.inputFormatters ?? [],
+        keyboardType: widget.inputType,
+        decoration: InputDecoration(
+          counterText: '',
+          hintText: widget.pista,
+          hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSecondary.withAlpha(60)),
+          filled: true, // Habilita el relleno del fondo
+          fillColor: Theme.of(context).cardColor,
+          hoverColor: Theme.of(context).primaryColor.withAlpha(40),
+          focusedBorder: OutlineInputBorder(
+            //Cuando estoy en el control
+            borderSide: BorderSide(
+                width: 1,
+                color: widget.colorEmpty ??
+                    Theme.of(context)
+                        .primaryColor), // Color del borde cuando está enfocado
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
           ),
-        ),
-        labelText: widget.texto,
-        labelStyle: FontsTheme.h5(),
-        prefixIcon: widget.icono != null
-            ? Padding(
-                padding: const EdgeInsets.only(left: 12, right: 8),
-                child: Icon(widget.icono, color: ColorTheme.accentLight),
-              )
-            : null,
-        suffixIcon: widget.showSubIcon
-            ? GestureDetector(
-                onTap: () {
-                  setState(() {
-                    if (mostrarClave) {
-                      mostrarClave = false;
-                      widget.obscure = true;
-                      suFixIcono = const Icon(
-                        Icons.visibility_off_outlined,
-                        color: ColorTheme.textLight,
-                      );
-                    } else {
-                      mostrarClave = true;
-                      widget.obscure = false;
-                      suFixIcono = const Icon(
-                        Icons.visibility_outlined,
-                        color: ColorTheme.accentLight,
-                      );
-                    }
-                  });
-                },
-                child: MouseRegion(
-                  cursor:
-                      SystemMouseCursors.click, // Cambia el cursor a una mano
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 8),
-                    child: suFixIcono,
+          enabledBorder: OutlineInputBorder(
+            //Cuando no estoy en el control
+            borderSide: BorderSide(
+                color: widget.colorEmpty ??
+                    Theme.of(context)
+                        .colorScheme
+                        .secondary), // Color del borde cuando no está enfocado
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
+          ),
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(4),
+            ),
+          ),
+          labelText: widget.texto,
+          labelStyle: FontsTheme.h5(),
+          prefixIcon: widget.icono != null
+              ? Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 8),
+                  child:
+                      Icon(widget.icono, color: Theme.of(context).primaryColor),
+                )
+              : null,
+          suffixIcon: widget.showSubIcon
+              ? GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (mostrarClave) {
+                        mostrarClave = false;
+                        widget.obscure = true;
+                        suFixIcono = Icon(
+                          Icons.visibility_off_outlined,
+                          color: Theme.of(context).colorScheme.onSecondary,
+                        );
+                      } else {
+                        mostrarClave = true;
+                        widget.obscure = false;
+                        suFixIcono = Icon(
+                          Icons.visibility_outlined,
+                          color: Theme.of(context).primaryColor,
+                        );
+                      }
+                    });
+                  },
+                  child: MouseRegion(
+                    cursor:
+                        SystemMouseCursors.click, // Cambia el cursor a una mano
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16, right: 8),
+                      child: suFixIcono,
+                    ),
                   ),
-                ),
-              )
-            : null,
-        floatingLabelStyle: const TextStyle(
-          color: ColorTheme.accentLight,
-          fontSize: 14,
+                )
+              : null,
+          floatingLabelStyle: Theme.of(context).textTheme.bodyLarge,
+          contentPadding: const EdgeInsets.all(16),
         ),
-        contentPadding: const EdgeInsets.all(16),
-      ),
-      style: FontsTheme.h4(),
-    );
+        style: Theme.of(context).textTheme.bodyLarge);
   }
 }
 
