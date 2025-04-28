@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:primware/theme/fonts.dart';
 import 'package:primware/views/register/register_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../theme/colors.dart';
@@ -35,14 +34,6 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
 
     _loadRememberedUser();
-    _checkVersion();
-  }
-
-  Future<void> _checkVersion() async {
-    String checkVersion = await fetchAppVersion();
-    setState(() {
-      version = checkVersion;
-    });
   }
 
   Future<void> _loadRememberedUser() async {
@@ -191,12 +182,6 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                const SizedBox(
-                    height: CustomSpacer.xlarge + CustomSpacer.medium),
-                Text(
-                  version,
-                  style: FontsTheme.pMini(),
-                )
               ],
             ),
           ),

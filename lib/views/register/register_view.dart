@@ -34,12 +34,7 @@ class _RegisterUserState extends State<RegisterUser> {
       _validateForm();
     });
     clientNameController.addListener(_validateForm);
-    orgValueController.addListener(_validateForm);
-    orgNameController.addListener(_validateForm);
-    adminUserNameController.addListener(_validateForm);
     adminUserEmailController.addListener(_validateForm);
-    normalUserNameController.addListener(_validateForm);
-    normalUserEmailController.addListener(_validateForm);
   }
 
   Future<void> _loadOptions() async {
@@ -69,12 +64,7 @@ class _RegisterUserState extends State<RegisterUser> {
   void _validateForm() {
     setState(() {
       isValid = clientNameController.text.isNotEmpty &&
-          orgValueController.text.isNotEmpty &&
-          orgNameController.text.isNotEmpty &&
-          adminUserNameController.text.isNotEmpty &&
           isValidEmail(adminUserEmailController.text) &&
-          normalUserNameController.text.isNotEmpty &&
-          isValidEmail(normalUserEmailController.text) &&
           selectedCountryID != null &&
           selectedCurrencyID != null;
     });
@@ -86,12 +76,11 @@ class _RegisterUserState extends State<RegisterUser> {
     });
     Map<String, dynamic> result = await postNewTenant(
       clientName: clientNameController.text,
-      orgValue: orgValueController.text,
-      orgName: orgNameController.text,
-      adminUserName: adminUserNameController.text,
+      orgValue: clientNameController.text.toLowerCase().trim(),
+      orgName: clientNameController.text.toLowerCase().trim(),
+      adminUserName: '${clientNameController.text.toLowerCase().trim()}Admin',
       adminUserEmail: adminUserEmailController.text,
-      normalUserName: normalUserNameController.text,
-      normalUserEmail: normalUserEmailController.text,
+      normalUserName: '${clientNameController.text.toLowerCase().trim()}User',
       currencyID: selectedCurrencyID!,
       countryID: selectedCountryID!,
     );
@@ -102,14 +91,14 @@ class _RegisterUserState extends State<RegisterUser> {
         builder: (context) => AlertDialog(
           title: Text('Creacion de empresa exitosa'),
           content: Text(
-              'Puede iniciar sesion con el usuario: ${orgValueController.text}${adminUserNameController.text} y clave: ${orgValueController.text}${adminUserNameController.text} \nEl usuario y clave son sensibles a mayusculas y minusculas\nRecuerde cambiar la clave al iniciar sesion'),
+              'Puede iniciar sesion con el usuario: ${clientNameController.text.toLowerCase().trim()}Admin y clave: ${clientNameController.text.toLowerCase().trim()}Admin \nEl usuario y clave son sensibles a mayusculas y minusculas\nRecuerde cambiar la clave al iniciar sesion'),
           actions: [
             TextButton(
               onPressed: () {
                 usuarioController.text =
-                    '${orgValueController.text}${adminUserNameController.text}';
+                    '${clientNameController.text.toLowerCase().trim()}Admin';
                 claveController.text =
-                    '${orgValueController.text}${adminUserNameController.text}';
+                    '${clientNameController.text.toLowerCase().trim()}Admin';
                 clearTextFields();
                 Navigator.push(
                   context,
@@ -174,59 +163,9 @@ class _RegisterUserState extends State<RegisterUser> {
                     ),
                     const SizedBox(height: CustomSpacer.medium),
                     TextfieldTheme(
-                      texto: 'Codigo de la organizacion',
-                      controlador: orgValueController,
-                      colorEmpty: orgValueController.text.isEmpty
-                          ? ColorTheme.error
-                          : null,
-                      inputType: TextInputType.name,
-                      onChanged: (p0) => _validateForm(),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(
-                      texto: 'Nombre de la organizacion',
-                      controlador: orgNameController,
-                      colorEmpty: orgNameController.text.isEmpty
-                          ? ColorTheme.error
-                          : null,
-                      inputType: TextInputType.name,
-                      onChanged: (p0) => _validateForm(),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(
-                      texto: 'Nombre del usuario administrador',
-                      controlador: adminUserNameController,
-                      colorEmpty: adminUserNameController.text.isEmpty
-                          ? ColorTheme.error
-                          : null,
-                      inputType: TextInputType.name,
-                      onChanged: (p0) => _validateForm(),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(
                       texto: 'Correo del usuario administrador',
                       controlador: adminUserEmailController,
                       colorEmpty: !isValidEmail(adminUserEmailController.text)
-                          ? ColorTheme.error
-                          : null,
-                      inputType: TextInputType.emailAddress,
-                      onChanged: (p0) => _validateForm(),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(
-                      texto: 'Nombre del usuario normal',
-                      controlador: normalUserNameController,
-                      colorEmpty: normalUserNameController.text.isEmpty
-                          ? ColorTheme.error
-                          : null,
-                      inputType: TextInputType.name,
-                      onChanged: (p0) => _validateForm(),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(
-                      texto: 'Correo del usuario normal',
-                      controlador: normalUserEmailController,
-                      colorEmpty: !isValidEmail(normalUserEmailController.text)
                           ? ColorTheme.error
                           : null,
                       inputType: TextInputType.emailAddress,

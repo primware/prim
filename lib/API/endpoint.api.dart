@@ -6,7 +6,7 @@ class Base {
   static String baseURL = local
       ? 'https://localhost:8480'
       : prod
-          ? 'https://fe.primware.net'
+          ? 'https://demo.primware.net'
           : 'https://testidempiere.com';
 }
 

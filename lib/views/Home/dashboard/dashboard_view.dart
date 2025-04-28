@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
+import '../../../main.dart';
 import '../../../shared/button.widget.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/fonts.dart';
@@ -24,7 +25,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorTheme.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Center(
           child: Column(
@@ -101,6 +102,17 @@ class _DashboardPageState extends State<DashboardPage> {
                             builder: (context) => const LoginPage(),
                           ),
                         );
+                      },
+                    ),
+                    SizedBox(height: 24),
+                    ButtonSecondary(
+                      texto: 'Cambiar tema',
+                      icono: Icons.brightness_6,
+                      bgcolor: ColorTheme.textDark,
+                      borderColor: ColorTheme.accentLight,
+                      textcolor: ColorTheme.accentLight,
+                      onPressed: () {
+                        ThemeManager.themeNotifier.toggleTheme();
                       },
                     ),
                   ],
