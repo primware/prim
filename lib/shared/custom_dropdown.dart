@@ -7,7 +7,7 @@ class SearchableDropdown<T> extends StatelessWidget {
   final List<Map<String, dynamic>> options;
   final String labelText;
   final void Function(T?)? onChanged;
-  final bool isEnabled;
+  final bool isEnabled, showSearchBox;
 
   final void Function(String)? onCreate;
 
@@ -19,6 +19,7 @@ class SearchableDropdown<T> extends StatelessWidget {
     required this.onChanged,
     this.isEnabled = true,
     this.onCreate,
+    this.showSearchBox = true,
   });
 
   @override
@@ -64,9 +65,8 @@ class SearchableDropdown<T> extends StatelessWidget {
         ),
       ),
       popupProps: PopupProps.menu(
-        showSearchBox: true,
+        showSearchBox: showSearchBox,
         emptyBuilder: (context, searchEntry) {
-          // Si no hay datos
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

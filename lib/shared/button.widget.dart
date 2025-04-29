@@ -53,7 +53,7 @@ class _ButtonPrimaryState extends State<ButtonPrimary> {
               Text(
                 widget.texto!,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).cardColor,
+                      color: Theme.of(context).colorScheme.surface,
                     ),
               ),
           ],
