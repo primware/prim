@@ -320,6 +320,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                 style: Theme.of(context).textTheme.titleLarge),
                             const SizedBox(height: CustomSpacer.medium),
                             Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children:
                                   invoiceLines.asMap().entries.map((entry) {
                                 final index = entry.key;
