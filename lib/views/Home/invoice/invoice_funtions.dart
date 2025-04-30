@@ -109,7 +109,7 @@ Future<List<Map<String, dynamic>>> fetchTax(
   }
 }
 
-Future<bool> postInvoice({
+Future<Map<String, dynamic>> postInvoice({
   required int cBPartnerID,
   required int ctaxID,
   required List<Map<String, dynamic>> invoiceLines,
@@ -122,6 +122,7 @@ Future<bool> postInvoice({
       context: context,
     );
 
+//? Crear la orden de venta
     final Map<String, dynamic> orderData = {
       "C_BPartner_ID": cBPartnerID,
       "M_Warehouse_ID": Token.warehouseID,
@@ -143,12 +144,16 @@ Future<bool> postInvoice({
     if (orderResponse.statusCode != 201) {
       print('Error al crear la orden: ${orderResponse.statusCode}');
       print(orderResponse.body);
-      return false;
+      return {
+        'success': false,
+        'message': 'Error al crear la orden.',
+      };
     }
 
     final createdOrder = json.decode(orderResponse.body);
     final int cOrderID = createdOrder['id'];
 
+//? Crear la línea de la orden
     for (var line in invoiceLines) {
       final lineData = {
         "M_Product_ID": line['M_Product_ID'],
@@ -171,13 +176,38 @@ Future<bool> postInvoice({
       if (lineResponse.statusCode != 201) {
         print('Error al crear línea: ${lineResponse.statusCode}');
         print(lineResponse.body);
-        return false;
+        return {
+          'success': false,
+          'message': 'Error al crear líneas de la orden.',
+        };
       }
     }
 
-    return true;
+//? Completar la orden
+
+    final completeOrderResponse = await http.put(
+      Uri.parse('${EndPoints.cOrder}/$cOrderID'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+      body: jsonEncode({
+        "DocStatus": {"id": "CO"}
+      }),
+    );
+
+    if (completeOrderResponse.statusCode != 200) {
+      print('Error al completar la orden: ${completeOrderResponse.statusCode}');
+      print(completeOrderResponse.body);
+      return {
+        'success': false,
+        'message': 'Error al completar la orden.',
+      };
+    }
+
+    return {'success': true};
   } catch (e) {
     print('Excepción general: $e');
-    return false;
+    return {'success': false, 'message': 'Excepción inesperada: $e'};
   }
 }

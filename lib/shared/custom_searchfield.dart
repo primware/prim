@@ -10,6 +10,8 @@ class CustomSearchField extends StatefulWidget {
   final Widget Function(Map<String, dynamic>)? itemBuilder;
   final bool enabled;
   final TextEditingController? controller;
+  final bool showCreateButtonIfNotFound;
+  final void Function(String)? onCreate;
 
   const CustomSearchField({
     super.key,
@@ -21,6 +23,8 @@ class CustomSearchField extends StatefulWidget {
     this.onSearch,
     this.itemBuilder,
     this.enabled = true,
+    this.showCreateButtonIfNotFound = false,
+    this.onCreate,
   });
 
   @override
@@ -70,6 +74,26 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
         );
       }).toList();
 
+      if (suggestions.isEmpty && widget.showCreateButtonIfNotFound) {
+        suggestions.add(
+          SearchFieldListItem<Map<String, dynamic>>(
+            _controller.text,
+            item: {},
+            child: Expanded(
+              child: InkWell(
+                onTap: () {
+                  if (widget.onCreate != null) {
+                    widget.onCreate!(_controller.text);
+                  }
+                },
+                child:
+                    Text('¿Crear ${widget.labelText} "${_controller.text}"?'),
+              ),
+            ),
+          ),
+        );
+      }
+
       completer.complete(suggestions);
     });
 
@@ -79,20 +103,9 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
   Widget _defaultItemBuilder(Map<String, dynamic> item) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '${item[widget.searchBy] ?? ''} - ${item['name'] ?? ''} ',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          Text(
-            '\$${item['price'] ?? ''}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ],
+      child: Text(
+        '${item['name'] ?? ''}',
+        style: Theme.of(context).textTheme.bodyMedium,
       ),
     );
   }
@@ -103,7 +116,7 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
       controller: _controller,
       enabled: widget.enabled,
       onSuggestionTap: (SearchFieldListItem<Map<String, dynamic>> item) {
-        if (widget.onItemSelected != null) {
+        if (widget.onItemSelected != null && item.item!.isNotEmpty) {
           widget.onItemSelected!(item.item!);
         }
       },

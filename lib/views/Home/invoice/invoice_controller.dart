@@ -5,7 +5,9 @@ TextEditingController qtyProductController = TextEditingController();
 TextEditingController productController = TextEditingController();
 TextEditingController taxController = TextEditingController();
 
-void clearTextFields() {
+void clearInvoiceFields() {
   clienteController.clear();
   qtyProductController.clear();
+  productController.clear();
+  taxController.clear();
 }

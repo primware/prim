@@ -11,6 +11,7 @@ import 'API/endpoint.api.dart';
 //TODO menu en button, Inicio, ventas, productos, clientes, Configuracion.
 //TODO agregar impuestos
 //TODO agregar lista de precios de venta, y al crear cada producto agregarlo a esa lista de precios
+//TODO agregar el acceso a ventana al usuario a la ventana de tasa de impuesto
 
 void main() {
   HttpOverrides.global = MyHttpOverrides();

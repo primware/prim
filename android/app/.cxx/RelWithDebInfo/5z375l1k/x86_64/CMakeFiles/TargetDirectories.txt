@@ -1,0 +1,2 @@
+C:/git/primware/android/app/.cxx/RelWithDebInfo/5z375l1k/x86_64/CMakeFiles/edit_cache.dir
+C:/git/primware/android/app/.cxx/RelWithDebInfo/5z375l1k/x86_64/CMakeFiles/rebuild_cache.dir

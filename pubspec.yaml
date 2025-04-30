@@ -17,6 +17,7 @@ dependencies:
   dropdown_search: ^6.0.2
   searchfield: ^1.2.7
   flutter_launcher_icons: ^0.14.3
+  shimmer: ^3.0.0
 
 
 flutter_launcher_icons:

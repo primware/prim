@@ -19,6 +19,11 @@ class EndPoints {
 
   static String cBPartner = '${Base.baseURL}/api/v1/models/C_BPartner';
 
+  static String cBPartnerLocation =
+      '${Base.baseURL}/api/v1/models/C_BPartner_Location';
+
+  static String cLocation = '${Base.baseURL}/api/v1/models/C_Location';
+
   static String adUserRoles = '${Base.baseURL}/api/v1/models/AD_User_Roles';
 
   static String salesRep =
