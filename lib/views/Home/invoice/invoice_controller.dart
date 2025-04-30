@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-TextEditingController terceroController = TextEditingController();
+TextEditingController clienteController = TextEditingController();
 TextEditingController qtyProductController = TextEditingController();
+TextEditingController productController = TextEditingController();
 
 void clearTextFields() {
-  terceroController.clear();
+  clienteController.clear();
   qtyProductController.clear();
 }

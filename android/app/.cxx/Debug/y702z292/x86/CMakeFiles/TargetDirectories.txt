@@ -1,0 +1,2 @@
+C:/git/primware/android/app/.cxx/Debug/y702z292/x86/CMakeFiles/edit_cache.dir
+C:/git/primware/android/app/.cxx/Debug/y702z292/x86/CMakeFiles/rebuild_cache.dir

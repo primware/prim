@@ -9,11 +9,13 @@ class CustomSearchField extends StatefulWidget {
   final Future<List<Map<String, dynamic>>> Function(String)? onSearch;
   final Widget Function(Map<String, dynamic>)? itemBuilder;
   final bool enabled;
+  final TextEditingController? controller;
 
   const CustomSearchField({
     super.key,
     required this.options,
     required this.labelText,
+    this.controller,
     this.onItemSelected,
     this.searchBy = 'id',
     this.onSearch,
@@ -26,7 +28,8 @@ class CustomSearchField extends StatefulWidget {
 }
 
 class _CustomSearchFieldState extends State<CustomSearchField> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller =
+      widget.controller ?? TextEditingController();
   Timer? _debounce;
 
   @override

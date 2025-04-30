@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:primware/API/user.api.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import '../../../API/endpoint.api.dart';
 import 'dart:convert';
@@ -15,7 +16,7 @@ Future<List<Map<String, dynamic>>> fetchBPartner(
       context: context,
     );
     final response = await http.get(
-      Uri.parse('${EndPoints.partner}?\$filter=IsCustomer eq true'),
+      Uri.parse('${EndPoints.cBPartner}?\$filter=IsCustomer eq true'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -50,7 +51,7 @@ Future<List<Map<String, dynamic>>> fetchProduct(
     );
     final response = await http.get(
       Uri.parse(
-          '${EndPoints.product}?\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
+          '${EndPoints.mProduct}?\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -77,5 +78,76 @@ Future<List<Map<String, dynamic>>> fetchProduct(
   } catch (e) {
     print('Excepción al obtener productos: $e');
     return [];
+  }
+}
+
+Future<bool> postInvoice({
+  required int cBPartnerID,
+  required List<Map<String, dynamic>> invoiceLines,
+  required BuildContext context,
+}) async {
+  try {
+    await usuarioAuth(
+      usuario: usuarioController.text.trim(),
+      clave: claveController.text.trim(),
+      context: context,
+    );
+
+    final Map<String, dynamic> orderData = {
+      "C_BPartner_ID": cBPartnerID,
+      "M_Warehouse_ID": Token.warehouseID,
+      "C_DocTypeTarget_ID": Token.cDocTypeTargetID,
+      "deliveryViaRule": "P",
+      "SalesRep_ID": UserData.id,
+      "isSOTrx": true,
+    };
+
+    final orderResponse = await http.post(
+      Uri.parse(EndPoints.cOrder),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+      body: jsonEncode(orderData),
+    );
+
+    if (orderResponse.statusCode != 201) {
+      print('Error al crear la orden: ${orderResponse.statusCode}');
+      print(orderResponse.body);
+      return false;
+    }
+
+    final createdOrder = json.decode(orderResponse.body);
+    final int cOrderID = createdOrder['id'];
+
+    for (var line in invoiceLines) {
+      final lineData = {
+        "M_Product_ID": line['M_Product_ID'],
+        "QtyEntered": line['Quantity'],
+        "PriceActual": line['Price'],
+        "PriceEntered": line['Price'],
+        "C_Order_ID": cOrderID
+      };
+
+      final lineResponse = await http.post(
+        Uri.parse(EndPoints.cOrderLine),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': Token.auth!,
+        },
+        body: jsonEncode(lineData),
+      );
+
+      if (lineResponse.statusCode != 201) {
+        print('Error al crear línea: ${lineResponse.statusCode}');
+        print(lineResponse.body);
+        return false;
+      }
+    }
+
+    return true;
+  } catch (e) {
+    print('Excepción general: $e');
+    return false;
   }
 }

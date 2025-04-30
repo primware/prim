@@ -13,13 +13,15 @@ class Base {
 class EndPoints {
   static String postUserAuth = '${Base.baseURL}/api/v1/auth/tokens';
 
-  static String request = '${Base.baseURL}/api/v1/models/R_Request';
+  static String rRequest = '${Base.baseURL}/api/v1/models/R_Request';
 
-  static String user = '${Base.baseURL}/api/v1/models/AD_User';
+  static String adUser = '${Base.baseURL}/api/v1/models/AD_User';
 
-  static String partner = '${Base.baseURL}/api/v1/models/C_BPartner';
+  static String mWarehouse = '${Base.baseURL}/api/v1/models/M_Warehouse';
 
-  static String rol = '${Base.baseURL}/api/v1/models/AD_User_Roles';
+  static String cBPartner = '${Base.baseURL}/api/v1/models/C_BPartner';
+
+  static String adUserRoles = '${Base.baseURL}/api/v1/models/AD_User_Roles';
 
   static String salesRep =
       '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
@@ -27,14 +29,17 @@ class EndPoints {
   static String getOrganizationsAfterLogin =
       '${Base.baseURL}/api/v1/models/AD_Org';
 
-  static String currency = '${Base.baseURL}/api/v1/models/C_Currency';
+  static String cCurrency = '${Base.baseURL}/api/v1/models/C_Currency';
 
-  static String country = '${Base.baseURL}/api/v1/models/C_Country';
+  static String cCountry = '${Base.baseURL}/api/v1/models/C_Country';
 
   static String initialclientsetup =
       '${Base.baseURL}/api/v1/processes/initialclientsetup';
 
-  static String product = '${Base.baseURL}/api/v1/models/M_Product';
+  static String mProduct = '${Base.baseURL}/api/v1/models/M_Product';
+
+  static String cOrder = '${Base.baseURL}/api/v1/models/C_Order';
+  static String cOrderLine = '${Base.baseURL}/api/v1/models/C_OrderLine';
 }
 
 class GetCustomerData {
@@ -79,4 +84,17 @@ class GetOrganization {
 
   String get endPoint =>
       '${Base.baseURL}/api/v1/auth/organizations?client=$clientID&role=$rolID';
+}
+
+class GetWarehouse {
+  final int rolID;
+  final int clientID;
+  final int organizationID;
+  GetWarehouse(
+      {required this.rolID,
+      required this.clientID,
+      required this.organizationID});
+
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/auth/warehouses?client=$clientID&role=$rolID&organization=$organizationID';
 }

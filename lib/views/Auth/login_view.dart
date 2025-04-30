@@ -108,12 +108,6 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Logo(
-                  width: isMobile ? 200 : 320,
-                ),
-                SizedBox(
-                    height: CustomSpacer.medium +
-                        (!isMobile ? CustomSpacer.xlarge : 0)),
                 CustomContainer(
                   maxWidthContainer: maxWidthContainer,
                   padding: isMobile ? 12 : 24,
@@ -121,6 +115,14 @@ class _LoginPageState extends State<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      Center(
+                        child: Logo(
+                          width: isMobile ? 200 : 320,
+                        ),
+                      ),
+                      SizedBox(
+                          height: CustomSpacer.medium +
+                              (!isMobile ? CustomSpacer.xlarge : 10)),
                       TextfieldTheme(
                         icono: Icons.mail_outline,
                         texto: 'Usuario',

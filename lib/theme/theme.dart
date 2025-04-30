@@ -8,7 +8,7 @@ class AppThemes {
     return ThemeData(
       brightness: Brightness.light,
       primaryColor: ColorTheme.accentLight,
-      scaffoldBackgroundColor: ColorTheme.backgroundLight,
+      scaffoldBackgroundColor: ColorTheme.aD200,
       cardColor: ColorTheme.textDark,
       appBarTheme: AppBarTheme(
         backgroundColor: ColorTheme.accentLight,
@@ -48,7 +48,7 @@ class AppThemes {
       dividerColor: ColorTheme.aL500,
       colorScheme: ColorScheme.light(
         primary: ColorTheme.accentLight,
-        secondary: ColorTheme.aL200,
+        secondary: ColorTheme.aD100,
         surface: Colors.white,
         onPrimary: ColorTheme.textDark,
         onSecondary: ColorTheme.textLight,
@@ -75,7 +75,7 @@ class AppThemes {
     return ThemeData(
       brightness: Brightness.dark,
       primaryColor: ColorTheme.accentDark,
-      scaffoldBackgroundColor: ColorTheme.backgroundDark,
+      scaffoldBackgroundColor: ColorTheme.aD100,
       cardColor: ColorTheme.tD100,
       appBarTheme: AppBarTheme(
         backgroundColor: ColorTheme.accentDark,

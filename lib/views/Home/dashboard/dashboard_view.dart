@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:primware/shared/custom_container.dart';
 import 'package:primware/views/Home/invoice/invoice_view.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
@@ -28,72 +29,103 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: ismobile ? MenuDrawer() : null,
-      body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            children: [
-              CustomAppMenu(),
-              Container(
-                constraints: BoxConstraints(maxWidth: 800),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hola, ${UserData.name} - ${UserData.clientName}',
-                      style: Theme.of(context).textTheme.headlineLarge,
-                      overflow: TextOverflow.visible,
-                    ),
-                    SizedBox(height: CustomSpacer.medium),
-                    GridView.count(
-                      shrinkWrap: true,
-                      crossAxisCount: ismobile ? 2 : 4,
-                      childAspectRatio: 1.5,
-                      crossAxisSpacing: ismobile ? 6 : 16,
-                      mainAxisSpacing: ismobile ? 6 : 16,
-                      children: [
-                        _buildDashboardCard(
-                          context,
-                          'Orden de venta',
-                          Icons.attach_money_rounded,
-                          () {
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
+            child: Column(
+              children: [
+                CustomAppMenu(),
+                CustomContainer(
+                  maxWidthContainer: 800,
+                  padding: 16,
+                  margin: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Text(
+                      //   'Hola, ${UserData.name} - ${UserData.clientName}',
+                      //   style: Theme.of(context).textTheme.headlineLarge,
+                      //   overflow: TextOverflow.visible,
+                      // ),
+                      Text(
+                        'Dashboard',
+                        style: Theme.of(context).textTheme.headlineLarge,
+                        overflow: TextOverflow.visible,
+                      ),
+                      SizedBox(height: CustomSpacer.medium),
+                      GridView.count(
+                        shrinkWrap: true,
+                        crossAxisCount: ismobile ? 2 : 4,
+                        childAspectRatio: 1.5,
+                        crossAxisSpacing: ismobile ? 6 : 16,
+                        mainAxisSpacing: ismobile ? 6 : 16,
+                        children: [
+                          _buildDashboardCard(
+                            context,
+                            'Ventas',
+                            Icons.attach_money_rounded,
+                            () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const InvoicePage(),
+                                ),
+                              );
+                            },
+                          ),
+                          _buildDashboardCard(
+                            context,
+                            'Mis ordenes',
+                            Icons.dashboard,
+                            () {},
+                          ),
+                          _buildDashboardCard(
+                            context,
+                            'Productos',
+                            Icons.inventory,
+                            () {},
+                          ),
+                          _buildDashboardCard(
+                            context,
+                            'Clientes',
+                            Icons.people,
+                            () {},
+                          ),
+                          _buildDashboardCard(
+                            context,
+                            'Ajustes',
+                            Icons.settings,
+                            () {},
+                          ),
+                        ],
+                      ),
+                      if (!ismobile) ...[
+                        SizedBox(
+                            height: CustomSpacer.xlarge + CustomSpacer.xlarge),
+                        ButtonSecondary(
+                          texto: 'Cerrar sesión',
+                          icono: Icons.logout_outlined,
+                          onPressed: () {
+                            Token.auth = null;
+                            usuarioController.clear();
+                            claveController.clear();
+                            UserData.rolName = null;
+                            UserData.imageBytes = null;
+
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const InvoicePage(),
+                                builder: (context) => const LoginPage(),
                               ),
                             );
                           },
                         ),
-                      ],
-                    ),
-                    if (!ismobile) ...[
-                      SizedBox(
-                          height: CustomSpacer.xlarge + CustomSpacer.xlarge),
-                      ButtonSecondary(
-                        texto: 'Cerrar sesión',
-                        icono: Icons.logout_outlined,
-                        onPressed: () {
-                          Token.auth = null;
-                          usuarioController.clear();
-                          claveController.clear();
-                          UserData.rolName = null;
-                          UserData.imageBytes = null;
-
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginPage(),
-                            ),
-                          );
-                        },
-                      ),
-                    ]
-                  ],
+                      ]
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

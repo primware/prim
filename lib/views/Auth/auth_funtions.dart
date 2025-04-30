@@ -31,29 +31,6 @@ Future<void> handle401(BuildContext context) async {
   );
 }
 
-Future<String> fetchAppVersion() async {
-  try {
-    final response = await http.get(Uri.parse('index.html'));
-
-    if (response.statusCode == 200) {
-      final htmlContent = response.body;
-
-      final regex = RegExp(r'manifest\.json\?v=(\d+)"');
-      final match = regex.firstMatch(htmlContent);
-
-      if (match != null) {
-        return 'Versión: ${match.group(1)}';
-      } else {
-        return 'Versión: not found';
-      }
-    } else {
-      return 'Versión: error loading index.html';
-    }
-  } catch (e) {
-    return 'Versión: debug';
-  }
-}
-
 Future<Map<String, dynamic>?> preAuth(
     String usuario, String clave, BuildContext context) async {
   try {
@@ -152,6 +129,39 @@ Future<List<Map<String, dynamic>>?> getOrganizations(
   return null;
 }
 
+Future<bool> getWarehouse({
+  required int clientId,
+  required int roleId,
+  required int organitaionId,
+  required BuildContext context,
+}) async {
+  try {
+    final response = await http.get(
+      Uri.parse(GetWarehouse(
+              rolID: roleId, clientID: clientId, organizationID: organitaionId)
+          .endPoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.preAuth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      Token.warehouseID = responseData['warehouses'][0]['id'];
+
+      return true;
+    } else {
+      print('Error en getWarehouse: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    if (e is http.ClientException) {
+      handle401(context);
+    }
+  }
+  return false;
+}
+
 Future<bool> usuarioAuth(
     {required String usuario,
     required String clave,
@@ -161,6 +171,12 @@ Future<bool> usuarioAuth(
       return false;
     }
 
+    await getWarehouse(
+        clientId: Token.client!,
+        roleId: Token.rol!,
+        organitaionId: Token.organitation!,
+        context: context);
+
     final Map<String, dynamic> data = {
       "userName": usuario,
       "password": clave,
@@ -168,7 +184,7 @@ Future<bool> usuarioAuth(
         "clientId": Token.client,
         "roleId": Token.rol,
         "organizationId": Token.organitation,
-        "warehouseId": 0,
+        "warehouseId": Token.warehouseID,
         "language": "en_US"
       }
     };
@@ -182,7 +198,7 @@ Future<bool> usuarioAuth(
     );
 
     if (response.statusCode == 200) {
-      Token.auth = 'Bearer ${json.decode(response.body)["token"]}';
+      Token.auth = '${Token.tokenType} ${json.decode(response.body)["token"]}';
       UserData.id = json.decode(response.body)["userId"];
       bool success = await loadUserData(context);
 

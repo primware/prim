@@ -8,7 +8,7 @@ import '../../API/token.api.dart';
 Future<List<Map<String, dynamic>>> fetchCurrency() async {
   try {
     final response = await http.get(
-      Uri.parse(EndPoints.currency),
+      Uri.parse(EndPoints.cCurrency),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.tokenRegister,
@@ -36,7 +36,7 @@ Future<List<Map<String, dynamic>>> fetchCurrency() async {
 Future<List<Map<String, dynamic>>> fetchCountry() async {
   try {
     final response = await http.get(
-      Uri.parse(EndPoints.country),
+      Uri.parse(EndPoints.cCountry),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.tokenRegister,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:primware/shared/custom_container.dart';
+import 'package:primware/views/Home/invoice/invoice_controller.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_dropdown.dart';
@@ -8,6 +10,8 @@ import '../../../shared/loading_container.dart';
 import '../../../shared/textfield.widget.dart';
 import '../../../theme/colors.dart';
 import 'invoice_funtions.dart';
+
+//TODO cargar los impuestos y la tasa de C_Tax
 
 class InvoicePage extends StatefulWidget {
   const InvoicePage({super.key});
@@ -54,6 +58,10 @@ class _InvoicePageState extends State<InvoicePage> {
     super.dispose();
   }
 
+  bool _isInvoiceValid() {
+    return selectedBPartnerID != null && invoiceLines.isNotEmpty;
+  }
+
   Future<void> _loadOptions() async {
     setState(() => isLoading = true);
 
@@ -88,16 +96,24 @@ class _InvoicePageState extends State<InvoicePage> {
 
   Future<void> _showQuantityDialog(Map<String, dynamic> product) async {
     final quantityController = TextEditingController(text: "1");
+    final priceController =
+        TextEditingController(text: product['price'].toString());
 
-    void onSubmitted(String value) {
+    void onSubmitted() {
       final qty = int.tryParse(quantityController.text) ?? 1;
+      final price =
+          double.tryParse(priceController.text) ?? (product['price'] ?? 0);
+
       setState(() {
         invoiceLines.add({
           ...product,
           'quantity': qty,
+          'price': price,
         });
       });
+
       _recalculateSummary();
+      productController.clear();
       Navigator.pop(context);
     }
 
@@ -106,12 +122,24 @@ class _InvoicePageState extends State<InvoicePage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          title: Text('Definir cantidad'),
-          content: TextfieldTheme(
-            controlador: quantityController,
-            inputType: TextInputType.number,
-            texto: 'Cantidad',
-            onSubmitted: onSubmitted,
+          title: Text('Definir cantidad y precio'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextfieldTheme(
+                controlador: quantityController,
+                texto: 'Cantidad',
+                inputType: TextInputType.number,
+                onSubmitted: (_) => onSubmitted,
+              ),
+              const SizedBox(height: 16),
+              TextfieldTheme(
+                controlador: priceController,
+                texto: 'Precio',
+                inputType: TextInputType.number,
+                onSubmitted: (_) => onSubmitted,
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -119,13 +147,12 @@ class _InvoicePageState extends State<InvoicePage> {
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: () => onSubmitted(quantityController.text),
+              onPressed: onSubmitted,
               child: Text(
                 'Agregar',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
               ),
             ),
           ],
@@ -141,6 +168,74 @@ class _InvoicePageState extends State<InvoicePage> {
     _recalculateSummary();
   }
 
+  Future<void> _createInvoice({
+    required List<Map<String, dynamic>> product,
+    required int bPartner,
+  }) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          title: Text('Completar'),
+          content: Text('¿Está seguro de que desea completar la orden?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                setState(() => isLoading = true);
+
+                final List<Map<String, dynamic>> invoiceLine =
+                    product.map((item) {
+                  return {
+                    'M_Product_ID': item['id'],
+                    'SKU': item['sku'],
+                    'Name': item['name'],
+                    'Price': item['price'],
+                    'Quantity': item['quantity'],
+                  };
+                }).toList();
+
+                bool sucess = await postInvoice(
+                    cBPartnerID: bPartner,
+                    invoiceLines: invoiceLine,
+                    context: context);
+
+                if (sucess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Orden completada"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Error al completar la orden"),
+                      backgroundColor: ColorTheme.error,
+                    ),
+                  );
+                }
+                setState(() => isLoading = false);
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Confirmar',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool ismobile = MediaQuery.of(context).size.width <= 750;
@@ -148,192 +243,208 @@ class _InvoicePageState extends State<InvoicePage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: ismobile ? const MenuDrawer() : null,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Center(
-              child: Column(
-                children: [
-                  const CustomAppMenu(),
-                  Container(
-                    constraints: const BoxConstraints(maxWidth: 800),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Facturación',
-                            style: Theme.of(context).textTheme.headlineLarge),
-                        const SizedBox(height: CustomSpacer.medium),
-                        SearchableDropdown<int>(
-                          value: selectedBPartnerID,
-                          options: bPartnerOptions,
-                          labelText: 'Tercero',
-                          onChanged: (value) {
-                            setState(() => selectedBPartnerID = value);
-                          },
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        CustomSearchField(
-                          options: productOptions,
-                          labelText: "Producto",
-                          searchBy: "sku",
-                          onItemSelected: (item) {
-                            final alreadyExists =
-                                invoiceLines.any((p) => p['id'] == item['id']);
-                            if (alreadyExists) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  backgroundColor: ColorTheme.atention,
-                                  content:
-                                      Text('El producto ya ha sido agregado'),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Center(
+                child: Column(
+                  children: [
+                    const CustomAppMenu(),
+                    CustomContainer(
+                      margin: const EdgeInsets.all(12),
+                      maxWidthContainer: 800,
+                      padding: 16,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Text('Orden de venta',
+                                style:
+                                    Theme.of(context).textTheme.headlineLarge),
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          CustomSearchField(
+                            options: bPartnerOptions,
+                            labelText: "Cliente",
+                            searchBy: "TaxID",
+                            onItemSelected: (item) {
+                              setState(() {
+                                selectedBPartnerID = item['id'];
+                              });
+                            },
+                            itemBuilder: (item) => Text(
+                              '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          CustomSearchField(
+                            options: productOptions,
+                            controller: productController,
+                            labelText: "Producto",
+                            searchBy: "sku",
+                            onItemSelected: (item) {
+                              _showQuantityDialog(item);
+                            },
+                            itemBuilder: (item) => Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              );
-                              return;
-                            }
-                            _showQuantityDialog(item);
-                          },
-                          itemBuilder: (item) => Row(
+                                Text(
+                                  '\$${item['price'] ?? '0.00'}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (invoiceLines.isNotEmpty) ...[
+                            const SizedBox(height: CustomSpacer.large),
+                            Text('Detalle de productos',
+                                style: Theme.of(context).textTheme.titleLarge),
+                            const SizedBox(height: CustomSpacer.medium),
+                            Wrap(
+                              children:
+                                  invoiceLines.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final line = entry.value;
+                                return Chip(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  deleteIconColor: ColorTheme.error,
+                                  label: Text(
+                                    '${line['quantity']} x \$${line['price']} (${line['name']})',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  deleteIcon: const Icon(Icons.close),
+                                  onDeleted: () => _deleteLine(index),
+                                  backgroundColor: Theme.of(context).cardColor,
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                          Divider(
+                            color: Theme.of(context).dividerColor,
+                            height: 60,
+                          ),
+                          Center(
+                            child: Text('Resumen de la Factura',
+                                style: Theme.of(context).textTheme.titleLarge),
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                '\$${item['price'] ?? '0.00'}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
+                              Text('Subtotal',
+                                  style:
+                                      Theme.of(context).textTheme.bodyMedium),
+                              Text('\$${subtotal.toStringAsFixed(2)}',
+                                  style:
+                                      Theme.of(context).textTheme.bodyMedium),
                             ],
                           ),
-                        ),
-                        if (invoiceLines.isNotEmpty) ...[
-                          const SizedBox(height: CustomSpacer.large),
-                          Text('Detalle de productos',
-                              style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: CustomSpacer.medium),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: invoiceLines.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final line = entry.value;
-                              return Chip(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                deleteIconColor: ColorTheme.error,
-                                label: Text(
-                                  '${line['quantity']}x ${line['sku'] ?? ''} - ${line['name']}  \$${(line['price'] ?? 0) * (line['quantity'] ?? 1)}',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                deleteIcon: const Icon(Icons.close),
-                                onDeleted: () => _deleteLine(index),
-                                backgroundColor: Theme.of(context).cardColor,
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                        Divider(
-                          color: Theme.of(context).dividerColor,
-                          height: 60,
-                        ),
-                        Center(
-                          child: Text('Resumen de la Factura',
-                              style: Theme.of(context).textTheme.titleLarge),
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Subtotal',
-                                style: Theme.of(context).textTheme.bodyMedium),
-                            Text('\$${subtotal.toStringAsFixed(2)}',
-                                style: Theme.of(context).textTheme.bodyMedium),
-                          ],
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Expanded(
-                              child: SearchableDropdown<int>(
-                                value: selectedTaxId,
-                                options: taxOptions,
-                                showSearchBox: false,
-                                labelText: 'Impuesto (%)',
-                                onChanged: (value) {
-                                  if (value == -1) {
-                                    setState(() {
-                                      useCustomTax = true;
-                                      selectedTaxId = 0;
-                                    });
-                                  } else {
-                                    setState(() {
-                                      useCustomTax = false;
-                                      selectedTaxId = value ?? 0;
-                                      customTaxController.clear();
-                                    });
-                                    _recalculateSummary();
-                                  }
-                                },
-                              ),
-                            ),
-                            if (useCustomTax) ...[
-                              const SizedBox(width: CustomSpacer.small),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                               Expanded(
-                                child: TextfieldTheme(
-                                  texto: "Monto",
-                                  controlador: customTaxController,
-                                  inputType: TextInputType.number,
-                                  icono: Icons.percent,
-                                  onChanged: (_) => _recalculateSummary(),
+                                child: SearchableDropdown<int>(
+                                  value: selectedTaxId,
+                                  options: taxOptions,
+                                  showSearchBox: false,
+                                  labelText: 'Impuesto (%)',
+                                  onChanged: (value) {
+                                    if (value == -1) {
+                                      setState(() {
+                                        useCustomTax = true;
+                                        selectedTaxId = 0;
+                                      });
+                                    } else {
+                                      setState(() {
+                                        useCustomTax = false;
+                                        selectedTaxId = value ?? 0;
+                                        customTaxController.clear();
+                                      });
+                                      _recalculateSummary();
+                                    }
+                                  },
                                 ),
                               ),
+                              if (useCustomTax) ...[
+                                const SizedBox(width: CustomSpacer.small),
+                                Expanded(
+                                  child: TextfieldTheme(
+                                    texto: "Monto",
+                                    controlador: customTaxController,
+                                    inputType: TextInputType.number,
+                                    icono: Icons.percent,
+                                    onChanged: (_) => _recalculateSummary(),
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('IVA',
-                                style: Theme.of(context).textTheme.bodyMedium),
-                            Text('\$${iva.toStringAsFixed(2)}',
-                                style: Theme.of(context).textTheme.bodyMedium),
-                          ],
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Total',
-                                style: Theme.of(context).textTheme.titleLarge),
-                            Text('\$${total.toStringAsFixed(2)}',
-                                style: Theme.of(context).textTheme.titleLarge),
-                          ],
-                        ),
-                        const SizedBox(height: CustomSpacer.xlarge),
-                        ButtonPrimary(
-                          fullWidth: true,
-                          texto: 'Crear Factura',
-                        )
-                      ],
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('IVA',
+                                  style:
+                                      Theme.of(context).textTheme.bodyMedium),
+                              Text('\$${iva.toStringAsFixed(2)}',
+                                  style:
+                                      Theme.of(context).textTheme.bodyMedium),
+                            ],
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Total',
+                                  style:
+                                      Theme.of(context).textTheme.titleLarge),
+                              Text('\$${total.toStringAsFixed(2)}',
+                                  style:
+                                      Theme.of(context).textTheme.titleLarge),
+                            ],
+                          ),
+                          const SizedBox(height: CustomSpacer.xlarge),
+                          Container(
+                            child: _isInvoiceValid()
+                                ? ButtonPrimary(
+                                    fullWidth: true,
+                                    texto: 'Completar',
+                                    onPressed: () => _createInvoice(
+                                      product: invoiceLines,
+                                      bPartner: selectedBPartnerID ?? 0,
+                                    ),
+                                  )
+                                : null,
+                          )
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          if (isLoading) const LoadingContainer(),
-        ],
+            if (isLoading) const LoadingContainer(),
+          ],
+        ),
       ),
     );
   }

@@ -6,21 +6,23 @@ import '../theme/fonts.dart';
 
 // ignore: must_be_immutable
 class TextfieldTheme extends StatefulWidget {
-  TextfieldTheme(
-      {super.key,
-      this.icono,
-      this.controlador,
-      this.texto,
-      this.pista,
-      this.obscure = false,
-      this.onSubmitted,
-      this.onChanged,
-      this.showSubIcon = false,
-      this.inputType = TextInputType.text,
-      this.inputFormatters,
-      this.readOnly = false,
-      this.colorEmpty,
-      this.maxLength});
+  TextfieldTheme({
+    super.key,
+    this.icono,
+    this.controlador,
+    this.texto,
+    this.pista,
+    this.obscure = false,
+    this.onSubmitted,
+    this.onChanged,
+    this.showSubIcon = false,
+    this.inputType = TextInputType.text,
+    this.inputFormatters,
+    this.readOnly = false,
+    this.colorEmpty,
+    this.maxLength,
+    this.focusNode,
+  });
 
   final String? texto;
   final String? pista;
@@ -33,6 +35,7 @@ class TextfieldTheme extends StatefulWidget {
   List<TextInputFormatter>? inputFormatters;
   final Color? colorEmpty;
   final int? maxLength;
+  final FocusNode? focusNode;
 
   @override
   State<TextfieldTheme> createState() => _TextfieldThemeState();
@@ -50,6 +53,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
   Widget build(BuildContext context) {
     return TextField(
         maxLength: widget.maxLength,
+        focusNode: widget.focusNode,
         onSubmitted: widget.onSubmitted,
         onChanged: widget.onChanged,
         obscureText: widget.obscure,
@@ -63,7 +67,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
           hintStyle: TextStyle(
               color: Theme.of(context).colorScheme.onSecondary.withAlpha(60)),
           filled: true, // Habilita el relleno del fondo
-          fillColor: Theme.of(context).cardColor,
+          fillColor: Theme.of(context).colorScheme.secondary.withAlpha(140),
           hoverColor: Theme.of(context).primaryColor.withAlpha(40),
           focusedBorder: OutlineInputBorder(
             //Cuando estoy en el control

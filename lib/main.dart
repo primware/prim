@@ -2,12 +2,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:primware/views/Auth/login_view.dart';
-import 'package:primware/theme/theme.dart'; // << Importa el nuevo theme
+import 'package:primware/theme/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'API/endpoint.api.dart';
 
 //TODO crear un registro Bancos/Cajas de Caja, y actualizar el esquema contable en dias de historia 360 al momento de crear la empresa
 //TODO crear tercero por defecto de cliente externo, con su  direccion
+//TODO menu en button, Inicio, ventas, productos, clientes, Configuracion.
+//TODO agregar impuestos
+//TODO agregar lista de precios de venta, y al crear cada producto agregarlo a esa lista de precios
 
 void main() {
   HttpOverrides.global = MyHttpOverrides();

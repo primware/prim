@@ -1,10 +1,9 @@
 // ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 
 class ColorTheme {
   //* Colores Modo Claro
-  static const Color accentLight = Color(0xFF1F67A6);
+  static const Color accentLight = Color(0xFF615B8A);
   //? colores mas claros que el primario
   static Color get aL100 => _getLighterColor(accentLight, 0.9);
   static Color get aL200 => _getLighterColor(accentLight, 0.8);
@@ -23,10 +22,10 @@ class ColorTheme {
   static Color get tL200 => _getLighterColor(textLight, 0.8);
   static Color get tL300 => _getLighterColor(textLight, 0.7);
 
-  static const Color backgroundLight = Color.fromARGB(255, 240, 240, 240);
+  static const Color backgroundLight = Color.fromARGB(255, 255, 255, 255);
 
   //* Colores Modo Oscuro
-  static const Color accentDark = Color.fromARGB(255, 85, 166, 236);
+  static const Color accentDark = Color(0xFF649A41);
   //? colores mas claros que el primario
   static Color get aD100 => _getLighterColor(accentDark, 0.9);
   static Color get aD200 => _getLighterColor(accentDark, 0.8);
@@ -70,4 +69,10 @@ class ColorTheme {
       (color.blue * (1 - fraction)).round(),
     );
   }
+}
+
+class ColorMaterial {
+  static const Color primary = Color(0xFF5E5791);
+  static const Color secondary = Color(0xFF466730);
+  static const Color tertiary = Color(0xFF7B5265);
 }

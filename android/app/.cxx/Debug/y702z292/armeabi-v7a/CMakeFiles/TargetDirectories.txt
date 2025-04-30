@@ -1,0 +1,2 @@
+C:/git/primware/android/app/.cxx/Debug/y702z292/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/git/primware/android/app/.cxx/Debug/y702z292/armeabi-v7a/CMakeFiles/rebuild_cache.dir
