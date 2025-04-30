@@ -13,8 +13,6 @@ class Base {
 class EndPoints {
   static String postUserAuth = '${Base.baseURL}/api/v1/auth/tokens';
 
-  static String rRequest = '${Base.baseURL}/api/v1/models/R_Request';
-
   static String adUser = '${Base.baseURL}/api/v1/models/AD_User';
 
   static String mWarehouse = '${Base.baseURL}/api/v1/models/M_Warehouse';
@@ -33,13 +31,18 @@ class EndPoints {
 
   static String cCountry = '${Base.baseURL}/api/v1/models/C_Country';
 
+  static String rRequest = '${Base.baseURL}/api/v1/models/R_Request';
+
   static String initialclientsetup =
       '${Base.baseURL}/api/v1/processes/initialclientsetup';
 
   static String mProduct = '${Base.baseURL}/api/v1/models/M_Product';
 
   static String cOrder = '${Base.baseURL}/api/v1/models/C_Order';
+
   static String cOrderLine = '${Base.baseURL}/api/v1/models/C_OrderLine';
+
+  static String cTax = '${Base.baseURL}/api/v1/models/C_Tax';
 }
 
 class GetCustomerData {

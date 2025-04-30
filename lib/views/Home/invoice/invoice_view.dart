@@ -25,24 +25,15 @@ class _InvoicePageState extends State<InvoicePage> {
 
   List<Map<String, dynamic>> bPartnerOptions = [];
   List<Map<String, dynamic>> productOptions = [];
+  List<Map<String, dynamic>> taxOptions = [];
   List<Map<String, dynamic>> invoiceLines = [];
 
   int? selectedBPartnerID;
+  Map<String, dynamic>? selectedTax;
+
   double subtotal = 0.0;
   double iva = 0.0;
   double total = 0.0;
-
-  final List<Map<String, dynamic>> taxOptions = [
-    {'id': 0, 'name': '0%'},
-    {'id': 7, 'name': '7%'},
-    {'id': 10, 'name': '10%'},
-    {'id': 15, 'name': '15%'},
-    {'id': -1, 'name': 'Otro'},
-  ];
-
-  int selectedTaxId = 7;
-  bool useCustomTax = false;
-  final customTaxController = TextEditingController();
 
   @override
   void initState() {
@@ -54,7 +45,8 @@ class _InvoicePageState extends State<InvoicePage> {
 
   @override
   void dispose() {
-    customTaxController.dispose();
+    taxController.dispose();
+    taxController.dispose(); // <--
     super.dispose();
   }
 
@@ -67,10 +59,22 @@ class _InvoicePageState extends State<InvoicePage> {
 
     final partner = await fetchBPartner(context: context);
     final product = await fetchProduct(context: context);
+    final tax = await fetchTax(context: context);
+
+    final defaultTax = tax.isNotEmpty
+        ? tax.firstWhere((t) => t['isdefault'] == true, orElse: () => tax.first)
+        : null;
 
     setState(() {
       bPartnerOptions = partner;
       productOptions = product;
+      taxOptions = tax;
+      if (defaultTax != null) {
+        selectedTax = defaultTax;
+        taxController.text = defaultTax['name'];
+        _recalculateSummary();
+      }
+      _recalculateSummary();
       isLoading = false;
     });
   }
@@ -83,9 +87,7 @@ class _InvoicePageState extends State<InvoicePage> {
       newSubtotal += price * quantity;
     }
 
-    final taxPercent = useCustomTax
-        ? double.tryParse(customTaxController.text) ?? 0
-        : selectedTaxId.toDouble();
+    final taxPercent = (selectedTax?['rate'] ?? 0).toDouble();
 
     setState(() {
       subtotal = newSubtotal;
@@ -202,6 +204,7 @@ class _InvoicePageState extends State<InvoicePage> {
                 bool sucess = await postInvoice(
                     cBPartnerID: bPartner,
                     invoiceLines: invoiceLine,
+                    ctaxID: selectedTax?['id'],
                     context: context);
 
                 if (sucess) {
@@ -358,45 +361,23 @@ class _InvoicePageState extends State<InvoicePage> {
                             ],
                           ),
                           const SizedBox(height: CustomSpacer.medium),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Expanded(
-                                child: SearchableDropdown<int>(
-                                  value: selectedTaxId,
-                                  options: taxOptions,
-                                  showSearchBox: false,
-                                  labelText: 'Impuesto (%)',
-                                  onChanged: (value) {
-                                    if (value == -1) {
-                                      setState(() {
-                                        useCustomTax = true;
-                                        selectedTaxId = 0;
-                                      });
-                                    } else {
-                                      setState(() {
-                                        useCustomTax = false;
-                                        selectedTaxId = value ?? 0;
-                                        customTaxController.clear();
-                                      });
-                                      _recalculateSummary();
-                                    }
-                                  },
-                                ),
-                              ),
-                              if (useCustomTax) ...[
-                                const SizedBox(width: CustomSpacer.small),
-                                Expanded(
-                                  child: TextfieldTheme(
-                                    texto: "Monto",
-                                    controlador: customTaxController,
-                                    inputType: TextInputType.number,
-                                    icono: Icons.percent,
-                                    onChanged: (_) => _recalculateSummary(),
-                                  ),
-                                ),
-                              ],
-                            ],
+                          CustomSearchField(
+                            controller: taxController,
+                            options: taxOptions,
+                            labelText: "Impuesto",
+                            searchBy: "Rate",
+                            onItemSelected: (item) {
+                              setState(() {
+                                selectedTax?['id'] = item['id'];
+                                taxController.text = item['name'];
+                                _recalculateSummary();
+                              });
+                            },
+                            itemBuilder: (item) => Text(
+                              '${item['rate'] ?? ''} - ${item['name'] ?? ''}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           const SizedBox(height: CustomSpacer.medium),
                           Row(

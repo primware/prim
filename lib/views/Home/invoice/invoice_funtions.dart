@@ -44,11 +44,6 @@ Future<List<Map<String, dynamic>>> fetchBPartner(
 Future<List<Map<String, dynamic>>> fetchProduct(
     {required BuildContext context}) async {
   try {
-    await usuarioAuth(
-      usuario: usuarioController.text.trim(),
-      clave: claveController.text.trim(),
-      context: context,
-    );
     final response = await http.get(
       Uri.parse(
           '${EndPoints.mProduct}?\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
@@ -81,8 +76,42 @@ Future<List<Map<String, dynamic>>> fetchProduct(
   }
 }
 
+Future<List<Map<String, dynamic>>> fetchTax(
+    {required BuildContext context}) async {
+  try {
+    final response = await http.get(
+      Uri.parse(EndPoints.cTax),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      final records = jsonResponse['records'] as List;
+      return records.map((record) {
+        return {
+          'id': record['id'],
+          'name': record['Name'],
+          'rate': record['Rate'],
+          'istaxexempt': record['IsTaxExempt'],
+          'issalestax': record['IsSalesTax'],
+          "isdefault": record['IsDefault'],
+        };
+      }).toList();
+    } else {
+      throw Exception('Error al cargar los impuestos: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Excepción al obtener impuesto: $e');
+    return [];
+  }
+}
+
 Future<bool> postInvoice({
   required int cBPartnerID,
+  required int ctaxID,
   required List<Map<String, dynamic>> invoiceLines,
   required BuildContext context,
 }) async {
@@ -126,6 +155,7 @@ Future<bool> postInvoice({
         "QtyEntered": line['Quantity'],
         "PriceActual": line['Price'],
         "PriceEntered": line['Price'],
+        "C_Tax_ID": ctaxID,
         "C_Order_ID": cOrderID
       };
 

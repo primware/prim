@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 TextEditingController clienteController = TextEditingController();
 TextEditingController qtyProductController = TextEditingController();
 TextEditingController productController = TextEditingController();
+TextEditingController taxController = TextEditingController();
 
 void clearTextFields() {
   clienteController.clear();
