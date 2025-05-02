@@ -8,8 +8,7 @@ import 'API/endpoint.api.dart';
 
 //TODO crear un registro Bancos/Cajas de Caja, y actualizar el esquema contable en dias de historia 360 al momento de crear la empresa
 //TODO crear tercero por defecto de cliente externo, con su  direccion
-//TODO menu en button, Inicio, ventas, productos, clientes, Configuracion.
-//TODO agregar lista de precios de venta M_PriceList
+//TODO agregar lista de precios M_PriceList que sea de venta
 //TODO agregar el acceso a ventana al usuario a la ventana de tasa de impuesto
 //TODO agregar el acceso a ventana categoria de producto
 //TODO agregar el acceso a ventana categoria de impuesto

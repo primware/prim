@@ -176,35 +176,27 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                     inputType: TextInputType.name,
                   ),
                   const SizedBox(height: CustomSpacer.xlarge),
-                  Row(
-                    children: [
-                      if (!isLoading) ...[
-                        Expanded(
-                          child: ButtonSecondary(
-                            fullWidth: true,
-                            texto: 'Cancelar',
-                            onPressed: () {
-                              clearPartnerFields();
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: CustomSpacer.medium)
-                      ],
-                      Expanded(
-                        child: Container(
-                          child: isValid
-                              ? isLoading
-                                  ? ButtonLoading(fullWidth: true)
-                                  : ButtonPrimary(
-                                      fullWidth: true,
-                                      texto: 'Completar',
-                                      onPressed: _createBPartner,
-                                    )
-                              : null,
-                        ),
-                      ),
-                    ],
+                  if (!isLoading) ...[
+                    ButtonSecondary(
+                      fullWidth: true,
+                      texto: 'Cancelar',
+                      onPressed: () {
+                        clearPartnerFields();
+                        Navigator.pop(context);
+                      },
+                    ),
+                    const SizedBox(height: CustomSpacer.medium)
+                  ],
+                  Container(
+                    child: isValid
+                        ? isLoading
+                            ? ButtonLoading(fullWidth: true)
+                            : ButtonPrimary(
+                                fullWidth: true,
+                                texto: 'Completar',
+                                onPressed: _createBPartner,
+                              )
+                        : null,
                   )
                 ],
               )),

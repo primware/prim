@@ -147,34 +147,26 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     inputType: TextInputType.number,
                   ),
                   const SizedBox(height: CustomSpacer.xlarge),
-                  Row(
-                    children: [
-                      if (!isLoading) ...[
-                        Expanded(
-                          child: ButtonSecondary(
-                            fullWidth: true,
-                            texto: 'Cancelar',
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: CustomSpacer.medium)
-                      ],
-                      Expanded(
-                        child: Container(
-                          child: isValid
-                              ? isLoading
-                                  ? ButtonLoading(fullWidth: true)
-                                  : ButtonPrimary(
-                                      fullWidth: true,
-                                      texto: 'Completar',
-                                      onPressed: _createProduct,
-                                    )
-                              : null,
-                        ),
-                      ),
-                    ],
+                  if (!isLoading) ...[
+                    ButtonSecondary(
+                      fullWidth: true,
+                      texto: 'Cancelar',
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                    const SizedBox(height: CustomSpacer.medium)
+                  ],
+                  Container(
+                    child: isValid
+                        ? isLoading
+                            ? ButtonLoading(fullWidth: true)
+                            : ButtonPrimary(
+                                fullWidth: true,
+                                texto: 'Completar',
+                                onPressed: _createProduct,
+                              )
+                        : null,
                   )
                 ],
               )),

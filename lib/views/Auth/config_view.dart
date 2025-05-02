@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:primware/theme/fonts.dart';
-import 'package:primware/views/Home/menu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../API/token.api.dart';
 import '../../../main.dart';

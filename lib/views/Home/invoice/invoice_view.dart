@@ -557,6 +557,17 @@ class _InvoicePageState extends State<InvoicePage> {
                         ],
                       ),
                       const SizedBox(height: CustomSpacer.xlarge),
+                      if (!isSending) ...[
+                        ButtonSecondary(
+                          fullWidth: true,
+                          texto: 'Cancelar',
+                          onPressed: () {
+                            clearInvoiceFields();
+                            Navigator.pop(context);
+                          },
+                        ),
+                        const SizedBox(height: CustomSpacer.medium)
+                      ],
                       Container(
                         child: _isInvoiceValid()
                             ? isSending

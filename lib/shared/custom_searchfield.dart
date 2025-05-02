@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:primware/shared/custom_spacer.dart';
 import 'package:searchfield/searchfield.dart';
 
 class CustomSearchField extends StatefulWidget {
@@ -79,17 +80,33 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
           SearchFieldListItem<Map<String, dynamic>>(
             _controller.text,
             item: {},
-            child: Expanded(
-              child: InkWell(
-                onTap: () {
-                  if (widget.onCreate != null) {
-                    widget.onCreate!(_controller.text);
-                  }
-                },
-                child: Text('¿Crear ${widget.labelText} "${_controller.text}"?',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.blueAccent,
-                        )),
+            child: GestureDetector(
+              onTap: () {
+                if (widget.onCreate != null) {
+                  widget.onCreate!(_controller.text);
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.add_circle_outline,
+                        color: Colors.blueAccent),
+                    const SizedBox(width: CustomSpacer.small),
+                    Center(
+                      child: Text(
+                        'Crear ${widget.labelText} "${_controller.text}"',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.blueAccent,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -133,7 +150,9 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
       }).toList(),
       suggestionsDecoration: SuggestionDecoration(
         color: Theme.of(context).cardColor,
+        hoverColor: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(8),
+        selectionColor: Theme.of(context).cardColor,
       ),
       searchInputDecoration: SearchInputDecoration(
         labelText: widget.labelText,
