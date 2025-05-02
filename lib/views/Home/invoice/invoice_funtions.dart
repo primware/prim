@@ -111,7 +111,6 @@ Future<List<Map<String, dynamic>>> fetchTax(
 
 Future<Map<String, dynamic>> postInvoice({
   required int cBPartnerID,
-  required int ctaxID,
   required List<Map<String, dynamic>> invoiceLines,
   required BuildContext context,
 }) async {
@@ -160,7 +159,7 @@ Future<Map<String, dynamic>> postInvoice({
         "QtyEntered": line['Quantity'],
         "PriceActual": line['Price'],
         "PriceEntered": line['Price'],
-        "C_Tax_ID": ctaxID,
+        "C_Tax_ID": line['C_Tax_ID'],
         "C_Order_ID": cOrderID
       };
 

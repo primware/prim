@@ -171,11 +171,13 @@ Future<bool> usuarioAuth(
       return false;
     }
 
-    await getWarehouse(
-        clientId: Token.client!,
-        roleId: Token.rol!,
-        organitaionId: Token.organitation!,
-        context: context);
+    if (Token.warehouseID == null) {
+      await getWarehouse(
+          clientId: Token.client!,
+          roleId: Token.rol!,
+          organitaionId: Token.organitation!,
+          context: context);
+    }
 
     final Map<String, dynamic> data = {
       "userName": usuario,

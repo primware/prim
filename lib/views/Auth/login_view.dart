@@ -99,87 +99,91 @@ class _LoginPageState extends State<LoginPage> {
         MediaQuery.of(context).size.width < 750 ? true : false;
     final double maxWidthContainer = isMobile ? 360 : 400;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Padding(
-        padding: EdgeInsets.all(isMobile ? 12 : 8),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CustomContainer(
-                  maxWidthContainer: maxWidthContainer,
-                  padding: isMobile ? 12 : 24,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Center(
-                        child: Logo(
-                          width: isMobile ? 200 : 320,
-                        ),
-                      ),
-                      SizedBox(
-                          height: CustomSpacer.medium +
-                              (!isMobile ? CustomSpacer.xlarge : 10)),
-                      TextfieldTheme(
-                        icono: Icons.mail_outline,
-                        texto: 'Usuario',
-                        inputType: TextInputType.emailAddress,
-                        controlador: usuarioController,
-                      ),
-                      const SizedBox(height: CustomSpacer.small),
-                      TextfieldTheme(
-                        icono: Icons.lock_outline,
-                        texto: 'Contraseña',
-                        obscure: true,
-                        showSubIcon: true,
-                        controlador: claveController,
-                        onSubmitted: (_) => _funcionLogin(
-                            usuarioController.text.trim(),
-                            claveController.text.trim()),
-                      ),
-                      const SizedBox(height: CustomSpacer.small),
-                      CustomCheckbox(
-                        value: rememberUser,
-                        text: 'Recordar usuario',
-                        onChanged: (newValue) {
-                          setState(() {
-                            rememberUser = newValue;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: CustomSpacer.xlarge),
-                      Container(
-                        child: isLoading
-                            ? ButtonLoading(
-                                fullWidth: true,
-                              )
-                            : ButtonPrimary(
-                                texto: 'Iniciar sesión',
-                                fullWidth: true,
-                                onPressed: () {
-                                  _funcionLogin(usuarioController.text.trim(),
-                                      claveController.text.trim());
-                                },
-                              ),
-                      ),
-                      const SizedBox(height: CustomSpacer.medium),
-                      ButtonSecondary(
-                        texto: 'Crear cuenta',
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RegisterUser(),
+    // ignore: deprecated_member_use
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Padding(
+          padding: EdgeInsets.all(isMobile ? 12 : 8),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CustomContainer(
+                    maxWidthContainer: maxWidthContainer,
+                    padding: isMobile ? 12 : 24,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Center(
+                          child: Logo(
+                            width: isMobile ? 200 : 320,
                           ),
                         ),
-                        fullWidth: true,
-                      ),
-                    ],
+                        SizedBox(
+                            height: CustomSpacer.medium +
+                                (!isMobile ? CustomSpacer.xlarge : 10)),
+                        TextfieldTheme(
+                          icono: Icons.mail_outline,
+                          texto: 'Usuario',
+                          inputType: TextInputType.emailAddress,
+                          controlador: usuarioController,
+                        ),
+                        const SizedBox(height: CustomSpacer.small),
+                        TextfieldTheme(
+                          icono: Icons.lock_outline,
+                          texto: 'Contraseña',
+                          obscure: true,
+                          showSubIcon: true,
+                          controlador: claveController,
+                          onSubmitted: (_) => _funcionLogin(
+                              usuarioController.text.trim(),
+                              claveController.text.trim()),
+                        ),
+                        const SizedBox(height: CustomSpacer.small),
+                        CustomCheckbox(
+                          value: rememberUser,
+                          text: 'Recordar usuario',
+                          onChanged: (newValue) {
+                            setState(() {
+                              rememberUser = newValue;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: CustomSpacer.xlarge),
+                        Container(
+                          child: isLoading
+                              ? ButtonLoading(
+                                  fullWidth: true,
+                                )
+                              : ButtonPrimary(
+                                  texto: 'Iniciar sesión',
+                                  fullWidth: true,
+                                  onPressed: () {
+                                    _funcionLogin(usuarioController.text.trim(),
+                                        claveController.text.trim());
+                                  },
+                                ),
+                        ),
+                        const SizedBox(height: CustomSpacer.medium),
+                        ButtonSecondary(
+                          texto: 'Crear cuenta',
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RegisterUser(),
+                            ),
+                          ),
+                          fullWidth: true,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

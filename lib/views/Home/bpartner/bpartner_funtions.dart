@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../API/endpoint.api.dart';
 import '../../../API/token.api.dart';
-import '../../../theme/colors.dart';
 import '../../Auth/auth_funtions.dart';
 import '../../Auth/login_view.dart';
 

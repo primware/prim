@@ -190,84 +190,86 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      backgroundColor: Theme.of(context).cardColor,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const SizedBox(height: CustomSpacer.medium),
-          if (_label != null) ...[
+    return SafeArea(
+      child: Drawer(
+        backgroundColor: Theme.of(context).cardColor,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const SizedBox(height: CustomSpacer.medium),
+            if (_label != null) ...[
+              ListTile(
+                textColor: ColorTheme.atention,
+                title: Text(_label!),
+                onTap: () {
+                  null;
+                },
+              ),
+              const SizedBox(height: CustomSpacer.medium),
+            ],
             ListTile(
-              textColor: ColorTheme.atention,
-              title: Text(_label!),
+              leading: Icon(Token.auth != null ? Icons.person : Icons.login),
+              title: Text(
+                Token.auth != null ? 'Panel' : 'Acceder',
+              ),
               onTap: () {
-                null;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Token.auth != null
+                        ? const DashboardPage()
+                        : const LoginPage(),
+                  ),
+                );
               },
             ),
-            const SizedBox(height: CustomSpacer.medium),
-          ],
-          ListTile(
-            leading: Icon(Token.auth != null ? Icons.person : Icons.login),
-            title: Text(
-              Token.auth != null ? 'Panel' : 'Acceder',
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Token.auth != null
-                      ? const DashboardPage()
-                      : const LoginPage(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            tileColor: Theme.of(context).cardColor,
-            leading: Icon(
-              _isDarkMode ? Icons.nightlight : Icons.sunny,
-              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.atention,
-            ),
-            title: Text(
-              _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-              style: TextStyle(
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+            ListTile(
+              tileColor: Theme.of(context).cardColor,
+              leading: Icon(
+                _isDarkMode ? Icons.nightlight : Icons.sunny,
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.atention,
               ),
+              title: Text(
+                _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+                style: TextStyle(
+                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+                ),
+              ),
+              onTap: () {
+                ThemeManager.themeNotifier.toggleTheme();
+                _loadTheme();
+              },
             ),
-            onTap: () {
-              ThemeManager.themeNotifier.toggleTheme();
-              _loadTheme();
-            },
-          ),
-          ListTile(
-            tileColor: Theme.of(context).cardColor,
-            leading: Icon(
-              Icons.logout_outlined,
-              color: ColorTheme.error,
-            ),
-            title: Text(
-              'Cerrar sesión',
-              style: TextStyle(
+            ListTile(
+              tileColor: Theme.of(context).cardColor,
+              leading: Icon(
+                Icons.logout_outlined,
                 color: ColorTheme.error,
               ),
-            ),
-            onTap: () {
-              Token.auth = null;
-              usuarioController.clear();
-              claveController.clear();
-
-              UserData.rolName = null;
-              UserData.imageBytes = null;
-
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginPage(),
+              title: Text(
+                'Cerrar sesión',
+                style: TextStyle(
+                  color: ColorTheme.error,
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+              onTap: () {
+                Token.auth = null;
+                usuarioController.clear();
+                claveController.clear();
+
+                UserData.rolName = null;
+                UserData.imageBytes = null;
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

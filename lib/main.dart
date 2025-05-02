@@ -9,9 +9,11 @@ import 'API/endpoint.api.dart';
 //TODO crear un registro Bancos/Cajas de Caja, y actualizar el esquema contable en dias de historia 360 al momento de crear la empresa
 //TODO crear tercero por defecto de cliente externo, con su  direccion
 //TODO menu en button, Inicio, ventas, productos, clientes, Configuracion.
-//TODO agregar impuestos
-//TODO agregar lista de precios de venta, y al crear cada producto agregarlo a esa lista de precios
+//TODO agregar lista de precios de venta M_PriceList
 //TODO agregar el acceso a ventana al usuario a la ventana de tasa de impuesto
+//TODO agregar el acceso a ventana categoria de producto
+//TODO agregar el acceso a ventana categoria de impuesto
+//TODO crear un rol maestro para tener todos los permisos y no tener que ir uno por uno
 
 void main() {
   HttpOverrides.global = MyHttpOverrides();

@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:primware/theme/fonts.dart';
+import 'package:primware/views/Home/menu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../API/token.api.dart';
 import '../../../main.dart';
@@ -180,12 +181,17 @@ class _ConfigPageState extends State<ConfigPage> {
           await prefs.setString('roleName_$usuario', UserData.rolName!);
         }
 
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => DashboardPage(),
           ),
         );
+
+        // Navigator.pushReplacement(
+        //   context,
+        //   MaterialPageRoute(builder: (_) => const MainMenu()),
+        // );
 
         setState(() {
           isLoading = false;
@@ -221,7 +227,7 @@ class _ConfigPageState extends State<ConfigPage> {
               children: [
                 Center(
                   child: Text(
-                    'Seleccionar Rol y sede',
+                    'Seleccionar Rol',
                     style: FontsTheme.pBold(),
                   ),
                 ),
@@ -229,13 +235,15 @@ class _ConfigPageState extends State<ConfigPage> {
                 SearchableDropdown<int>(
                   value: selectedClientId,
                   options: clients,
-                  labelText: 'Clientes',
+                  showSearchBox: false,
+                  labelText: 'Empresa',
                   onChanged: _onClientSelected,
                 ),
                 const SizedBox(height: CustomSpacer.medium),
                 SearchableDropdown<int>(
                   value: selectedRoleId,
                   options: roles,
+                  showSearchBox: false,
                   labelText: 'Rol',
                   onChanged: _onRoleSelected,
                 ),
@@ -243,6 +251,7 @@ class _ConfigPageState extends State<ConfigPage> {
                 SearchableDropdown<int>(
                   value: selectedOrganizationId,
                   options: organizations,
+                  showSearchBox: false,
                   labelText: 'Organizacion',
                   onChanged: _onOrganizationSelected,
                 ),

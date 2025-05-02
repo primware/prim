@@ -8,6 +8,7 @@ class SearchableDropdown<T> extends StatelessWidget {
   final String labelText;
   final void Function(T?)? onChanged;
   final bool isEnabled, showSearchBox;
+  final String Function(Map<String, dynamic>)? displayItem;
 
   final void Function(String)? onCreate;
 
@@ -19,6 +20,7 @@ class SearchableDropdown<T> extends StatelessWidget {
     required this.onChanged,
     this.isEnabled = true,
     this.onCreate,
+    this.displayItem,
     this.showSearchBox = true,
   });
 
@@ -42,11 +44,14 @@ class SearchableDropdown<T> extends StatelessWidget {
               .toList();
         }
       },
-      itemAsString: (item) => item['name'],
+      itemAsString: (item) =>
+          displayItem != null ? displayItem!(item) : item['name'],
       compareFn: (item, selectedValue) => item['id'] == selectedValue,
       dropdownBuilder: (context, selectedItem) {
         return Text(
-          selectedItem?['name'] ?? '',
+          displayItem != null
+              ? displayItem!(selectedItem ?? {})
+              : selectedItem?['name'] ?? '',
           style: FontsTheme.h5(),
         );
       },
@@ -100,7 +105,7 @@ class SearchableDropdown<T> extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
-              item['name'],
+              displayItem != null ? displayItem!(item) : item['name'],
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           );

@@ -42,12 +42,20 @@ class EndPoints {
       '${Base.baseURL}/api/v1/processes/initialclientsetup';
 
   static String mProduct = '${Base.baseURL}/api/v1/models/M_Product';
+  static String mProductPrice = '${Base.baseURL}/api/v1/models/M_ProductPrice';
+
+  static String mProductCategory =
+      '${Base.baseURL}/api/v1/models/M_Product_Category';
+
+  static String mPriceList = '${Base.baseURL}/api/v1/models/M_PriceList';
 
   static String cOrder = '${Base.baseURL}/api/v1/models/C_Order';
 
   static String cOrderLine = '${Base.baseURL}/api/v1/models/C_OrderLine';
 
   static String cTax = '${Base.baseURL}/api/v1/models/C_Tax';
+
+  static String cTaxCategory = '${Base.baseURL}/api/v1/models/C_TaxCategory';
 }
 
 class GetCustomerData {

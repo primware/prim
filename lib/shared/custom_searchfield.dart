@@ -86,8 +86,10 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
                     widget.onCreate!(_controller.text);
                   }
                 },
-                child:
-                    Text('¿Crear ${widget.labelText} "${_controller.text}"?'),
+                child: Text('¿Crear ${widget.labelText} "${_controller.text}"?',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.blueAccent,
+                        )),
               ),
             ),
           ),

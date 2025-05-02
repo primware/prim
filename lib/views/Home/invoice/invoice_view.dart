@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
-import 'package:primware/views/Home/invoice/invoice_controller.dart';
+import 'package:primware/shared/custom_dropdown.dart';
+import 'package:primware/views/Home/product/product_new_view.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/textfield.widget.dart';
 import '../../../theme/colors.dart';
-import '../bpartner/bpartner_view.dart';
+import '../bpartner/bpartner_new_view.dart';
 import 'invoice_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -19,6 +20,10 @@ class InvoicePage extends StatefulWidget {
 }
 
 class _InvoicePageState extends State<InvoicePage> {
+  TextEditingController clienteController = TextEditingController();
+  TextEditingController qtyProductController = TextEditingController();
+  TextEditingController productController = TextEditingController();
+  TextEditingController taxController = TextEditingController();
   bool isSending = false;
   bool isBPartnerLoading = true;
   bool isProductLoading = true;
@@ -36,6 +41,13 @@ class _InvoicePageState extends State<InvoicePage> {
   double iva = 0.0;
   double total = 0.0;
 
+  void clearInvoiceFields() {
+    clienteController.clear();
+    qtyProductController.clear();
+    productController.clear();
+    taxController.clear();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -48,7 +60,6 @@ class _InvoicePageState extends State<InvoicePage> {
 
   @override
   void dispose() {
-    taxController.dispose();
     super.dispose();
   }
 
@@ -122,6 +133,7 @@ class _InvoicePageState extends State<InvoicePage> {
   }
 
   Future<void> _showQuantityDialog(Map<String, dynamic> product) async {
+    int? selectedTaxID = selectedTax?['id'];
     final quantityController = TextEditingController(text: "1");
     final priceController =
         TextEditingController(text: product['price'].toString());
@@ -136,6 +148,7 @@ class _InvoicePageState extends State<InvoicePage> {
           ...product,
           'quantity': qty,
           'price': price,
+          'C_Tax_ID': selectedTaxID,
         });
       });
 
@@ -159,13 +172,26 @@ class _InvoicePageState extends State<InvoicePage> {
                 inputType: TextInputType.number,
                 onSubmitted: (_) => onSubmitted,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: CustomSpacer.medium),
               TextfieldTheme(
                 controlador: priceController,
                 texto: 'Precio',
                 inputType: TextInputType.number,
                 onSubmitted: (_) => onSubmitted,
               ),
+              const SizedBox(height: CustomSpacer.medium),
+              SearchableDropdown<int>(
+                labelText: 'Tipo de impuesto',
+                showSearchBox: false,
+                options: taxOptions,
+                value: selectedTaxID,
+                onChanged: (value) {
+                  setState(() {
+                    selectedTaxID = value;
+                  });
+                },
+                displayItem: (item) => '${item['name']} (${item['rate']}%)',
+              )
             ],
           ),
           actions: [
@@ -186,6 +212,17 @@ class _InvoicePageState extends State<InvoicePage> {
         );
       },
     );
+  }
+
+  void _onProductCreated(Map<String, dynamic> newProduct) async {
+    await _loadProduct();
+    final createdProduct = productOptions.firstWhere(
+      (p) => p['id'] == newProduct['id'],
+      orElse: () => {},
+    );
+    if (createdProduct.isNotEmpty) {
+      _showQuantityDialog(createdProduct);
+    }
   }
 
   void _deleteLine(int index) {
@@ -236,13 +273,13 @@ class _InvoicePageState extends State<InvoicePage> {
         'Name': item['name'],
         'Price': item['price'],
         'Quantity': item['quantity'],
+        'C_Tax_ID': item['C_Tax_ID'],
       };
     }).toList();
 
     final result = await postInvoice(
       cBPartnerID: bPartner,
       invoiceLines: invoiceLine,
-      ctaxID: selectedTax?['id'],
       context: context,
     );
 
@@ -269,6 +306,32 @@ class _InvoicePageState extends State<InvoicePage> {
       );
     }
     setState(() => isSending = false);
+  }
+
+  Map<String, double> getGroupedTaxTotals() {
+    final Map<String, double> groupedTaxes = {};
+
+    for (var line in invoiceLines) {
+      final price = (line['price'] ?? 0) as num;
+      final quantity = (line['quantity'] ?? 1) as num;
+      final taxID = line['C_Tax_ID'];
+      final tax =
+          taxOptions.firstWhere((t) => t['id'] == taxID, orElse: () => {});
+      final rate = (tax['rate'] ?? 0).toDouble();
+      final name = tax['name'] ?? 'Sin impuesto';
+
+      final taxAmount = price * quantity * (rate / 100);
+      groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] =
+          (groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] ?? 0) +
+              taxAmount;
+    }
+
+    return groupedTaxes;
+  }
+
+  double getTotalTaxAmount() {
+    final taxes = getGroupedTaxTotals();
+    return taxes.values.fold(0.0, (sum, amount) => sum + amount);
   }
 
   @override
@@ -308,7 +371,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) =>
-                                        BPartnerPage(bpartnerName: value),
+                                        BPartnerNewPage(bpartnerName: value),
                                   ),
                                 );
 
@@ -338,8 +401,22 @@ class _InvoicePageState extends State<InvoicePage> {
                           : CustomSearchField(
                               options: productOptions,
                               controller: productController,
+                              showCreateButtonIfNotFound: true,
                               labelText: "Producto",
                               searchBy: "sku",
+                              onCreate: (value) async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ProductNewPage(productName: value),
+                                  ),
+                                );
+                                if (result != null &&
+                                    result['created'] == true) {
+                                  _onProductCreated(result['product']);
+                                }
+                              },
                               onItemSelected: (item) {
                                 _showQuantityDialog(item);
                               },
@@ -375,16 +452,23 @@ class _InvoicePageState extends State<InvoicePage> {
                         const SizedBox(height: CustomSpacer.medium),
                         Wrap(
                           spacing: 8,
-                          runSpacing: 8,
+                          runSpacing: 2,
                           children: invoiceLines.asMap().entries.map((entry) {
                             final index = entry.key;
                             final line = entry.value;
+                            final tax = taxOptions.firstWhere(
+                              (t) => t['id'] == line['C_Tax_ID'],
+                              orElse: () => {},
+                            );
+                            final taxRate = tax['rate'] != null
+                                ? '${tax['rate']}%'
+                                : 'Sin impuesto';
                             return Chip(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               deleteIconColor: ColorTheme.error,
                               label: Text(
-                                '${line['quantity']} x \$${line['price']} (${line['name']})',
+                                '${line['quantity']} x \$${line['price']} + $taxRate (${line['name']})',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                               deleteIcon: const Icon(Icons.close),
@@ -413,37 +497,56 @@ class _InvoicePageState extends State<InvoicePage> {
                         ],
                       ),
                       const SizedBox(height: CustomSpacer.medium),
-                      isTaxLoading
-                          ? _buildShimmerField()
-                          : CustomSearchField(
-                              controller: taxController,
-                              options: taxOptions,
-                              labelText: "Impuesto",
-                              searchBy: "Rate",
-                              onItemSelected: (item) {
-                                setState(() {
-                                  selectedTax?['id'] = item['id'];
-                                  taxController.text = item['name'];
-                                  _recalculateSummary();
-                                });
-                              },
-                              itemBuilder: (item) => Text(
-                                '${item['rate'] ?? ''} - ${item['name'] ?? ''}',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                      if (invoiceLines.isNotEmpty &&
+                          getTotalTaxAmount() > 0) ...[
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Resumen de impuestos',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: CustomSpacer.small),
+                            ...getGroupedTaxTotals().entries.map(
+                                  (entry) => Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(entry.key,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium),
+                                      Text(
+                                          '\$${entry.value.toStringAsFixed(2)}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium),
+                                    ],
+                                  ),
+                                ),
+                            const SizedBox(height: CustomSpacer.small),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Total impuestos',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        )),
+                                Text(
+                                    '\$${getTotalTaxAmount().toStringAsFixed(2)}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        )),
+                              ],
                             ),
-                      const SizedBox(height: CustomSpacer.medium),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('IVA',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                          Text('\$${iva.toStringAsFixed(2)}',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                        ],
-                      ),
-                      const SizedBox(height: CustomSpacer.medium),
+                          ],
+                        ),
+                        const SizedBox(height: CustomSpacer.medium),
+                      ],
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
