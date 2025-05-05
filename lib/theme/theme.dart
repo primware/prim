@@ -11,9 +11,12 @@ class AppThemes {
       scaffoldBackgroundColor: ColorTheme.aD200,
       cardColor: ColorTheme.textDark,
       appBarTheme: AppBarTheme(
-        backgroundColor: ColorTheme.accentLight,
-        foregroundColor: ColorTheme.textDark,
+        backgroundColor: ColorTheme.textLight,
+        foregroundColor: ColorTheme.aD100,
         elevation: 0,
+        centerTitle: true,
+        titleTextStyle:
+            GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w600),
       ),
       textTheme: TextTheme(
         displayLarge: GoogleFonts.poppins(
@@ -78,9 +81,12 @@ class AppThemes {
       scaffoldBackgroundColor: ColorTheme.aD100,
       cardColor: ColorTheme.tD100,
       appBarTheme: AppBarTheme(
-        backgroundColor: ColorTheme.accentDark,
-        foregroundColor: ColorTheme.textLight,
+        backgroundColor: ColorTheme.textDark,
+        foregroundColor: ColorTheme.aD200,
         elevation: 0,
+        centerTitle: true,
+        titleTextStyle:
+            GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w600),
       ),
       textTheme: TextTheme(
         displayLarge: GoogleFonts.poppins(

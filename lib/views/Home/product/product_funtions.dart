@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../API/endpoint.api.dart';
 import '../../../API/token.api.dart';
+import '../../../API/user.api.dart';
 import '../../Auth/auth_funtions.dart';
 import '../../Auth/login_view.dart';
 
@@ -219,4 +220,39 @@ Future<int?> getCTaxCategory() async {
     print('Error en getCTaxCategory: $e');
   }
   return null;
+}
+
+Future<List<Map<String, dynamic>>> fetchProducts(
+    {required BuildContext context}) async {
+  try {
+    final response = await http.get(
+      Uri.parse(
+          '${EndPoints.mProduct}?\$filter=CreatedBy eq ${UserData.id}&\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      final records = jsonResponse['records'] as List;
+      return records.map((record) {
+        return {
+          'id': record['id'],
+          'Name': record['Name'],
+          'SKU': record['SKU'],
+          'Price': record['M_ProductPrice'] != null &&
+                  record['M_ProductPrice'].isNotEmpty
+              ? record['M_ProductPrice'][0]['PriceStd']
+              : null,
+        };
+      }).toList();
+    } else {
+      throw Exception('Error al cargar los productos: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Excepción al obtener productos: $e');
+    return [];
+  }
 }

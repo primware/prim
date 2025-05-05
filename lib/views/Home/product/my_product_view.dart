@@ -1,42 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
-import 'package:primware/shared/custom_spacer.dart';
-import 'package:primware/shared/textfield.widget.dart';
-import 'package:primware/views/Home/dashboard/dashboard_view.dart';
-import 'package:primware/views/Home/invoice/invoice_funtions.dart';
-import 'package:primware/views/Home/invoice/my_invoice_detail.dart';
 import 'package:shimmer/shimmer.dart';
 
-class OrderListPage extends StatefulWidget {
-  const OrderListPage({super.key});
+import '../../../shared/custom_spacer.dart';
+import '../../../shared/textfield.widget.dart';
+import '../dashboard/dashboard_view.dart';
+import 'product_funtions.dart';
+
+class ProductListPage extends StatefulWidget {
+  const ProductListPage({super.key});
 
   @override
-  State<OrderListPage> createState() => _OrderListPageState();
+  State<ProductListPage> createState() => _ProductListPageState();
 }
 
-class _OrderListPageState extends State<OrderListPage> {
-  List<Map<String, dynamic>> _orders = [];
+class _ProductListPageState extends State<ProductListPage> {
+  List<Map<String, dynamic>> _products = [];
   bool _isLoading = true;
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchOrders();
+    _fetchProducts();
   }
 
-  Future<void> _fetchOrders() async {
+  Future<void> _fetchProducts() async {
     setState(() => _isLoading = true);
-    final result = await fetchOrders(context: context);
+    final result = await fetchProducts(context: context);
     setState(() {
-      _orders = result;
+      _products = result;
       _isLoading = false;
     });
   }
 
   List<Map<String, dynamic>> _getFilteredOrders() {
-    return _orders
-        .where((order) => order['DocumentNo']
+    return _products
+        .where((product) => product['Name']
             .toString()
             .toLowerCase()
             .contains(_searchQuery.toLowerCase()))
@@ -71,16 +71,16 @@ class _OrderListPageState extends State<OrderListPage> {
       children: orders.map((order) {
         return GestureDetector(
           onTap: () async {
-            final refreshed = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => OrderDetailPage(order: order),
-              ),
-            );
+            // final refreshed = await Navigator.push(
+            //   context,
+            //   MaterialPageRoute(
+            //     builder: (_) => OrderDetailPage(order: order),
+            //   ),
+            // );
 
-            if (refreshed == true) {
-              _fetchOrders();
-            }
+            // if (refreshed == true) {
+            //   _fetchOrders();
+            // }
           },
           child: Container(
             margin: EdgeInsets.only(bottom: 12),
@@ -91,15 +91,12 @@ class _OrderListPageState extends State<OrderListPage> {
             child: ListTile(
               title: Row(
                 children: [
-                  Icon(Icons.person_outline,
+                  Icon(Icons.inventory_2_outlined,
                       color: Theme.of(context).colorScheme.onSecondary),
                   const SizedBox(width: CustomSpacer.small),
-                  Expanded(
-                    child: Text(
-                        '${order['bpartner']['name']} #${order['DocumentNo']}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSecondary)),
-                  ),
+                  Text('${order['Name']} (${order['SKU']})',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSecondary)),
                 ],
               ),
               subtitle: Column(
@@ -110,32 +107,13 @@ class _OrderListPageState extends State<OrderListPage> {
                       Icon(Icons.attach_money_rounded,
                           color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: CustomSpacer.small),
-                      Expanded(
-                        child: Text(order['GrandTotal'].toString(),
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSecondary)),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_month_outlined,
-                          color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: CustomSpacer.small),
-                      Expanded(
-                        child: Text(order['DateOrdered'],
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary)),
-                      ),
+                      Text(order['Price'].toString(),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.copyWith(
+                                  color:
+                                      Theme.of(context).colorScheme.primary)),
                     ],
                   ),
                 ],
@@ -150,26 +128,26 @@ class _OrderListPageState extends State<OrderListPage> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const DashboardPage(),
-          ),
-        );
-        return Future.value(false);
-      },
-      child: Scaffold(
-        appBar: AppBar(title: Text('Mis órdenes')),
-        body: SingleChildScrollView(
-          child: CustomContainer(
-            child: Column(
+        onWillPop: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DashboardPage(),
+            ),
+          );
+          return Future.value(false);
+        },
+        child: Scaffold(
+          appBar: AppBar(title: Text('Mis productos')),
+          body: SingleChildScrollView(
+            child: CustomContainer(
+                child: Column(
               children: [
                 Row(
                   children: [
                     Expanded(
                       child: TextfieldTheme(
-                        texto: 'Buscar orden',
+                        texto: 'Buscar producto',
                         icono: Icons.search,
                         onChanged: (value) {
                           setState(() => _searchQuery = value);
@@ -179,7 +157,7 @@ class _OrderListPageState extends State<OrderListPage> {
                     const SizedBox(width: CustomSpacer.small),
                     IconButton(
                       icon: const Icon(Icons.refresh),
-                      onPressed: _fetchOrders,
+                      onPressed: _fetchProducts,
                     ),
                   ],
                 ),
@@ -188,10 +166,8 @@ class _OrderListPageState extends State<OrderListPage> {
                     ? _buildShimmerList()
                     : _buildOrderList(_getFilteredOrders()),
               ],
-            ),
+            )),
           ),
-        ),
-      ),
-    );
+        ));
   }
 }

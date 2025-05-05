@@ -29,7 +29,7 @@ class OrderDetailPage extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.onSecondary,
         actions: [
           IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
+            icon: const Icon(Icons.share),
             tooltip: 'Exportar PDF',
             onPressed: () async {
               final pdf = await generateOrderSummaryPdf(order);
@@ -43,6 +43,7 @@ class OrderDetailPage extends StatelessWidget {
       body: CustomContainer(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             _buildHeader(order: order, context: context),
             const SizedBox(height: CustomSpacer.large),
@@ -76,6 +77,7 @@ class OrderDetailPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: ListTile(
+                      tileColor: Colors.transparent,
                       title: Text(name,
                           style: Theme.of(context).textTheme.bodyMedium),
                       subtitle: Text(

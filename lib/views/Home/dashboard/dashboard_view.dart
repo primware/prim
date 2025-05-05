@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
-import 'package:primware/views/Home/invoice/invoice_view.dart';
+import 'package:primware/views/Home/invoice/new_invoice_view.dart';
 import 'package:primware/views/Home/invoice/my_invoice_view.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
@@ -9,6 +9,7 @@ import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../Auth/login_view.dart';
+import '../product/my_product_view.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -113,24 +114,32 @@ class _DashboardPageState extends State<DashboardPage> {
                                 );
                               },
                             ),
-                            _buildDashboardCard(
-                              context,
-                              'Productos',
-                              Icons.inventory,
-                              () {},
-                            ),
-                            _buildDashboardCard(
-                              context,
-                              'Clientes',
-                              Icons.people,
-                              () {},
-                            ),
-                            _buildDashboardCard(
-                              context,
-                              'Ajustes',
-                              Icons.settings,
-                              () {},
-                            ),
+                            // _buildDashboardCard(
+                            //   context,
+                            //   'Productos',
+                            //   Icons.inventory,
+                            //   () {
+                            //     Navigator.push(
+                            //       context,
+                            //       MaterialPageRoute(
+                            //         builder: (context) =>
+                            //             const ProductListPage(),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
+                            // _buildDashboardCard(
+                            //   context,
+                            //   'Clientes',
+                            //   Icons.people,
+                            //   () {},
+                            // ),
+                            // _buildDashboardCard(
+                            //   context,
+                            //   'Ajustes',
+                            //   Icons.settings,
+                            //   () {},
+                            // ),
                           ],
                         ),
                         if (!ismobile) ...[

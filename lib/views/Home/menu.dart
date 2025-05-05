@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:primware/views/Home/bpartner/bpartner_view.dart';
 
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
-import 'package:primware/views/Home/invoice/invoice_view.dart';
-import 'package:primware/views/Home/product/product_view.dart';
+import 'package:primware/views/Home/invoice/new_invoice_view.dart';
+import 'package:primware/views/Home/product/my_product_view.dart';
 import 'package:primware/views/Home/settings/settings_view.dart';
 
 class MainMenu extends StatefulWidget {
@@ -20,7 +20,7 @@ class _MainMenuState extends State<MainMenu> {
   final List<Widget> _pages = const [
     DashboardPage(),
     InvoicePage(),
-    ProductPage(),
+    ProductListPage(),
     BPartnerPage(),
     SettingsPage(),
   ];

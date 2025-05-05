@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_dropdown.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
-import 'package:primware/views/Home/product/product_new_view.dart';
+import 'package:primware/views/Home/product/new_product_view.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/custom_spacer.dart';
@@ -336,8 +336,6 @@ class _InvoicePageState extends State<InvoicePage> {
 
   @override
   Widget build(BuildContext context) {
-    bool ismobile = MediaQuery.of(context).size.width <= 750;
-
     return WillPopScope(
       onWillPop: () {
         Navigator.pushReplacement(

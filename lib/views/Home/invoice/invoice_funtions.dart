@@ -46,7 +46,7 @@ Future<List<Map<String, dynamic>>> fetchProduct(
   try {
     final response = await http.get(
       Uri.parse(
-          '${EndPoints.mProduct}?\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
+          '${EndPoints.mProduct}?\$filter=CreatedBy eq ${UserData.id}&\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,

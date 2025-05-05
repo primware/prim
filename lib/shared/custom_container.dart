@@ -15,6 +15,7 @@ class CustomContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      clipBehavior: Clip.none,
       margin: margin,
       constraints: BoxConstraints(maxWidth: maxWidthContainer),
       padding: EdgeInsets.all(padding),
