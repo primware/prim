@@ -18,6 +18,8 @@ dependencies:
   searchfield: ^1.2.7
   flutter_launcher_icons: ^0.14.3
   shimmer: ^3.0.0
+  pdf: ^3.11.3
+  printing: ^5.14.2
 
 
 flutter_launcher_icons:

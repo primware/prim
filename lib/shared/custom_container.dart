@@ -4,10 +4,10 @@ import 'package:primware/theme/colors.dart';
 class CustomContainer extends StatelessWidget {
   const CustomContainer(
       {super.key,
-      required this.maxWidthContainer,
-      required this.padding,
+      this.maxWidthContainer = 800,
+      this.padding = 16,
       required this.child,
-      this.margin});
+      this.margin = const EdgeInsets.all(12)});
   final double maxWidthContainer, padding;
   final Widget child;
   final EdgeInsetsGeometry? margin;

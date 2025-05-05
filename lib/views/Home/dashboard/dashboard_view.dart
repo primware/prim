@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/views/Home/invoice/invoice_view.dart';
+import 'package:primware/views/Home/invoice/my_invoice_view.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/button.widget.dart';
@@ -70,9 +71,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   CustomAppMenu(),
                   CustomContainer(
-                    maxWidthContainer: 800,
-                    padding: 16,
-                    margin: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -106,7 +104,14 @@ class _DashboardPageState extends State<DashboardPage> {
                               context,
                               'Mis ordenes',
                               Icons.dashboard,
-                              () {},
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const OrderListPage(),
+                                  ),
+                                );
+                              },
                             ),
                             _buildDashboardCard(
                               context,

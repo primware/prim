@@ -207,92 +207,83 @@ class _ConfigPageState extends State<ConfigPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile =
-        MediaQuery.of(context).size.width < 750 ? true : false;
-    final double maxWidthContainer = isMobile ? 360 : 400;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Padding(
-        padding: EdgeInsets.all(isMobile ? 12 : 8),
-        child: Center(
-            child: SingleChildScrollView(
-          child: CustomContainer(
-            maxWidthContainer: maxWidthContainer,
-            padding: isMobile ? 12 : 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Text(
-                    'Seleccionar Rol',
-                    style: FontsTheme.pBold(),
-                  ),
+      body: Center(
+          child: SingleChildScrollView(
+        child: CustomContainer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Text(
+                  'Seleccionar Rol',
+                  style: FontsTheme.pBold(),
                 ),
-                const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(
-                  value: selectedClientId,
-                  options: clients,
-                  showSearchBox: false,
-                  labelText: 'Empresa',
-                  onChanged: _onClientSelected,
-                ),
-                const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(
-                  value: selectedRoleId,
-                  options: roles,
-                  showSearchBox: false,
-                  labelText: 'Rol',
-                  onChanged: _onRoleSelected,
-                ),
-                const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(
-                  value: selectedOrganizationId,
-                  options: organizations,
-                  showSearchBox: false,
-                  labelText: 'Organizacion',
-                  onChanged: _onOrganizationSelected,
-                ),
-                const SizedBox(height: CustomSpacer.medium),
-                CustomCheckbox(
-                  value: rememberConfig,
-                  text: 'Recordar configuración',
-                  onChanged: (newValue) {
-                    setState(() {
-                      rememberConfig = newValue;
-                    });
-                  },
-                ),
-                const SizedBox(height: CustomSpacer.xlarge),
-                Container(
-                  child: isLoading
-                      ? ButtonLoading(
-                          fullWidth: true,
-                        )
-                      : ButtonPrimary(
-                          texto: 'Continuar',
-                          fullWidth: true,
-                          onPressed: _onContinue,
-                        ),
-                ),
-                const SizedBox(height: 12),
-                ButtonSecondary(
-                    texto: 'Volver',
-                    fullWidth: true,
-                    onPressed: () async {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MainApp(),
-                        ),
-                      );
-                    }),
-              ],
-            ),
+              ),
+              const SizedBox(height: CustomSpacer.medium),
+              SearchableDropdown<int>(
+                value: selectedClientId,
+                options: clients,
+                showSearchBox: false,
+                labelText: 'Empresa',
+                onChanged: _onClientSelected,
+              ),
+              const SizedBox(height: CustomSpacer.medium),
+              SearchableDropdown<int>(
+                value: selectedRoleId,
+                options: roles,
+                showSearchBox: false,
+                labelText: 'Rol',
+                onChanged: _onRoleSelected,
+              ),
+              const SizedBox(height: CustomSpacer.medium),
+              SearchableDropdown<int>(
+                value: selectedOrganizationId,
+                options: organizations,
+                showSearchBox: false,
+                labelText: 'Organizacion',
+                onChanged: _onOrganizationSelected,
+              ),
+              const SizedBox(height: CustomSpacer.medium),
+              CustomCheckbox(
+                value: rememberConfig,
+                text: 'Recordar configuración',
+                onChanged: (newValue) {
+                  setState(() {
+                    rememberConfig = newValue;
+                  });
+                },
+              ),
+              const SizedBox(height: CustomSpacer.xlarge),
+              Container(
+                child: isLoading
+                    ? ButtonLoading(
+                        fullWidth: true,
+                      )
+                    : ButtonPrimary(
+                        texto: 'Continuar',
+                        fullWidth: true,
+                        onPressed: _onContinue,
+                      ),
+              ),
+              const SizedBox(height: 12),
+              ButtonSecondary(
+                  texto: 'Volver',
+                  fullWidth: true,
+                  onPressed: () async {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MainApp(),
+                      ),
+                    );
+                  }),
+            ],
           ),
-        )),
-      ),
+        ),
+      )),
     );
   }
 }

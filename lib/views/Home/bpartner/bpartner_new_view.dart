@@ -130,20 +130,21 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        appBar: AppBar(
+          title: Text('Cliente nuevo',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineLarge
+                  ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
+          centerTitle: true,
+          backgroundColor: Theme.of(context).colorScheme.onSecondary,
+        ),
         body: SafeArea(
-      child: SingleChildScrollView(
-        child: Center(
-          child: CustomContainer(
-              margin: const EdgeInsets.all(12),
-              maxWidthContainer: 800,
-              padding: 16,
-              child: Column(
+          child: SingleChildScrollView(
+            child: Center(
+              child: CustomContainer(
+                  child: Column(
                 children: [
-                  Center(
-                    child: Text('Cliente nuevo',
-                        style: Theme.of(context).textTheme.headlineLarge),
-                  ),
-                  const SizedBox(height: CustomSpacer.xlarge),
                   TextfieldTheme(
                     controlador: nameController,
                     texto: 'Nombre*',
@@ -200,8 +201,8 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   )
                 ],
               )),
-        ),
-      ),
-    ));
+            ),
+          ),
+        ));
   }
 }

@@ -97,7 +97,6 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final bool isMobile =
         MediaQuery.of(context).size.width < 750 ? true : false;
-    final double maxWidthContainer = isMobile ? 360 : 400;
 
     // ignore: deprecated_member_use
     return WillPopScope(
@@ -112,8 +111,6 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CustomContainer(
-                    maxWidthContainer: maxWidthContainer,
-                    padding: isMobile ? 12 : 24,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,

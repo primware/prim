@@ -21,7 +21,7 @@ Future<Map<String, dynamic>> postProduct({
 
 //? Revisar el sku
     if (sku != null) {
-      bool uniqueSKU = await productSKUExists(sku!);
+      bool uniqueSKU = await productSKUExists(sku);
 
       if (uniqueSKU) {
         return {

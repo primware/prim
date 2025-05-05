@@ -15,6 +15,7 @@ import 'API/endpoint.api.dart';
 //TODO crear un rol maestro para tener todos los permisos y no tener que ir uno por uno
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
   runApp(const MainApp());
 }

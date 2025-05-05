@@ -210,3 +210,50 @@ Future<Map<String, dynamic>> postInvoice({
     return {'success': false, 'message': 'Excepción inesperada: $e'};
   }
 }
+
+Future<List<Map<String, dynamic>>> fetchOrders(
+    {required BuildContext context}) async {
+  try {
+    await usuarioAuth(
+      usuario: usuarioController.text.trim(),
+      clave: claveController.text.trim(),
+      context: context,
+    );
+
+    final response = await http.get(
+      Uri.parse(
+          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=Created&\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      final List records = jsonResponse['records'];
+
+      return records.map((record) {
+        return {
+          'id': record['id'],
+          'Created': record['Created'],
+          'DocumentNo': record['DocumentNo'],
+          'DateOrdered': record['DateOrdered'],
+          'GrandTotal': record['GrandTotal'],
+          'TotalLines': record['TotalLines'],
+          'bpartner': {
+            'id': record['C_BPartner_ID']?['id'],
+            'name': record['C_BPartner_ID']?['identifier'],
+          },
+          'C_OrderLine': record['C_OrderLine'] ?? [],
+        };
+      }).toList();
+    } else {
+      debugPrint('Error al obtener órdenes: ${response.body}');
+      return [];
+    }
+  } catch (e) {
+    debugPrint('Error de red en fetchOrders: $e');
+    return [];
+  }
+}
