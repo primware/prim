@@ -1,4 +1,3 @@
-import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 Future<pw.Document> generateOrderSummaryPdf(Map<String, dynamic> order) async {
