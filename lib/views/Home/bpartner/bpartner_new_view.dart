@@ -30,7 +30,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     if (widget.bpartnerName != null) {
       nameController.text = widget.bpartnerName!;
     }
-    locationController.text = 'Ubicación de ${widget.bpartnerName}';
+    // locationController.text = 'Ubicación de ${widget.bpartnerName}';
     nameController.addListener(_isFormValid);
     emailController.addListener(_isFormValid);
     taxController.addListener(_isFormValid);

@@ -88,23 +88,23 @@ class _DashboardPageState extends State<DashboardPage> {
                           crossAxisSpacing: ismobile ? 6 : 16,
                           mainAxisSpacing: ismobile ? 6 : 16,
                           children: [
+                            // _buildDashboardCard(
+                            //   context,
+                            //   'Ventas',
+                            //   Icons.attach_money_rounded,
+                            //   () {
+                            //     Navigator.push(
+                            //       context,
+                            //       MaterialPageRoute(
+                            //         builder: (context) => const InvoicePage(),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
                             _buildDashboardCard(
                               context,
                               'Ventas',
                               Icons.attach_money_rounded,
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const InvoicePage(),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildDashboardCard(
-                              context,
-                              'Mis ordenes',
-                              Icons.dashboard,
                               () {
                                 Navigator.push(
                                   context,

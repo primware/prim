@@ -142,7 +142,7 @@ class _MobileMenu extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: CustomSpacer.small),
+        padding: EdgeInsets.only(right: CustomSpacer.medium),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -207,22 +207,22 @@ class _MenuDrawerState extends State<MenuDrawer> {
               ),
               const SizedBox(height: CustomSpacer.medium),
             ],
-            ListTile(
-              leading: Icon(Token.auth != null ? Icons.person : Icons.login),
-              title: Text(
-                Token.auth != null ? 'Panel' : 'Acceder',
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Token.auth != null
-                        ? const DashboardPage()
-                        : const LoginPage(),
-                  ),
-                );
-              },
-            ),
+            // ListTile(
+            //   leading: Icon(Token.auth != null ? Icons.person : Icons.login),
+            //   title: Text(
+            //     Token.auth != null ? 'Panel' : 'Acceder',
+            //   ),
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (context) => Token.auth != null
+            //             ? const DashboardPage()
+            //             : const LoginPage(),
+            //       ),
+            //     );
+            //   },
+            // ),
             ListTile(
               tileColor: Theme.of(context).cardColor,
               leading: Icon(

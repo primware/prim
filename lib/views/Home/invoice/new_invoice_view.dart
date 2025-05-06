@@ -336,252 +336,232 @@ class _InvoicePageState extends State<InvoicePage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const DashboardPage(),
-          ),
-        );
-        return Future.value(false);
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Orden de venta',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineLarge
-                  ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
-          centerTitle: true,
-          backgroundColor: Theme.of(context).colorScheme.onSecondary,
-        ),
-        // drawer: ismobile ? const MenuDrawer() : null,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: CustomContainer(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    isBPartnerLoading
-                        ? _buildShimmerField()
-                        : CustomSearchField(
-                            options: bPartnerOptions,
-                            labelText: "Cliente",
-                            searchBy: "TaxID",
-                            showCreateButtonIfNotFound: true,
-                            onCreate: (value) async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      BPartnerNewPage(bpartnerName: value),
-                                ),
-                              );
-
-                              if (result != null && result['created'] == true) {
-                                await _loadBPartner();
-                                setState(() {
-                                  selectedBPartnerID = result['bpartner']['id'];
-                                });
-                              }
-                            },
-                            onItemSelected: (item) {
-                              setState(() {
-                                selectedBPartnerID = item['id'];
-                              });
-                            },
-                            itemBuilder: (item) => Text(
-                              '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    isProductLoading
-                        ? _buildShimmerField()
-                        : CustomSearchField(
-                            options: productOptions,
-                            controller: productController,
-                            showCreateButtonIfNotFound: true,
-                            labelText: "Producto",
-                            searchBy: "sku",
-                            onCreate: (value) async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      ProductNewPage(productName: value),
-                                ),
-                              );
-                              if (result != null && result['created'] == true) {
-                                _onProductCreated(result['product']);
-                              }
-                            },
-                            onItemSelected: (item) {
-                              _showQuantityDialog(item);
-                            },
-                            itemBuilder: (item) => Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${item['price'] ?? '0.00'}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                    if (invoiceLines.isNotEmpty) ...[
-                      const SizedBox(height: CustomSpacer.large),
-                      Text('Detalle de productos',
-                          style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: CustomSpacer.medium),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 2,
-                        children: invoiceLines.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final line = entry.value;
-                          final tax = taxOptions.firstWhere(
-                            (t) => t['id'] == line['C_Tax_ID'],
-                            orElse: () => {},
-                          );
-                          final taxRate = tax['rate'] != null
-                              ? '${tax['rate']}%'
-                              : 'Sin impuesto';
-                          return Chip(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            deleteIconColor: ColorTheme.error,
-                            label: Text(
-                              '${line['quantity']} x \$${line['price']} + $taxRate (${line['name']})',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            deleteIcon: const Icon(Icons.close),
-                            onDeleted: () => _deleteLine(index),
-                            backgroundColor: Theme.of(context).cardColor,
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                    Divider(
-                      color: Theme.of(context).dividerColor,
-                      height: 60,
-                    ),
-                    Center(
-                      child: Text('Resumen de la Factura',
-                          style: Theme.of(context).textTheme.titleLarge),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Subtotal',
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        Text('\$${subtotal.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.bodyMedium),
-                      ],
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    if (invoiceLines.isNotEmpty && getTotalTaxAmount() > 0) ...[
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Resumen de impuestos',
-                              style: Theme.of(context).textTheme.titleMedium),
-                          const SizedBox(height: CustomSpacer.small),
-                          ...getGroupedTaxTotals().entries.map(
-                                (entry) => Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(entry.key,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium),
-                                    Text('\$${entry.value.toStringAsFixed(2)}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium),
-                                  ],
-                                ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Nueva orden'),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
+            child: CustomContainer(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  isBPartnerLoading
+                      ? _buildShimmerField()
+                      : CustomSearchField(
+                          options: bPartnerOptions,
+                          labelText: "Cliente",
+                          searchBy: "TaxID",
+                          showCreateButtonIfNotFound: true,
+                          onCreate: (value) async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    BPartnerNewPage(bpartnerName: value),
                               ),
-                          const SizedBox(height: CustomSpacer.small),
-                          Row(
+                            );
+
+                            if (result != null && result['created'] == true) {
+                              await _loadBPartner();
+                              setState(() {
+                                selectedBPartnerID = result['bpartner']['id'];
+                              });
+                            }
+                          },
+                          onItemSelected: (item) {
+                            setState(() {
+                              selectedBPartnerID = item['id'];
+                            });
+                          },
+                          itemBuilder: (item) => Text(
+                            '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  isProductLoading
+                      ? _buildShimmerField()
+                      : CustomSearchField(
+                          options: productOptions,
+                          controller: productController,
+                          showCreateButtonIfNotFound: true,
+                          labelText: "Producto",
+                          searchBy: "sku",
+                          onCreate: (value) async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ProductNewPage(productName: value),
+                              ),
+                            );
+                            if (result != null && result['created'] == true) {
+                              _onProductCreated(result['product']);
+                            }
+                          },
+                          onItemSelected: (item) {
+                            _showQuantityDialog(item);
+                          },
+                          itemBuilder: (item) => Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Total impuestos',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      )),
+                              Expanded(
+                                child: Text(
+                                  '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                               Text(
-                                  '\$${getTotalTaxAmount().toStringAsFixed(2)}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      )),
+                                '\$${item['price'] ?? '0.00'}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
                             ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: CustomSpacer.medium),
+                        ),
+                  if (invoiceLines.isNotEmpty) ...[
+                    const SizedBox(height: CustomSpacer.large),
+                    Text('Detalle de productos',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: CustomSpacer.medium),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 2,
+                      children: invoiceLines.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final line = entry.value;
+                        final tax = taxOptions.firstWhere(
+                          (t) => t['id'] == line['C_Tax_ID'],
+                          orElse: () => {},
+                        );
+                        final taxRate = tax['rate'] != null
+                            ? '${tax['rate']}%'
+                            : 'Sin impuesto';
+                        return Chip(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          deleteIconColor: ColorTheme.error,
+                          label: Text(
+                            '${line['quantity']} x \$${line['price']} + $taxRate (${line['name']})',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          deleteIcon: const Icon(Icons.close),
+                          onDeleted: () => _deleteLine(index),
+                          backgroundColor: Theme.of(context).cardColor,
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                  Divider(
+                    color: Theme.of(context).dividerColor,
+                    height: 60,
+                  ),
+                  Center(
+                    child: Text('Resumen de la Factura',
+                        style: Theme.of(context).textTheme.titleLarge),
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Subtotal',
+                          style: Theme.of(context).textTheme.bodyMedium),
+                      Text('\$${subtotal.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.bodyMedium),
                     ],
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  if (invoiceLines.isNotEmpty && getTotalTaxAmount() > 0) ...[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Total',
-                            style: Theme.of(context).textTheme.titleLarge),
-                        Text('\$${total.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.titleLarge),
+                        Text('Resumen de impuestos',
+                            style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: CustomSpacer.small),
+                        ...getGroupedTaxTotals().entries.map(
+                              (entry) => Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(entry.key,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium),
+                                  Text('\$${entry.value.toStringAsFixed(2)}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium),
+                                ],
+                              ),
+                            ),
+                        const SizedBox(height: CustomSpacer.small),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Total impuestos',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    )),
+                            Text('\$${getTotalTaxAmount().toStringAsFixed(2)}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    )),
+                          ],
+                        ),
                       ],
                     ),
-                    const SizedBox(height: CustomSpacer.xlarge),
-                    if (!isSending) ...[
-                      ButtonSecondary(
-                        fullWidth: true,
-                        texto: 'Cancelar',
-                        onPressed: () {
-                          clearInvoiceFields();
-                          Navigator.pop(context);
-                        },
-                      ),
-                      const SizedBox(height: CustomSpacer.medium)
-                    ],
-                    Container(
-                      child: _isInvoiceValid()
-                          ? isSending
-                              ? ButtonLoading(fullWidth: true)
-                              : ButtonPrimary(
-                                  fullWidth: true,
-                                  texto: 'Completar',
-                                  onPressed: () => _createInvoice(
-                                    product: invoiceLines,
-                                    bPartner: selectedBPartnerID ?? 0,
-                                  ),
-                                )
-                          : null,
-                    )
+                    const SizedBox(height: CustomSpacer.medium),
                   ],
-                ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Total',
+                          style: Theme.of(context).textTheme.titleLarge),
+                      Text('\$${total.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.titleLarge),
+                    ],
+                  ),
+                  const SizedBox(height: CustomSpacer.xlarge),
+                  if (!isSending) ...[
+                    ButtonSecondary(
+                      fullWidth: true,
+                      texto: 'Cancelar',
+                      onPressed: () {
+                        clearInvoiceFields();
+                        Navigator.pop(context);
+                      },
+                    ),
+                    const SizedBox(height: CustomSpacer.medium)
+                  ],
+                  Container(
+                    child: _isInvoiceValid()
+                        ? isSending
+                            ? ButtonLoading(fullWidth: true)
+                            : ButtonPrimary(
+                                fullWidth: true,
+                                texto: 'Completar',
+                                onPressed: () => _createInvoice(
+                                  product: invoiceLines,
+                                  bPartner: selectedBPartnerID ?? 0,
+                                ),
+                              )
+                        : null,
+                  )
+                ],
               ),
             ),
           ),
