@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:primware/views/register/register_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
@@ -93,6 +94,15 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
+  void _abrirTienda() async {
+    final url = Uri.parse('https://primware.net/shop/');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      print('No se pudo abrir el enlace');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile =
@@ -102,7 +112,11 @@ class _LoginPageState extends State<LoginPage> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _abrirTienda,
+          icon: const Icon(Icons.shopping_cart_outlined),
+          label: const Text('Tienda'),
+        ),
         body: Center(
           child: SingleChildScrollView(
             child: CustomContainer(

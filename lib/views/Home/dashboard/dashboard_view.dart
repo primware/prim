@@ -9,7 +9,6 @@ import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../Auth/login_view.dart';
-import '../product/my_product_view.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
