@@ -5,6 +5,7 @@ import 'package:primware/shared/textfield.widget.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/invoice/invoice_funtions.dart';
 import 'package:primware/views/Home/invoice/my_invoice_detail.dart';
+import 'package:primware/views/Home/invoice/new_invoice_view.dart';
 import 'package:shimmer/shimmer.dart';
 
 class OrderListPage extends StatefulWidget {
@@ -161,6 +162,17 @@ class _OrderListPageState extends State<OrderListPage> {
       },
       child: Scaffold(
         appBar: AppBar(title: Text('Mis órdenes')),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const InvoicePage(),
+              ),
+            );
+          },
+          child: const Icon(Icons.add),
+        ),
         body: SingleChildScrollView(
           child: CustomContainer(
             child: Column(
