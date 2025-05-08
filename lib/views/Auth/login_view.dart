@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
   void _abrirTienda() async {
     final url = Uri.parse('https://primware.net/shop');
     if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.platformDefault);
+      await launchUrl(url, mode: LaunchMode.inAppWebView);
     } else {
       print('No se pudo abrir el enlace');
     }

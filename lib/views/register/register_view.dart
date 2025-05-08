@@ -120,7 +120,10 @@ class _RegisterUserState extends State<RegisterUser> {
           content: Text(result['summary'].toString()),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                print(result['summary'].toString());
+                Navigator.of(context).pop();
+              },
               child: Text('OK'),
             ),
           ],

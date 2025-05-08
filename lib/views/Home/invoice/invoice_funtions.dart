@@ -46,7 +46,7 @@ Future<List<Map<String, dynamic>>> fetchProduct(
   try {
     final response = await http.get(
       Uri.parse(
-          '${EndPoints.mProduct}?\$filter=CreatedBy eq ${UserData.id}&\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
+          '${EndPoints.mProduct}?\$\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -125,7 +125,9 @@ Future<Map<String, dynamic>> postInvoice({
     final Map<String, dynamic> orderData = {
       "C_BPartner_ID": cBPartnerID,
       "M_Warehouse_ID": Token.warehouseID,
-      "C_DocTypeTarget_ID": Token.cDocTypeTargetID,
+      "C_DocTypeTarget_ID": {
+        "identifier": "POS Order",
+      },
       "deliveryViaRule": "P",
       "SalesRep_ID": UserData.id,
       "isSOTrx": true,

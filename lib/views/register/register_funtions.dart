@@ -94,6 +94,8 @@ Future<Map<String, dynamic>> postNewTenant({
       body: jsonEncode(data),
     );
 
+    print(data.toString());
+
     if (response.statusCode != 200) {
       print('Error: ${response.statusCode}, ${response.body}');
     }
