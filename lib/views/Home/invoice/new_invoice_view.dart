@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_dropdown.dart';
-import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/product/new_product_view.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_searchfield.dart';

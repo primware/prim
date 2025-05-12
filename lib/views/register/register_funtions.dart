@@ -6,27 +6,44 @@ import '../../../API/endpoint.api.dart';
 import '../../API/token.api.dart';
 
 Future<List<Map<String, dynamic>>> fetchCurrency() async {
-  try {
-    final response = await http.get(
-      Uri.parse(EndPoints.cCurrency),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.tokenRegister,
-      },
-    );
+  List<Map<String, dynamic>> allCurrencys = [];
+  int skip = 0;
+  int totalCount = 0;
 
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-      final records = jsonResponse['records'] as List;
-      return records.map((record) {
-        return {
-          'id': record['id'],
-          'name': record['ISO_Code'],
-        };
-      }).toList();
-    } else {
-      throw Exception('Error al cargar las monedas');
-    }
+  const int pageSize = 100;
+
+  try {
+    do {
+      final response = await http.get(
+        Uri.parse(
+            '${EndPoints.cCurrency}?\$skip=$skip&\$select=ISO_Code&\$orderby=Name'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': Token.tokenRegister,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+        final records = jsonResponse['records'] as List;
+        totalCount = jsonResponse['row-count'] ?? 0;
+
+        final mapped = records.map((record) {
+          return {
+            'id': record['id'],
+            'name': record['ISO_Code'],
+          };
+        }).toList();
+
+        allCurrencys.addAll(mapped);
+        skip += pageSize;
+      } else {
+        throw Exception(
+            'Error al cargar las monedas (status ${response.statusCode})');
+      }
+    } while (skip < totalCount);
+
+    return allCurrencys;
   } catch (e) {
     print('Excepción al obtener monedas: $e');
     return [];
@@ -34,29 +51,47 @@ Future<List<Map<String, dynamic>>> fetchCurrency() async {
 }
 
 Future<List<Map<String, dynamic>>> fetchCountry() async {
-  try {
-    final response = await http.get(
-      Uri.parse(EndPoints.cCountry),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.tokenRegister,
-      },
-    );
+  List<Map<String, dynamic>> allCountries = [];
+  int skip = 0;
+  int totalCount = 0;
 
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-      final records = jsonResponse['records'] as List;
-      return records.map((record) {
-        return {
-          'id': record['id'],
-          'name': record['Name'],
-        };
-      }).toList();
-    } else {
-      throw Exception('Error al cargar los paises');
-    }
+  const int pageSize = 100;
+
+  try {
+    do {
+      final response = await http.get(
+        Uri.parse(
+            '${EndPoints.cCountry}?\$skip=$skip&\$select=Name,CountryCode&\$orderby=Name'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': Token.tokenRegister,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+        final records = jsonResponse['records'] as List;
+        totalCount = jsonResponse['row-count'] ?? 0;
+
+        final mapped = records.map((record) {
+          return {
+            'id': record['id'],
+            'name': record['Name'],
+            'CountryCode': record['CountryCode'],
+          };
+        }).toList();
+
+        allCountries.addAll(mapped);
+        skip += pageSize;
+      } else {
+        throw Exception(
+            'Error al cargar los países (status ${response.statusCode})');
+      }
+    } while (skip < totalCount);
+
+    return allCountries;
   } catch (e) {
-    print('Excepción al obtener paises: $e');
+    print('Excepción al obtener países: $e');
     return [];
   }
 }

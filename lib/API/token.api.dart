@@ -6,7 +6,7 @@ class Token {
   static int? rol;
   static int? organitation;
   static int? warehouseID; //? Estandar
-  static int? cDocTypeTargetID = 1000139; //? POS Order
+  // static int? cDocTypeTargetID = 1000139; //? POS Order
 
   static String tokenType = 'Bearer';
   static String? tokenSystem =
