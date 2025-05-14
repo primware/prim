@@ -4,7 +4,7 @@ class Base {
   static String title = prod ? 'Prod' : 'Test';
 
   static String baseURL = local
-      ? 'https://localhost:8480'
+      ? 'https://localhost:8443'
       : prod
           ? 'https://demo.primware.net'
           : 'https://testidempiere.com';

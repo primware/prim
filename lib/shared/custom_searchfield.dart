@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:primware/shared/custom_spacer.dart';
 import 'package:searchfield/searchfield.dart';
+
+import 'custom_spacer.dart';
 
 class CustomSearchField extends StatefulWidget {
   final List<Map<String, dynamic>> options;
   final String labelText, searchBy;
+  final String? searchByText;
   final void Function(Map<String, dynamic>)? onItemSelected;
   final Future<List<Map<String, dynamic>>> Function(String)? onSearch;
   final Widget Function(Map<String, dynamic>)? itemBuilder;
@@ -21,6 +23,7 @@ class CustomSearchField extends StatefulWidget {
     this.controller,
     this.onItemSelected,
     this.searchBy = 'id',
+    this.searchByText,
     this.onSearch,
     this.itemBuilder,
     this.enabled = true,
@@ -137,6 +140,7 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
       onSuggestionTap: (SearchFieldListItem<Map<String, dynamic>> item) {
         if (widget.onItemSelected != null && item.item!.isNotEmpty) {
           widget.onItemSelected!(item.item!);
+          _controller.text = item.searchKey;
         }
       },
       suggestions: widget.options.map((item) {
@@ -167,7 +171,7 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
       ),
       suggestionStyle: Theme.of(context).textTheme.bodyMedium,
       onSearchTextChanged: _onSearchItems,
-      hint: 'Buscar por nombre o ${widget.searchBy}...',
+      hint: 'Buscar por nombre o ${widget.searchByText ?? widget.searchBy}...',
     );
   }
 }

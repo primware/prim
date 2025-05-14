@@ -5,10 +5,12 @@ import '../../../theme/colors.dart';
 import '../../../theme/fonts.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_dropdown.dart';
+import '../../shared/custom_searchfield.dart';
 import '../../shared/custom_spacer.dart';
 import '../../shared/loading_container.dart';
 import 'register_controller.dart';
 import 'register_funtions.dart';
+import 'package:shimmer/shimmer.dart';
 
 class RegisterUser extends StatefulWidget {
   const RegisterUser({super.key});
@@ -53,6 +55,22 @@ class _RegisterUserState extends State<RegisterUser> {
     setState(() {
       isLoading = false;
     });
+  }
+
+  Widget _buildShimmerField() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        height: 60,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
   }
 
   bool isValidEmail(String email) {
@@ -173,29 +191,43 @@ class _RegisterUserState extends State<RegisterUser> {
                       onChanged: (p0) => _validateForm(),
                     ),
                     const SizedBox(height: CustomSpacer.medium),
-                    SearchableDropdown<int>(
-                      value: selectedCurrencyID,
-                      options: currencyOptions,
-                      labelText: 'Moneda',
-                      onChanged: (value) {
-                        setState(() {
-                          selectedCurrencyID = value;
-                          _validateForm();
-                        });
-                      },
-                    ),
+                    isLoading
+                        ? _buildShimmerField()
+                        : CustomSearchField(
+                            options: currencyOptions,
+                            labelText: 'Moneda',
+                            onItemSelected: (p0) {
+                              setState(() {
+                                selectedCurrencyID = p0['id'];
+                                _validateForm();
+                              });
+                            },
+                            itemBuilder: (p0) => Text(
+                              p0['name'],
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                     const SizedBox(height: CustomSpacer.medium),
-                    SearchableDropdown<int>(
-                      value: selectedCountryID,
-                      options: countryOptions,
-                      labelText: 'País',
-                      onChanged: (value) {
-                        setState(() {
-                          selectedCountryID = value;
-                          _validateForm();
-                        });
-                      },
-                    ),
+                    isLoading
+                        ? _buildShimmerField()
+                        : CustomSearchField(
+                            options: countryOptions,
+                            labelText: 'País',
+                            searchBy: 'CountryCode',
+                            searchByText: 'código del país',
+                            onItemSelected: (p0) {
+                              setState(() {
+                                selectedCountryID = p0['id'];
+                                _validateForm();
+                              });
+                            },
+                            itemBuilder: (p0) => Text(
+                              '${p0['CountryCode'] ?? ''} - ${p0['name'] ?? ''}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                     const SizedBox(
                         height: CustomSpacer.medium + CustomSpacer.xlarge),
                     Container(
