@@ -193,7 +193,8 @@ Future<Map<String, dynamic>> postInvoice({
         'Authorization': Token.auth!,
       },
       body: jsonEncode({
-        "DocStatus": {"id": "CO"}
+        "DocStatus": {"id": "CO"},
+        "Processed": true
       }),
     );
 

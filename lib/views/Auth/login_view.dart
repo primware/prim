@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:primware/views/register/register_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../API/endpoint.api.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
@@ -9,6 +10,7 @@ import '../../shared/custom_spacer.dart';
 import '../../shared/logo.dart';
 import '../../shared/message.custom.dart';
 import '../../shared/textfield.widget.dart';
+import '../../theme/colors.dart';
 import 'auth_funtions.dart';
 import 'config_view.dart';
 
@@ -26,13 +28,13 @@ TextEditingController claveController = TextEditingController();
 
 class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
-
+  final TextEditingController baseURLController = TextEditingController();
   bool rememberUser = false;
 
   @override
   void initState() {
     super.initState();
-
+    _loadBaseURL();
     _loadRememberedUser();
   }
 
@@ -53,6 +55,99 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _saveBaseURL() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String baseURL = baseURLController.text.trim();
+    await prefs.setString('baseURL', baseURL);
+    Base.baseURL = baseURL;
+  }
+
+  Future<void> _loadBaseURL() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? baseURL = prefs.getString('baseURL');
+
+    if (baseURL != null) {
+      baseURLController.text = baseURL;
+      Base.baseURL = baseURL;
+    }
+  }
+
+  Future<void> _showBaseURLDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Servidor',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextfieldTheme(
+                texto: 'URL',
+                controlador: baseURLController,
+              ),
+              Text(
+                'Ej: https://test.idempiere.org',
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(color: Theme.of(context).primaryColor),
+              )
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
+          actions: [
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.cancel_outlined),
+              color: ColorTheme.error,
+              iconSize: 32,
+            ),
+            IconButton(
+              onPressed: () {
+                _saveBaseURL();
+                Navigator.of(context).pop();
+                _resetDialog();
+              },
+              icon: const Icon(Icons.check_circle_outline),
+              color: ColorTheme.success,
+              iconSize: 32,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _resetDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Servidor',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          content: Text(
+            'Se guardó la direción, es necesario reiniciar la aplicación para aplicar los cambios',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          actions: [
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.check_circle_outline),
+              color: ColorTheme.success,
+              iconSize: 32,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _funcionLogin(String usuario, String clave) async {
     setState(() {
       isLoading = true;
@@ -71,6 +166,7 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.remove('clave');
         await prefs.setBool('rememberUser', false);
       }
+      _saveBaseURL();
 
       Navigator.push(
         context,
@@ -94,15 +190,6 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void _abrirTienda() async {
-    final url = Uri.parse('https://primware.net/shop');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.inAppWebView);
-    } else {
-      print('No se pudo abrir el enlace');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isMobile =
@@ -113,9 +200,9 @@ class _LoginPageState extends State<LoginPage> {
       onWillPop: () async => false,
       child: Scaffold(
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: _abrirTienda,
-          icon: const Icon(Icons.shopping_cart_outlined),
-          label: const Text('Tienda'),
+          onPressed: _showBaseURLDialog,
+          icon: const Icon(Icons.settings),
+          label: const Text('Servidor'),
         ),
         body: Center(
           child: SingleChildScrollView(
