@@ -38,6 +38,8 @@ class EndPoints {
 
   static String rRequest = '${Base.baseURL}/api/v1/models/R_Request';
 
+  static String cPos = '${Base.baseURL}/api/v1/models/C_POS';
+
   static String initialclientsetup =
       '${Base.baseURL}/api/v1/processes/initialclientsetup';
 

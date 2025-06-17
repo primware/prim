@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../API/endpoint.api.dart';
+import '../../API/pos.api.dart';
 import '../../API/token.api.dart';
 import '../../main.dart';
 import '../../shared/message.custom.dart';
@@ -203,7 +204,7 @@ Future<bool> usuarioAuth(
       Token.auth = '${Token.tokenType} ${json.decode(response.body)["token"]}';
       UserData.id = json.decode(response.body)["userId"];
       bool success = await loadUserData(context);
-
+      await loadPOSData(context);
       return success;
     } else {
       print('Error: ${response.statusCode}, ${response.body}');
@@ -291,6 +292,41 @@ Future<bool> loadUserData(BuildContext context) async {
   }
 
   return false;
+}
+
+Future<void> loadPOSData(BuildContext context) async {
+  try {
+    final response = await http.get(
+      Uri.parse('${EndPoints.cPos}?\$filter=SalesRep_ID eq ${UserData.id}'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final posData =
+          json.decode(utf8.decode(response.bodyBytes))['records'][0];
+
+      POS.priceListID = posData?['M_PriceList_ID']['id'];
+      POS.docTypeID = posData?['C_DocType_ID']['id'];
+
+      if (POS.docTypeID == null || POS.priceListID == null) {
+        SnackMessage.show(
+          context: context,
+          message: "No hay Terminal PDV configurado para este usuario",
+          type: SnackType.failure,
+        );
+      }
+    } else {
+      print(
+          'Error al cargar loadPOSData, codigo: ${response.statusCode}, detalle: ${response.body}');
+    }
+  } catch (e) {
+    if (e is http.ClientException) {
+      handle401(context);
+    }
+  }
 }
 
 Future<List<Map<String, dynamic>>?> getOrganizationsAfterLogin(

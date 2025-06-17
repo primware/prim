@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:primware/API/pos.api.dart';
 import 'package:primware/API/user.api.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import '../../../API/endpoint.api.dart';
@@ -136,14 +137,14 @@ Future<Map<String, dynamic>> postInvoice({
       "C_BPartner_ID": {"id": cBPartnerID},
       "AD_Org_ID": {"id": Token.organitation},
       "M_Warehouse_ID": {"id": Token.warehouseID},
-      "C_DocTypeTarget_ID": {"identifier": "POS Order"},
+      "C_DocTypeTarget_ID": POS.docTypeID,
       "SalesRep_ID": {"id": UserData.id},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",
       "PriorityRule": "5",
       "FreightCostRule": "I",
       "PaymentRule": "B",
-      "M_PriceList_ID": {"identifier": "Standard"},
+      "M_PriceList_ID": POS.priceListID,
       "IsSOTrx": true,
       "order-line": orderLines,
       "doc-action": "CO"
