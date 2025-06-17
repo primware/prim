@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
-import 'package:primware/views/Home/invoice/new_invoice_view.dart';
 import 'package:primware/views/Home/invoice/my_invoice_view.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';

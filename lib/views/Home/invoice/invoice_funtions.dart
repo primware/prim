@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:primware/API/user.api.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import '../../../API/endpoint.api.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 
@@ -15,7 +15,7 @@ Future<List<Map<String, dynamic>>> fetchBPartner(
       clave: claveController.text.trim(),
       context: context,
     );
-    final response = await http.get(
+    final response = await get(
       Uri.parse('${EndPoints.cBPartner}?\$filter=IsCustomer eq true'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -44,7 +44,7 @@ Future<List<Map<String, dynamic>>> fetchBPartner(
 Future<List<Map<String, dynamic>>> fetchProduct(
     {required BuildContext context}) async {
   try {
-    final response = await http.get(
+    final response = await get(
       Uri.parse(
           '${EndPoints.mProduct}?\$\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
       headers: {
@@ -79,7 +79,7 @@ Future<List<Map<String, dynamic>>> fetchProduct(
 Future<List<Map<String, dynamic>>> fetchTax(
     {required BuildContext context}) async {
   try {
-    final response = await http.get(
+    final response = await get(
       Uri.parse(EndPoints.cTax),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -121,20 +121,36 @@ Future<Map<String, dynamic>> postInvoice({
       context: context,
     );
 
-//? Crear la orden de venta
+    final orderLines = invoiceLines.map((line) {
+      return {
+        "M_Product_ID": {"id": line['M_Product_ID']},
+        "QtyEntered": line['Quantity'],
+        "QtyOrdered": line['Quantity'],
+        "PriceActual": line['Price'],
+        "PriceEntered": line['Price'],
+        "C_Tax_ID": {"id": line['C_Tax_ID']}
+      };
+    }).toList();
+
     final Map<String, dynamic> orderData = {
-      "C_BPartner_ID": cBPartnerID,
-      "M_Warehouse_ID": Token.warehouseID,
-      "C_DocTypeTarget_ID": {
-        "identifier": "POS Order",
-      },
-      "deliveryViaRule": "P",
-      "SalesRep_ID": UserData.id,
-      "isSOTrx": true,
+      "C_BPartner_ID": {"id": cBPartnerID},
+      "AD_Org_ID": {"id": Token.organitation},
+      "M_Warehouse_ID": {"id": Token.warehouseID},
+      "C_DocTypeTarget_ID": {"identifier": "POS Order"},
+      "SalesRep_ID": {"id": UserData.id},
+      "DeliveryRule": "A",
+      "DeliveryViaRule": "P",
+      "PriorityRule": "5",
+      "FreightCostRule": "I",
+      "PaymentRule": "B",
+      "M_PriceList_ID": {"identifier": "Standard"},
+      "IsSOTrx": true,
+      "order-line": orderLines,
+      "doc-action": "CO"
     };
 
-    final orderResponse = await http.post(
-      Uri.parse(EndPoints.cOrder),
+    final orderResponse = await post(
+      Uri.parse('${Base.baseURL}/api/v1/windows/sales-order'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
@@ -143,67 +159,11 @@ Future<Map<String, dynamic>> postInvoice({
     );
 
     if (orderResponse.statusCode != 201) {
-      print('Error al crear la orden: ${orderResponse.statusCode}');
+      print('Error al crear y completar la orden: ${orderResponse.statusCode}');
       print(orderResponse.body);
       return {
         'success': false,
-        'message': 'Error al crear la orden.',
-      };
-    }
-
-    final createdOrder = json.decode(orderResponse.body);
-    final int cOrderID = createdOrder['id'];
-
-//? Crear la línea de la orden
-    for (var line in invoiceLines) {
-      final lineData = {
-        "M_Product_ID": line['M_Product_ID'],
-        "QtyEntered": line['Quantity'],
-        "PriceActual": line['Price'],
-        "PriceEntered": line['Price'],
-        "C_Tax_ID": line['C_Tax_ID'],
-        "C_Order_ID": cOrderID
-      };
-
-      final lineResponse = await http.post(
-        Uri.parse(EndPoints.cOrderLine),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': Token.auth!,
-        },
-        body: jsonEncode(lineData),
-      );
-
-      if (lineResponse.statusCode != 201) {
-        print('Error al crear línea: ${lineResponse.statusCode}');
-        print(lineResponse.body);
-        return {
-          'success': false,
-          'message': 'Error al crear líneas de la orden.',
-        };
-      }
-    }
-
-//? Completar la orden
-
-    final completeOrderResponse = await http.put(
-      Uri.parse('${EndPoints.cOrder}/$cOrderID'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': Token.auth!,
-      },
-      body: jsonEncode({
-        "DocStatus": {"id": "CO"},
-        "Processed": true
-      }),
-    );
-
-    if (completeOrderResponse.statusCode != 200) {
-      print('Error al completar la orden: ${completeOrderResponse.statusCode}');
-      print(completeOrderResponse.body);
-      return {
-        'success': false,
-        'message': 'Error al completar la orden.',
+        'message': 'Error al crear y completar la orden.',
       };
     }
 
@@ -223,7 +183,7 @@ Future<List<Map<String, dynamic>>> fetchOrders(
       context: context,
     );
 
-    final response = await http.get(
+    final response = await get(
       Uri.parse(
           '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=Created&\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
       headers: {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:primware/views/register/register_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../API/endpoint.api.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
