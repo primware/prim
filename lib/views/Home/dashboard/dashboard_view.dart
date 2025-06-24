@@ -1,7 +1,9 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
+import 'package:primware/shared/logo.dart';
 import 'package:primware/views/Home/invoice/my_invoice_view.dart';
+import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/button.widget.dart';
@@ -61,112 +63,67 @@ class _DashboardPageState extends State<DashboardPage> {
         return false;
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        drawer: ismobile ? MenuDrawer() : null,
+        appBar: AppBar(
+          title: Text(
+            'Dashboard',
+          ),
+        ),
+        drawer: MenuDrawer(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
-              child: Column(
-                children: [
-                  CustomAppMenu(),
-                  CustomContainer(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: CustomContainer(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(child: Logo(width: 320)),
+                    SizedBox(height: CustomSpacer.xlarge),
+                    GridView.count(
+                      shrinkWrap: true,
+                      crossAxisCount: ismobile ? 2 : 4,
+                      childAspectRatio: 1.5,
+                      crossAxisSpacing: ismobile ? 6 : 16,
+                      mainAxisSpacing: ismobile ? 6 : 16,
                       children: [
-                        Text(
-                          'Dashboard',
-                          style: Theme.of(context).textTheme.headlineLarge,
-                          overflow: TextOverflow.visible,
-                        ),
-                        SizedBox(height: CustomSpacer.medium),
-                        GridView.count(
-                          shrinkWrap: true,
-                          crossAxisCount: ismobile ? 2 : 4,
-                          childAspectRatio: 1.5,
-                          crossAxisSpacing: ismobile ? 6 : 16,
-                          mainAxisSpacing: ismobile ? 6 : 16,
-                          children: [
-                            // _buildDashboardCard(
-                            //   context,
-                            //   'Ventas',
-                            //   Icons.attach_money_rounded,
-                            //   () {
-                            //     Navigator.push(
-                            //       context,
-                            //       MaterialPageRoute(
-                            //         builder: (context) => const InvoicePage(),
-                            //       ),
-                            //     );
-                            //   },
-                            // ),
-                            _buildDashboardCard(
+                        _buildDashboardCard(
+                          context,
+                          'Mis Ordenes',
+                          Icons.attach_money_rounded,
+                          () {
+                            Navigator.push(
                               context,
-                              'Ventas',
-                              Icons.attach_money_rounded,
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const OrderListPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                            // _buildDashboardCard(
-                            //   context,
-                            //   'Productos',
-                            //   Icons.inventory,
-                            //   () {
-                            //     Navigator.push(
-                            //       context,
-                            //       MaterialPageRoute(
-                            //         builder: (context) =>
-                            //             const ProductListPage(),
-                            //       ),
-                            //     );
-                            //   },
-                            // ),
-                            // _buildDashboardCard(
-                            //   context,
-                            //   'Clientes',
-                            //   Icons.people,
-                            //   () {},
-                            // ),
-                            // _buildDashboardCard(
-                            //   context,
-                            //   'Ajustes',
-                            //   Icons.settings,
-                            //   () {},
-                            // ),
-                          ],
+                              MaterialPageRoute(
+                                builder: (context) => const OrderListPage(),
+                              ),
+                            );
+                          },
                         ),
-                        if (!ismobile) ...[
-                          SizedBox(
-                              height:
-                                  CustomSpacer.xlarge + CustomSpacer.xlarge),
-                          ButtonSecondary(
-                            texto: 'Cerrar sesión',
-                            icono: Icons.logout_outlined,
-                            onPressed: () {
-                              Token.auth = null;
-                              usuarioController.clear();
-                              claveController.clear();
-                              UserData.rolName = null;
-                              UserData.imageBytes = null;
-
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginPage(),
-                                ),
-                              );
-                            },
-                          ),
-                        ]
                       ],
                     ),
-                  ),
-                ],
+                    if (!ismobile) ...[
+                      SizedBox(
+                          height: CustomSpacer.xlarge + CustomSpacer.xlarge),
+                      ButtonSecondary(
+                        texto: 'Cerrar sesión',
+                        icono: Icons.logout_outlined,
+                        onPressed: () {
+                          Token.auth = null;
+                          usuarioController.clear();
+                          claveController.clear();
+                          UserData.rolName = null;
+                          UserData.imageBytes = null;
+
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ]
+                  ],
+                ),
               ),
             ),
           ),

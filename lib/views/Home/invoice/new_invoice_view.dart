@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_dropdown.dart';
 import 'package:primware/views/Home/product/new_product_view.dart';
+import '../../../API/pos.api.dart';
 import '../../../shared/button.widget.dart';
+import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/textfield.widget.dart';
@@ -10,6 +12,8 @@ import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new_view.dart';
 import 'invoice_funtions.dart';
 import 'package:shimmer/shimmer.dart';
+
+import 'my_invoice_view.dart';
 
 class InvoicePage extends StatefulWidget {
   const InvoicePage({super.key});
@@ -68,9 +72,22 @@ class _InvoicePageState extends State<InvoicePage> {
 
   Future<void> _loadBPartner() async {
     final partner = await fetchBPartner(context: context);
+
+    // Buscar el cliente por defecto según el ID en POS
+    final defaultPartner = partner.firstWhere(
+      (p) => p['id'] == POS.templatePartnerID,
+      orElse: () => {},
+    );
+
     setState(() {
       bPartnerOptions = partner;
       isBPartnerLoading = false;
+
+      if (defaultPartner.isNotEmpty) {
+        selectedBPartnerID = defaultPartner['id'];
+        clienteController.text =
+            '${defaultPartner['TaxID'] ?? ''} - ${defaultPartner['name'] ?? ''}';
+      }
     });
   }
 
@@ -132,7 +149,7 @@ class _InvoicePageState extends State<InvoicePage> {
   }
 
   Future<void> _showQuantityDialog(Map<String, dynamic> product) async {
-    int? selectedTaxID = selectedTax?['id'];
+    int? selectedTaxID = product['tax']?['id'];
     final quantityController = TextEditingController(text: "1");
     final priceController =
         TextEditingController(text: product['price'].toString());
@@ -339,6 +356,7 @@ class _InvoicePageState extends State<InvoicePage> {
       appBar: AppBar(
         title: Text('Nueva orden'),
       ),
+      drawer: POS.isPOS ? MenuDrawer() : null,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -352,6 +370,7 @@ class _InvoicePageState extends State<InvoicePage> {
                           options: bPartnerOptions,
                           labelText: "Cliente",
                           searchBy: "TaxID",
+                          controller: clienteController,
                           showCreateButtonIfNotFound: true,
                           onCreate: (value) async {
                             final result = await Navigator.push(
@@ -541,7 +560,10 @@ class _InvoicePageState extends State<InvoicePage> {
                       texto: 'Cancelar',
                       onPressed: () {
                         clearInvoiceFields();
-                        Navigator.pop(context);
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => OrderListPage()));
                       },
                     ),
                     const SizedBox(height: CustomSpacer.medium)

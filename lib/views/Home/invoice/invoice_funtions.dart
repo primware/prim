@@ -42,12 +42,14 @@ Future<List<Map<String, dynamic>>> fetchBPartner(
   }
 }
 
-Future<List<Map<String, dynamic>>> fetchProduct(
-    {required BuildContext context}) async {
+Future<List<Map<String, dynamic>>> fetchProduct({
+  required BuildContext context,
+}) async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.mProduct}?\$\$select=Name,SKU&\$expand=M_ProductPrice(\$select=PriceStd)'),
+        '${EndPoints.mProduct}?\$select=Name,C_TaxCategory_ID,SKU&\$expand=M_ProductPrice(\$select=PriceStd)',
+      ),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -57,8 +59,25 @@ Future<List<Map<String, dynamic>>> fetchProduct(
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
       final records = jsonResponse['records'] as List;
-      return records.map((record) {
-        return {
+
+      List<Map<String, dynamic>> productList = [];
+
+      for (var record in records) {
+        final taxCategoryID = record['C_TaxCategory_ID']?['id'];
+        Map<String, dynamic>? assignedTax;
+
+        if (taxCategoryID != null) {
+          final taxes = await fetchTax(
+            context: context,
+            cTaxCategoryID: taxCategoryID,
+          );
+
+          if (taxes.isNotEmpty) {
+            assignedTax = taxes.first;
+          }
+        }
+
+        productList.add({
           'id': record['id'],
           'name': record['Name'],
           'sku': record['SKU'],
@@ -66,8 +85,11 @@ Future<List<Map<String, dynamic>>> fetchProduct(
                   record['M_ProductPrice'].isNotEmpty
               ? record['M_ProductPrice'][0]['PriceStd']
               : null,
-        };
-      }).toList();
+          'tax': assignedTax,
+        });
+      }
+
+      return productList;
     } else {
       throw Exception('Error al cargar los productos: ${response.statusCode}');
     }
@@ -77,11 +99,18 @@ Future<List<Map<String, dynamic>>> fetchProduct(
   }
 }
 
-Future<List<Map<String, dynamic>>> fetchTax(
-    {required BuildContext context}) async {
+Future<List<Map<String, dynamic>>> fetchTax({
+  required BuildContext context,
+  int? cTaxCategoryID,
+}) async {
   try {
+    String url = EndPoints.cTax;
+    if (cTaxCategoryID != null) {
+      url += '?\$filter=C_TaxCategory_ID eq $cTaxCategoryID';
+    }
+
     final response = await get(
-      Uri.parse(EndPoints.cTax),
+      Uri.parse(url),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -98,7 +127,7 @@ Future<List<Map<String, dynamic>>> fetchTax(
           'rate': record['Rate'],
           'istaxexempt': record['IsTaxExempt'],
           'issalestax': record['IsSalesTax'],
-          "isdefault": record['IsDefault'],
+          'isdefault': record['IsDefault'],
         };
       }).toList();
     } else {
@@ -143,7 +172,7 @@ Future<Map<String, dynamic>> postInvoice({
       "DeliveryViaRule": "P",
       "PriorityRule": "5",
       "FreightCostRule": "I",
-      "PaymentRule": "B",
+      "PaymentRule": "M",
       "M_PriceList_ID": POS.priceListID,
       "IsSOTrx": true,
       "order-line": orderLines,

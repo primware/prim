@@ -297,7 +297,8 @@ Future<bool> loadUserData(BuildContext context) async {
 Future<void> loadPOSData(BuildContext context) async {
   try {
     final response = await http.get(
-      Uri.parse('${EndPoints.cPos}?\$filter=SalesRep_ID eq ${UserData.id}'),
+      Uri.parse(
+          '${EndPoints.cPos}?\$filter=SalesRep_ID eq ${UserData.id}&\$expand=C_DocType_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -305,24 +306,40 @@ Future<void> loadPOSData(BuildContext context) async {
     );
 
     if (response.statusCode == 200) {
-      final posData =
-          json.decode(utf8.decode(response.bodyBytes))['records'][0];
+      final decoded = json.decode(utf8.decode(response.bodyBytes));
+      final records = decoded['records'] as List?;
 
-      POS.priceListID = posData?['M_PriceList_ID']['id'];
-      POS.docTypeID = posData?['C_DocType_ID']['id'];
-
-      if (POS.docTypeID == null || POS.priceListID == null) {
+      if (records == null || records.isEmpty) {
         SnackMessage.show(
           context: context,
           message: "No hay Terminal PDV configurado para este usuario",
           type: SnackType.failure,
         );
+        return;
+      }
+
+      final posData = records.first;
+
+      POS.priceListID = posData['M_PriceList_ID']?['id'];
+      POS.docTypeID = posData['C_DocType_ID']?['id'];
+      POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
+
+      final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
+      POS.isPOS = docSubType == 'WR';
+
+      if (POS.docTypeID == null || POS.priceListID == null) {
+        SnackMessage.show(
+          context: context,
+          message: "Terminal PDV incompleto: faltan datos clave.",
+          type: SnackType.failure,
+        );
       }
     } else {
       print(
-          'Error al cargar loadPOSData, codigo: ${response.statusCode}, detalle: ${response.body}');
+          'Error al cargar loadPOSData, código: ${response.statusCode}, detalle: ${response.body}');
     }
   } catch (e) {
+    print('Excepción en loadPOSData: $e');
     if (e is http.ClientException) {
       handle401(context);
     }

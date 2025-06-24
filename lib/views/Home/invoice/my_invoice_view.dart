@@ -8,6 +8,9 @@ import 'package:primware/views/Home/invoice/my_invoice_detail.dart';
 import 'package:primware/views/Home/invoice/new_invoice_view.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../API/pos.api.dart';
+import '../../../shared/custom_app_menu.dart';
+
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
 
@@ -162,6 +165,7 @@ class _OrderListPageState extends State<OrderListPage> {
       },
       child: Scaffold(
         appBar: AppBar(title: Text('Mis órdenes')),
+        drawer: POS.isPOS ? MenuDrawer() : null,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             Navigator.push(
@@ -174,32 +178,34 @@ class _OrderListPageState extends State<OrderListPage> {
           child: const Icon(Icons.add),
         ),
         body: SingleChildScrollView(
-          child: CustomContainer(
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextfieldTheme(
-                        texto: 'Buscar orden',
-                        icono: Icons.search,
-                        onChanged: (value) {
-                          setState(() => _searchQuery = value);
-                        },
+          child: Center(
+            child: CustomContainer(
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextfieldTheme(
+                          texto: 'Buscar orden',
+                          icono: Icons.search,
+                          onChanged: (value) {
+                            setState(() => _searchQuery = value);
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: CustomSpacer.small),
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: _fetchOrders,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: CustomSpacer.medium),
-                _isLoading
-                    ? _buildShimmerList()
-                    : _buildOrderList(_getFilteredOrders()),
-              ],
+                      const SizedBox(width: CustomSpacer.small),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: _fetchOrders,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  _isLoading
+                      ? _buildShimmerList()
+                      : _buildOrderList(_getFilteredOrders()),
+                ],
+              ),
             ),
           ),
         ),

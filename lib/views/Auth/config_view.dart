@@ -2,9 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:primware/theme/fonts.dart';
+import 'package:primware/views/Home/invoice/new_invoice_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../API/token.api.dart';
 import '../../../main.dart';
+import '../../API/pos.api.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
@@ -183,14 +185,9 @@ class _ConfigPageState extends State<ConfigPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => DashboardPage(),
+            builder: (context) => POS.isPOS ? InvoicePage() : DashboardPage(),
           ),
         );
-
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(builder: (_) => const MainMenu()),
-        // );
 
         setState(() {
           isLoading = false;

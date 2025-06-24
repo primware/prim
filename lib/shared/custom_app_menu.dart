@@ -5,12 +5,14 @@ import 'package:primware/API/token.api.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
+import 'package:primware/views/Home/invoice/new_invoice_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../API/endpoint.api.dart';
 import '../API/user.api.dart';
 import '../main.dart';
 import '../theme/colors.dart';
 import '../theme/fonts.dart';
+import '../views/Home/invoice/my_invoice_view.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
 
@@ -197,49 +199,81 @@ class _MenuDrawerState extends State<MenuDrawer> {
           padding: EdgeInsets.zero,
           children: [
             const SizedBox(height: CustomSpacer.medium),
-            if (_label != null) ...[
-              ListTile(
-                textColor: ColorTheme.atention,
-                title: Text(_label!),
-                onTap: () {
-                  null;
-                },
-              ),
-              const SizedBox(height: CustomSpacer.medium),
-            ],
-            // ListTile(
-            //   leading: Icon(Token.auth != null ? Icons.person : Icons.login),
-            //   title: Text(
-            //     Token.auth != null ? 'Panel' : 'Acceder',
-            //   ),
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (context) => Token.auth != null
-            //             ? const DashboardPage()
-            //             : const LoginPage(),
-            //       ),
-            //     );
-            //   },
-            // ),
             ListTile(
-              tileColor: Theme.of(context).cardColor,
-              leading: Icon(
-                _isDarkMode ? Icons.nightlight : Icons.sunny,
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.atention,
-              ),
+              leading: Icon(Icons.add),
               title: Text(
-                _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+                'Nueva orden',
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const InvoicePage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.attach_money_outlined,
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
+              tileColor: Theme.of(context).cardColor,
+              title: Text(
+                'Mis ordenes',
                 style: TextStyle(
                   color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
                 ),
               ),
               onTap: () {
-                ThemeManager.themeNotifier.toggleTheme();
-                _loadTheme();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const OrderListPage(),
+                  ),
+                );
               },
             ),
+            ListTile(
+              leading: Icon(
+                Token.auth != null ? Icons.person : Icons.login,
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
+              tileColor: Theme.of(context).cardColor,
+              title: Text(
+                Token.auth != null ? 'Panel' : 'Acceder',
+                style: TextStyle(
+                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Token.auth != null
+                        ? const DashboardPage()
+                        : const LoginPage(),
+                  ),
+                );
+              },
+            ),
+            // ListTile(
+            //   tileColor: Theme.of(context).cardColor,
+            //   leading: Icon(
+            //     _isDarkMode ? Icons.nightlight : Icons.sunny,
+            //     color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.atention,
+            //   ),
+            //   title: Text(
+            //     _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+            //     style: TextStyle(
+            //       color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+            //     ),
+            //   ),
+            //   onTap: () {
+            //     ThemeManager.themeNotifier.toggleTheme();
+            //     _loadTheme();
+            //   },
+            // ),
             ListTile(
               tileColor: Theme.of(context).cardColor,
               leading: Icon(
@@ -260,7 +294,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 UserData.rolName = null;
                 UserData.imageBytes = null;
 
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const LoginPage(),
