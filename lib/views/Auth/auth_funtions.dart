@@ -326,14 +326,6 @@ Future<void> loadPOSData(BuildContext context) async {
 
       final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.isPOS = docSubType == 'WR';
-
-      if (POS.docTypeID == null || POS.priceListID == null) {
-        SnackMessage.show(
-          context: context,
-          message: "Terminal PDV incompleto: faltan datos clave.",
-          type: SnackType.failure,
-        );
-      }
     } else {
       print(
           'Error al cargar loadPOSData, código: ${response.statusCode}, detalle: ${response.body}');

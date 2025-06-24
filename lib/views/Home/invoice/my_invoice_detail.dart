@@ -40,87 +40,90 @@ class OrderDetailPage extends StatelessWidget {
           )
         ],
       ),
-      body: CustomContainer(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeader(order: order, context: context),
-            const SizedBox(height: CustomSpacer.large),
-            Text('Resumen de productos',
-                style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: CustomSpacer.small),
-            Expanded(
-              child: ListView.builder(
-                itemCount: lines.length,
-                itemBuilder: (context, index) {
-                  final line = lines[index];
-                  final String name = line['M_Product_ID']['identifier']
-                      .toString()
-                      .split('_')
-                      .skip(1)
-                      .join(' ');
-                  final double qty = (line['QtyOrdered'] as num).toDouble();
-                  final double price = (line['PriceActual'] as num).toDouble();
-                  final double net = (line['LineNetAmt'] as num).toDouble();
-                  final double rate =
-                      (line['C_Tax_ID']['Rate'] as num).toDouble();
-                  final double tax = net * (rate / 100);
-                  final double total = net + tax;
+      body: Center(
+        child: CustomContainer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHeader(order: order, context: context),
+              const SizedBox(height: CustomSpacer.large),
+              Text('Resumen de productos',
+                  style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: CustomSpacer.small),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: lines.length,
+                  itemBuilder: (context, index) {
+                    final line = lines[index];
+                    final String name = line['M_Product_ID']['identifier']
+                        .toString()
+                        .split('_')
+                        .skip(1)
+                        .join(' ');
+                    final double qty = (line['QtyOrdered'] as num).toDouble();
+                    final double price =
+                        (line['PriceActual'] as num).toDouble();
+                    final double net = (line['LineNetAmt'] as num).toDouble();
+                    final double rate =
+                        (line['C_Tax_ID']['Rate'] as num).toDouble();
+                    final double tax = net * (rate / 100);
+                    final double total = net + tax;
 
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .scaffoldBackgroundColor
-                          .withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ListTile(
-                      tileColor: Colors.transparent,
-                      title: Text(name,
-                          style: Theme.of(context).textTheme.bodyMedium),
-                      subtitle: Text(
-                          "Cantidad: $qty | Precio: \$${price.toStringAsFixed(2)}",
-                          style: Theme.of(context).textTheme.bodySmall),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "${line['C_Tax_ID']['Name']} ($rate%)",
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(fontSize: 12),
-                          ),
-                          Text(
-                            "Subtotal: \$${net.toStringAsFixed(2)}",
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(fontSize: 12),
-                          ),
-                          Text(
-                            "Total: \$${total.toStringAsFixed(2)}",
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(fontSize: 12),
-                          ),
-                        ],
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .scaffoldBackgroundColor
+                            .withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                  );
-                },
+                      child: ListTile(
+                        tileColor: Colors.transparent,
+                        title: Text(name,
+                            style: Theme.of(context).textTheme.bodyMedium),
+                        subtitle: Text(
+                            "Cantidad: $qty | Precio: \$${price.toStringAsFixed(2)}",
+                            style: Theme.of(context).textTheme.bodySmall),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              "${line['C_Tax_ID']['Name']} ($rate%)",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(fontSize: 12),
+                            ),
+                            Text(
+                              "Subtotal: \$${net.toStringAsFixed(2)}",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(fontSize: 12),
+                            ),
+                            Text(
+                              "Total: \$${total.toStringAsFixed(2)}",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            const Divider(),
-            _buildFinalSummary(
-                taxSummary: taxSummary,
-                grandTotal: (order['GrandTotal'] as num).toDouble(),
-                context: context),
-          ],
+              const Divider(),
+              _buildFinalSummary(
+                  taxSummary: taxSummary,
+                  grandTotal: (order['GrandTotal'] as num).toDouble(),
+                  context: context),
+            ],
+          ),
         ),
       ),
     );
