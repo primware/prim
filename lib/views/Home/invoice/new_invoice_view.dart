@@ -354,7 +354,11 @@ class _InvoicePageState extends State<InvoicePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nueva orden'),
+        title: Text('Nueva orden',
+            style: Theme.of(context)
+                .textTheme
+                .headlineLarge
+                ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
       ),
       drawer: POS.isPOS ? MenuDrawer() : null,
       body: SafeArea(

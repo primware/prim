@@ -12,21 +12,17 @@ class OrderDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lines = order['C_OrderLine'] as List<dynamic>;
-
+    final lines = (order['C_OrderLine'] as List?) ?? [];
     final taxSummary = _calculateTaxSummary([order]);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Orden #${order['DocumentNo']}',
-          style: Theme.of(context)
-              .textTheme
-              .headlineLarge
-              ?.copyWith(color: Theme.of(context).colorScheme.secondary),
-        ),
+        title: Text('Orden #${order['DocumentNo']}',
+            style: Theme.of(context)
+                .textTheme
+                .headlineLarge
+                ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
         centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.onSecondary,
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -56,11 +52,12 @@ class OrderDetailPage extends StatelessWidget {
                   itemCount: lines.length,
                   itemBuilder: (context, index) {
                     final line = lines[index];
-                    final String name = line['M_Product_ID']['identifier']
-                        .toString()
-                        .split('_')
-                        .skip(1)
-                        .join(' ');
+                    final String name =
+                        (line['M_Product_ID']?['identifier']?.toString() ??
+                                'Sin nombre')
+                            .split('_')
+                            .skip(1)
+                            .join(' ');
                     final double qty = (line['QtyOrdered'] as num).toDouble();
                     final double price =
                         (line['PriceActual'] as num).toDouble();

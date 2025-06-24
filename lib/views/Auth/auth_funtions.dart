@@ -149,16 +149,14 @@ Future<bool> getWarehouse({
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
-      Token.warehouseID = responseData['warehouses'][0]['id'];
+      Token.warehouseID = responseData?['warehouses'][0]['id'];
 
       return true;
     } else {
       print('Error en getWarehouse: ${response.statusCode}, ${response.body}');
     }
   } catch (e) {
-    if (e is http.ClientException) {
-      handle401(context);
-    }
+    print(e);
   }
   return false;
 }
@@ -187,7 +185,7 @@ Future<bool> usuarioAuth(
         "clientId": Token.client,
         "roleId": Token.rol,
         "organizationId": Token.organitation,
-        "warehouseId": Token.warehouseID,
+        "warehouseId": Token.warehouseID ?? 0,
         "language": "en_US"
       }
     };
@@ -286,9 +284,7 @@ Future<bool> loadUserData(BuildContext context) async {
           'Error al cargar loadUserData, codigo: ${response.statusCode}, detalle: ${response.body}');
     }
   } catch (e) {
-    if (e is http.ClientException) {
-      handle401(context);
-    }
+    print(e);
   }
 
   return false;
@@ -310,11 +306,8 @@ Future<void> loadPOSData(BuildContext context) async {
       final records = decoded['records'] as List?;
 
       if (records == null || records.isEmpty) {
-        SnackMessage.show(
-          context: context,
-          message: "No hay Terminal PDV configurado para este usuario",
-          type: SnackType.failure,
-        );
+        print('No hay Terminal PDV configurado para este usuario');
+
         return;
       }
 

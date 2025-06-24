@@ -164,7 +164,10 @@ class _OrderListPageState extends State<OrderListPage> {
         return Future.value(false);
       },
       child: Scaffold(
-        appBar: AppBar(title: Text('Mis órdenes')),
+        appBar: AppBar(
+            title: Text('Mis órdenes',
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.secondary))),
         drawer: POS.isPOS ? MenuDrawer() : null,
         floatingActionButton: FloatingActionButton(
           onPressed: () {

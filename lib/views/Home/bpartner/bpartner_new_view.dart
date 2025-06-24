@@ -137,7 +137,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   .headlineLarge
                   ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
           centerTitle: true,
-          backgroundColor: Theme.of(context).colorScheme.onSecondary,
         ),
         body: SafeArea(
           child: SingleChildScrollView(
