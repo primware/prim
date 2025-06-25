@@ -58,6 +58,9 @@ class EndPoints {
   static String cTax = '${Base.baseURL}/api/v1/models/C_Tax';
 
   static String cTaxCategory = '${Base.baseURL}/api/v1/models/C_TaxCategory';
+
+  static String cPOSTenderType =
+      '${Base.baseURL}/api/v1/models/C_POSTenderType';
 }
 
 class GetCustomerData {

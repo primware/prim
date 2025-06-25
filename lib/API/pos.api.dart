@@ -4,3 +4,7 @@ class POS {
   static int? templatePartnerID;
   static bool isPOS = false;
 }
+
+class POSTenderType {
+  static bool isMultiPayment = false;
+}

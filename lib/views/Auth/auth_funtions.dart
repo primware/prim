@@ -201,8 +201,9 @@ Future<bool> usuarioAuth(
     if (response.statusCode == 200) {
       Token.auth = '${Token.tokenType} ${json.decode(response.body)["token"]}';
       UserData.id = json.decode(response.body)["userId"];
-      bool success = await loadUserData(context);
-      await loadPOSData(context);
+      bool success = await _loadUserData(context);
+      await _loadPOSData(context);
+      POSTenderType.isMultiPayment = await _posTenderExists();
       return success;
     } else {
       print('Error: ${response.statusCode}, ${response.body}');
@@ -257,7 +258,7 @@ Future<bool> superAuth(
   return false;
 }
 
-Future<bool> loadUserData(BuildContext context) async {
+Future<bool> _loadUserData(BuildContext context) async {
   try {
     final response = await http.get(
       Uri.parse(GetUserData(adUserID: UserData.id!).endPoint),
@@ -290,7 +291,7 @@ Future<bool> loadUserData(BuildContext context) async {
   return false;
 }
 
-Future<void> loadPOSData(BuildContext context) async {
+Future<void> _loadPOSData(BuildContext context) async {
   try {
     final response = await http.get(
       Uri.parse(
@@ -328,6 +329,25 @@ Future<void> loadPOSData(BuildContext context) async {
     if (e is http.ClientException) {
       handle401(context);
     }
+  }
+}
+
+Future<bool> _posTenderExists() async {
+  final response = await http.get(
+    Uri.parse(EndPoints.cPOSTenderType),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': Token.auth!,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return data['row-count'] > 0;
+  } else {
+    print(
+        'Error al verificar existencia de PosTenderExists: ${response.statusCode}, ${response.body}');
+    return false;
   }
 }
 

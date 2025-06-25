@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/logo.dart';
 import 'package:primware/views/Home/invoice/my_invoice_view.dart';
-import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/button.widget.dart';

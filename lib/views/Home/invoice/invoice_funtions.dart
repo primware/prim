@@ -172,7 +172,7 @@ Future<Map<String, dynamic>> postInvoice({
       "DeliveryViaRule": "P",
       "PriorityRule": "5",
       "FreightCostRule": "I",
-      "PaymentRule": "M",
+      "PaymentRule": POSTenderType.isMultiPayment ? "M" : "B",
       "M_PriceList_ID": POS.priceListID,
       "IsSOTrx": true,
       "order-line": orderLines,
