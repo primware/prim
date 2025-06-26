@@ -2,7 +2,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 import '../../API/endpoint.api.dart';
 import '../../API/pos.api.dart';
 import '../../API/token.api.dart';
@@ -16,7 +16,7 @@ Future<void> handle401(BuildContext context) async {
   Token.auth = null;
   UserData.rolName = null;
   UserData.imageBytes = null;
-  usuarioController.clear();
+  // usuarioController.clear();
   claveController.clear();
 
   Navigator.push(
@@ -41,7 +41,7 @@ Future<Map<String, dynamic>?> preAuth(
 
     final Map<String, dynamic> data = {"userName": usuario, "password": clave};
 
-    final response = await http.post(
+    final response = await post(
       Uri.parse(EndPoints.postUserAuth),
       headers: {
         'Content-Type': 'application/json',
@@ -58,10 +58,10 @@ Future<Map<String, dynamic>?> preAuth(
       print('Error: ${response.statusCode}, ${response.body}');
     }
   } catch (e) {
-    print(e);
-    if (e is http.ClientException) {
-      handle401(context);
-    }
+    // print(e);
+    // if (e is ClientException) {
+    //   handle401(context);
+    // }
   }
   return null;
 }
@@ -69,7 +69,7 @@ Future<Map<String, dynamic>?> preAuth(
 Future<List<Map<String, dynamic>>?> getRoles(
     int clientId, BuildContext context) async {
   try {
-    final response = await http.get(
+    final response = await get(
       Uri.parse(GetRol(clientID: clientId).endPoint),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -91,7 +91,7 @@ Future<List<Map<String, dynamic>>?> getRoles(
       print('Error: ${response.statusCode}, ${response.body}');
     }
   } catch (e) {
-    if (e is http.ClientException) {
+    if (e is ClientException) {
       handle401(context);
     }
   }
@@ -101,7 +101,7 @@ Future<List<Map<String, dynamic>>?> getRoles(
 Future<List<Map<String, dynamic>>?> getOrganizations(
     int clientId, int roleId, BuildContext context) async {
   try {
-    final response = await http.get(
+    final response = await get(
       Uri.parse(GetOrganization(rolID: roleId, clientID: clientId).endPoint),
       headers: {
         'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ Future<List<Map<String, dynamic>>?> getOrganizations(
       print('Error: ${response.statusCode}, ${response.body}');
     }
   } catch (e) {
-    if (e is http.ClientException) {
+    if (e is ClientException) {
       handle401(context);
     }
   }
@@ -137,7 +137,7 @@ Future<bool> getWarehouse({
   required BuildContext context,
 }) async {
   try {
-    final response = await http.get(
+    final response = await get(
       Uri.parse(GetWarehouse(
               rolID: roleId, clientID: clientId, organizationID: organitaionId)
           .endPoint),
@@ -190,7 +190,7 @@ Future<bool> usuarioAuth(
       }
     };
 
-    final response = await http.post(
+    final response = await post(
       Uri.parse(EndPoints.postUserAuth),
       headers: {
         'Content-Type': 'application/json',
@@ -204,14 +204,13 @@ Future<bool> usuarioAuth(
       bool success = await _loadUserData(context);
       await _loadPOSData(context);
       POSTenderType.isMultiPayment = await _posTenderExists();
+      await _fetchDocumentActions();
       return success;
     } else {
       print('Error: ${response.statusCode}, ${response.body}');
     }
   } catch (e) {
-    if (e is http.ClientException) {
-      handle401(context);
-    }
+    print(e);
   }
   return false;
 }
@@ -235,7 +234,7 @@ Future<bool> superAuth(
       }
     };
 
-    final response = await http.post(
+    final response = await post(
       Uri.parse(EndPoints.postUserAuth),
       headers: {
         'Content-Type': 'application/json',
@@ -251,7 +250,7 @@ Future<bool> superAuth(
       print('Error: ${response.statusCode}, ${response.body}');
     }
   } catch (e) {
-    if (e is http.ClientException) {
+    if (e is ClientException) {
       handle401(context);
     }
   }
@@ -260,7 +259,7 @@ Future<bool> superAuth(
 
 Future<bool> _loadUserData(BuildContext context) async {
   try {
-    final response = await http.get(
+    final response = await get(
       Uri.parse(GetUserData(adUserID: UserData.id!).endPoint),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -293,7 +292,7 @@ Future<bool> _loadUserData(BuildContext context) async {
 
 Future<void> _loadPOSData(BuildContext context) async {
   try {
-    final response = await http.get(
+    final response = await get(
       Uri.parse(
           '${EndPoints.cPos}?\$filter=SalesRep_ID eq ${UserData.id}&\$expand=C_DocType_ID'),
       headers: {
@@ -308,7 +307,7 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       if (records == null || records.isEmpty) {
         print('No hay Terminal PDV configurado para este usuario');
-
+        POS.priceListID ??= await _getMPriceListID();
         return;
       }
 
@@ -326,14 +325,14 @@ Future<void> _loadPOSData(BuildContext context) async {
     }
   } catch (e) {
     print('Excepción en loadPOSData: $e');
-    if (e is http.ClientException) {
+    if (e is ClientException) {
       handle401(context);
     }
   }
 }
 
 Future<bool> _posTenderExists() async {
-  final response = await http.get(
+  final response = await get(
     Uri.parse(EndPoints.cPOSTenderType),
     headers: {
       'Content-Type': 'application/json',
@@ -351,10 +350,96 @@ Future<bool> _posTenderExists() async {
   }
 }
 
+Future<int?> _getMPriceListID() async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      return responseData['records'][0]['id'];
+    } else {
+      print(
+          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en _getMPriceListID: $e');
+  }
+  return null;
+}
+
+Future<int?> _getCDocType() async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\' AND IsDefault eq true OR DocSubTypeSO eq \'OB\'&\$orderby=IsDefault desc'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      return responseData['records'][0]['id'];
+    } else {
+      print('Error en _getCDocType: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en _getCDocType: $e');
+  }
+  return null;
+}
+
+Future<void> _fetchDocumentActions() async {
+  if (POS.docTypeID == null) {}
+  POS.docTypeID = await _getCDocType();
+  if (POS.docTypeID == null || Token.rol == null) return;
+
+  final response = await get(
+    Uri.parse(GetDocumentActions(roleID: Token.rol!, docTypeID: POS.docTypeID!)
+        .endPoint),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': Token.auth!,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+    final records = jsonResponse['records'] as List;
+
+    final Map<String, Map<String, String>> actionMap = {
+      'Complete': {'code': 'CO', 'name': 'Completar'},
+      'Prepare': {'code': 'PR', 'name': 'Preparar'},
+    };
+
+    final List<Map<String, String>> result = [...POS.documentActions];
+
+    for (var record in records) {
+      final identifier = record['AD_Ref_List_ID']?['identifier'];
+      final action = actionMap[identifier];
+      if (action != null && !result.any((e) => e['code'] == action['code'])) {
+        result.add(action);
+      }
+    }
+
+    POS.documentActions = result;
+  } else {
+    print('Error al obtener acciones de documento: ${response.statusCode}');
+  }
+}
+
 Future<List<Map<String, dynamic>>?> getOrganizationsAfterLogin(
     BuildContext context) async {
   try {
-    final response = await http.get(
+    final response = await get(
       Uri.parse(EndPoints.getOrganizationsAfterLogin),
       headers: {
         'Content-Type': 'application/json',

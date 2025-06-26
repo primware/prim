@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
 class ButtonPrimary extends StatefulWidget {
-  const ButtonPrimary({
-    super.key,
-    this.onPressed,
-    this.onLongPress,
-    this.texto,
-    this.icono,
-    this.fullWidth = false,
-  });
+  const ButtonPrimary(
+      {super.key,
+      this.onPressed,
+      this.onLongPress,
+      this.texto,
+      this.icono,
+      this.fullWidth = false,
+      this.enable = true});
 
   final Function()? onPressed, onLongPress;
   final String? texto;
   final IconData? icono;
-  final bool fullWidth;
+  final bool fullWidth, enable;
 
   @override
   State<ButtonPrimary> createState() => _ButtonPrimaryState();
@@ -27,7 +27,8 @@ class _ButtonPrimaryState extends State<ButtonPrimary> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor:
+              widget.enable ? Theme.of(context).primaryColor : Colors.grey,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),

@@ -59,6 +59,8 @@ class EndPoints {
 
   static String cTaxCategory = '${Base.baseURL}/api/v1/models/C_TaxCategory';
 
+  static String cDocType = '${Base.baseURL}/api/v1/models/C_DocType';
+
   static String cPOSTenderType =
       '${Base.baseURL}/api/v1/models/C_POSTenderType';
 }
@@ -118,4 +120,28 @@ class GetWarehouse {
 
   String get endPoint =>
       '${Base.baseURL}/api/v1/auth/warehouses?client=$clientID&role=$rolID&organization=$organizationID';
+}
+
+class GetProductInPriceList {
+  final int mPriceListID;
+
+  GetProductInPriceList({
+    required this.mPriceListID,
+  });
+
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/models/M_PriceList_Version?\$filter=M_PriceList_ID eq $mPriceListID&\$select=ValidFrom&\$expand=M_ProductPrice(\$select=M_Product_ID)&\$orderby=ValidFrom desc';
+}
+
+class GetDocumentActions {
+  final int roleID;
+  final int docTypeID;
+
+  GetDocumentActions({
+    required this.roleID,
+    required this.docTypeID,
+  });
+
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/models/AD_Document_Action_Access?\$filter=AD_Role_ID eq $roleID AND C_DocType_ID eq $docTypeID&\$select=AD_Ref_List_ID';
 }

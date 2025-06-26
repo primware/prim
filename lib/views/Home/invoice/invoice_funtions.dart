@@ -42,10 +42,18 @@ Future<List<Map<String, dynamic>>> fetchBPartner(
   }
 }
 
-Future<List<Map<String, dynamic>>> fetchProduct({
+Future<List<Map<String, dynamic>>> fetchProductInPriceList({
   required BuildContext context,
 }) async {
   try {
+    if (POS.priceListID == null) {
+      return [];
+    }
+
+    final validProductIDs =
+        await _fetchLatestPricelistProductIDs(mPriceListID: POS.priceListID!);
+    if (validProductIDs.isEmpty) return [];
+
     final response = await get(
       Uri.parse(
         '${EndPoints.mProduct}?\$select=Name,C_TaxCategory_ID,SKU&\$expand=M_ProductPrice(\$select=PriceStd)',
@@ -63,6 +71,8 @@ Future<List<Map<String, dynamic>>> fetchProduct({
       List<Map<String, dynamic>> productList = [];
 
       for (var record in records) {
+        if (!validProductIDs.contains(record['id'])) continue;
+
         final taxCategoryID = record['C_TaxCategory_ID']?['id'];
         Map<String, dynamic>? assignedTax;
 
@@ -95,6 +105,43 @@ Future<List<Map<String, dynamic>>> fetchProduct({
     }
   } catch (e) {
     print('Excepción al obtener productos: $e');
+    return [];
+  }
+}
+
+Future<List<int>> _fetchLatestPricelistProductIDs(
+    {required int mPriceListID}) async {
+  try {
+    final response = await get(
+      Uri.parse(GetProductInPriceList(mPriceListID: mPriceListID).endPoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+          'Error al obtener la lista de precios: ${response.statusCode}');
+    }
+
+    final data = json.decode(utf8.decode(response.bodyBytes));
+    final records = data['records'] as List;
+
+    if (records.isEmpty) return [];
+
+    final latestVersion = records.first;
+    final prices = latestVersion['M_ProductPrice'] as List;
+
+    final productIDs = prices
+        .map((entry) => entry['M_Product_ID']?['id'])
+        .where((id) => id != null)
+        .cast<int>()
+        .toList();
+
+    return productIDs;
+  } catch (e) {
+    print('Error al obtener productos desde la lista de precios: $e');
     return [];
   }
 }
@@ -144,6 +191,7 @@ Future<Map<String, dynamic>> postInvoice({
   required List<Map<String, dynamic>> invoiceLines,
   required List<Map<String, dynamic>> payments,
   required BuildContext context,
+  required String docAction,
 }) async {
   try {
     await usuarioAuth(
@@ -185,10 +233,8 @@ Future<Map<String, dynamic>> postInvoice({
       "IsSOTrx": true,
       "order-line": orderLines,
       if (POSTenderType.isMultiPayment) "pos-payment": posPayments,
-      "doc-action": "DR"
+      "doc-action": docAction
     };
-
-    print(orderData);
 
     final orderResponse = await post(
       Uri.parse('${Base.baseURL}/api/v1/windows/sales-order'),

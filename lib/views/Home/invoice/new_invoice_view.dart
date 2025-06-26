@@ -45,6 +45,7 @@ class _InvoicePageState extends State<InvoicePage> {
   bool _isInvoiceValid = false;
 
   int? selectedBPartnerID;
+  String? selectedDocActionCode;
   Map<String, dynamic>? selectedTax;
 
   double subtotal = 0.0;
@@ -65,8 +66,14 @@ class _InvoicePageState extends State<InvoicePage> {
       _loadBPartner();
       _loadProduct();
       _loadTax();
-      _loadPayment();
+      if (POSTenderType.isMultiPayment) {
+        _loadPayment();
+      }
     });
+
+    if (POS.documentActions.isNotEmpty) {
+      selectedDocActionCode = POS.documentActions.first['code'];
+    }
   }
 
   Future<void> _loadPayment() async {
@@ -111,8 +118,9 @@ class _InvoicePageState extends State<InvoicePage> {
     final difference = (totalPayment - totalAmount).abs();
 
     setState(() {
-      _isInvoiceValid =
-          clientSelected && products.isNotEmpty && difference < 0.01;
+      _isInvoiceValid = clientSelected &&
+          products.isNotEmpty &&
+          (difference < 0.01 || POSTenderType.isMultiPayment == false);
     });
   }
 
@@ -138,7 +146,7 @@ class _InvoicePageState extends State<InvoicePage> {
   }
 
   Future<void> _loadProduct() async {
-    final product = await fetchProduct(context: context);
+    final product = await fetchProductInPriceList(context: context);
     setState(() {
       productOptions = product;
       isProductLoading = false;
@@ -164,17 +172,27 @@ class _InvoicePageState extends State<InvoicePage> {
 
   void _recalculateSummary() {
     double newSubtotal = 0.0;
+    double newIVA = 0.0;
+
     for (var line in invoiceLines) {
       final price = (line['price'] ?? 0) as num;
       final quantity = (line['quantity'] ?? 1) as num;
-      newSubtotal += price * quantity;
-    }
+      final taxID = line['C_Tax_ID'];
 
-    final taxPercent = (selectedTax?['rate'] ?? 0).toDouble();
+      newSubtotal += price * quantity;
+
+      final tax = taxOptions.firstWhere(
+        (t) => t['id'] == taxID,
+        orElse: () => {},
+      );
+      final taxPercent = double.tryParse('${tax['rate'] ?? '0'}') ?? 0.0;
+
+      newIVA += price * quantity * (taxPercent / 100);
+    }
 
     setState(() {
       subtotal = newSubtotal;
-      iva = subtotal * (taxPercent / 100);
+      iva = newIVA;
       total = subtotal + iva;
     });
   }
@@ -369,6 +387,7 @@ class _InvoicePageState extends State<InvoicePage> {
       invoiceLines: invoiceLine,
       payments: paymentData,
       context: context,
+      docAction: selectedDocActionCode ?? 'DR',
     );
 
     if (result['success'] == true) {
@@ -384,6 +403,9 @@ class _InvoicePageState extends State<InvoicePage> {
         subtotal = 0.0;
         iva = 0.0;
         total = 0.0;
+        paymentControllers.forEach((key, controller) => controller.clear());
+        selectedDocActionCode = POS.documentActions.first['code'];
+        _validateForm();
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -449,6 +471,12 @@ class _InvoicePageState extends State<InvoicePage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Center(
+                              child: Text('Detalles de la orden',
+                                  style:
+                                      Theme.of(context).textTheme.titleLarge),
+                            ),
+                            const SizedBox(height: CustomSpacer.medium),
                             isBPartnerLoading
                                 ? _buildShimmerField()
                                 : CustomSearchField(
@@ -574,215 +602,217 @@ class _InvoicePageState extends State<InvoicePage> {
                                 }).toList(),
                               ),
                             ],
-                            Divider(
-                              color: Theme.of(context).dividerColor,
-                              height: 60,
-                            ),
-                            Center(
-                              child: Text('Resumen de la Factura',
-                                  style:
-                                      Theme.of(context).textTheme.titleLarge),
-                            ),
-                            const SizedBox(height: CustomSpacer.medium),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Subtotal',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium),
-                                Text('\$${subtotal.toStringAsFixed(2)}',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium),
-                              ],
-                            ),
-                            const SizedBox(height: CustomSpacer.medium),
-                            if (invoiceLines.isNotEmpty &&
-                                getTotalTaxAmount() > 0) ...[
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Resumen de impuestos',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium),
-                                  const SizedBox(height: CustomSpacer.small),
-                                  ...getGroupedTaxTotals().entries.map(
-                                        (entry) => Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(entry.key,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium),
-                                            Text(
-                                                '\$${entry.value.toStringAsFixed(2)}',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium),
-                                          ],
-                                        ),
-                                      ),
-                                  const SizedBox(height: CustomSpacer.small),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Total impuestos',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              )),
-                                      Text(
-                                          '\$${getTotalTaxAmount().toStringAsFixed(2)}',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              )),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: CustomSpacer.medium),
-                            ],
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Total',
-                                    style:
-                                        Theme.of(context).textTheme.titleLarge),
-                                Text('\$${total.toStringAsFixed(2)}',
-                                    style:
-                                        Theme.of(context).textTheme.titleLarge),
-                              ],
-                            ),
-                            const SizedBox(height: CustomSpacer.xlarge),
-                            if (!isSending) ...[
-                              ButtonSecondary(
-                                fullWidth: true,
-                                texto: 'Cancelar',
-                                onPressed: () {
-                                  clearInvoiceFields();
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              OrderListPage()));
-                                },
-                              ),
-                              const SizedBox(height: CustomSpacer.medium)
-                            ],
                           ],
                         ),
                       ],
                     ),
                   ),
                 ),
+                if (POSTenderType.isMultiPayment)
+                  CustomContainer(
+                    maxWidthContainer: 360,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Métodos de pago",
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 12),
+                            if (isPaymentMethodsLoading)
+                              _buildShimmerField()
+                            else ...[
+                              ...paymentMethods.map((method) {
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextfieldTheme(
+                                          controlador:
+                                              paymentControllers[method['id']],
+                                          texto: method['name'],
+                                          inputType: TextInputType.number,
+                                          onChanged: (_) => _validateForm(),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: const Icon(
+                                            Icons.attach_money_rounded),
+                                        tooltip:
+                                            'Llenar con el máximo disponible',
+                                        onPressed: () {
+                                          final currentSum = paymentControllers
+                                              .entries
+                                              .where(
+                                                  (e) => e.key != method['id'])
+                                              .map((e) =>
+                                                  double.tryParse(
+                                                      e.value.text) ??
+                                                  0.0)
+                                              .fold(0.0, (a, b) => a + b);
+
+                                          final remaining =
+                                              (totalAmount - currentSum)
+                                                  .clamp(0.0, totalAmount);
+                                          paymentControllers[method['id']]
+                                                  ?.text =
+                                              remaining.toStringAsFixed(2);
+                                          _validateForm();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                          ],
+                        ),
+                        if (!_isInvoiceValid &&
+                            clientSelected &&
+                            products.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              'La suma de los pagos debe ser igual al total.',
+                              style: TextStyle(
+                                  color: ColorTheme.error, fontSize: 13),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                //? Resumen de la factura
                 CustomContainer(
                   maxWidthContainer: 360,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Center(
+                        child: Text('Resumen de la Factura',
+                            style: Theme.of(context).textTheme.titleLarge),
+                      ),
+                      const SizedBox(height: CustomSpacer.medium),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Total a pagar',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          Text(
-                            '\$${total.toStringAsFixed(2)}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                    color: Theme.of(context).primaryColor),
-                          ),
+                          Text('Subtotal',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                          Text('\$${subtotal.toStringAsFixed(2)}',
+                              style: Theme.of(context).textTheme.bodyMedium),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Métodos de pago",
-                              style: Theme.of(context).textTheme.titleMedium),
-                          const SizedBox(height: 12),
-                          if (isPaymentMethodsLoading)
-                            _buildShimmerField()
-                          else ...[
-                            ...paymentMethods.map((method) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4.0),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: TextfieldTheme(
-                                        controlador:
-                                            paymentControllers[method['id']],
-                                        texto: method['name'],
-                                        inputType: TextInputType.number,
-                                        onChanged: (_) => _validateForm(),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(
-                                          Icons.attach_money_rounded),
-                                      tooltip:
-                                          'Llenar con el máximo disponible',
-                                      onPressed: () {
-                                        final currentSum = paymentControllers
-                                            .entries
-                                            .where((e) => e.key != method['id'])
-                                            .map((e) =>
-                                                double.tryParse(e.value.text) ??
-                                                0.0)
-                                            .fold(0.0, (a, b) => a + b);
-
-                                        final remaining =
-                                            (totalAmount - currentSum)
-                                                .clamp(0.0, totalAmount);
-                                        paymentControllers[method['id']]?.text =
-                                            remaining.toStringAsFixed(2);
-                                        _validateForm();
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      if (_isInvoiceValid)
-                        Container(
-                          child: isSending
-                              ? ButtonLoading(fullWidth: true)
-                              : ButtonPrimary(
-                                  fullWidth: true,
-                                  texto: 'Completar',
-                                  onPressed: () => _createInvoice(
-                                    product: invoiceLines,
-                                    bPartner: selectedBPartnerID ?? 0,
+                      const SizedBox(height: CustomSpacer.medium),
+                      if (invoiceLines.isNotEmpty &&
+                          getTotalTaxAmount() > 0) ...[
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Resumen de impuestos',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: CustomSpacer.small),
+                            ...getGroupedTaxTotals().entries.map(
+                                  (entry) => Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(entry.key,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium),
+                                      Text(
+                                          '\$${entry.value.toStringAsFixed(2)}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium),
+                                    ],
                                   ),
                                 ),
+                            const SizedBox(height: CustomSpacer.small),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Total impuestos',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        )),
+                                Text(
+                                    '\$${getTotalTaxAmount().toStringAsFixed(2)}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        )),
+                              ],
+                            ),
+                          ],
                         ),
-                      if (!_isInvoiceValid &&
-                          clientSelected &&
-                          products.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            'La suma de los pagos debe ser igual al total.',
-                            style: TextStyle(
-                                color: ColorTheme.error, fontSize: 13),
-                          ),
+                        const SizedBox(height: CustomSpacer.medium),
+                      ],
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Total',
+                              style: Theme.of(context).textTheme.titleLarge),
+                          Text('\$${total.toStringAsFixed(2)}',
+                              style: Theme.of(context).textTheme.titleLarge),
+                        ],
+                      ),
+                      const Divider(),
+                      const SizedBox(height: CustomSpacer.xlarge),
+                      CustomSearchField(
+                        options: POS.documentActions,
+                        labelText: "Acción del Documento",
+                        searchBy: "name",
+                        showCreateButtonIfNotFound: false,
+                        controller: TextEditingController(
+                          text: POS.documentActions.first['name'],
+                        ),
+                        onItemSelected: (item) {
+                          setState(() {
+                            selectedDocActionCode = item['code'];
+                          });
+                        },
+                        itemBuilder: (item) => Text(
+                          '${item['name']}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                      const SizedBox(height: CustomSpacer.small),
+                      Container(
+                        child: isSending
+                            ? ButtonLoading(fullWidth: true)
+                            : ButtonPrimary(
+                                fullWidth: true,
+                                texto: 'Procesar',
+                                enable: _isInvoiceValid,
+                                onPressed: () => _isInvoiceValid
+                                    ? _createInvoice(
+                                        product: invoiceLines,
+                                        bPartner: selectedBPartnerID ?? 0,
+                                      )
+                                    : null,
+                              ),
+                      ),
+                      const SizedBox(height: CustomSpacer.medium),
+                      if (!isSending)
+                        ButtonSecondary(
+                          fullWidth: true,
+                          texto: 'Cancelar',
+                          onPressed: () {
+                            clearInvoiceFields();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => OrderListPage()));
+                          },
                         ),
                     ],
                   ),
