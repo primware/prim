@@ -131,7 +131,7 @@ class _LoginPageState extends State<LoginPage> {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           content: Text(
-            'Se guardó la direción, es necesario reiniciar la aplicación para aplicar los cambios',
+            'Se guardó la direción del servidor.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           actions: [

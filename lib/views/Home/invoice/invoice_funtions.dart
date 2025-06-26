@@ -142,6 +142,7 @@ Future<List<Map<String, dynamic>>> fetchTax({
 Future<Map<String, dynamic>> postInvoice({
   required int cBPartnerID,
   required List<Map<String, dynamic>> invoiceLines,
+  required List<Map<String, dynamic>> payments,
   required BuildContext context,
 }) async {
   try {
@@ -162,22 +163,32 @@ Future<Map<String, dynamic>> postInvoice({
       };
     }).toList();
 
+    final posPayments = payments.map((payment) {
+      return {
+        "C_POSTenderType_ID": {"id": payment['C_POSTenderType_ID']},
+        "PayAmt": payment['PayAmt'],
+      };
+    }).toList();
+
     final Map<String, dynamic> orderData = {
       "C_BPartner_ID": {"id": cBPartnerID},
       "AD_Org_ID": {"id": Token.organitation},
       "M_Warehouse_ID": {"id": Token.warehouseID},
-      "C_DocTypeTarget_ID": POS.docTypeID,
+      "C_DocTypeTarget_ID": POS.docTypeID ?? {"identifier": "POS Order"},
       "SalesRep_ID": {"id": UserData.id},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",
       "PriorityRule": "5",
       "FreightCostRule": "I",
       "PaymentRule": POSTenderType.isMultiPayment ? "M" : "B",
-      "M_PriceList_ID": POS.priceListID,
+      "M_PriceList_ID": POS.priceListID ?? {"identifier": "Standard"},
       "IsSOTrx": true,
       "order-line": orderLines,
-      "doc-action": "CO"
+      if (POSTenderType.isMultiPayment) "pos-payment": posPayments,
+      "doc-action": "DR"
     };
+
+    print(orderData);
 
     final orderResponse = await post(
       Uri.parse('${Base.baseURL}/api/v1/windows/sales-order'),
@@ -247,6 +258,36 @@ Future<List<Map<String, dynamic>>> fetchOrders(
     }
   } catch (e) {
     debugPrint('Error de red en fetchOrders: $e');
+    return [];
+  }
+}
+
+Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
+  try {
+    final response = await get(
+      Uri.parse('${EndPoints.cPOSTenderType}?\$select=Name,TenderType'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      final records = jsonResponse['records'] as List;
+      return records.map((record) {
+        return {
+          'id': record['id'],
+          'name': record['Name'],
+          'tenderType': record['TenderType']?['identifier'] ?? 'Desconocido',
+        };
+      }).toList();
+    } else {
+      throw Exception(
+          'Error al cargar métodos de pago: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Excepción al obtener métodos de pago: $e');
     return [];
   }
 }
