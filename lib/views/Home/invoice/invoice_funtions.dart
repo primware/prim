@@ -337,3 +337,32 @@ Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
     return [];
   }
 }
+
+Future<List<Map<String, dynamic>>> fetchProductCategory() async {
+  try {
+    final response = await get(
+      Uri.parse(EndPoints.mProductCategory),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      final records = jsonResponse['records'] as List;
+      return records.map((record) {
+        return {
+          'id': record['id'],
+          'name': record['Name'],
+        };
+      }).toList();
+    } else {
+      throw Exception(
+          'Error al cargar las categorias de los productos: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Excepción al obtener las categorias de los productos: $e');
+    return [];
+  }
+}

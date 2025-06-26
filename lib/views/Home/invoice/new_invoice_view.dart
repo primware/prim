@@ -30,12 +30,17 @@ class _InvoicePageState extends State<InvoicePage> {
   bool isSending = false;
   bool isBPartnerLoading = true;
   bool isProductLoading = true;
+  bool isProductCategoryLoading = true;
   bool isTaxLoading = true;
 
   List<Map<String, dynamic>> bPartnerOptions = [];
   List<Map<String, dynamic>> productOptions = [];
+  List<Map<String, dynamic>> categpryOptions = [];
   List<Map<String, dynamic>> taxOptions = [];
   List<Map<String, dynamic>> invoiceLines = [];
+
+  // Estado para categorías seleccionadas
+  Set<int> selectedCategories = {};
 
   // Payment methods state
   List<Map<String, dynamic>> paymentMethods = [];
@@ -66,6 +71,7 @@ class _InvoicePageState extends State<InvoicePage> {
       _loadBPartner();
       _loadProduct();
       _loadTax();
+      _loadProductCategory();
       if (POSTenderType.isMultiPayment) {
         _loadPayment();
       }
@@ -150,6 +156,14 @@ class _InvoicePageState extends State<InvoicePage> {
     setState(() {
       productOptions = product;
       isProductLoading = false;
+    });
+  }
+
+  Future<void> _loadProductCategory() async {
+    final category = await fetchProductCategory();
+    setState(() {
+      categpryOptions = category;
+      isProductCategoryLoading = false;
     });
   }
 
@@ -518,52 +532,103 @@ class _InvoicePageState extends State<InvoicePage> {
                             const SizedBox(height: CustomSpacer.medium),
                             isProductLoading
                                 ? _buildShimmerField()
-                                : CustomSearchField(
-                                    options: productOptions,
-                                    controller: productController,
-                                    showCreateButtonIfNotFound: true,
-                                    labelText: "Producto",
-                                    searchBy: "sku",
-                                    onCreate: (value) async {
-                                      final result = await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => ProductNewPage(
-                                              productName: value),
-                                        ),
-                                      );
-                                      if (result != null &&
-                                          result['created'] == true) {
-                                        _onProductCreated(result['product']);
-                                      }
-                                    },
-                                    onItemSelected: (item) {
-                                      _showQuantityDialog(item);
-                                    },
-                                    itemBuilder: (item) => Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        Text(
-                                          '\$${item['price'] ?? '0.00'}',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Segmento de categorías antes del campo de producto
+                                      if (!isProductCategoryLoading)
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text('Categorías del producto',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium),
+                                            const SizedBox(
+                                                height: CustomSpacer.small),
+                                            SizedBox(
+                                              width: double.infinity,
+                                              child: SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: SegmentedButton<int>(
+                                                  segments: categpryOptions
+                                                      .map((cat) =>
+                                                          ButtonSegment<int>(
+                                                            value: cat['id'],
+                                                            label: Text(
+                                                                cat['Name']),
+                                                          ))
+                                                      .toList(),
+                                                  selected: selectedCategories,
+                                                  multiSelectionEnabled: true,
+                                                  onSelectionChanged:
+                                                      (Set<int> newSelection) {
+                                                    setState(() {
+                                                      selectedCategories =
+                                                          newSelection;
+                                                      // Puedes usar newSelection para filtrar productos si deseas
+                                                    });
+                                                  },
+                                                ),
                                               ),
+                                            ),
+                                            const SizedBox(
+                                                height: CustomSpacer.medium),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      // Campo de producto
+                                      CustomSearchField(
+                                        options: productOptions,
+                                        controller: productController,
+                                        showCreateButtonIfNotFound: true,
+                                        labelText: "Producto",
+                                        searchBy: "sku",
+                                        onCreate: (value) async {
+                                          final result = await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => ProductNewPage(
+                                                  productName: value),
+                                            ),
+                                          );
+                                          if (result != null &&
+                                              result['created'] == true) {
+                                            _onProductCreated(
+                                                result['product']);
+                                          }
+                                        },
+                                        onItemSelected: (item) {
+                                          _showQuantityDialog(item);
+                                        },
+                                        itemBuilder: (item) => Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text(
+                                              '\$${item['price'] ?? '0.00'}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                             if (invoiceLines.isNotEmpty) ...[
                               const SizedBox(height: CustomSpacer.large),
