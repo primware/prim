@@ -29,6 +29,7 @@ class MainApp extends StatefulWidget {
 }
 
 class ThemeManager {
+  // ignore: library_private_types_in_public_api
   static late _MainAppState themeNotifier;
 }
 

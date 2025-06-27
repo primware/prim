@@ -173,13 +173,13 @@ class _InvoicePageState extends State<InvoicePage> {
     });
   }
 
-  Future<void> _loadProductCategory() async {
-    final category = await fetchProductCategory();
-    setState(() {
-      categpryOptions = category;
-      isProductCategoryLoading = false;
-    });
-  }
+  // Future<void> _loadProductCategory() async {
+  //   final category = await fetchProductCategory();
+  //   setState(() {
+  //     categpryOptions = category;
+  //     isProductCategoryLoading = false;
+  //   });
+  // }
 
   Future<void> _loadTax() async {
     final tax = await fetchTax(context: context);
