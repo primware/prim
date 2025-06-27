@@ -306,7 +306,8 @@ Future<void> _loadPOSData(BuildContext context) async {
       final records = decoded['records'] as List?;
 
       if (records == null || records.isEmpty) {
-        print('No hay Terminal PDV configurado para este usuario');
+        print(
+            'No hay Terminal PDV configurado para este usuario, obteniendo datos por defecto del priceList');
         POS.priceListID ??= await _getMPriceListID();
         return;
       }
@@ -467,4 +468,27 @@ Future<List<Map<String, dynamic>>?> getOrganizationsAfterLogin(
     print('Error general getOrganizationsAfterLogin: $e');
   }
   return null;
+}
+
+Future<String> fetchAppVersion() async {
+  try {
+    final response = await get(Uri.parse('index.html'));
+
+    if (response.statusCode == 200) {
+      final htmlContent = response.body;
+
+      final regex = RegExp(r'flutter_bootstrap\.js\?v=(\d+)"');
+      final match = regex.firstMatch(htmlContent);
+
+      if (match != null) {
+        return 'Versión: ${match.group(1)}';
+      } else {
+        return 'Versión: no encontrada';
+      }
+    } else {
+      return 'Versión: error al cargar index.html';
+    }
+  } catch (e) {
+    return 'Versión: debug';
+  }
 }

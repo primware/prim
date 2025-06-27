@@ -23,6 +23,7 @@ class InvoicePage extends StatefulWidget {
 }
 
 class _InvoicePageState extends State<InvoicePage> {
+  double calculatedChange = 0.0;
   TextEditingController clienteController = TextEditingController();
   TextEditingController qtyProductController = TextEditingController();
   TextEditingController productController = TextEditingController();
@@ -71,7 +72,7 @@ class _InvoicePageState extends State<InvoicePage> {
       _loadBPartner();
       _loadProduct();
       _loadTax();
-      _loadProductCategory();
+      // _loadProductCategory();
       if (POSTenderType.isMultiPayment) {
         _loadPayment();
       }
@@ -121,12 +122,25 @@ class _InvoicePageState extends State<InvoicePage> {
         .map((c) => double.tryParse(c.text) ?? 0.0)
         .fold(0.0, (sum, val) => sum + val);
 
-    final difference = (totalPayment - totalAmount).abs();
+    final totalCash = paymentControllers.entries
+        .where((entry) {
+          final method = paymentMethods.firstWhere(
+            (m) => m['id'] == entry.key,
+            orElse: () => {},
+          );
+          return method['isCash'] == true;
+        })
+        .map((entry) => double.tryParse(entry.value.text) ?? 0.0)
+        .fold(0.0, (sum, val) => sum + val);
+
+    final change = (totalPayment > totalAmount)
+        ? (totalCash - (totalAmount - (totalPayment - totalCash)))
+        : 0.0;
 
     setState(() {
-      _isInvoiceValid = clientSelected &&
-          products.isNotEmpty &&
-          (difference < 0.01 || POSTenderType.isMultiPayment == false);
+      _isInvoiceValid =
+          clientSelected && products.isNotEmpty && totalPayment >= totalAmount;
+      calculatedChange = change > 0 ? change : 0.0;
     });
   }
 
@@ -378,6 +392,8 @@ class _InvoicePageState extends State<InvoicePage> {
       return {
         'M_Product_ID': item['id'],
         'SKU': item['sku'],
+        'upc': item['upc'],
+        'Category': item['category'],
         'Name': item['name'],
         'Price': item['price'],
         'Quantity': item['quantity'],
@@ -405,6 +421,30 @@ class _InvoicePageState extends State<InvoicePage> {
     );
 
     if (result['success'] == true) {
+      if (calculatedChange > 0) {
+        await showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: Theme.of(context).cardColor,
+            title: Text(
+              'Vuelto',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            content: Text(
+              'El cambio es de \$${calculatedChange.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: ColorTheme.success,
+                  ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+            ],
+          ),
+        );
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Orden completada"),
@@ -485,12 +525,6 @@ class _InvoicePageState extends State<InvoicePage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Center(
-                              child: Text('Detalles de la orden',
-                                  style:
-                                      Theme.of(context).textTheme.titleLarge),
-                            ),
-                            const SizedBox(height: CustomSpacer.medium),
                             isBPartnerLoading
                                 ? _buildShimmerField()
                                 : CustomSearchField(
@@ -536,56 +570,73 @@ class _InvoicePageState extends State<InvoicePage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      // Segmento de categorías antes del campo de producto
-                                      if (!isProductCategoryLoading)
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Categorías del producto',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleMedium),
-                                            const SizedBox(
-                                                height: CustomSpacer.small),
-                                            SizedBox(
-                                              width: double.infinity,
-                                              child: SingleChildScrollView(
-                                                scrollDirection:
-                                                    Axis.horizontal,
-                                                child: SegmentedButton<int>(
-                                                  segments: categpryOptions
-                                                      .map((cat) =>
-                                                          ButtonSegment<int>(
-                                                            value: cat['id'],
-                                                            label: Text(
-                                                                cat['Name']),
-                                                          ))
-                                                      .toList(),
-                                                  selected: selectedCategories,
-                                                  multiSelectionEnabled: true,
-                                                  onSelectionChanged:
-                                                      (Set<int> newSelection) {
-                                                    setState(() {
-                                                      selectedCategories =
-                                                          newSelection;
-                                                      // Puedes usar newSelection para filtrar productos si deseas
-                                                    });
-                                                  },
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                                height: CustomSpacer.medium),
-                                          ],
-                                        ),
+                                      // // Segmento de categorías antes del campo de producto
+                                      // if (!isProductCategoryLoading)
+                                      //   Column(
+                                      //     crossAxisAlignment:
+                                      //         CrossAxisAlignment.start,
+                                      //     children: [
+                                      //       Text('Categorías del producto',
+                                      //           style: Theme.of(context)
+                                      //               .textTheme
+                                      //               .titleMedium),
+                                      //       const SizedBox(
+                                      //           height: CustomSpacer.small),
+                                      //       SizedBox(
+                                      //         width: double.infinity,
+                                      //         child: SingleChildScrollView(
+                                      //           scrollDirection:
+                                      //               Axis.horizontal,
+                                      //           child: SegmentedButton<int>(
+                                      //             segments: categpryOptions
+                                      //                 .map((cat) =>
+                                      //                     ButtonSegment<int>(
+                                      //                       value: cat['id'],
+                                      //                       label: Text(
+                                      //                           cat['name']),
+                                      //                     ))
+                                      //                 .toList(),
+                                      //             style:
+                                      //                 SegmentedButton.styleFrom(
+                                      //               selectedBackgroundColor: Theme
+                                      //                       .of(context)
+                                      //                   .scaffoldBackgroundColor,
+                                      //               textStyle: Theme.of(context)
+                                      //                   .textTheme
+                                      //                   .bodyMedium,
+                                      //               padding:
+                                      //                   EdgeInsets.symmetric(
+                                      //                       vertical: 20,
+                                      //                       horizontal: 4),
+                                      //             ),
+                                      //             showSelectedIcon: false,
+                                      //             selected: selectedCategories,
+                                      //             emptySelectionAllowed: true,
+                                      //             multiSelectionEnabled: true,
+                                      //             onSelectionChanged:
+                                      //                 (Set<int> newSelection) {
+                                      //               setState(() {
+                                      //                 selectedCategories =
+                                      //                     newSelection;
+                                      //                 print(
+                                      //                     'Categorías seleccionadas: ${selectedCategories.toList()}');
+                                      //                 // Puedes usar newSelection para filtrar productos si deseas
+                                      //               });
+                                      //             },
+                                      //           ),
+                                      //         ),
+                                      //       ),
+                                      //       const SizedBox(
+                                      //           height: CustomSpacer.medium),
+                                      //     ],
+                                      //   ),
                                       // Campo de producto
                                       CustomSearchField(
                                         options: productOptions,
                                         controller: productController,
                                         showCreateButtonIfNotFound: true,
                                         labelText: "Producto",
-                                        searchBy: "sku",
+                                        searchBy: "UPC",
                                         onCreate: (value) async {
                                           final result = await Navigator.push(
                                             context,
@@ -691,44 +742,67 @@ class _InvoicePageState extends State<InvoicePage> {
                               ...paymentMethods.map((method) {
                                 return Padding(
                                   padding:
-                                      const EdgeInsets.symmetric(vertical: 4.0),
-                                  child: Row(
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: TextfieldTheme(
-                                          controlador:
-                                              paymentControllers[method['id']],
-                                          texto: method['name'],
-                                          inputType: TextInputType.number,
-                                          onChanged: (_) => _validateForm(),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        icon: const Icon(
-                                            Icons.attach_money_rounded),
-                                        tooltip:
-                                            'Llenar con el máximo disponible',
-                                        onPressed: () {
-                                          final currentSum = paymentControllers
-                                              .entries
-                                              .where(
-                                                  (e) => e.key != method['id'])
-                                              .map((e) =>
-                                                  double.tryParse(
-                                                      e.value.text) ??
-                                                  0.0)
-                                              .fold(0.0, (a, b) => a + b);
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: TextfieldTheme(
+                                              controlador: paymentControllers[
+                                                  method['id']],
+                                              texto: method['name'],
+                                              inputType: TextInputType.number,
+                                              onChanged: (_) => _validateForm(),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.attach_money_rounded),
+                                            tooltip:
+                                                'Llenar con el máximo disponible',
+                                            onPressed: () {
+                                              final currentSum =
+                                                  paymentControllers.entries
+                                                      .where((e) =>
+                                                          e.key != method['id'])
+                                                      .map((e) =>
+                                                          double.tryParse(
+                                                              e.value.text) ??
+                                                          0.0)
+                                                      .fold(
+                                                          0.0, (a, b) => a + b);
 
-                                          final remaining =
-                                              (totalAmount - currentSum)
-                                                  .clamp(0.0, totalAmount);
-                                          paymentControllers[method['id']]
-                                                  ?.text =
-                                              remaining.toStringAsFixed(2);
-                                          _validateForm();
-                                        },
+                                              final remaining =
+                                                  (totalAmount - currentSum)
+                                                      .clamp(0.0, totalAmount);
+                                              paymentControllers[method['id']]
+                                                      ?.text =
+                                                  remaining.toStringAsFixed(2);
+                                              _validateForm();
+                                            },
+                                          ),
+                                        ],
                                       ),
+                                      if (calculatedChange > 0 &&
+                                          method['isCash'])
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              top: 2, bottom: 4),
+                                          child: Text(
+                                            'Cambio: \$${calculatedChange.toStringAsFixed(2)}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: ColorTheme.success,
+                                                ),
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 );

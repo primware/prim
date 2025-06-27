@@ -56,7 +56,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
 
     final response = await get(
       Uri.parse(
-        '${EndPoints.mProduct}?\$select=Name,C_TaxCategory_ID,SKU&\$expand=M_ProductPrice(\$select=PriceStd)',
+        '${EndPoints.mProduct}?\$select=Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd)',
       ),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -91,6 +91,10 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
           'id': record['id'],
           'name': record['Name'],
           'sku': record['SKU'],
+          'upc': record['UPC'],
+          'category': record['M_Product_Category_ID'] != null
+              ? record['M_Product_Category_ID']['id']
+              : null,
           'price': record['M_ProductPrice'] != null &&
                   record['M_ProductPrice'].isNotEmpty
               ? record['M_ProductPrice'][0]['PriceStd']
@@ -131,6 +135,7 @@ Future<List<int>> _fetchLatestPricelistProductIDs(
     if (records.isEmpty) return [];
 
     final latestVersion = records.first;
+    POS.priceListVersionID = latestVersion?['id'];
     final prices = latestVersion['M_ProductPrice'] as List;
 
     final productIDs = prices
@@ -326,6 +331,8 @@ Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
           'id': record['id'],
           'name': record['Name'],
           'tenderType': record['TenderType']?['identifier'] ?? 'Desconocido',
+          'tenderTypeID': record['TenderType']?['id'],
+          'isCash': record['TenderType']?['id'] == 'X',
         };
       }).toList();
     } else {
@@ -341,7 +348,7 @@ Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
 Future<List<Map<String, dynamic>>> fetchProductCategory() async {
   try {
     final response = await get(
-      Uri.parse(EndPoints.mProductCategory),
+      Uri.parse('${EndPoints.mProductCategory}?\$select=Name&\$orderby=Name'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,

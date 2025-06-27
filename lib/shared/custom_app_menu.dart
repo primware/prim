@@ -6,6 +6,7 @@ import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/invoice/new_invoice_view.dart';
+import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../API/endpoint.api.dart';
 import '../API/user.api.dart';
@@ -253,6 +254,27 @@ class _MenuDrawerState extends State<MenuDrawer> {
                     builder: (context) => Token.auth != null
                         ? const DashboardPage()
                         : const LoginPage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.settings,
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
+              tileColor: Theme.of(context).cardColor,
+              title: Text(
+                'Debug Panel',
+                style: TextStyle(
+                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DebugPage(),
                   ),
                 );
               },
