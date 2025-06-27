@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../theme/colors.dart';
-import '../theme/fonts.dart';
 
 // ignore: must_be_immutable
 class TextfieldTheme extends StatefulWidget {
