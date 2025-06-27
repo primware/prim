@@ -56,7 +56,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
 
     final response = await get(
       Uri.parse(
-        '${EndPoints.mProduct}?\$select=Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd)',
+        '${EndPoints.mProduct}?\$filter=IsSold eq true&\$select=Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd)',
       ),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -212,7 +212,8 @@ Future<Map<String, dynamic>> postInvoice({
         "QtyOrdered": line['Quantity'],
         "PriceActual": line['Price'],
         "PriceEntered": line['Price'],
-        "C_Tax_ID": {"id": line['C_Tax_ID']}
+        "C_Tax_ID": {"id": line['C_Tax_ID']},
+        "Description": line['Description'] ?? '',
       };
     }).toList();
 

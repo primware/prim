@@ -138,8 +138,13 @@ class _InvoicePageState extends State<InvoicePage> {
         : 0.0;
 
     setState(() {
-      _isInvoiceValid =
-          clientSelected && products.isNotEmpty && totalPayment >= totalAmount;
+      if (paymentMethods.isEmpty) {
+        _isInvoiceValid = clientSelected && products.isNotEmpty;
+      } else {
+        _isInvoiceValid = clientSelected &&
+            products.isNotEmpty &&
+            totalPayment >= totalAmount;
+      }
       calculatedChange = change > 0 ? change : 0.0;
     });
   }
@@ -246,11 +251,13 @@ class _InvoicePageState extends State<InvoicePage> {
     final quantityController = TextEditingController(text: "1");
     final priceController =
         TextEditingController(text: product['price'].toString());
+    final descriptionController = TextEditingController();
 
     void onSubmitted() {
       final qty = int.tryParse(quantityController.text) ?? 1;
       final price =
           double.tryParse(priceController.text) ?? (product['price'] ?? 0);
+      final description = descriptionController.text;
 
       setState(() {
         invoiceLines.add({
@@ -258,6 +265,7 @@ class _InvoicePageState extends State<InvoicePage> {
           'quantity': qty,
           'price': price,
           'C_Tax_ID': selectedTaxID,
+          'Description': description,
         });
       });
 
@@ -276,11 +284,44 @@ class _InvoicePageState extends State<InvoicePage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextfieldTheme(
-                controlador: quantityController,
-                texto: 'Cantidad',
-                inputType: TextInputType.number,
-                onSubmitted: (_) => onSubmitted,
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: IconButton(
+                      icon: Icon(Icons.remove),
+                      color: ColorTheme.error,
+                      onPressed: () {
+                        int current =
+                            int.tryParse(quantityController.text) ?? 1;
+                        if (current > 1) {
+                          quantityController.text = (current - 1).toString();
+                        }
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: TextfieldTheme(
+                      controlador: quantityController,
+                      texto: 'Cantidad',
+                      inputType: TextInputType.number,
+                      onSubmitted: (_) => onSubmitted(),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: IconButton(
+                      icon: Icon(Icons.add),
+                      color: ColorTheme.success,
+                      onPressed: () {
+                        int current =
+                            int.tryParse(quantityController.text) ?? 1;
+                        quantityController.text = (current + 1).toString();
+                      },
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: CustomSpacer.medium),
               TextfieldTheme(
@@ -301,7 +342,13 @@ class _InvoicePageState extends State<InvoicePage> {
                   });
                 },
                 displayItem: (item) => '${item['name']} (${item['rate']}%)',
-              )
+              ),
+              const SizedBox(height: CustomSpacer.medium),
+              TextFieldComments(
+                controlador: descriptionController,
+                texto: 'Descripción (opcional)',
+                onSubmitted: (_) => onSubmitted,
+              ),
             ],
           ),
           actions: [
@@ -398,6 +445,7 @@ class _InvoicePageState extends State<InvoicePage> {
         'Price': item['price'],
         'Quantity': item['quantity'],
         'C_Tax_ID': item['C_Tax_ID'],
+        'Description': item['Description'] ?? '',
       };
     }).toList();
 
@@ -431,10 +479,11 @@ class _InvoicePageState extends State<InvoicePage> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             content: Text(
-              'El cambio es de \$${calculatedChange.toStringAsFixed(2)}',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: ColorTheme.success,
-                  ),
+              '\$${calculatedChange.toStringAsFixed(2)}',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             actions: [
               TextButton(
@@ -515,213 +564,206 @@ class _InvoicePageState extends State<InvoicePage> {
             child: Wrap(
               spacing: 16,
               runSpacing: 16,
-              alignment: WrapAlignment.center,
+              alignment: WrapAlignment.end,
               children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 700),
-                  child: CustomContainer(
-                    child: Column(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            isBPartnerLoading
-                                ? _buildShimmerField()
-                                : CustomSearchField(
-                                    options: bPartnerOptions,
-                                    labelText: "Cliente",
-                                    searchBy: "TaxID",
-                                    controller: clienteController,
-                                    showCreateButtonIfNotFound: true,
-                                    onCreate: (value) async {
-                                      final result = await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => BPartnerNewPage(
-                                              bpartnerName: value),
-                                        ),
-                                      );
-                                      if (result != null &&
-                                          result['created'] == true) {
-                                        await _loadBPartner();
-                                        setState(() {
-                                          selectedBPartnerID =
-                                              result['bpartner']['id'];
-                                        });
-                                      }
-                                    },
-                                    onItemSelected: (item) {
+                CustomContainer(
+                  maxWidthContainer: 360,
+                  child: Column(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          isBPartnerLoading
+                              ? _buildShimmerField()
+                              : CustomSearchField(
+                                  options: bPartnerOptions,
+                                  labelText: "Cliente",
+                                  searchBy: "TaxID",
+                                  controller: clienteController,
+                                  showCreateButtonIfNotFound: true,
+                                  onCreate: (value) async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BPartnerNewPage(
+                                            bpartnerName: value),
+                                      ),
+                                    );
+                                    if (result != null &&
+                                        result['created'] == true) {
+                                      await _loadBPartner();
                                       setState(() {
-                                        selectedBPartnerID = item['id'];
+                                        selectedBPartnerID =
+                                            result['bpartner']['id'];
                                       });
-                                    },
-                                    itemBuilder: (item) => Text(
-                                      '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                    }
+                                  },
+                                  onItemSelected: (item) {
+                                    setState(() {
+                                      selectedBPartnerID = item['id'];
+                                    });
+                                  },
+                                  itemBuilder: (item) => Text(
+                                    '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                            const SizedBox(height: CustomSpacer.medium),
-                            isProductLoading
-                                ? _buildShimmerField()
-                                : Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // // Segmento de categorías antes del campo de producto
-                                      // if (!isProductCategoryLoading)
-                                      //   Column(
-                                      //     crossAxisAlignment:
-                                      //         CrossAxisAlignment.start,
-                                      //     children: [
-                                      //       Text('Categorías del producto',
-                                      //           style: Theme.of(context)
-                                      //               .textTheme
-                                      //               .titleMedium),
-                                      //       const SizedBox(
-                                      //           height: CustomSpacer.small),
-                                      //       SizedBox(
-                                      //         width: double.infinity,
-                                      //         child: SingleChildScrollView(
-                                      //           scrollDirection:
-                                      //               Axis.horizontal,
-                                      //           child: SegmentedButton<int>(
-                                      //             segments: categpryOptions
-                                      //                 .map((cat) =>
-                                      //                     ButtonSegment<int>(
-                                      //                       value: cat['id'],
-                                      //                       label: Text(
-                                      //                           cat['name']),
-                                      //                     ))
-                                      //                 .toList(),
-                                      //             style:
-                                      //                 SegmentedButton.styleFrom(
-                                      //               selectedBackgroundColor: Theme
-                                      //                       .of(context)
-                                      //                   .scaffoldBackgroundColor,
-                                      //               textStyle: Theme.of(context)
-                                      //                   .textTheme
-                                      //                   .bodyMedium,
-                                      //               padding:
-                                      //                   EdgeInsets.symmetric(
-                                      //                       vertical: 20,
-                                      //                       horizontal: 4),
-                                      //             ),
-                                      //             showSelectedIcon: false,
-                                      //             selected: selectedCategories,
-                                      //             emptySelectionAllowed: true,
-                                      //             multiSelectionEnabled: true,
-                                      //             onSelectionChanged:
-                                      //                 (Set<int> newSelection) {
-                                      //               setState(() {
-                                      //                 selectedCategories =
-                                      //                     newSelection;
-                                      //                 print(
-                                      //                     'Categorías seleccionadas: ${selectedCategories.toList()}');
-                                      //                 // Puedes usar newSelection para filtrar productos si deseas
-                                      //               });
-                                      //             },
-                                      //           ),
-                                      //         ),
-                                      //       ),
-                                      //       const SizedBox(
-                                      //           height: CustomSpacer.medium),
-                                      //     ],
-                                      //   ),
-                                      // Campo de producto
-                                      CustomSearchField(
-                                        options: productOptions,
-                                        controller: productController,
-                                        showCreateButtonIfNotFound: true,
-                                        labelText: "Producto",
-                                        searchBy: "UPC",
-                                        onCreate: (value) async {
-                                          final result = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => ProductNewPage(
-                                                  productName: value),
-                                            ),
-                                          );
-                                          if (result != null &&
-                                              result['created'] == true) {
-                                            _onProductCreated(
-                                                result['product']);
-                                          }
-                                        },
-                                        onItemSelected: (item) {
-                                          _showQuantityDialog(item);
-                                        },
-                                        itemBuilder: (item) => Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            Text(
-                                              '\$${item['price'] ?? '0.00'}',
+                                ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          isProductLoading
+                              ? _buildShimmerField()
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // // Segmento de categorías antes del campo de producto
+                                    // if (!isProductCategoryLoading)
+                                    //   Column(
+                                    //     crossAxisAlignment:
+                                    //         CrossAxisAlignment.start,
+                                    //     children: [
+                                    //       Text('Categorías del producto',
+                                    //           style: Theme.of(context)
+                                    //               .textTheme
+                                    //               .titleMedium),
+                                    //       const SizedBox(
+                                    //           height: CustomSpacer.small),
+                                    //       SizedBox(
+                                    //         width: double.infinity,
+                                    //         child: SingleChildScrollView(
+                                    //           scrollDirection:
+                                    //               Axis.horizontal,
+                                    //           child: SegmentedButton<int>(
+                                    //             segments: categpryOptions
+                                    //                 .map((cat) =>
+                                    //                     ButtonSegment<int>(
+                                    //                       value: cat['id'],
+                                    //                       label: Text(
+                                    //                           cat['name']),
+                                    //                     ))
+                                    //                 .toList(),
+                                    //             style:
+                                    //                 SegmentedButton.styleFrom(
+                                    //               selectedBackgroundColor: Theme
+                                    //                       .of(context)
+                                    //                   .scaffoldBackgroundColor,
+                                    //               textStyle: Theme.of(context)
+                                    //                   .textTheme
+                                    //                   .bodyMedium,
+                                    //               padding:
+                                    //                   EdgeInsets.symmetric(
+                                    //                       vertical: 20,
+                                    //                       horizontal: 4),
+                                    //             ),
+                                    //             showSelectedIcon: false,
+                                    //             selected: selectedCategories,
+                                    //             emptySelectionAllowed: true,
+                                    //             multiSelectionEnabled: true,
+                                    //             onSelectionChanged:
+                                    //                 (Set<int> newSelection) {
+                                    //               setState(() {
+                                    //                 selectedCategories =
+                                    //                     newSelection;
+                                    //                 print(
+                                    //                     'Categorías seleccionadas: ${selectedCategories.toList()}');
+                                    //                 // Puedes usar newSelection para filtrar productos si deseas
+                                    //               });
+                                    //             },
+                                    //           ),
+                                    //         ),
+                                    //       ),
+                                    //       const SizedBox(
+                                    //           height: CustomSpacer.medium),
+                                    //     ],
+                                    //   ),
+                                    // Campo de producto
+                                    CustomSearchField(
+                                      options: productOptions,
+                                      controller: productController,
+                                      showCreateButtonIfNotFound: true,
+                                      labelText: "Producto",
+                                      searchBy: "UPC",
+                                      onCreate: (value) async {
+                                        final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => ProductNewPage(
+                                                productName: value),
+                                          ),
+                                        );
+                                        if (result != null &&
+                                            result['created'] == true) {
+                                          _onProductCreated(result['product']);
+                                        }
+                                      },
+                                      onItemSelected: (item) {
+                                        _showQuantityDialog(item);
+                                      },
+                                      itemBuilder: (item) => Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .bodyMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
+                                                  .bodyMedium,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                          Text(
+                                            '\$${item['price'] ?? '0.00'}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                            if (invoiceLines.isNotEmpty) ...[
-                              const SizedBox(height: CustomSpacer.large),
-                              Text('Detalle de productos',
-                                  style:
-                                      Theme.of(context).textTheme.titleLarge),
-                              const SizedBox(height: CustomSpacer.medium),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 2,
-                                children:
-                                    invoiceLines.asMap().entries.map((entry) {
-                                  final index = entry.key;
-                                  final line = entry.value;
-                                  final tax = taxOptions.firstWhere(
-                                    (t) => t['id'] == line['C_Tax_ID'],
-                                    orElse: () => {},
-                                  );
-                                  final taxRate = tax['rate'] != null
-                                      ? '${tax['rate']}%'
-                                      : 'Sin impuesto';
-                                  return Chip(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    deleteIconColor: ColorTheme.error,
-                                    label: Text(
-                                      '${line['quantity']} x \$${line['price']} + $taxRate (${line['name']})',
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
                                     ),
-                                    deleteIcon: const Icon(Icons.close),
-                                    onDeleted: () => _deleteLine(index),
-                                    backgroundColor:
-                                        Theme.of(context).cardColor,
-                                  );
-                                }).toList(),
-                              ),
-                            ],
+                                  ],
+                                ),
+                          if (invoiceLines.isNotEmpty) ...[
+                            const SizedBox(height: CustomSpacer.large),
+                            Text('Detalle de productos',
+                                style: Theme.of(context).textTheme.titleLarge),
+                            const SizedBox(height: CustomSpacer.medium),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children:
+                                  invoiceLines.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final line = entry.value;
+                                final tax = taxOptions.firstWhere(
+                                  (t) => t['id'] == line['C_Tax_ID'],
+                                  orElse: () => {},
+                                );
+                                final taxRate = tax['rate'] != null
+                                    ? '${tax['rate']}%'
+                                    : 'Sin impuesto';
+                                return Chip(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  deleteIconColor: ColorTheme.error,
+                                  label: Text(
+                                    '${line['quantity']} x \$${line['price']} + $taxRate (${line['name']})',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  deleteIcon: const Icon(Icons.close),
+                                  onDeleted: () => _deleteLine(index),
+                                  backgroundColor: Theme.of(context).cardColor,
+                                );
+                              }).toList(),
+                            ),
                           ],
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 if (POSTenderType.isMultiPayment)
@@ -794,12 +836,14 @@ class _InvoicePageState extends State<InvoicePage> {
                                           padding: const EdgeInsets.only(
                                               top: 2, bottom: 4),
                                           child: Text(
-                                            'Cambio: \$${calculatedChange.toStringAsFixed(2)}',
+                                            'Vuelto: \$${calculatedChange.toStringAsFixed(2)}',
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodyMedium
                                                 ?.copyWith(
-                                                  color: ColorTheme.success,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
                                                 ),
                                           ),
                                         ),
@@ -850,7 +894,7 @@ class _InvoicePageState extends State<InvoicePage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Resumen de impuestos',
+                            Text('Impuestos',
                                 style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: CustomSpacer.small),
                             ...getGroupedTaxTotals().entries.map(
