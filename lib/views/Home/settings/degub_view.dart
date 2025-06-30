@@ -65,8 +65,6 @@ class DebugPage extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium),
                 SelectableText('Token - warehouseID: ${Token.warehouseID}',
                     style: Theme.of(context).textTheme.bodyMedium),
-                SelectableText('Token - tokenRegister: ${Token.tokenRegister}',
-                    style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
           ),

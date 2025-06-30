@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_dropdown.dart';
-import 'package:primware/views/Home/product/new_product_view.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
@@ -23,6 +23,7 @@ class InvoicePage extends StatefulWidget {
 }
 
 class _InvoicePageState extends State<InvoicePage> {
+  Timer? _debounce;
   double calculatedChange = 0.0;
   TextEditingController clienteController = TextEditingController();
   TextEditingController qtyProductController = TextEditingController();
@@ -31,6 +32,7 @@ class _InvoicePageState extends State<InvoicePage> {
   bool isSending = false;
   bool isBPartnerLoading = true;
   bool isProductLoading = true;
+  bool isProductSearchLoading = false;
   bool isProductCategoryLoading = true;
   bool isTaxLoading = true;
 
@@ -70,9 +72,9 @@ class _InvoicePageState extends State<InvoicePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBPartner();
-      _loadProduct();
+      initialLoadProduct();
       _loadTax();
-      // _loadProductCategory();
+      _loadProductCategory();
       if (POSTenderType.isMultiPayment) {
         _loadPayment();
       }
@@ -81,6 +83,30 @@ class _InvoicePageState extends State<InvoicePage> {
     if (POS.documentActions.isNotEmpty) {
       selectedDocActionCode = POS.documentActions.first['code'];
     }
+  }
+
+  Future<void> initialLoadProduct() async {
+    setState(() {
+      isProductLoading = true;
+    });
+    final product = await fetchProductInPriceList(
+      context: context,
+    );
+    setState(() {
+      productOptions = product;
+      isProductLoading = false;
+    });
+  }
+
+  void debouncedLoadProduct() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    final searchText = productController.text.trim();
+    if (searchText.length < 4 && searchText.isNotEmpty) {
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 1000), () {
+      _loadProduct(showLoadingIndicator: true);
+    });
   }
 
   Future<void> _loadPayment() async {
@@ -170,21 +196,31 @@ class _InvoicePageState extends State<InvoicePage> {
     });
   }
 
-  Future<void> _loadProduct() async {
-    final product = await fetchProductInPriceList(context: context);
+  Future<void> _loadProduct({bool showLoadingIndicator = false}) async {
+    if (showLoadingIndicator) {
+      setState(() {
+        isProductSearchLoading = true;
+      });
+    }
+    final product = await fetchProductInPriceList(
+      context: context,
+      categoryID:
+          selectedCategories.isNotEmpty ? selectedCategories.toList() : null,
+      searchTerm: productController.text.trim(),
+    );
     setState(() {
       productOptions = product;
-      isProductLoading = false;
+      isProductSearchLoading = false;
     });
   }
 
-  // Future<void> _loadProductCategory() async {
-  //   final category = await fetchProductCategory();
-  //   setState(() {
-  //     categpryOptions = category;
-  //     isProductCategoryLoading = false;
-  //   });
-  // }
+  Future<void> _loadProductCategory() async {
+    final category = await fetchProductCategory();
+    setState(() {
+      categpryOptions = category;
+      isProductCategoryLoading = false;
+    });
+  }
 
   Future<void> _loadTax() async {
     final tax = await fetchTax(context: context);
@@ -371,16 +407,16 @@ class _InvoicePageState extends State<InvoicePage> {
     );
   }
 
-  void _onProductCreated(Map<String, dynamic> newProduct) async {
-    await _loadProduct();
-    final createdProduct = productOptions.firstWhere(
-      (p) => p['id'] == newProduct['id'],
-      orElse: () => {},
-    );
-    if (createdProduct.isNotEmpty) {
-      _showQuantityDialog(createdProduct);
-    }
-  }
+  // void _onProductCreated(Map<String, dynamic> newProduct) async {
+  //   await _loadProduct();
+  //   final createdProduct = productOptions.firstWhere(
+  //     (p) => p['id'] == newProduct['id'],
+  //     orElse: () => {},
+  //   );
+  //   if (createdProduct.isNotEmpty) {
+  //     _showQuantityDialog(createdProduct);
+  //   }
+  // }
 
   void _deleteLine(int index) {
     setState(() {
@@ -616,89 +652,73 @@ class _InvoicePageState extends State<InvoicePage> {
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // // Segmento de categorías antes del campo de producto
-                                    // if (!isProductCategoryLoading)
-                                    //   Column(
-                                    //     crossAxisAlignment:
-                                    //         CrossAxisAlignment.start,
-                                    //     children: [
-                                    //       Text('Categorías del producto',
-                                    //           style: Theme.of(context)
-                                    //               .textTheme
-                                    //               .titleMedium),
-                                    //       const SizedBox(
-                                    //           height: CustomSpacer.small),
-                                    //       SizedBox(
-                                    //         width: double.infinity,
-                                    //         child: SingleChildScrollView(
-                                    //           scrollDirection:
-                                    //               Axis.horizontal,
-                                    //           child: SegmentedButton<int>(
-                                    //             segments: categpryOptions
-                                    //                 .map((cat) =>
-                                    //                     ButtonSegment<int>(
-                                    //                       value: cat['id'],
-                                    //                       label: Text(
-                                    //                           cat['name']),
-                                    //                     ))
-                                    //                 .toList(),
-                                    //             style:
-                                    //                 SegmentedButton.styleFrom(
-                                    //               selectedBackgroundColor: Theme
-                                    //                       .of(context)
-                                    //                   .scaffoldBackgroundColor,
-                                    //               textStyle: Theme.of(context)
-                                    //                   .textTheme
-                                    //                   .bodyMedium,
-                                    //               padding:
-                                    //                   EdgeInsets.symmetric(
-                                    //                       vertical: 20,
-                                    //                       horizontal: 4),
-                                    //             ),
-                                    //             showSelectedIcon: false,
-                                    //             selected: selectedCategories,
-                                    //             emptySelectionAllowed: true,
-                                    //             multiSelectionEnabled: true,
-                                    //             onSelectionChanged:
-                                    //                 (Set<int> newSelection) {
-                                    //               setState(() {
-                                    //                 selectedCategories =
-                                    //                     newSelection;
-                                    //                 print(
-                                    //                     'Categorías seleccionadas: ${selectedCategories.toList()}');
-                                    //                 // Puedes usar newSelection para filtrar productos si deseas
-                                    //               });
-                                    //             },
-                                    //           ),
-                                    //         ),
-                                    //       ),
-                                    //       const SizedBox(
-                                    //           height: CustomSpacer.medium),
-                                    //     ],
-                                    //   ),
+                                    // Segmento de categorías antes del campo de producto
+                                    if (!isProductCategoryLoading)
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text('Categorías del producto',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium),
+                                          const SizedBox(
+                                              height: CustomSpacer.small),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              child: SegmentedButton<int>(
+                                                segments: categpryOptions
+                                                    .map((cat) =>
+                                                        ButtonSegment<int>(
+                                                          value: cat['id'],
+                                                          label:
+                                                              Text(cat['name']),
+                                                        ))
+                                                    .toList(),
+                                                style:
+                                                    SegmentedButton.styleFrom(
+                                                  selectedBackgroundColor: Theme
+                                                          .of(context)
+                                                      .scaffoldBackgroundColor,
+                                                  textStyle: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium,
+                                                ),
+                                                showSelectedIcon: false,
+                                                selected: selectedCategories,
+                                                emptySelectionAllowed: true,
+                                                multiSelectionEnabled: true,
+                                                onSelectionChanged:
+                                                    (Set<int> newSelection) {
+                                                  setState(() =>
+                                                      selectedCategories =
+                                                          newSelection);
+                                                  debouncedLoadProduct();
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                              height: CustomSpacer.medium),
+                                        ],
+                                      ),
                                     // Campo de producto
+                                    if (isProductSearchLoading) ...[
+                                      const SizedBox(height: 4),
+                                      const LinearProgressIndicator(),
+                                      const SizedBox(height: 8),
+                                    ],
                                     CustomSearchField(
                                       options: productOptions,
                                       controller: productController,
-                                      showCreateButtonIfNotFound: true,
                                       labelText: "Producto",
                                       searchBy: "UPC",
-                                      onCreate: (value) async {
-                                        final result = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ProductNewPage(
-                                                productName: value),
-                                          ),
-                                        );
-                                        if (result != null &&
-                                            result['created'] == true) {
-                                          _onProductCreated(result['product']);
-                                        }
-                                      },
                                       onItemSelected: (item) {
                                         _showQuantityDialog(item);
                                       },
+                                      onChanged: (_) => debouncedLoadProduct(),
                                       itemBuilder: (item) => Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
@@ -724,6 +744,34 @@ class _InvoicePageState extends State<InvoicePage> {
                                         ],
                                       ),
                                     ),
+                                    // //? crear producto si no existe
+                                    // if (productOptions.isEmpty &&
+                                    //     productController.text
+                                    //         .trim()
+                                    //         .isNotEmpty) ...[
+                                    //   const SizedBox(height: 8),
+                                    //   ElevatedButton.icon(
+                                    //     icon: const Icon(Icons.add),
+                                    //     label: Text(
+                                    //         'Crear "${productController.text.trim()}"'),
+                                    //     onPressed: () async {
+                                    //       final result = await Navigator.push(
+                                    //         context,
+                                    //         MaterialPageRoute(
+                                    //           builder: (_) => ProductNewPage(
+                                    //               productName: productController
+                                    //                   .text
+                                    //                   .trim()),
+                                    //         ),
+                                    //       );
+                                    //       if (result != null &&
+                                    //           result['created'] == true) {
+                                    //         _onProductCreated(
+                                    //             result['product']);
+                                    //       }
+                                    //     },
+                                    //   ),
+                                    // ],
                                   ],
                                 ),
                           if (invoiceLines.isNotEmpty) ...[

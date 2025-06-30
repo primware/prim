@@ -44,20 +44,27 @@ Future<List<Map<String, dynamic>>> fetchBPartner(
 
 Future<List<Map<String, dynamic>>> fetchProductInPriceList({
   required BuildContext context,
+  List<int>? categoryID = const [],
+  String? searchTerm = '',
 }) async {
   try {
     if (POS.priceListID == null) {
       return [];
     }
 
-    final validProductIDs =
-        await _fetchLatestPricelistProductIDs(mPriceListID: POS.priceListID!);
-    if (validProductIDs.isEmpty) return [];
-
+    // Construir filtro de categorías usando 'or' si hay varias categorías, para compatibilidad con iDempiere.
+    String categoryFilter = '';
+    if (categoryID != null && categoryID.isNotEmpty) {
+      categoryFilter =
+          ' and (${categoryID.map((id) => 'M_Product_Category_ID eq $id').join(' or ')})';
+    }
+    final filterQuery = 'IsSold eq true'
+        '${searchTerm!.isNotEmpty ? ' and contains(tolower(Name), ${searchTerm.toLowerCase()})' : ''}'
+        '$categoryFilter';
+    final url =
+        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
     final response = await get(
-      Uri.parse(
-        '${EndPoints.mProduct}?\$filter=IsSold eq true&\$select=Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd)',
-      ),
+      Uri.parse(url),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -71,8 +78,6 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
       List<Map<String, dynamic>> productList = [];
 
       for (var record in records) {
-        if (!validProductIDs.contains(record['id'])) continue;
-
         final taxCategoryID = record['C_TaxCategory_ID']?['id'];
         Map<String, dynamic>? assignedTax;
 
@@ -109,44 +114,6 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
     }
   } catch (e) {
     print('Excepción al obtener productos: $e');
-    return [];
-  }
-}
-
-Future<List<int>> _fetchLatestPricelistProductIDs(
-    {required int mPriceListID}) async {
-  try {
-    final response = await get(
-      Uri.parse(GetProductInPriceList(mPriceListID: mPriceListID).endPoint),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': Token.auth!,
-      },
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception(
-          'Error al obtener la lista de precios: ${response.statusCode}');
-    }
-
-    final data = json.decode(utf8.decode(response.bodyBytes));
-    final records = data['records'] as List;
-
-    if (records.isEmpty) return [];
-
-    final latestVersion = records.first;
-    POS.priceListVersionID = latestVersion?['id'];
-    final prices = latestVersion['M_ProductPrice'] as List;
-
-    final productIDs = prices
-        .map((entry) => entry['M_Product_ID']?['id'])
-        .where((id) => id != null)
-        .cast<int>()
-        .toList();
-
-    return productIDs;
-  } catch (e) {
-    print('Error al obtener productos desde la lista de precios: $e');
     return [];
   }
 }

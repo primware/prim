@@ -15,6 +15,7 @@ class CustomSearchField extends StatefulWidget {
   final TextEditingController? controller;
   final bool showCreateButtonIfNotFound;
   final void Function(String)? onCreate;
+  final void Function(String)? onChanged;
 
   const CustomSearchField({
     super.key,
@@ -29,6 +30,7 @@ class CustomSearchField extends StatefulWidget {
     this.enabled = true,
     this.showCreateButtonIfNotFound = false,
     this.onCreate,
+    this.onChanged,
   });
 
   @override
@@ -43,8 +45,17 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
   @override
   void dispose() {
     _debounce?.cancel();
-    _controller.dispose();
+    _controller.removeListener(_handleTextChange);
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_handleTextChange);
   }
 
   Future<List<SearchFieldListItem<Map<String, dynamic>>>> _onSearchItems(
@@ -130,6 +141,12 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
         style: Theme.of(context).textTheme.bodyMedium,
       ),
     );
+  }
+
+  void _handleTextChange() {
+    if (widget.onChanged != null) {
+      widget.onChanged!(_controller.text);
+    }
   }
 
   @override

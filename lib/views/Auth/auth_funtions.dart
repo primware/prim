@@ -309,6 +309,8 @@ Future<void> _loadPOSData(BuildContext context) async {
         print(
             'No hay Terminal PDV configurado para este usuario, obteniendo datos por defecto del priceList');
         POS.priceListID ??= await _getMPriceListID();
+        POS.priceListVersionID =
+            await _getMPriceListVersion(POS.priceListID ?? 0);
         return;
       }
 
@@ -317,6 +319,8 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.priceListID = posData['M_PriceList_ID']?['id'];
       POS.docTypeID = posData['C_DocType_ID']?['id'];
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
+      POS.priceListVersionID =
+          await _getMPriceListVersion(POS.priceListID ?? 0);
 
       final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.isPOS = docSubType == 'WR';
@@ -364,7 +368,38 @@ Future<int?> _getMPriceListID() async {
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
       return responseData['records'][0]['id'];
+    } else {
+      print(
+          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en _getMPriceListID: $e');
+  }
+  return null;
+}
+
+Future<int?> _getMPriceListVersion(int id) async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.mPriceList}?\$filter=M_PriceList_ID eq $id AND IsDefault eq true&\$expand=M_PriceList_Version'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+      final versions = record['M_PriceList_Version'] as List?;
+      if (versions != null && versions.isNotEmpty) {
+        final latestVersion = versions.first;
+        return latestVersion['id'];
+      }
     } else {
       print(
           'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
