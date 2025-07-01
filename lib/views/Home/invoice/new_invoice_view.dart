@@ -282,18 +282,32 @@ class _InvoicePageState extends State<InvoicePage> {
     );
   }
 
-  Future<void> _showQuantityDialog(Map<String, dynamic> product) async {
+  Future<void> _showQuantityDialog(Map<String, dynamic> product,
+      {int? index}) async {
     int? selectedTaxID = product['tax']?['id'];
-    final quantityController = TextEditingController(text: "1");
-    final priceController =
-        TextEditingController(text: product['price'].toString());
-    final descriptionController = TextEditingController();
+    final quantityController = TextEditingController(
+      text: index != null && product['quantity'] != null
+          ? product['quantity'].toString()
+          : "1",
+    );
+
+    final priceController = TextEditingController(
+        text: product['price'] == 0 ? '' : product['price'].toString());
+    final descriptionController = TextEditingController(
+      text: index != null && product['Description'] != null
+          ? product['Description'].toString()
+          : '',
+    );
 
     void onSubmitted() {
       final qty = int.tryParse(quantityController.text) ?? 1;
       final price =
           double.tryParse(priceController.text) ?? (product['price'] ?? 0);
       final description = descriptionController.text;
+
+      if (index != null) {
+        invoiceLines.removeAt(index);
+      }
 
       setState(() {
         invoiceLines.add({
@@ -308,106 +322,132 @@ class _InvoicePageState extends State<InvoicePage> {
       _recalculateSummary();
       productController.clear();
       _validateForm();
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     }
 
-    await showDialog(
+    final result = await showDialog<bool>(
       context: context,
+      barrierDismissible: true,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          title: Text('Definir cantidad y precio'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: IconButton(
-                      icon: Icon(Icons.remove),
-                      color: ColorTheme.error,
-                      onPressed: () {
-                        int current =
-                            int.tryParse(quantityController.text) ?? 1;
-                        if (current > 1) {
-                          quantityController.text = (current - 1).toString();
-                        }
-                      },
+        return WillPopScope(
+          onWillPop: () async {
+            productController.clear();
+            return true;
+          },
+          child: AlertDialog(
+            backgroundColor: Theme.of(context).cardColor,
+            title: Text(product['name'] ?? 'Producto',
+                style: Theme.of(context).textTheme.bodyMedium),
+            content: SingleChildScrollView(
+              child: Padding(
+                padding: MediaQuery.of(context).viewInsets,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Divider(
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                  ),
-                  Expanded(
-                    child: TextfieldTheme(
-                      controlador: quantityController,
-                      texto: 'Cantidad',
+                    const SizedBox(height: CustomSpacer.medium),
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: IconButton(
+                            icon: Icon(Icons.remove),
+                            color: ColorTheme.error,
+                            onPressed: () {
+                              int current =
+                                  int.tryParse(quantityController.text) ?? 1;
+                              if (current > 1) {
+                                quantityController.text =
+                                    (current - 1).toString();
+                              }
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: TextfieldTheme(
+                            controlador: quantityController,
+                            texto: 'Cantidad',
+                            inputType: TextInputType.number,
+                            onSubmitted: (_) => onSubmitted(),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: IconButton(
+                            icon: Icon(Icons.add),
+                            color: ColorTheme.success,
+                            onPressed: () {
+                              int current =
+                                  int.tryParse(quantityController.text) ?? 1;
+                              quantityController.text =
+                                  (current + 1).toString();
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: CustomSpacer.medium),
+                    TextfieldTheme(
+                      controlador: priceController,
+                      pista: product['price'] == 0
+                          ? product['price'].toString()
+                          : null,
+                      texto: 'Precio',
                       inputType: TextInputType.number,
-                      onSubmitted: (_) => onSubmitted(),
-                      textAlign: TextAlign.center,
+                      onSubmitted: (_) => onSubmitted,
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: IconButton(
-                      icon: Icon(Icons.add),
-                      color: ColorTheme.success,
-                      onPressed: () {
-                        int current =
-                            int.tryParse(quantityController.text) ?? 1;
-                        quantityController.text = (current + 1).toString();
+                    const SizedBox(height: CustomSpacer.medium),
+                    SearchableDropdown<int>(
+                      labelText: 'Tipo de impuesto',
+                      showSearchBox: false,
+                      options: taxOptions,
+                      value: selectedTaxID,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedTaxID = value;
+                        });
                       },
+                      displayItem: (item) =>
+                          '${item['name']} (${item['rate']}%)',
                     ),
-                  ),
-                ],
+                    const SizedBox(height: CustomSpacer.medium),
+                    TextFieldComments(
+                      controlador: descriptionController,
+                      texto: 'Descripción (opcional)',
+                      onSubmitted: (_) => onSubmitted,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: CustomSpacer.medium),
-              TextfieldTheme(
-                controlador: priceController,
-                texto: 'Precio',
-                inputType: TextInputType.number,
-                onSubmitted: (_) => onSubmitted,
-              ),
-              const SizedBox(height: CustomSpacer.medium),
-              SearchableDropdown<int>(
-                labelText: 'Tipo de impuesto',
-                showSearchBox: false,
-                options: taxOptions,
-                value: selectedTaxID,
-                onChanged: (value) {
-                  setState(() {
-                    selectedTaxID = value;
-                  });
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  productController.clear();
+                  Navigator.pop(context, false);
                 },
-                displayItem: (item) => '${item['name']} (${item['rate']}%)',
+                child: const Text('Cancelar'),
               ),
-              const SizedBox(height: CustomSpacer.medium),
-              TextFieldComments(
-                controlador: descriptionController,
-                texto: 'Descripción (opcional)',
-                onSubmitted: (_) => onSubmitted,
+              ElevatedButton(
+                onPressed: onSubmitted,
+                child: Text(
+                  'Agregar',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                productController.clear();
-                Navigator.pop(context);
-              },
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: onSubmitted,
-              child: Text(
-                'Agregar',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.surface,
-                    ),
-              ),
-            ),
-          ],
         );
       },
     );
+    if (result != true) {
+      productController.clear();
+    }
   }
 
   // void _onProductCreated(Map<String, dynamic> newProduct) async {
@@ -866,7 +906,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                       options: productOptions,
                                       controller: productController,
                                       labelText: "Producto",
-                                      searchBy: "UPC",
+                                      searchBy: "Codigo",
                                       onItemSelected: (item) {
                                         _showQuantityDialog(item);
                                       },
@@ -876,12 +916,30 @@ class _InvoicePageState extends State<InvoicePage> {
                                             MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
-                                            child: Text(
-                                              '${item['sku'] ?? ''} - ${item['name'] ?? ''}',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium,
-                                              overflow: TextOverflow.ellipsis,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '${item['name'] ?? ''}',
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall,
+                                                ),
+                                                if (item['value'] != null)
+                                                  Text(
+                                                    'Cod: ${item['value'] ?? ''}',
+                                                    maxLines: 2,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                              ],
                                             ),
                                           ),
                                           Text(
@@ -945,18 +1003,52 @@ class _InvoicePageState extends State<InvoicePage> {
                                 final taxRate = tax['rate'] != null
                                     ? '${tax['rate']}%'
                                     : 'Sin impuesto';
-                                return Chip(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  deleteIconColor: ColorTheme.error,
-                                  label: Text(
-                                    '${line['quantity']} x \$${line['price']} + $taxRate (${line['name']})',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
+                                return Tooltip(
+                                  message: line['name'],
+                                  child: InputChip(
+                                    onPressed: () =>
+                                        _showQuantityDialog(line, index: index),
+                                    deleteIcon: const Icon(Icons.close),
+                                    onDeleted: () => _deleteLine(index),
+                                    deleteIconColor: ColorTheme.error,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    label: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          line['name'],
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        if (line['Description'] != null &&
+                                            line['Description']
+                                                .toString()
+                                                .isNotEmpty)
+                                          Text(
+                                            '${line['Description']}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall,
+                                          ),
+                                        Text(
+                                          '${line['quantity']} x \$${line['price']} + $taxRate',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor:
+                                        Theme.of(context).cardColor,
                                   ),
-                                  deleteIcon: const Icon(Icons.close),
-                                  onDeleted: () => _deleteLine(index),
-                                  backgroundColor: Theme.of(context).cardColor,
                                 );
                               }).toList(),
                             ),

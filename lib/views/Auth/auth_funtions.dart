@@ -311,6 +311,8 @@ Future<void> _loadPOSData(BuildContext context) async {
         POS.priceListID ??= await _getMPriceListID();
         POS.priceListVersionID =
             await _getMPriceListVersion(POS.priceListID ?? 0);
+        await fetchTaxs();
+
         return;
       }
 

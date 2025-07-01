@@ -62,7 +62,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
         '${searchTerm!.isNotEmpty ? ' and contains(tolower(Name), ${searchTerm.toLowerCase()})' : ''}'
         '$categoryFilter';
     final url =
-        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
+        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
     final response = await get(
       Uri.parse(url),
       headers: {
@@ -90,6 +90,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
         productList.add({
           'id': record['id'],
           'name': record['Name'],
+          'value': record['Value'],
           'sku': record['SKU'],
           'upc': record['UPC'],
           'category': record['M_Product_Category_ID'] != null
@@ -271,7 +272,8 @@ Future<List<Map<String, dynamic>>> fetchOrders(
 Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
   try {
     final response = await get(
-      Uri.parse('${EndPoints.cPOSTenderType}?\$select=Name,TenderType'),
+      Uri.parse(
+          '${EndPoints.cPOSTenderType}?\$select=Name,TenderType,Value&\$orderby=Value'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
