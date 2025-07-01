@@ -79,10 +79,11 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
 
       for (var record in records) {
         final taxCategoryID = record['C_TaxCategory_ID']?['id'];
+        if (taxCategoryID == null || record['M_ProductPrice'] == null) continue;
+
         Map<String, dynamic>? assignedTax;
 
-        if (taxCategoryID != null &&
-            POS.principalTaxs.containsKey(taxCategoryID)) {
+        if (POS.principalTaxs.containsKey(taxCategoryID)) {
           assignedTax = POS.principalTaxs[taxCategoryID];
         }
 

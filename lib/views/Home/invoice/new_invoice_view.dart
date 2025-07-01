@@ -389,7 +389,10 @@ class _InvoicePageState extends State<InvoicePage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                productController.clear();
+                Navigator.pop(context);
+              },
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
@@ -677,8 +680,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                                           .onSecondary),
                                             ),
                                             icon: const Icon(Icons.category),
-                                            label: const Text(
-                                                "Aplicar Categorías"),
+                                            label: const Text("Categorías"),
                                             onPressed: () async {
                                               Set<int> tempSelected =
                                                   Set<int>.from(

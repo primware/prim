@@ -169,7 +169,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: locationController,
-                    texto: 'Ubicación*',
+                    texto: 'Dirección*',
                     colorEmpty: locationController.text.isEmpty
                         ? ColorTheme.error
                         : null,
