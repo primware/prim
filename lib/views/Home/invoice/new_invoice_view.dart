@@ -223,7 +223,7 @@ class _InvoicePageState extends State<InvoicePage> {
   }
 
   Future<void> _loadTax() async {
-    final tax = await fetchTax(context: context);
+    final tax = await fetchTax();
     final defaultTax = tax.isNotEmpty
         ? tax.firstWhere((t) => t['isdefault'] == true, orElse: () => tax.first)
         : null;
@@ -652,54 +652,204 @@ class _InvoicePageState extends State<InvoicePage> {
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Segmento de categorías antes del campo de producto
+                                    // Segmento de selección de categorías con botón y modal
                                     if (!isProductCategoryLoading)
                                       Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text('Categorías del producto',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium),
-                                          const SizedBox(
-                                              height: CustomSpacer.small),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: SegmentedButton<int>(
-                                                segments: categpryOptions
-                                                    .map((cat) =>
-                                                        ButtonSegment<int>(
-                                                          value: cat['id'],
-                                                          label:
-                                                              Text(cat['name']),
-                                                        ))
-                                                    .toList(),
-                                                style:
-                                                    SegmentedButton.styleFrom(
-                                                  selectedBackgroundColor: Theme
-                                                          .of(context)
-                                                      .scaffoldBackgroundColor,
-                                                  textStyle: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyMedium,
-                                                ),
-                                                showSelectedIcon: false,
-                                                selected: selectedCategories,
-                                                emptySelectionAllowed: true,
-                                                multiSelectionEnabled: true,
-                                                onSelectionChanged:
-                                                    (Set<int> newSelection) {
-                                                  setState(() =>
-                                                      selectedCategories =
-                                                          newSelection);
-                                                  debouncedLoadProduct();
+                                          TextButton.icon(
+                                            style: ButtonStyle(
+                                              textStyle:
+                                                  MaterialStateProperty.all(
+                                                      Theme.of(context)
+                                                          .textTheme
+                                                          .bodyMedium),
+                                              backgroundColor:
+                                                  MaterialStateProperty.all(
+                                                      Theme.of(context)
+                                                          .colorScheme
+                                                          .secondary),
+                                              foregroundColor:
+                                                  MaterialStateProperty.all(
+                                                      Theme.of(context)
+                                                          .colorScheme
+                                                          .onSecondary),
+                                            ),
+                                            icon: const Icon(Icons.category),
+                                            label: const Text(
+                                                "Aplicar Categorías"),
+                                            onPressed: () async {
+                                              Set<int> tempSelected =
+                                                  Set<int>.from(
+                                                      selectedCategories);
+                                              await showModalBottomSheet(
+                                                context: context,
+                                                isScrollControlled: true,
+                                                builder: (context) {
+                                                  return StatefulBuilder(
+                                                    builder: (context,
+                                                        setModalState) {
+                                                      return SafeArea(
+                                                        child: Padding(
+                                                          padding:
+                                                              MediaQuery.of(
+                                                                      context)
+                                                                  .viewInsets,
+                                                          child: Container(
+                                                            constraints:
+                                                                const BoxConstraints(
+                                                                    maxHeight:
+                                                                        400),
+                                                            child: Column(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          16.0),
+                                                                  child: Text(
+                                                                    "Selecciona las categorías",
+                                                                    style: Theme.of(
+                                                                            context)
+                                                                        .textTheme
+                                                                        .bodyLarge,
+                                                                  ),
+                                                                ),
+                                                                Expanded(
+                                                                  child: ListView
+                                                                      .builder(
+                                                                    shrinkWrap:
+                                                                        true,
+                                                                    itemCount:
+                                                                        categpryOptions
+                                                                            .length,
+                                                                    itemBuilder:
+                                                                        (context,
+                                                                            idx) {
+                                                                      final cat =
+                                                                          categpryOptions[
+                                                                              idx];
+                                                                      final isSelected =
+                                                                          tempSelected
+                                                                              .contains(cat['id']);
+                                                                      return ListTile(
+                                                                        title: Text(
+                                                                            cat['name']),
+                                                                        selected:
+                                                                            isSelected,
+                                                                        onTap:
+                                                                            () {
+                                                                          setModalState(
+                                                                              () {
+                                                                            if (isSelected) {
+                                                                              tempSelected.remove(cat['id']);
+                                                                            } else {
+                                                                              tempSelected.add(cat['id']);
+                                                                            }
+                                                                          });
+                                                                        },
+                                                                        trailing: isSelected
+                                                                            ? const Icon(Icons.check,
+                                                                                color: Colors.blue)
+                                                                            : null,
+                                                                      );
+                                                                    },
+                                                                  ),
+                                                                ),
+                                                                Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          16.0),
+                                                                  child: Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .end,
+                                                                    children: [
+                                                                      TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                        },
+                                                                        child: const Text(
+                                                                            "Cancelar"),
+                                                                      ),
+                                                                      const SizedBox(
+                                                                          width:
+                                                                              8),
+                                                                      ElevatedButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.pop(
+                                                                              context,
+                                                                              tempSelected);
+                                                                        },
+                                                                        child: const Text(
+                                                                            "Aplicar"),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
                                                 },
+                                              ).then((result) {
+                                                if (result != null &&
+                                                    result is Set<int>) {
+                                                  setState(() {
+                                                    selectedCategories =
+                                                        Set<int>.from(result);
+                                                  });
+                                                  debouncedLoadProduct();
+                                                }
+                                              });
+                                            },
+                                          ),
+                                          // Chips de categorías seleccionadas
+                                          if (selectedCategories.isNotEmpty)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 8.0),
+                                              child: Wrap(
+                                                spacing: 6,
+                                                runSpacing: 6,
+                                                children: selectedCategories
+                                                    .map((catId) {
+                                                  final cat = categpryOptions
+                                                      .firstWhere(
+                                                    (c) => c['id'] == catId,
+                                                    orElse: () =>
+                                                        <String, dynamic>{},
+                                                  );
+                                                  final catName = cat.isNotEmpty
+                                                      ? cat['name']
+                                                      : 'Categoría';
+                                                  return Chip(
+                                                    label: Text(catName),
+                                                    onDeleted: () {
+                                                      setState(() {
+                                                        selectedCategories
+                                                            .remove(catId);
+                                                      });
+                                                      debouncedLoadProduct();
+                                                    },
+                                                  );
+                                                }).toList(),
                                               ),
                                             ),
-                                          ),
                                           const SizedBox(
                                               height: CustomSpacer.medium),
                                         ],

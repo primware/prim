@@ -81,15 +81,9 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
         final taxCategoryID = record['C_TaxCategory_ID']?['id'];
         Map<String, dynamic>? assignedTax;
 
-        if (taxCategoryID != null) {
-          final taxes = await fetchTax(
-            context: context,
-            cTaxCategoryID: taxCategoryID,
-          );
-
-          if (taxes.isNotEmpty) {
-            assignedTax = taxes.first;
-          }
+        if (taxCategoryID != null &&
+            POS.principalTaxs.containsKey(taxCategoryID)) {
+          assignedTax = POS.principalTaxs[taxCategoryID];
         }
 
         productList.add({
@@ -118,18 +112,10 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
   }
 }
 
-Future<List<Map<String, dynamic>>> fetchTax({
-  required BuildContext context,
-  int? cTaxCategoryID,
-}) async {
+Future<List<Map<String, dynamic>>> fetchTax() async {
   try {
-    String url = EndPoints.cTax;
-    if (cTaxCategoryID != null) {
-      url += '?\$filter=C_TaxCategory_ID eq $cTaxCategoryID';
-    }
-
     final response = await get(
-      Uri.parse(url),
+      Uri.parse(EndPoints.cTax),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,

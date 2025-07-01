@@ -8,6 +8,8 @@ class POS {
   static List<Map<String, String>> documentActions = [
     {'code': 'DR', 'name': 'Borrador'}
   ];
+
+  static Map<dynamic, dynamic> principalTaxs = {};
 }
 
 class POSTenderType {

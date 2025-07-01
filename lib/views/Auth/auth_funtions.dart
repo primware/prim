@@ -322,6 +322,8 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
 
+      await fetchTaxs();
+
       final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.isPOS = docSubType == 'WR';
     } else {
@@ -385,7 +387,7 @@ Future<int?> _getMPriceListVersion(int id) async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.mPriceList}?\$filter=M_PriceList_ID eq $id AND IsDefault eq true&\$expand=M_PriceList_Version'),
+          '${EndPoints.mPriceList}?\$filter=M_PriceList_ID eq $id&\$expand=M_PriceList_Version'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
@@ -525,5 +527,36 @@ Future<String> fetchAppVersion() async {
     }
   } catch (e) {
     return 'Versión: debug';
+  }
+}
+
+Future<void> fetchTaxs() async {
+  try {
+    final response = await get(
+      Uri.parse(EndPoints.cTax),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      POS.principalTaxs = {
+        for (var record in jsonResponse['records'])
+          record['C_TaxCategory_ID']['id']: {
+            'id': record['id'],
+            'name': record['Name'],
+            'rate': record['Rate'],
+            'istaxexempt': record['IsTaxExempt'],
+            'issalestax': record['IsSalesTax'],
+            'isdefault': record['IsDefault'],
+          }
+      };
+    } else {
+      throw Exception('Error al cargar los impuestos: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Excepción al obtener impuesto: $e');
   }
 }
