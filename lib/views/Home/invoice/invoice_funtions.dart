@@ -8,16 +8,21 @@ import 'dart:convert';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 
-Future<List<Map<String, dynamic>>> fetchBPartner(
-    {required BuildContext context}) async {
+Future<List<Map<String, dynamic>>> fetchBPartner({
+  required BuildContext context,
+  String? searchTerm = '',
+}) async {
   try {
     await usuarioAuth(
       usuario: usuarioController.text.trim(),
       clave: claveController.text.trim(),
       context: context,
     );
+    final filterQuery = 'IsCustomer eq true'
+        '${searchTerm!.isNotEmpty ? ' and contains(tolower(Name), ${searchTerm.toLowerCase()})' : ''}';
+
     final response = await get(
-      Uri.parse('${EndPoints.cBPartner}?\$filter=IsCustomer eq true'),
+      Uri.parse('${EndPoints.cBPartner}?\$filter=$filterQuery'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,

@@ -33,6 +33,7 @@ class _InvoicePageState extends State<InvoicePage> {
   bool isBPartnerLoading = true;
   bool isProductLoading = true;
   bool isProductSearchLoading = false;
+  bool isCustomerSearchLoading = false;
   bool isProductCategoryLoading = true;
   bool isTaxLoading = true;
 
@@ -109,6 +110,17 @@ class _InvoicePageState extends State<InvoicePage> {
     });
   }
 
+  void debouncedLoadCustomer() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    final searchText = clienteController.text.trim();
+    if (searchText.length < 4 && searchText.isNotEmpty) {
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 1000), () {
+      _loadBPartner(showLoadingIndicator: true);
+    });
+  }
+
   Future<void> _loadPayment() async {
     setState(() {
       isPaymentMethodsLoading = true;
@@ -175,8 +187,16 @@ class _InvoicePageState extends State<InvoicePage> {
     });
   }
 
-  Future<void> _loadBPartner() async {
-    final partner = await fetchBPartner(context: context);
+  Future<void> _loadBPartner({bool showLoadingIndicator = false}) async {
+    if (showLoadingIndicator) {
+      setState(() {
+        isCustomerSearchLoading = true;
+      });
+    }
+    final partner = await fetchBPartner(
+      context: context,
+      searchTerm: clienteController.text.trim(),
+    );
 
     //? Busca el cliente por defecto según el ID en POS
     final defaultPartner = partner.firstWhere(
@@ -187,7 +207,7 @@ class _InvoicePageState extends State<InvoicePage> {
     setState(() {
       bPartnerOptions = partner;
       isBPartnerLoading = false;
-
+      isCustomerSearchLoading = false;
       if (defaultPartner.isNotEmpty) {
         selectedBPartnerID = defaultPartner['id'];
         clienteController.text =
@@ -652,6 +672,11 @@ class _InvoicePageState extends State<InvoicePage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (isCustomerSearchLoading) ...[
+                            const SizedBox(height: 4),
+                            const LinearProgressIndicator(),
+                            const SizedBox(height: 8),
+                          ],
                           isBPartnerLoading
                               ? _buildShimmerField()
                               : CustomSearchField(
@@ -660,6 +685,7 @@ class _InvoicePageState extends State<InvoicePage> {
                                   searchBy: "TaxID",
                                   controller: clienteController,
                                   showCreateButtonIfNotFound: true,
+                                  onChanged: (_) => debouncedLoadCustomer(),
                                   onCreate: (value) async {
                                     final result = await Navigator.push(
                                       context,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/localization/app_locale.dart';
-import 'package:primware/views/register/register_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../API/endpoint.api.dart';
 import '../../shared/button.widget.dart';
@@ -100,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(
-            'Servidor',
+            AppLocale.server.getString(context),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           content: Column(
@@ -223,7 +222,7 @@ class _LoginPageState extends State<LoginPage> {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _showBaseURLDialog,
           icon: const Icon(Icons.settings),
-          label: const Text('Servidor'),
+          label: Text(AppLocale.server.getString(context)),
         ),
         body: Center(
           child: SingleChildScrollView(
