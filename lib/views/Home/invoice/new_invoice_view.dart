@@ -1246,6 +1246,7 @@ class _InvoicePageState extends State<InvoicePage> {
                         options: POS.documentActions,
                         labelText: "Acción del Documento",
                         searchBy: "name",
+                        
                         showCreateButtonIfNotFound: false,
                         controller: TextEditingController(
                           text: POS.documentActions.first['name'],

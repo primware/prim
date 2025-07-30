@@ -6,6 +6,7 @@ import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/invoice/new_invoice_view.dart';
+import 'package:primware/views/Home/product/my_product_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../API/endpoint.api.dart';
@@ -13,6 +14,7 @@ import '../API/user.api.dart';
 import '../main.dart';
 import '../theme/colors.dart';
 import '../theme/fonts.dart';
+import '../views/Home/bpartner/bpartner_view.dart';
 import '../views/Home/invoice/my_invoice_view.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
@@ -196,15 +198,57 @@ class _MenuDrawerState extends State<MenuDrawer> {
     return SafeArea(
       child: Drawer(
         backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
         child: ListView(
-          padding: EdgeInsets.zero,
+          padding: EdgeInsets.only(
+            top: CustomSpacer.medium,
+            bottom: CustomSpacer.medium,
+          ),
           children: [
-            const SizedBox(height: CustomSpacer.medium),
+            Center(
+              child: Text(UserData.name ?? 'Usuario',
+                  style: FontsTheme.h5Bold(
+                    color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+                  )),
+            ),
+            const Divider(
+              height: 24,
+            ),
             ListTile(
-              leading: Icon(Icons.add),
+              leading: Icon(
+                Icons.dashboard_outlined,
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
+              tileColor: Theme.of(context).cardColor,
+              title: Text(
+                'Dashboard',
+                style: TextStyle(
+                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DashboardPage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.add,
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
               title: Text(
                 'Nueva orden',
+                style: TextStyle(
+                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+                ),
               ),
+              tileColor: Theme.of(context).cardColor,
               onTap: () {
                 Navigator.push(
                   context,
@@ -237,12 +281,12 @@ class _MenuDrawerState extends State<MenuDrawer> {
             ),
             ListTile(
               leading: Icon(
-                Token.auth != null ? Icons.person : Icons.login,
+                Icons.inventory_2_outlined,
                 color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
               ),
               tileColor: Theme.of(context).cardColor,
               title: Text(
-                Token.auth != null ? 'Panel' : 'Acceder',
+                'Productos',
                 style: TextStyle(
                   color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
                 ),
@@ -251,13 +295,33 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => Token.auth != null
-                        ? const DashboardPage()
-                        : const LoginPage(),
+                    builder: (context) => const ProductListPage(),
                   ),
                 );
               },
             ),
+            ListTile(
+              leading: Icon(
+                Icons.people_alt_outlined,
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
+              tileColor: Theme.of(context).cardColor,
+              title: Text(
+                'Clientes',
+                style: TextStyle(
+                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BPartnerListPage(),
+                  ),
+                );
+              },
+            ),
+
             ListTile(
               leading: Icon(
                 Icons.settings,
