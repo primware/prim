@@ -299,7 +299,7 @@ class _InvoicePageState extends State<InvoicePage> {
           : '',
     );
 
-    void onSubmitted() {
+    void onSubmitted(BuildContext dialogContext) {
       final qty = int.tryParse(quantityController.text) ?? 1;
       final price =
           double.tryParse(priceController.text) ?? (product['price'] ?? 0);
@@ -322,13 +322,13 @@ class _InvoicePageState extends State<InvoicePage> {
       _recalculateSummary();
       productController.clear();
       _validateForm();
-      Navigator.pop(context, true);
+      Navigator.pop(dialogContext, true);
     }
 
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (context) {
+      builder: (dialogContext) {
         return WillPopScope(
           onWillPop: () async {
             productController.clear();
@@ -370,7 +370,7 @@ class _InvoicePageState extends State<InvoicePage> {
                             controlador: quantityController,
                             texto: 'Cantidad',
                             inputType: TextInputType.number,
-                            onSubmitted: (_) => onSubmitted(),
+                            onSubmitted: (_) => onSubmitted(dialogContext),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -427,12 +427,12 @@ class _InvoicePageState extends State<InvoicePage> {
               TextButton(
                 onPressed: () {
                   productController.clear();
-                  Navigator.pop(context, false);
+                  Navigator.pop(dialogContext, false);
                 },
                 child: const Text('Cancelar'),
               ),
               ElevatedButton(
-                onPressed: onSubmitted,
+                onPressed: () => onSubmitted(dialogContext),
                 child: Text(
                   'Agregar',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1246,7 +1246,6 @@ class _InvoicePageState extends State<InvoicePage> {
                         options: POS.documentActions,
                         labelText: "Acción del Documento",
                         searchBy: "name",
-                        
                         showCreateButtonIfNotFound: false,
                         controller: TextEditingController(
                           text: POS.documentActions.first['name'],

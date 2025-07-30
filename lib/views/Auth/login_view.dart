@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+import 'package:primware/localization/app_locale.dart';
 import 'package:primware/views/register/register_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../API/endpoint.api.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
+import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
 import '../../shared/logo.dart';
 import '../../shared/message.custom.dart';
@@ -36,6 +39,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _loadBaseURL();
     _loadRememberedUser();
+    _loadSavedLanguage();
     _checkVersion();
   }
 
@@ -52,6 +56,16 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           rememberUser = true;
         });
+      }
+    }
+  }
+
+  Future<void> _loadSavedLanguage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('rememberUser') ?? false) {
+      String? lang = prefs.getString('languageCode');
+      if (lang != null) {
+        FlutterLocalization.instance.translate(lang);
       }
     }
   }
@@ -232,14 +246,14 @@ class _LoginPageState extends State<LoginPage> {
                               (!isMobile ? CustomSpacer.xlarge : 10)),
                       TextfieldTheme(
                         icono: Icons.mail_outline,
-                        texto: 'Usuario',
+                        texto: AppLocale.user.getString(context),
                         inputType: TextInputType.emailAddress,
                         controlador: usuarioController,
                       ),
                       const SizedBox(height: CustomSpacer.small),
                       TextfieldTheme(
                         icono: Icons.lock_outline,
-                        texto: 'Contraseña',
+                        texto: AppLocale.pass.getString(context),
                         obscure: true,
                         showSubIcon: true,
                         controlador: claveController,
@@ -247,10 +261,31 @@ class _LoginPageState extends State<LoginPage> {
                             usuarioController.text.trim(),
                             claveController.text.trim()),
                       ),
+                      const SizedBox(height: CustomSpacer.medium),
+                      SearchableDropdown<String>(
+                        value: FlutterLocalization
+                            .instance.currentLocale?.languageCode,
+                        onChanged: (String? lang) async {
+                          if (lang != null) {
+                            FlutterLocalization.instance.translate(lang);
+                            if (rememberUser) {
+                              SharedPreferences prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setString('languageCode', lang);
+                            }
+                          }
+                        },
+                        labelText: AppLocale.lang.getString(context),
+                        showSearchBox: false,
+                        options: [
+                          {'id': 'es', 'name': 'Español'},
+                          {'id': 'en', 'name': 'English'},
+                        ],
+                      ),
                       const SizedBox(height: CustomSpacer.small),
                       CustomCheckbox(
                         value: rememberUser,
-                        text: 'Recordar usuario',
+                        text: AppLocale.rememberLogin.getString(context),
                         onChanged: (newValue) {
                           setState(() {
                             rememberUser = newValue;
@@ -264,24 +299,13 @@ class _LoginPageState extends State<LoginPage> {
                                 fullWidth: true,
                               )
                             : ButtonPrimary(
-                                texto: 'Iniciar sesión',
+                                texto: AppLocale.login.getString(context),
                                 fullWidth: true,
                                 onPressed: () {
                                   _funcionLogin(usuarioController.text.trim(),
                                       claveController.text.trim());
                                 },
                               ),
-                      ),
-                      const SizedBox(height: CustomSpacer.medium),
-                      ButtonSecondary(
-                        texto: 'Crear cuenta',
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RegisterUser(),
-                          ),
-                        ),
-                        fullWidth: true,
                       ),
                     ],
                   ),
