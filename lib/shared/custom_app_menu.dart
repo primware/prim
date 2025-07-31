@@ -10,6 +10,7 @@ import 'package:primware/views/Home/product/product_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../API/endpoint.api.dart';
+import '../API/pos.api.dart';
 import '../API/user.api.dart';
 import '../main.dart';
 import '../theme/colors.dart';
@@ -195,201 +196,223 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Drawer(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
+    return Drawer(
+      backgroundColor: Theme.of(context).cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+      ),
+      child: ListView(
+        padding: EdgeInsets.only(
+          top: CustomSpacer.xlarge + CustomSpacer.xlarge + CustomSpacer.medium,
+          bottom: CustomSpacer.medium,
         ),
-        child: ListView(
-          padding: EdgeInsets.only(
-            top: CustomSpacer.medium,
-            bottom: CustomSpacer.medium,
+        children: [
+          Center(
+            child: Text(UserData.name ?? 'Usuario',
+                style: FontsTheme.h5Bold(
+                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+                )),
           ),
-          children: [
-            Center(
-              child: Text(UserData.name ?? 'Usuario',
-                  style: FontsTheme.h5Bold(
-                    color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-                  )),
+          const Divider(
+            height: 24,
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.dashboard_outlined,
+              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
             ),
-            const Divider(
-              height: 24,
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.dashboard_outlined,
+            tileColor: Theme.of(context).cardColor,
+            title: Text(
+              'Dashboard',
+              style: TextStyle(
                 color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
               ),
-              tileColor: Theme.of(context).cardColor,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DashboardPage(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.add,
+              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+            ),
+            title: Text(
+              'Nueva orden',
+              style: TextStyle(
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
+            ),
+            tileColor: Theme.of(context).cardColor,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const InvoicePage(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.attach_money_outlined,
+              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+            ),
+            tileColor: Theme.of(context).cardColor,
+            title: Text(
+              'Mis ordenes',
+              style: TextStyle(
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrderListPage(),
+                ),
+              );
+            },
+          ),
+          if (POS.docTypeRefundID != null)
+            ListTile(
+              leading: Icon(
+                Icons.sd_card_alert_outlined,
+                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+              ),
               title: Text(
-                'Dashboard',
+                'Nota de crédito',
                 style: TextStyle(
                   color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
                 ),
               ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DashboardPage(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.add,
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-              ),
-              title: Text(
-                'Nueva orden',
-                style: TextStyle(
-                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-                ),
-              ),
               tileColor: Theme.of(context).cardColor,
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const InvoicePage(),
+                    builder: (context) => const InvoicePage(
+                      isRefund: true,
+                    ),
                   ),
                 );
               },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.attach_money_outlined,
+          ListTile(
+            leading: Icon(
+              Icons.inventory_2_outlined,
+              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+            ),
+            tileColor: Theme.of(context).cardColor,
+            title: Text(
+              'Productos',
+              style: TextStyle(
                 color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
               ),
-              tileColor: Theme.of(context).cardColor,
-              title: Text(
-                'Mis ordenes',
-                style: TextStyle(
-                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-                ),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OrderListPage(),
-                  ),
-                );
-              },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.inventory_2_outlined,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProductListPage(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.people_alt_outlined,
+              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+            ),
+            tileColor: Theme.of(context).cardColor,
+            title: Text(
+              'Clientes',
+              style: TextStyle(
                 color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
               ),
-              tileColor: Theme.of(context).cardColor,
-              title: Text(
-                'Productos',
-                style: TextStyle(
-                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-                ),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProductListPage(),
-                  ),
-                );
-              },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.people_alt_outlined,
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-              ),
-              tileColor: Theme.of(context).cardColor,
-              title: Text(
-                'Clientes',
-                style: TextStyle(
-                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BPartnerListPage(),
                 ),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const BPartnerListPage(),
-                  ),
-                );
-              },
-            ),
+              );
+            },
+          ),
 
-            ListTile(
-              leading: Icon(
-                Icons.settings,
+          ListTile(
+            leading: Icon(
+              Icons.settings,
+              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+            ),
+            tileColor: Theme.of(context).cardColor,
+            title: Text(
+              'Debug Panel',
+              style: TextStyle(
                 color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
               ),
-              tileColor: Theme.of(context).cardColor,
-              title: Text(
-                'Debug Panel',
-                style: TextStyle(
-                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-                ),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DebugPage(),
-                  ),
-                );
-              },
             ),
-            // ListTile(
-            //   tileColor: Theme.of(context).cardColor,
-            //   leading: Icon(
-            //     _isDarkMode ? Icons.nightlight : Icons.sunny,
-            //     color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.atention,
-            //   ),
-            //   title: Text(
-            //     _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-            //     style: TextStyle(
-            //       color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-            //     ),
-            //   ),
-            //   onTap: () {
-            //     ThemeManager.themeNotifier.toggleTheme();
-            //     _loadTheme();
-            //   },
-            // ),
-            ListTile(
-              tileColor: Theme.of(context).cardColor,
-              leading: Icon(
-                Icons.logout_outlined,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DebugPage(),
+                ),
+              );
+            },
+          ),
+          // ListTile(
+          //   tileColor: Theme.of(context).cardColor,
+          //   leading: Icon(
+          //     _isDarkMode ? Icons.nightlight : Icons.sunny,
+          //     color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.atention,
+          //   ),
+          //   title: Text(
+          //     _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+          //     style: TextStyle(
+          //       color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
+          //     ),
+          //   ),
+          //   onTap: () {
+          //     ThemeManager.themeNotifier.toggleTheme();
+          //     _loadTheme();
+          //   },
+          // ),
+          ListTile(
+            tileColor: Theme.of(context).cardColor,
+            leading: Icon(
+              Icons.logout_outlined,
+              color: ColorTheme.error,
+            ),
+            title: Text(
+              'Cerrar sesión',
+              style: TextStyle(
                 color: ColorTheme.error,
               ),
-              title: Text(
-                'Cerrar sesión',
-                style: TextStyle(
-                  color: ColorTheme.error,
-                ),
-              ),
-              onTap: () {
-                Token.auth = null;
-                usuarioController.clear();
-                claveController.clear();
-
-                UserData.rolName = null;
-                UserData.imageBytes = null;
-
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LoginPage(),
-                  ),
-                );
-              },
             ),
-          ],
-        ),
+            onTap: () {
+              Token.auth = null;
+              usuarioController.clear();
+              claveController.clear();
+
+              UserData.rolName = null;
+              UserData.imageBytes = null;
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LoginPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

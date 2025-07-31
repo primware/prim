@@ -16,7 +16,9 @@ import 'package:shimmer/shimmer.dart';
 import 'my_invoice_view.dart';
 
 class InvoicePage extends StatefulWidget {
-  const InvoicePage({super.key});
+  final bool isRefund;
+
+  const InvoicePage({super.key, this.isRefund = false});
 
   @override
   State<InvoicePage> createState() => _InvoicePageState();
@@ -510,7 +512,8 @@ class _InvoicePageState extends State<InvoicePage> {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
           title: Text('Completar'),
-          content: Text('¿Está seguro de que desea completar la orden?'),
+          content: Text(
+              '¿Está seguro de que desea completar la ${widget.isRefund == true ? 'nota de crédido' : 'orden'}?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -565,6 +568,7 @@ class _InvoicePageState extends State<InvoicePage> {
       payments: paymentData,
       context: context,
       docAction: selectedDocActionCode ?? 'DR',
+      isRefund: widget.isRefund,
     );
 
     if (result['success'] == true) {
@@ -594,8 +598,10 @@ class _InvoicePageState extends State<InvoicePage> {
         );
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Orden completada"),
+        SnackBar(
+          content: Text(widget.isRefund
+              ? 'Nota de crédito compleata'
+              : 'Orden completada'),
           backgroundColor: Colors.green,
         ),
       );
@@ -650,13 +656,11 @@ class _InvoicePageState extends State<InvoicePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nueva orden',
-            style: Theme.of(context)
-                .textTheme
-                .headlineLarge
-                ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
+        title: Text(widget.isRefund ? 'Nota de crédito' : 'Nueva orden'),
+        backgroundColor:
+            widget.isRefund ? Theme.of(context).colorScheme.error : null,
       ),
-      drawer: POS.isPOS ? MenuDrawer() : null,
+      drawer: MenuDrawer(),
       body: SingleChildScrollView(
         child: Center(
           child: Wrap(
