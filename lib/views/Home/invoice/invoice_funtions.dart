@@ -19,7 +19,8 @@ Future<List<Map<String, dynamic>>> fetchBPartner({
         '${searchTerm!.isNotEmpty ? ' and contains(tolower(Name), ${searchTerm.toLowerCase()})' : ''}';
 
     final response = await get(
-      Uri.parse('${EndPoints.cBPartner}?\$filter=$filterQuery'),
+      Uri.parse(
+          '${EndPoints.cBPartner}?\$filter=$filterQuery&\$expand=AD_User,C_BPartner_Location'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -36,6 +37,10 @@ Future<List<Map<String, dynamic>>> fetchBPartner({
           'TaxID': record['TaxID'],
           'LCO_TaxIdType_ID': record['LCO_TaxIdType_ID']?['id'],
           'LCO_TaxIdTypeName': record['LCO_TaxIdType_ID']?['identifier'],
+          'C_BP_Group_ID': record['C_BP_Group_ID']?['id'],
+          'AD_User_ID': record['AD_User']?[0]?['id'],
+          'C_BPartner_Location_ID': record['C_BPartner_Location']?[0]?['id'],
+          'locationName': record['C_BPartner_Location']?[0]?['Name'],
         };
       }).toList();
     } else {

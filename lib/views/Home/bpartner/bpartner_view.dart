@@ -7,6 +7,7 @@ import '../../../shared/shimmer_list.dart';
 import '../../../shared/textfield.widget.dart';
 import '../dashboard/dashboard_view.dart';
 import '../invoice/invoice_funtions.dart';
+import 'bpartner_details.dart';
 import 'bpartner_new.dart';
 
 class BPartnerListPage extends StatefulWidget {
@@ -81,15 +82,15 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
       children: records.map((record) {
         return GestureDetector(
           onTap: () async {
-            // final refreshed = await Navigator.push(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (_) => BPartnerDetailPage(bpartner: record),
-            //   ),
-            // );
-            // if (refreshed == true) {
-            //   debouncedLoadBPartner();
-            // }
+            final refreshed = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BPartnerDetailPage(bpartner: record),
+              ),
+            );
+            if (refreshed == true) {
+              debouncedLoadBPartner();
+            }
           },
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),

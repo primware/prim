@@ -42,8 +42,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     }
 
     nameController.addListener(_isFormValid);
-    emailController.addListener(_isFormValid);
-    taxController.addListener(_isFormValid);
+
     locationController.addListener(_isFormValid);
   }
 
@@ -78,7 +77,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     setState(() {
       isValid = nameController.text.isNotEmpty &&
           locationController.text.isNotEmpty &&
-          isValidEmail(emailController.text) &&
           selectedTaxTypeID != null &&
           selectedBPartnerGroupID != null;
     });
@@ -228,7 +226,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: emailController,
-                    texto: 'Correo electrónico *',
+                    texto: 'Correo electrónico',
                     colorEmpty: !isValidEmail(emailController.text)
                         ? ColorTheme.error
                         : null,
