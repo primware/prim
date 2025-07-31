@@ -33,6 +33,9 @@ Future<List<Map<String, dynamic>>> fetchBPartner({
         return {
           'id': record['id'],
           'name': record['Name'],
+          'TaxID': record['TaxID'],
+          'LCO_TaxIdType_ID': record['LCO_TaxIdType_ID']?['id'],
+          'LCO_TaxIdTypeName': record['LCO_TaxIdType_ID']?['identifier'],
         };
       }).toList();
     } else {

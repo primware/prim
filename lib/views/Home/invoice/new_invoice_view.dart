@@ -9,7 +9,7 @@ import '../../../shared/custom_searchfield.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/textfield.widget.dart';
 import '../../../theme/colors.dart';
-import '../bpartner/bpartner_new_view.dart';
+import '../bpartner/bpartner_new.dart';
 import 'invoice_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 

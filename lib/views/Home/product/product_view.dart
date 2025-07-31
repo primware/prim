@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import '../../../shared/custom_app_menu.dart';
@@ -8,7 +7,7 @@ import '../../../shared/shimmer_list.dart';
 import '../../../shared/textfield.widget.dart';
 import '../dashboard/dashboard_view.dart';
 import '../invoice/invoice_funtions.dart';
-import 'new_product_view.dart';
+import 'product_new.dart';
 import 'product_details.dart';
 
 class ProductListPage extends StatefulWidget {

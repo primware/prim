@@ -221,7 +221,7 @@ Future<List<Map<String, dynamic>>?> getCTaxCategoryID(
             (responseData['records'] as List).map((record) {
           return {
             'id': record['id'],
-            'name': record['Name'] ?? record['name'] ?? '',
+            'name': record['Name'] ?? '',
           };
         }).toList();
         return records;
@@ -287,7 +287,7 @@ Future<Map<String, dynamic>> putProduct({
     };
 
     final response = await put(
-      Uri.parse("${EndPoints.mProduct}($id)"),
+      Uri.parse("${EndPoints.mProduct}/$id"),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -316,7 +316,7 @@ Future<Map<String, dynamic>> putProduct({
     };
 
     final priceResponse = await put(
-      Uri.parse("${EndPoints.mProductPrice}($productPriceID)"),
+      Uri.parse("${EndPoints.mProductPrice}/$productPriceID"),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,

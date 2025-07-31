@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import '../../../shared/button.widget.dart';
+import '../../../shared/custom_dropdown.dart';
+import '../../../shared/shimmer_list.dart';
 import '../../../shared/textfield.widget.dart';
 import '../../../theme/colors.dart';
 import 'bpartner_funtions.dart';
@@ -20,21 +22,49 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
   TextEditingController taxController = TextEditingController();
   TextEditingController locationController = TextEditingController();
   TextEditingController emailController = TextEditingController();
-  bool isValid = false;
-  bool isLoading = false;
+
+  bool isValid = false,
+      isLoading = false,
+      _isTaxTypeLoading = true,
+      _isGroupLoading = true;
+
+  int? selectedTaxTypeID, selectedBPartnerGroupID;
+
+  List<Map<String, dynamic>> taxTypes = [], bPartnerGroups = [];
 
   @override
   void initState() {
     super.initState();
-
+    _loadTaxType();
+    _loadBPartnerGroups();
     if (widget.bpartnerName != null) {
       nameController.text = widget.bpartnerName!;
     }
-    // locationController.text = 'Ubicación de ${widget.bpartnerName}';
+
     nameController.addListener(_isFormValid);
     emailController.addListener(_isFormValid);
     taxController.addListener(_isFormValid);
     locationController.addListener(_isFormValid);
+  }
+
+  Future<void> _loadTaxType() async {
+    final fetchedTaxTypes = await getCTaxTypeID(context);
+    if (fetchedTaxTypes != null) {
+      setState(() {
+        taxTypes = fetchedTaxTypes;
+        _isTaxTypeLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadBPartnerGroups() async {
+    final fetchedGroups = await getCBPGroup(context);
+    if (fetchedGroups != null) {
+      setState(() {
+        bPartnerGroups = fetchedGroups;
+        _isGroupLoading = false;
+      });
+    }
   }
 
   void clearPartnerFields() {
@@ -48,7 +78,9 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     setState(() {
       isValid = nameController.text.isNotEmpty &&
           locationController.text.isNotEmpty &&
-          isValidEmail(emailController.text);
+          isValidEmail(emailController.text) &&
+          selectedTaxTypeID != null &&
+          selectedBPartnerGroupID != null;
     });
   }
 
@@ -104,7 +136,9 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
       name: nameController.text,
       location: locationController.text,
       taxID: taxController.text,
+      cBPartnerGroupID: selectedBPartnerGroupID!,
       email: emailController.text,
+      cTaxTypeID: selectedTaxTypeID!,
       context: context,
     );
 
@@ -146,11 +180,45 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                 children: [
                   TextfieldTheme(
                     controlador: nameController,
-                    texto: 'Nombre*',
+                    texto: 'Nombre *',
                     colorEmpty:
                         nameController.text.isEmpty ? ColorTheme.error : null,
                     inputType: TextInputType.name,
                   ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  _isTaxTypeLoading
+                      ? ShimmerList(
+                          count: 1,
+                        )
+                      : SearchableDropdown<int>(
+                          value: selectedTaxTypeID,
+                          options: taxTypes,
+                          showSearchBox: false,
+                          labelText: 'Persona *',
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              selectedTaxTypeID = newValue;
+                              _isFormValid();
+                            });
+                          },
+                        ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  _isGroupLoading
+                      ? ShimmerList(
+                          count: 1,
+                        )
+                      : SearchableDropdown<int>(
+                          value: selectedBPartnerGroupID,
+                          options: bPartnerGroups,
+                          showSearchBox: false,
+                          labelText: 'Grupo *',
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              selectedBPartnerGroupID = newValue;
+                              _isFormValid();
+                            });
+                          },
+                        ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: taxController,
@@ -160,7 +228,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: emailController,
-                    texto: 'Correo electrónico*',
+                    texto: 'Correo electrónico *',
                     colorEmpty: !isValidEmail(emailController.text)
                         ? ColorTheme.error
                         : null,
@@ -169,7 +237,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: locationController,
-                    texto: 'Dirección*',
+                    texto: 'Dirección *',
                     colorEmpty: locationController.text.isEmpty
                         ? ColorTheme.error
                         : null,

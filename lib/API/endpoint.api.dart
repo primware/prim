@@ -44,6 +44,7 @@ class EndPoints {
       '${Base.baseURL}/api/v1/processes/initialclientsetup';
 
   static String mProduct = '${Base.baseURL}/api/v1/models/M_Product';
+
   static String mProductPrice = '${Base.baseURL}/api/v1/models/M_ProductPrice';
 
   static String mProductCategory =
@@ -60,6 +61,10 @@ class EndPoints {
   static String cTaxCategory = '${Base.baseURL}/api/v1/models/C_TaxCategory';
 
   static String cDocType = '${Base.baseURL}/api/v1/models/C_DocType';
+
+  static String lcoTaxIdType = '${Base.baseURL}/api/v1/models/LCO_TaxIdType';
+
+  static String cBPGroup = '${Base.baseURL}/api/v1/models/C_BP_Group';
 
   static String cPOSTenderType =
       '${Base.baseURL}/api/v1/models/C_POSTenderType';

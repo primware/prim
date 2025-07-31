@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 import '../../../API/endpoint.api.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
@@ -9,6 +9,8 @@ Future<Map<String, dynamic>> postBPartner({
   required String name,
   required String location,
   required String email,
+  required int cTaxTypeID,
+  required int cBPartnerGroupID,
   String? taxID,
   required BuildContext context,
 }) async {
@@ -31,9 +33,11 @@ Future<Map<String, dynamic>> postBPartner({
       "Name": name,
       if (taxID != null) "TaxID": taxID,
       "IsCustomer": true,
+      "LCO_TaxIdType_ID": cTaxTypeID,
+      "C_BP_Group_ID": cBPartnerGroupID,
     };
 
-    final bPartnerResponse = await http.post(
+    final bPartnerResponse = await post(
       Uri.parse(EndPoints.cBPartner),
       headers: {
         'Content-Type': 'application/json',
@@ -52,7 +56,7 @@ Future<Map<String, dynamic>> postBPartner({
     }
 
 //? Ubicación
-    final locationResponse = await http.post(
+    final locationResponse = await post(
       Uri.parse(EndPoints.cLocation),
       headers: {
         'Content-Type': 'application/json',
@@ -89,7 +93,7 @@ Future<Map<String, dynamic>> postBPartner({
       "IsRemitTo": true,
     };
 
-    final locationPartnerResponse = await http.post(
+    final locationPartnerResponse = await post(
       Uri.parse(EndPoints.cBPartnerLocation),
       headers: {
         'Content-Type': 'application/json',
@@ -116,7 +120,7 @@ Future<Map<String, dynamic>> postBPartner({
       "IsBillTo": true,
     };
 
-    final userResponse = await http.post(
+    final userResponse = await post(
       Uri.parse(EndPoints.adUser),
       headers: {
         'Content-Type': 'application/json',
@@ -149,7 +153,7 @@ Future<Map<String, dynamic>> postBPartner({
 }
 
 Future<bool> userExists(String email) async {
-  final response = await http.get(
+  final response = await get(
     Uri.parse("${EndPoints.adUser}?\$filter=EMail eq '$email'"),
     headers: {
       'Content-Type': 'application/json',
@@ -165,4 +169,82 @@ Future<bool> userExists(String email) async {
         'Error al verificar usuario: ${response.statusCode}, ${response.body}');
     return false;
   }
+}
+
+Future<List<Map<String, dynamic>>?> getCTaxTypeID(BuildContext context) async {
+  try {
+    await usuarioAuth(
+      context: context,
+    );
+
+    final response = await get(
+      Uri.parse(EndPoints.lcoTaxIdType),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(utf8.decode(response.bodyBytes));
+
+      if (responseData['records'] != null && responseData['records'] is List) {
+        List<Map<String, dynamic>> records =
+            (responseData['records'] as List).map((record) {
+          return {
+            'id': record['id'],
+            'name': record['Name'] ?? '',
+          };
+        }).toList();
+        return records;
+      } else {
+        print('Error: formato inesperado de la respuesta.');
+        return null;
+      }
+    } else {
+      print('Error: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error al obtener tipo de identificacion: $e');
+  }
+  return null;
+}
+
+Future<List<Map<String, dynamic>>?> getCBPGroup(BuildContext context) async {
+  try {
+    await usuarioAuth(
+      context: context,
+    );
+
+    final response = await get(
+      Uri.parse(EndPoints.cBPGroup),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(utf8.decode(response.bodyBytes));
+
+      if (responseData['records'] != null && responseData['records'] is List) {
+        List<Map<String, dynamic>> records =
+            (responseData['records'] as List).map((record) {
+          return {
+            'id': record['id'],
+            'name': record['Name'] ?? '',
+          };
+        }).toList();
+        return records;
+      } else {
+        print('Error: formato inesperado de la respuesta.');
+        return null;
+      }
+    } else {
+      print('Error: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error al obtener grupo de terceros: $e');
+  }
+  return null;
 }
