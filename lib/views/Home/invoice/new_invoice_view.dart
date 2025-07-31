@@ -657,669 +657,659 @@ class _InvoicePageState extends State<InvoicePage> {
                 ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
       ),
       drawer: POS.isPOS ? MenuDrawer() : null,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              alignment: WrapAlignment.end,
-              children: [
-                CustomContainer(
-                  maxWidthContainer: 360,
-                  child: Column(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (isCustomerSearchLoading) ...[
-                            const SizedBox(height: 4),
-                            const LinearProgressIndicator(),
-                            const SizedBox(height: 8),
-                          ],
-                          isBPartnerLoading
-                              ? _buildShimmerField()
-                              : CustomSearchField(
-                                  options: bPartnerOptions,
-                                  labelText: "Cliente",
-                                  searchBy: "TaxID",
-                                  controller: clienteController,
-                                  showCreateButtonIfNotFound: true,
-                                  onChanged: (_) => debouncedLoadCustomer(),
-                                  onCreate: (value) async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => BPartnerNewPage(
-                                            bpartnerName: value),
-                                      ),
-                                    );
-                                    if (result != null &&
-                                        result['created'] == true) {
-                                      await _loadBPartner();
-                                      setState(() {
-                                        selectedBPartnerID =
-                                            result['bpartner']['id'];
-                                      });
-                                    }
-                                  },
-                                  onItemSelected: (item) {
-                                    setState(() {
-                                      selectedBPartnerID = item['id'];
-                                    });
-                                  },
-                                  itemBuilder: (item) => Text(
-                                    '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                          const SizedBox(height: CustomSpacer.medium),
-                          isProductLoading
-                              ? _buildShimmerField()
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Segmento de selección de categorías con botón y modal
-                                    if (!isProductCategoryLoading)
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          TextButton.icon(
-                                            style: ButtonStyle(
-                                              textStyle:
-                                                  MaterialStateProperty.all(
-                                                      Theme.of(context)
-                                                          .textTheme
-                                                          .bodyMedium),
-                                              backgroundColor:
-                                                  MaterialStateProperty.all(
-                                                      Theme.of(context)
-                                                          .colorScheme
-                                                          .secondary),
-                                              foregroundColor:
-                                                  MaterialStateProperty.all(
-                                                      Theme.of(context)
-                                                          .colorScheme
-                                                          .onSecondary),
-                                            ),
-                                            icon: const Icon(Icons.category),
-                                            label: const Text("Categorías"),
-                                            onPressed: () async {
-                                              Set<int> tempSelected =
-                                                  Set<int>.from(
-                                                      selectedCategories);
-                                              await showModalBottomSheet(
-                                                context: context,
-                                                isScrollControlled: true,
-                                                builder: (context) {
-                                                  return StatefulBuilder(
-                                                    builder: (context,
-                                                        setModalState) {
-                                                      return SafeArea(
-                                                        child: Padding(
-                                                          padding:
-                                                              MediaQuery.of(
-                                                                      context)
-                                                                  .viewInsets,
-                                                          child: Container(
-                                                            constraints:
-                                                                const BoxConstraints(
-                                                                    maxHeight:
-                                                                        400),
-                                                            child: Column(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          16.0),
-                                                                  child: Text(
-                                                                    "Selecciona las categorías",
-                                                                    style: Theme.of(
-                                                                            context)
-                                                                        .textTheme
-                                                                        .bodyLarge,
-                                                                  ),
-                                                                ),
-                                                                Expanded(
-                                                                  child: ListView
-                                                                      .builder(
-                                                                    shrinkWrap:
-                                                                        true,
-                                                                    itemCount:
-                                                                        categpryOptions
-                                                                            .length,
-                                                                    itemBuilder:
-                                                                        (context,
-                                                                            idx) {
-                                                                      final cat =
-                                                                          categpryOptions[
-                                                                              idx];
-                                                                      final isSelected =
-                                                                          tempSelected
-                                                                              .contains(cat['id']);
-                                                                      return ListTile(
-                                                                        title: Text(
-                                                                            cat['name']),
-                                                                        selected:
-                                                                            isSelected,
-                                                                        onTap:
-                                                                            () {
-                                                                          setModalState(
-                                                                              () {
-                                                                            if (isSelected) {
-                                                                              tempSelected.remove(cat['id']);
-                                                                            } else {
-                                                                              tempSelected.add(cat['id']);
-                                                                            }
-                                                                          });
-                                                                        },
-                                                                        trailing: isSelected
-                                                                            ? const Icon(Icons.check,
-                                                                                color: Colors.blue)
-                                                                            : null,
-                                                                      );
-                                                                    },
-                                                                  ),
-                                                                ),
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          16.0),
-                                                                  child: Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .end,
-                                                                    children: [
-                                                                      TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                        },
-                                                                        child: const Text(
-                                                                            "Cancelar"),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                          width:
-                                                                              8),
-                                                                      ElevatedButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.pop(
-                                                                              context,
-                                                                              tempSelected);
-                                                                        },
-                                                                        child: const Text(
-                                                                            "Aplicar"),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                              ).then((result) {
-                                                if (result != null &&
-                                                    result is Set<int>) {
-                                                  setState(() {
-                                                    selectedCategories =
-                                                        Set<int>.from(result);
-                                                  });
-                                                  debouncedLoadProduct();
-                                                }
-                                              });
-                                            },
-                                          ),
-                                          // Chips de categorías seleccionadas
-                                          if (selectedCategories.isNotEmpty)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 8.0),
-                                              child: Wrap(
-                                                spacing: 6,
-                                                runSpacing: 6,
-                                                children: selectedCategories
-                                                    .map((catId) {
-                                                  final cat = categpryOptions
-                                                      .firstWhere(
-                                                    (c) => c['id'] == catId,
-                                                    orElse: () =>
-                                                        <String, dynamic>{},
-                                                  );
-                                                  final catName = cat.isNotEmpty
-                                                      ? cat['name']
-                                                      : 'Categoría';
-                                                  return Chip(
-                                                    label: Text(catName),
-                                                    onDeleted: () {
-                                                      setState(() {
-                                                        selectedCategories
-                                                            .remove(catId);
-                                                      });
-                                                      debouncedLoadProduct();
-                                                    },
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            ),
-                                          const SizedBox(
-                                              height: CustomSpacer.medium),
-                                        ],
-                                      ),
-                                    // Campo de producto
-                                    if (isProductSearchLoading) ...[
-                                      const SizedBox(height: 4),
-                                      const LinearProgressIndicator(),
-                                      const SizedBox(height: 8),
-                                    ],
-                                    CustomSearchField(
-                                      options: productOptions,
-                                      controller: productController,
-                                      labelText: "Producto",
-                                      searchBy: "Codigo",
-                                      onItemSelected: (item) {
-                                        _showQuantityDialog(item);
-                                      },
-                                      onChanged: (_) => debouncedLoadProduct(),
-                                      itemBuilder: (item) => Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '${item['name'] ?? ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall,
-                                                ),
-                                                if (item['value'] != null)
-                                                  Text(
-                                                    'Cod: ${item['value'] ?? ''}',
-                                                    maxLines: 2,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodySmall,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                          Text(
-                                            '\$${item['price'] ?? '0.00'}',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.end,
+            children: [
+              CustomContainer(
+                maxWidthContainer: 360,
+                child: Column(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isCustomerSearchLoading) ...[
+                          const SizedBox(height: 4),
+                          const LinearProgressIndicator(),
+                          const SizedBox(height: 8),
+                        ],
+                        isBPartnerLoading
+                            ? _buildShimmerField()
+                            : CustomSearchField(
+                                options: bPartnerOptions,
+                                labelText: "Cliente",
+                                searchBy: "TaxID",
+                                controller: clienteController,
+                                showCreateButtonIfNotFound: true,
+                                onChanged: (_) => debouncedLoadCustomer(),
+                                onCreate: (value) async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          BPartnerNewPage(bpartnerName: value),
                                     ),
-                                    // //? crear producto si no existe
-                                    // if (productOptions.isEmpty &&
-                                    //     productController.text
-                                    //         .trim()
-                                    //         .isNotEmpty) ...[
-                                    //   const SizedBox(height: 8),
-                                    //   ElevatedButton.icon(
-                                    //     icon: const Icon(Icons.add),
-                                    //     label: Text(
-                                    //         'Crear "${productController.text.trim()}"'),
-                                    //     onPressed: () async {
-                                    //       final result = await Navigator.push(
-                                    //         context,
-                                    //         MaterialPageRoute(
-                                    //           builder: (_) => ProductNewPage(
-                                    //               productName: productController
-                                    //                   .text
-                                    //                   .trim()),
-                                    //         ),
-                                    //       );
-                                    //       if (result != null &&
-                                    //           result['created'] == true) {
-                                    //         _onProductCreated(
-                                    //             result['product']);
-                                    //       }
-                                    //     },
-                                    //   ),
-                                    // ],
-                                  ],
+                                  );
+                                  if (result != null &&
+                                      result['created'] == true) {
+                                    await _loadBPartner();
+                                    setState(() {
+                                      selectedBPartnerID =
+                                          result['bpartner']['id'];
+                                    });
+                                  }
+                                },
+                                onItemSelected: (item) {
+                                  setState(() {
+                                    selectedBPartnerID = item['id'];
+                                  });
+                                },
+                                itemBuilder: (item) => Text(
+                                  '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                          if (invoiceLines.isNotEmpty) ...[
-                            const SizedBox(height: CustomSpacer.large),
-                            Text('Detalle de productos',
-                                style: Theme.of(context).textTheme.titleLarge),
-                            const SizedBox(height: CustomSpacer.medium),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children:
-                                  invoiceLines.asMap().entries.map((entry) {
-                                final index = entry.key;
-                                final line = entry.value;
-                                final tax = taxOptions.firstWhere(
-                                  (t) => t['id'] == line['C_Tax_ID'],
-                                  orElse: () => {},
-                                );
-                                final taxRate = tax['rate'] != null
-                                    ? '${tax['rate']}%'
-                                    : 'Sin impuesto';
-                                return Tooltip(
-                                  message: line['name'],
-                                  child: InputChip(
-                                    onPressed: () =>
-                                        _showQuantityDialog(line, index: index),
-                                    deleteIcon: const Icon(Icons.close),
-                                    onDeleted: () => _deleteLine(index),
-                                    deleteIconColor: ColorTheme.error,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    label: Column(
-                                      mainAxisSize: MainAxisSize.min,
+                              ),
+                        const SizedBox(height: CustomSpacer.medium),
+                        isProductLoading
+                            ? _buildShimmerField()
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Segmento de selección de categorías con botón y modal
+                                  if (!isProductCategoryLoading)
+                                    Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
+                                        TextButton.icon(
+                                          style: ButtonStyle(
+                                            textStyle:
+                                                MaterialStateProperty.all(
+                                                    Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium),
+                                            backgroundColor:
+                                                MaterialStateProperty.all(
+                                                    Theme.of(context)
+                                                        .colorScheme
+                                                        .secondary),
+                                            foregroundColor:
+                                                MaterialStateProperty.all(
+                                                    Theme.of(context)
+                                                        .colorScheme
+                                                        .onSecondary),
+                                          ),
+                                          icon: const Icon(Icons.category),
+                                          label: const Text("Categorías"),
+                                          onPressed: () async {
+                                            Set<int> tempSelected =
+                                                Set<int>.from(
+                                                    selectedCategories);
+                                            await showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              builder: (context) {
+                                                return StatefulBuilder(
+                                                  builder:
+                                                      (context, setModalState) {
+                                                    return SafeArea(
+                                                      child: Padding(
+                                                        padding: MediaQuery.of(
+                                                                context)
+                                                            .viewInsets,
+                                                        child: Container(
+                                                          constraints:
+                                                              const BoxConstraints(
+                                                                  maxHeight:
+                                                                      400),
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        16.0),
+                                                                child: Text(
+                                                                  "Selecciona las categorías",
+                                                                  style: Theme.of(
+                                                                          context)
+                                                                      .textTheme
+                                                                      .bodyLarge,
+                                                                ),
+                                                              ),
+                                                              Expanded(
+                                                                child: ListView
+                                                                    .builder(
+                                                                  shrinkWrap:
+                                                                      true,
+                                                                  itemCount:
+                                                                      categpryOptions
+                                                                          .length,
+                                                                  itemBuilder:
+                                                                      (context,
+                                                                          idx) {
+                                                                    final cat =
+                                                                        categpryOptions[
+                                                                            idx];
+                                                                    final isSelected =
+                                                                        tempSelected
+                                                                            .contains(cat['id']);
+                                                                    return ListTile(
+                                                                      title: Text(
+                                                                          cat['name']),
+                                                                      selected:
+                                                                          isSelected,
+                                                                      onTap:
+                                                                          () {
+                                                                        setModalState(
+                                                                            () {
+                                                                          if (isSelected) {
+                                                                            tempSelected.remove(cat['id']);
+                                                                          } else {
+                                                                            tempSelected.add(cat['id']);
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                      trailing: isSelected
+                                                                          ? const Icon(
+                                                                              Icons.check,
+                                                                              color: Colors.blue)
+                                                                          : null,
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ),
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        16.0),
+                                                                child: Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .end,
+                                                                  children: [
+                                                                    TextButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      child: const Text(
+                                                                          "Cancelar"),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        width:
+                                                                            8),
+                                                                    ElevatedButton(
+                                                                      onPressed:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context,
+                                                                            tempSelected);
+                                                                      },
+                                                                      child: const Text(
+                                                                          "Aplicar"),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            ).then((result) {
+                                              if (result != null &&
+                                                  result is Set<int>) {
+                                                setState(() {
+                                                  selectedCategories =
+                                                      Set<int>.from(result);
+                                                });
+                                                debouncedLoadProduct();
+                                              }
+                                            });
+                                          },
+                                        ),
+                                        // Chips de categorías seleccionadas
+                                        if (selectedCategories.isNotEmpty)
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 8.0),
+                                            child: Wrap(
+                                              spacing: 6,
+                                              runSpacing: 6,
+                                              children: selectedCategories
+                                                  .map((catId) {
+                                                final cat =
+                                                    categpryOptions.firstWhere(
+                                                  (c) => c['id'] == catId,
+                                                  orElse: () =>
+                                                      <String, dynamic>{},
+                                                );
+                                                final catName = cat.isNotEmpty
+                                                    ? cat['name']
+                                                    : 'Categoría';
+                                                return Chip(
+                                                  label: Text(catName),
+                                                  onDeleted: () {
+                                                    setState(() {
+                                                      selectedCategories
+                                                          .remove(catId);
+                                                    });
+                                                    debouncedLoadProduct();
+                                                  },
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        const SizedBox(
+                                            height: CustomSpacer.medium),
+                                      ],
+                                    ),
+                                  // Campo de producto
+                                  if (isProductSearchLoading) ...[
+                                    const SizedBox(height: 4),
+                                    const LinearProgressIndicator(),
+                                    const SizedBox(height: 8),
+                                  ],
+                                  CustomSearchField(
+                                    options: productOptions,
+                                    controller: productController,
+                                    labelText: "Producto",
+                                    searchBy: "Codigo",
+                                    onItemSelected: (item) {
+                                      _showQuantityDialog(item);
+                                    },
+                                    onChanged: (_) => debouncedLoadProduct(),
+                                    itemBuilder: (item) => Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${item['name'] ?? ''}',
+                                                overflow: TextOverflow.ellipsis,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall,
+                                              ),
+                                              if (item['value'] != null)
+                                                Text(
+                                                  'Cod: ${item['value'] ?? ''}',
+                                                  maxLines: 2,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
                                         Text(
-                                          line['name'],
-                                          overflow: TextOverflow.ellipsis,
+                                          '\$${item['price'] ?? '0.00'}',
                                           style: Theme.of(context)
                                               .textTheme
-                                              .bodySmall
+                                              .bodyMedium
                                               ?.copyWith(
                                                 fontWeight: FontWeight.bold,
                                               ),
                                         ),
-                                        if (line['Description'] != null &&
-                                            line['Description']
-                                                .toString()
-                                                .isNotEmpty)
-                                          Text(
-                                            '${line['Description']}',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelSmall,
-                                          ),
-                                        Text(
-                                          '${line['quantity']} x \$${line['price']} + $taxRate',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall,
-                                        ),
                                       ],
                                     ),
-                                    backgroundColor:
-                                        Theme.of(context).cardColor,
                                   ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (POSTenderType.isMultiPayment)
-                  CustomContainer(
-                    maxWidthContainer: 360,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Métodos de pago",
-                                style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: 12),
-                            if (isPaymentMethodsLoading)
-                              _buildShimmerField()
-                            else ...[
-                              ...paymentMethods.map((method) {
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 6),
-                                  child: Column(
+                                  // //? crear producto si no existe
+                                  // if (productOptions.isEmpty &&
+                                  //     productController.text
+                                  //         .trim()
+                                  //         .isNotEmpty) ...[
+                                  //   const SizedBox(height: 8),
+                                  //   ElevatedButton.icon(
+                                  //     icon: const Icon(Icons.add),
+                                  //     label: Text(
+                                  //         'Crear "${productController.text.trim()}"'),
+                                  //     onPressed: () async {
+                                  //       final result = await Navigator.push(
+                                  //         context,
+                                  //         MaterialPageRoute(
+                                  //           builder: (_) => ProductNewPage(
+                                  //               productName: productController
+                                  //                   .text
+                                  //                   .trim()),
+                                  //         ),
+                                  //       );
+                                  //       if (result != null &&
+                                  //           result['created'] == true) {
+                                  //         _onProductCreated(
+                                  //             result['product']);
+                                  //       }
+                                  //     },
+                                  //   ),
+                                  // ],
+                                ],
+                              ),
+                        if (invoiceLines.isNotEmpty) ...[
+                          const SizedBox(height: CustomSpacer.large),
+                          Text('Detalle de productos',
+                              style: Theme.of(context).textTheme.titleLarge),
+                          const SizedBox(height: CustomSpacer.medium),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: invoiceLines.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final line = entry.value;
+                              final tax = taxOptions.firstWhere(
+                                (t) => t['id'] == line['C_Tax_ID'],
+                                orElse: () => {},
+                              );
+                              final taxRate = tax['rate'] != null
+                                  ? '${tax['rate']}%'
+                                  : 'Sin impuesto';
+                              return Tooltip(
+                                message: line['name'],
+                                child: InputChip(
+                                  onPressed: () =>
+                                      _showQuantityDialog(line, index: index),
+                                  deleteIcon: const Icon(Icons.close),
+                                  onDeleted: () => _deleteLine(index),
+                                  deleteIconColor: ColorTheme.error,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  label: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: TextfieldTheme(
-                                              controlador: paymentControllers[
-                                                  method['id']],
-                                              texto: method['name'],
-                                              inputType: TextInputType.number,
-                                              onChanged: (_) => _validateForm(),
+                                      Text(
+                                        line['name'],
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
                                             ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            icon: const Icon(
-                                                Icons.attach_money_rounded),
-                                            tooltip:
-                                                'Llenar con el máximo disponible',
-                                            onPressed: () {
-                                              final currentSum =
-                                                  paymentControllers.entries
-                                                      .where((e) =>
-                                                          e.key != method['id'])
-                                                      .map((e) =>
-                                                          double.tryParse(
-                                                              e.value.text) ??
-                                                          0.0)
-                                                      .fold(
-                                                          0.0, (a, b) => a + b);
-
-                                              final remaining =
-                                                  (totalAmount - currentSum)
-                                                      .clamp(0.0, totalAmount);
-                                              paymentControllers[method['id']]
-                                                      ?.text =
-                                                  remaining.toStringAsFixed(2);
-                                              _validateForm();
-                                            },
-                                          ),
-                                        ],
                                       ),
-                                      if (calculatedChange > 0 &&
-                                          method['isCash'])
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 2, bottom: 4),
-                                          child: Text(
-                                            'Vuelto: \$${calculatedChange.toStringAsFixed(2)}',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .primary,
-                                                ),
-                                          ),
+                                      if (line['Description'] != null &&
+                                          line['Description']
+                                              .toString()
+                                              .isNotEmpty)
+                                        Text(
+                                          '${line['Description']}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall,
                                         ),
+                                      Text(
+                                        '${line['quantity']} x \$${line['price']} + $taxRate',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
                                     ],
                                   ),
-                                );
-                              }),
-                            ],
-                          ],
-                        ),
-                        if (!_isInvoiceValid &&
-                            clientSelected &&
-                            products.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              'La suma de los pagos debe ser igual al total.',
-                              style: TextStyle(
-                                  color: ColorTheme.error, fontSize: 13),
-                            ),
+                                  backgroundColor: Theme.of(context).cardColor,
+                                ),
+                              );
+                            }).toList(),
                           ),
+                        ],
                       ],
                     ),
-                  ),
-
-                //? Resumen de la factura
+                  ],
+                ),
+              ),
+              if (POSTenderType.isMultiPayment)
                 CustomContainer(
                   maxWidthContainer: 360,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Center(
-                        child: Text('Resumen de la Factura',
-                            style: Theme.of(context).textTheme.titleLarge),
-                      ),
-                      const SizedBox(height: CustomSpacer.medium),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Subtotal',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                          Text('\$${subtotal.toStringAsFixed(2)}',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                        ],
-                      ),
-                      const SizedBox(height: CustomSpacer.medium),
-                      if (invoiceLines.isNotEmpty &&
-                          getTotalTaxAmount() > 0) ...[
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Impuestos',
-                                style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: CustomSpacer.small),
-                            ...getGroupedTaxTotals().entries.map(
-                                  (entry) => Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(entry.key,
+                          Text("Métodos de pago",
+                              style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 12),
+                          if (isPaymentMethodsLoading)
+                            _buildShimmerField()
+                          else ...[
+                            ...paymentMethods.map((method) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: TextfieldTheme(
+                                            controlador: paymentControllers[
+                                                method['id']],
+                                            texto: method['name'],
+                                            inputType: TextInputType.number,
+                                            onChanged: (_) => _validateForm(),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          icon: const Icon(
+                                              Icons.attach_money_rounded),
+                                          tooltip:
+                                              'Llenar con el máximo disponible',
+                                          onPressed: () {
+                                            final currentSum =
+                                                paymentControllers.entries
+                                                    .where((e) =>
+                                                        e.key != method['id'])
+                                                    .map((e) =>
+                                                        double.tryParse(
+                                                            e.value.text) ??
+                                                        0.0)
+                                                    .fold(0.0, (a, b) => a + b);
+
+                                            final remaining =
+                                                (totalAmount - currentSum)
+                                                    .clamp(0.0, totalAmount);
+                                            paymentControllers[method['id']]
+                                                    ?.text =
+                                                remaining.toStringAsFixed(2);
+                                            _validateForm();
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    if (calculatedChange > 0 &&
+                                        method['isCash'])
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            top: 2, bottom: 4),
+                                        child: Text(
+                                          'Vuelto: \$${calculatedChange.toStringAsFixed(2)}',
                                           style: Theme.of(context)
                                               .textTheme
-                                              .bodyMedium),
-                                      Text(
-                                          '\$${entry.value.toStringAsFixed(2)}',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium),
-                                    ],
-                                  ),
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary,
+                                              ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                            const SizedBox(height: CustomSpacer.small),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Total impuestos',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        )),
-                                Text(
-                                    '\$${getTotalTaxAmount().toStringAsFixed(2)}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        )),
-                              ],
-                            ),
+                              );
+                            }),
                           ],
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                      ],
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Total',
-                              style: Theme.of(context).textTheme.titleLarge),
-                          Text('\$${total.toStringAsFixed(2)}',
-                              style: Theme.of(context).textTheme.titleLarge),
                         ],
                       ),
-                      const Divider(),
-                      const SizedBox(height: CustomSpacer.xlarge),
-                      CustomSearchField(
-                        options: POS.documentActions,
-                        labelText: "Acción del Documento",
-                        searchBy: "name",
-                        showCreateButtonIfNotFound: false,
-                        controller: TextEditingController(
-                          text: POS.documentActions.first['name'],
-                        ),
-                        onItemSelected: (item) {
-                          setState(() {
-                            selectedDocActionCode = item['code'];
-                          });
-                        },
-                        itemBuilder: (item) => Text(
-                          '${item['name']}',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ),
-                      const SizedBox(height: CustomSpacer.small),
-                      Container(
-                        child: isSending
-                            ? ButtonLoading(fullWidth: true)
-                            : ButtonPrimary(
-                                fullWidth: true,
-                                texto: 'Procesar',
-                                enable: _isInvoiceValid,
-                                onPressed: () => _isInvoiceValid
-                                    ? _createInvoice(
-                                        product: invoiceLines,
-                                        bPartner: selectedBPartnerID ?? 0,
-                                      )
-                                    : null,
-                              ),
-                      ),
-                      const SizedBox(height: CustomSpacer.medium),
-                      if (!isSending)
-                        ButtonSecondary(
-                          fullWidth: true,
-                          texto: 'Cancelar',
-                          onPressed: () {
-                            clearInvoiceFields();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => OrderListPage()));
-                          },
+                      if (!_isInvoiceValid &&
+                          clientSelected &&
+                          products.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'La suma de los pagos debe ser igual al total.',
+                            style: TextStyle(
+                                color: ColorTheme.error, fontSize: 13),
+                          ),
                         ),
                     ],
                   ),
                 ),
-              ],
-            ),
+
+              //? Resumen de la factura
+              CustomContainer(
+                maxWidthContainer: 360,
+                child: Column(
+                  children: [
+                    Center(
+                      child: Text('Resumen de la Factura',
+                          style: Theme.of(context).textTheme.titleLarge),
+                    ),
+                    const SizedBox(height: CustomSpacer.medium),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Subtotal',
+                            style: Theme.of(context).textTheme.bodyMedium),
+                        Text('\$${subtotal.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium),
+                      ],
+                    ),
+                    const SizedBox(height: CustomSpacer.medium),
+                    if (invoiceLines.isNotEmpty && getTotalTaxAmount() > 0) ...[
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Impuestos',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: CustomSpacer.small),
+                          ...getGroupedTaxTotals().entries.map(
+                                (entry) => Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(entry.key,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium),
+                                    Text('\$${entry.value.toStringAsFixed(2)}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium),
+                                  ],
+                                ),
+                              ),
+                          const SizedBox(height: CustomSpacer.small),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Total impuestos',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      )),
+                              Text(
+                                  '\$${getTotalTaxAmount().toStringAsFixed(2)}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      )),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: CustomSpacer.medium),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Total',
+                            style: Theme.of(context).textTheme.titleLarge),
+                        Text('\$${total.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.titleLarge),
+                      ],
+                    ),
+                    const Divider(),
+                    const SizedBox(height: CustomSpacer.xlarge),
+                    CustomSearchField(
+                      options: POS.documentActions,
+                      labelText: "Acción del Documento",
+                      searchBy: "name",
+                      showCreateButtonIfNotFound: false,
+                      controller: TextEditingController(
+                        text: POS.documentActions.first['name'],
+                      ),
+                      onItemSelected: (item) {
+                        setState(() {
+                          selectedDocActionCode = item['code'];
+                        });
+                      },
+                      itemBuilder: (item) => Text(
+                        '${item['name']}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    const SizedBox(height: CustomSpacer.small),
+                    Container(
+                      child: isSending
+                          ? ButtonLoading(fullWidth: true)
+                          : ButtonPrimary(
+                              fullWidth: true,
+                              texto: 'Procesar',
+                              enable: _isInvoiceValid,
+                              onPressed: () => _isInvoiceValid
+                                  ? _createInvoice(
+                                      product: invoiceLines,
+                                      bPartner: selectedBPartnerID ?? 0,
+                                    )
+                                  : null,
+                            ),
+                    ),
+                    const SizedBox(height: CustomSpacer.medium),
+                    if (!isSending)
+                      ButtonSecondary(
+                        fullWidth: true,
+                        texto: 'Cancelar',
+                        onPressed: () {
+                          clearInvoiceFields();
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => OrderListPage()));
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

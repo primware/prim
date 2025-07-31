@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import '../../../API/endpoint.api.dart';
-import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 
