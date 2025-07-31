@@ -166,10 +166,7 @@ class _ConfigPageState extends State<ConfigPage> {
       setState(() {
         isLoading = true;
       });
-      bool login = await usuarioAuth(
-          usuario: usuarioController.text.trim(),
-          clave: claveController.text.trim(),
-          context: context);
+      bool login = await usuarioAuth(context: context);
 
       if (login) {
         if (rememberConfig) {

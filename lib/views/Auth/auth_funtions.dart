@@ -161,12 +161,9 @@ Future<bool> getWarehouse({
   return false;
 }
 
-Future<bool> usuarioAuth(
-    {required String usuario,
-    required String clave,
-    required BuildContext context}) async {
+Future<bool> usuarioAuth({required BuildContext context}) async {
   try {
-    if (usuario.isEmpty || clave.isEmpty) {
+    if (usuarioController.text.isEmpty || claveController.text.isEmpty) {
       return false;
     }
 
@@ -179,8 +176,8 @@ Future<bool> usuarioAuth(
     }
 
     final Map<String, dynamic> data = {
-      "userName": usuario,
-      "password": clave,
+      "userName": usuarioController.text.trim(),
+      "password": claveController.text.trim(),
       "parameters": {
         "clientId": Token.client,
         "roleId": Token.rol,

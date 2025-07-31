@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import '../../../API/endpoint.api.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
-import '../../Auth/login_view.dart';
 
 Future<Map<String, dynamic>> postBPartner({
   required String name,
@@ -15,8 +14,6 @@ Future<Map<String, dynamic>> postBPartner({
 }) async {
   try {
     await usuarioAuth(
-      usuario: usuarioController.text.trim(),
-      clave: claveController.text.trim(),
       context: context,
     );
 

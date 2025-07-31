@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/shimmer_list.dart';
@@ -11,16 +10,16 @@ import '../../../shared/formater.dart';
 import '../../../shared/textfield.widget.dart';
 import '../../../theme/colors.dart';
 
-class ProductNewPage extends StatefulWidget {
-  final String? productName;
+class ProductDetailPage extends StatefulWidget {
+  final Map<String, dynamic> product;
 
-  const ProductNewPage({super.key, this.productName});
+  const ProductDetailPage({super.key, required this.product});
 
   @override
-  State<ProductNewPage> createState() => _ProductNewPageState();
+  State<ProductDetailPage> createState() => _ProductDetailPageState();
 }
 
-class _ProductNewPageState extends State<ProductNewPage> {
+class _ProductDetailPageState extends State<ProductDetailPage> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController skuController = TextEditingController();
   final TextEditingController upcController = TextEditingController();
@@ -43,9 +42,14 @@ class _ProductNewPageState extends State<ProductNewPage> {
     _loadCategories();
     _loadTaxies();
 
-    if (widget.productName != null) {
-      nameController.text = widget.productName!;
-    }
+    // Pre-fill with product data
+    nameController.text = widget.product['name'] ?? '';
+    skuController.text = widget.product['sku'] ?? '';
+    upcController.text = widget.product['upc'] ?? '';
+    priceController.text = widget.product['price']?.toString() ?? '';
+
+    selectedCategoryID = widget.product['category'];
+    selectedTaxID = widget.product['C_TaxCategory_ID'];
 
     nameController.addListener(_isFormValid);
     priceController.addListener(_isFormValid);
@@ -84,18 +88,18 @@ class _ProductNewPageState extends State<ProductNewPage> {
   void dispose() {
     nameController.removeListener(_isFormValid);
     priceController.removeListener(_isFormValid);
-
     super.dispose();
   }
 
-  Future<void> _createProduct() async {
+  Future<void> _updateProduct() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          title: Text('Crear producto'),
-          content: Text('¿Está seguro de que desea crear el producto?'),
+          title: const Text('Actualizar producto'),
+          content:
+              const Text('¿Está seguro de que desea actualizar el producto?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -120,7 +124,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     setState(() => isLoading = true);
 
-    final result = await postProduct(
+    final result = await putProduct(
+      id: widget.product['id'],
       name: nameController.text,
       sku: skuController.text,
       upc: upcController.text,
@@ -133,15 +138,12 @@ class _ProductNewPageState extends State<ProductNewPage> {
     setState(() => isLoading = false);
 
     if (result['success'] == true) {
-      Navigator.pop(context, {
-        'created': true,
-        'product': result['product'],
-      });
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(
-              child: Text(result['message'] ?? 'Error al crear producto')),
+              child: Text(result['message'] ?? 'Error al actualizar producto')),
           backgroundColor: ColorTheme.error,
         ),
       );
@@ -151,7 +153,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('Producto nuevo')),
+        appBar: AppBar(title: const Text('Detalle de producto')),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
@@ -179,9 +181,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isCategoryLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
+                      ? ShimmerList(count: 1)
                       : SearchableDropdown<int>(
                           value: selectedCategoryID,
                           options: categories,
@@ -196,9 +196,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                         ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isTaxiesLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
+                      ? ShimmerList(count: 1)
                       : SearchableDropdown<int>(
                           value: selectedTaxID,
                           options: taxies,
@@ -237,8 +235,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto: 'Completar',
-                                onPressed: _createProduct,
+                                texto: 'Actualizar',
+                                onPressed: _updateProduct,
                               )
                         : null,
                   )

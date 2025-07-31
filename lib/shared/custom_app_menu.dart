@@ -6,7 +6,7 @@ import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/invoice/new_invoice_view.dart';
-import 'package:primware/views/Home/product/my_product_view.dart';
+import 'package:primware/views/Home/product/product_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../API/endpoint.api.dart';

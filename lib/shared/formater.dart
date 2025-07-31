@@ -67,6 +67,19 @@ class NumericTextFormatter extends TextInputFormatter {
   }
 }
 
+class NumericTextFormatterWithDecimal extends TextInputFormatter {
+  final RegExp _regex = RegExp(r'^\d*\.?\d{0,2}$');
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (_regex.hasMatch(newValue.text)) {
+      return newValue;
+    }
+    return oldValue;
+  }
+}
+
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

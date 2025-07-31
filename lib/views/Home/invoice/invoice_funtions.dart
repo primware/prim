@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/API/user.api.dart';
-import 'package:primware/views/Auth/login_view.dart';
 import '../../../API/endpoint.api.dart';
 import 'dart:convert';
 import '../../../API/token.api.dart';
@@ -14,8 +13,6 @@ Future<List<Map<String, dynamic>>> fetchBPartner({
 }) async {
   try {
     await usuarioAuth(
-      usuario: usuarioController.text.trim(),
-      clave: claveController.text.trim(),
       context: context,
     );
     final filterQuery = 'IsCustomer eq true'
@@ -64,7 +61,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
           ' and (${categoryID.map((id) => 'M_Product_Category_ID eq $id').join(' or ')})';
     }
     final filterQuery = 'IsSold eq true'
-        '${searchTerm!.isNotEmpty ? ' and contains(tolower(Name), ${searchTerm.toLowerCase()})' : ''}'
+        '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), ${searchTerm.toLowerCase()}) or contains(tolower(SKU), ${searchTerm.toLowerCase()}))' : ''}'
         '$categoryFilter';
     final url =
         '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
@@ -105,6 +102,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
                   record['M_ProductPrice'].isNotEmpty
               ? record['M_ProductPrice'][0]['PriceStd']
               : null,
+          'C_TaxCategory_ID': taxCategoryID,
           'tax': assignedTax,
         });
       }
@@ -160,8 +158,6 @@ Future<Map<String, dynamic>> postInvoice({
 }) async {
   try {
     await usuarioAuth(
-      usuario: usuarioController.text.trim(),
-      clave: claveController.text.trim(),
       context: context,
     );
 
@@ -231,8 +227,6 @@ Future<List<Map<String, dynamic>>> fetchOrders(
     {required BuildContext context}) async {
   try {
     await usuarioAuth(
-      usuario: usuarioController.text.trim(),
-      clave: claveController.text.trim(),
       context: context,
     );
 
