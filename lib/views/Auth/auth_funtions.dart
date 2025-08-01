@@ -526,7 +526,7 @@ Future<String> fetchAppVersion() async {
       return 'Versión: error al cargar index.html';
     }
   } catch (e) {
-    return 'Versión: debug';
+    return 'No es web';
   }
 }
 

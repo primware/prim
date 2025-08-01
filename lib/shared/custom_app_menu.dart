@@ -4,7 +4,7 @@ import 'package:primware/API/token.api.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
-import 'package:primware/views/Home/invoice/new_invoice_view.dart';
+import 'package:primware/views/Home/invoice/my_invoice_new.dart';
 import 'package:primware/views/Home/product/product_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,7 +14,7 @@ import '../API/user.api.dart';
 import '../main.dart';
 import '../theme/colors.dart';
 import '../views/Home/bpartner/bpartner_view.dart';
-import '../views/Home/invoice/my_invoice_view.dart';
+import '../views/Home/invoice/my_invoice.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
 

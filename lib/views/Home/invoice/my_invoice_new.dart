@@ -13,7 +13,7 @@ import '../bpartner/bpartner_new.dart';
 import 'invoice_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'my_invoice_view.dart';
+import 'my_invoice.dart';
 
 class InvoicePage extends StatefulWidget {
   final bool isRefund;

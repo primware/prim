@@ -2,13 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/logo.dart';
-import 'package:primware/views/Home/invoice/my_invoice_view.dart';
+import 'package:primware/views/Home/invoice/my_invoice.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../Auth/login_view.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:shimmer/shimmer.dart';
+import 'dashboard_funtions.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -18,14 +21,50 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  List<String> dataKeys = [];
+  List<FlSpot> salesData = [];
+  bool isLoadingSalesChart = true;
+  String groupBy = 'month';
+
+  Future<void> _loadSalesChart() async {
+    setState(() {
+      isLoadingSalesChart = true;
+    });
+    final groupedData =
+        await fetchSalesChartData(context: context, groupBy: groupBy);
+    setState(() {
+      salesData = [];
+      dataKeys = groupedData.keys.toList();
+      double xIndex = 0;
+      for (var key in dataKeys) {
+        salesData.add(FlSpot(
+          xIndex,
+          groupedData[key] ?? 0,
+        ));
+        xIndex++;
+      }
+      isLoadingSalesChart = false;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadSalesChart();
+  }
+
+  String formatLabel(String key) {
+    final parts = key.split('-');
+    if (parts.length == 2) {
+      return '${parts[1].padLeft(2, '0')}/${parts[0]}';
+    } else if (parts.length == 3) {
+      return '${parts[2].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}';
+    }
+    return key;
   }
 
   @override
   Widget build(BuildContext context) {
-    bool ismobile = MediaQuery.of(context).size.width <= 750;
     DateTime? lastBackPressed;
 
     return WillPopScope(
@@ -73,99 +112,174 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: Logo(width: 320)),
+                    Center(child: Logo(width: 280)),
                     SizedBox(height: CustomSpacer.xlarge),
-                    GridView.count(
-                      shrinkWrap: true,
-                      crossAxisCount: ismobile ? 2 : 4,
-                      childAspectRatio: 1.5,
-                      crossAxisSpacing: ismobile ? 6 : 16,
-                      mainAxisSpacing: ismobile ? 6 : 16,
+                    Row(
                       children: [
-                        _buildDashboardCard(
-                          context,
-                          'Mis Ordenes',
-                          Icons.attach_money_rounded,
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const OrderListPage(),
-                              ),
-                            );
+                        Text('Total Vendido por',
+                            style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(width: CustomSpacer.medium),
+                        DropdownButton<String>(
+                          value: groupBy,
+                          items: [
+                            DropdownMenuItem(value: 'day', child: Text('Días')),
+                            DropdownMenuItem(
+                                value: 'month', child: Text('Meses')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                groupBy = value;
+                              });
+                              _loadSalesChart();
+                            }
                           },
                         ),
                       ],
                     ),
-                    if (!ismobile) ...[
-                      SizedBox(
-                          height: CustomSpacer.xlarge + CustomSpacer.xlarge),
-                      ButtonSecondary(
-                        texto: 'Cerrar sesión',
-                        icono: Icons.logout_outlined,
-                        onPressed: () {
-                          Token.auth = null;
-                          usuarioController.clear();
-                          claveController.clear();
-                          UserData.rolName = null;
-                          UserData.imageBytes = null;
-
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginPage(),
+                    SizedBox(
+                      height: 200,
+                      child: isLoadingSalesChart
+                          ? Shimmer.fromColors(
+                              baseColor: Colors.grey[300]!,
+                              highlightColor: Colors.grey[100]!,
+                              child: Container(
+                                width: double.infinity,
+                                height: 200,
+                                color: Colors.white,
+                              ),
+                            )
+                          : LineChart(
+                              LineChartData(
+                                lineTouchData: LineTouchData(
+                                  touchTooltipData: LineTouchTooltipData(
+                                    getTooltipColor: (touchedSpot) =>
+                                        Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer,
+                                    fitInsideHorizontally: true,
+                                    fitInsideVertically: true,
+                                    getTooltipItems: (touchedSpots) {
+                                      return touchedSpots.map((spot) {
+                                        return LineTooltipItem(
+                                          '${spot.y.toStringAsFixed(2)} USD', //TODO Moneda del grupo empresarial
+                                          Theme.of(context)
+                                              .textTheme
+                                              .titleMedium!
+                                              .copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        );
+                                      }).toList();
+                                    },
+                                  ),
+                                ),
+                                gridData: FlGridData(
+                                  show: true,
+                                  drawVerticalLine: false,
+                                  horizontalInterval: (salesData.isNotEmpty
+                                      ? (salesData.map((e) => e.y).reduce(
+                                                  (a, b) => a > b ? a : b) /
+                                              5)
+                                          .roundToDouble()
+                                      : 10000),
+                                  getDrawingHorizontalLine: (value) {
+                                    return FlLine(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .secondaryContainer
+                                          .withOpacity(0.6),
+                                      strokeWidth: 1,
+                                    );
+                                  },
+                                ),
+                                titlesData: FlTitlesData(
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 24,
+                                      getTitlesWidget: (value, meta) {
+                                        final index = value.toInt();
+                                        if (index >= 0 &&
+                                            index < dataKeys.length) {
+                                          return Text(
+                                              formatLabel(dataKeys[index]),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall);
+                                        }
+                                        return const SizedBox();
+                                      },
+                                    ),
+                                  ),
+                                  leftTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      interval: (salesData.isNotEmpty
+                                          ? (salesData.map((e) => e.y).reduce(
+                                                      (a, b) => a > b ? a : b) /
+                                                  5)
+                                              .roundToDouble()
+                                          : 10000),
+                                      getTitlesWidget: (value, meta) {
+                                        return Text(
+                                          '${(value / 1000).round()}k',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleSmall,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  topTitles: AxisTitles(
+                                      sideTitles:
+                                          SideTitles(showTitles: false)),
+                                  rightTitles: AxisTitles(
+                                      sideTitles:
+                                          SideTitles(showTitles: false)),
+                                ),
+                                borderData: FlBorderData(show: false),
+                                minX: 0,
+                                maxX: salesData.isNotEmpty
+                                    ? salesData.length.toDouble() - 1
+                                    : 0,
+                                minY: 0,
+                                lineBarsData: [
+                                  LineChartBarData(
+                                    spots: salesData,
+                                    isCurved: true,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                    barWidth: 3,
+                                    isStrokeCapRound: true,
+                                    dotData: FlDotData(show: false),
+                                    belowBarData: BarAreaData(
+                                      show: true,
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .surfaceTint
+                                              .withOpacity(0.5),
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .surfaceTint
+                                              .withOpacity(0),
+                                        ],
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
-                      ),
-                    ]
+                    ),
                   ],
                 ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashboardCard(
-    BuildContext context,
-    String title,
-    IconData icon,
-    VoidCallback onTap,
-  ) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Card(
-          color: Theme.of(context).primaryColor,
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 40,
-                color: Theme.of(context).colorScheme.surface,
-              ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                ),
-              ),
-            ],
           ),
         ),
       ),

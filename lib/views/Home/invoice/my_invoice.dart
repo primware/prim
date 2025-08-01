@@ -5,7 +5,7 @@ import 'package:primware/shared/custom_textfield.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/invoice/invoice_funtions.dart';
 import 'package:primware/views/Home/invoice/my_invoice_detail.dart';
-import 'package:primware/views/Home/invoice/new_invoice_view.dart';
+import 'package:primware/views/Home/invoice/my_invoice_new.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../API/pos.api.dart';

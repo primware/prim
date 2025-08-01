@@ -1,11 +1,13 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:primware/views/Home/invoice/new_invoice_view.dart';
+import 'package:primware/views/Home/invoice/my_invoice_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../API/token.api.dart';
 import '../../../main.dart';
 import '../../API/pos.api.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+import 'package:primware/localization/app_locale.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
@@ -192,7 +194,7 @@ class _ConfigPageState extends State<ConfigPage> {
     } else {
       SnackMessage.show(
         context: context,
-        message: "Seleccione una empresa, rol y organizacion",
+        message: AppLocale.selectCompanyRoleOrganization.getString(context),
         type: SnackType.failure,
       );
     }
@@ -215,7 +217,7 @@ class _ConfigPageState extends State<ConfigPage> {
             children: [
               Center(
                 child: Text(
-                  'Seleccionar Rol',
+                  AppLocale.selectRole.getString(context),
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
@@ -224,7 +226,7 @@ class _ConfigPageState extends State<ConfigPage> {
                 value: selectedClientId,
                 options: clients,
                 showSearchBox: false,
-                labelText: 'Empresa',
+                labelText: AppLocale.company.getString(context),
                 onChanged: _onClientSelected,
               ),
               const SizedBox(height: CustomSpacer.medium),
@@ -232,7 +234,7 @@ class _ConfigPageState extends State<ConfigPage> {
                 value: selectedRoleId,
                 options: roles,
                 showSearchBox: false,
-                labelText: 'Rol',
+                labelText: AppLocale.role.getString(context),
                 onChanged: _onRoleSelected,
               ),
               const SizedBox(height: CustomSpacer.medium),
@@ -240,13 +242,13 @@ class _ConfigPageState extends State<ConfigPage> {
                 value: selectedOrganizationId,
                 options: organizations,
                 showSearchBox: false,
-                labelText: 'Organizacion',
+                labelText: AppLocale.organization.getString(context),
                 onChanged: _onOrganizationSelected,
               ),
               const SizedBox(height: CustomSpacer.medium),
               CustomCheckbox(
                 value: rememberConfig,
-                text: 'Recordar configuración',
+                text: AppLocale.rememberConfig.getString(context),
                 onChanged: (newValue) {
                   setState(() {
                     rememberConfig = newValue;
@@ -260,22 +262,17 @@ class _ConfigPageState extends State<ConfigPage> {
                         fullWidth: true,
                       )
                     : ButtonPrimary(
-                        texto: 'Continuar',
+                        texto: AppLocale.continueKey.getString(context),
                         fullWidth: true,
                         onPressed: _onContinue,
                       ),
               ),
               const SizedBox(height: 12),
               ButtonSecondary(
-                  texto: 'Volver',
+                  texto: AppLocale.back.getString(context),
                   fullWidth: true,
                   onPressed: () async {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MainApp(),
-                      ),
-                    );
+                    Navigator.pop(context);
                   }),
             ],
           ),

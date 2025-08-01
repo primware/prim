@@ -149,11 +149,11 @@ class _LoginPageState extends State<LoginPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(
-            'Servidor',
+            AppLocale.server.getString(context),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           content: Text(
-            'Se guardó la direción del servidor.',
+            AppLocale.serverSaved.getString(context),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           actions: [
@@ -201,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
     } else {
       SnackMessage.show(
         context: context,
-        message: "Credenciales incorrectas",
+        message: AppLocale.invalidCredentials.getString(context),
         type: SnackType.failure,
       );
     }
@@ -309,12 +309,14 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                const SizedBox(
-                    height: CustomSpacer.xlarge + CustomSpacer.medium),
-                Text(
-                  version,
-                  style: Theme.of(context).textTheme.labelMedium,
-                )
+                if (version != 'No es web') ...[
+                  const SizedBox(
+                      height: CustomSpacer.xlarge + CustomSpacer.medium),
+                  Text(
+                    version,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  )
+                ]
               ],
             ),
           ),
