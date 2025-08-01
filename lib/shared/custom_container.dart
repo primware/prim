@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:primware/theme/colors.dart';
 
 class CustomContainer extends StatelessWidget {
   const CustomContainer(
@@ -20,11 +19,11 @@ class CustomContainer extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: maxWidthContainer),
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: Theme.of(context).colorScheme.onPrimary,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: ColorTheme.tD300.withAlpha(40),
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(40),
             spreadRadius: 2,
             blurRadius: 12,
             offset: const Offset(12, 12),

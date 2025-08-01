@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/colors.dart';
-import '../theme/fonts.dart';
 
 class CustomDateField extends StatelessWidget {
   final TextEditingController controller;
@@ -46,26 +45,26 @@ class CustomDateField extends StatelessWidget {
           readOnly: readOnly,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            suffixIcon: const Icon(
+            suffixIcon: Icon(
               Icons.event_note,
-              color: ColorTheme.accentLight,
+              color: Theme.of(context).colorScheme.primary,
             ),
             labelText: labelText,
-            floatingLabelStyle: FontsTheme.h5(color: ColorTheme.accentLight),
-            hoverColor: ColorTheme.aL100,
+            floatingLabelStyle: Theme.of(context).textTheme.bodySmall,
+            hoverColor: Theme.of(context).colorScheme.primary,
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
                   width: 1,
                   color: controller.text.isEmpty
                       ? ColorTheme.error
-                      : ColorTheme.textLight),
+                      : Theme.of(context).colorScheme.outline),
               borderRadius: const BorderRadius.all(Radius.circular(8)),
             ),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
                   color: controller.text.isEmpty
                       ? ColorTheme.error
-                      : ColorTheme.textLight),
+                      : Theme.of(context).colorScheme.onSurface),
               borderRadius: const BorderRadius.all(Radius.circular(8)),
             ),
           ),

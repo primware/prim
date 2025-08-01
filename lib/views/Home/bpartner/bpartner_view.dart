@@ -4,7 +4,7 @@ import 'package:primware/shared/custom_container.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/shimmer_list.dart';
-import '../../../shared/textfield.widget.dart';
+import '../../../shared/custom_textfield.dart';
 import '../dashboard/dashboard_view.dart';
 import '../invoice/invoice_funtions.dart';
 import 'bpartner_details.dart';

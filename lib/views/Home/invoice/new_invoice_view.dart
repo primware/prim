@@ -7,7 +7,7 @@ import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/custom_spacer.dart';
-import '../../../shared/textfield.widget.dart';
+import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new.dart';
 import 'invoice_funtions.dart';

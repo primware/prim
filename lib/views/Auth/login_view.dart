@@ -10,7 +10,7 @@ import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
 import '../../shared/logo.dart';
 import '../../shared/message.custom.dart';
-import '../../shared/textfield.widget.dart';
+import '../../shared/custom_textfield.dart';
 import '../../theme/colors.dart';
 import 'auth_funtions.dart';
 import 'config_view.dart';

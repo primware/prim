@@ -1,6 +1,5 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:primware/theme/fonts.dart';
 import '../theme/colors.dart';
 import 'button_dialog.dart';
 
@@ -42,12 +41,10 @@ class _WebCameraDialogState extends State<WebCameraDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: ColorTheme.textDark,
+      backgroundColor: Theme.of(context).colorScheme.onSurface,
       content: isLoading
-          ? Text(
-              'Cargando camara',
-              style: FontsTheme.p(),
-            )
+          ? Text('Cargando camara',
+              style: Theme.of(context).textTheme.bodySmall)
           : AspectRatio(
               aspectRatio: _controller!.value.aspectRatio,
               child: CameraPreview(_controller!),

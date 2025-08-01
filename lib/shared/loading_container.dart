@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:primware/theme/colors.dart';
 
 class LoadingContainer extends StatelessWidget {
   const LoadingContainer({
@@ -14,7 +13,7 @@ class LoadingContainer extends StatelessWidget {
       color: Colors.black.withOpacity(0.5),
       child: Center(
         child: CircularProgressIndicator(
-          color: ColorTheme.accentLight,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );

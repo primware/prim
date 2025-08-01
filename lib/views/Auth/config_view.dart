@@ -217,7 +217,7 @@ class _ConfigPageState extends State<ConfigPage> {
               Center(
                 child: Text(
                   'Seleccionar Rol',
-                  style: FontsTheme.pBold(),
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
               const SizedBox(height: CustomSpacer.medium),

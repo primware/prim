@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/fonts.dart';
 
 class BotonDialog extends StatelessWidget {
   const BotonDialog(
@@ -27,10 +26,11 @@ class BotonDialog extends StatelessWidget {
         ),
       ),
       onPressed: onPressed,
-      child: Text(
-        text,
-        style: FontsTheme.h4Bold(color: Colors.white),
-      ),
+      child: Text(text,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              )),
     );
   }
 }

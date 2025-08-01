@@ -20,8 +20,6 @@ import '../views/Home/invoice/my_invoice_view.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
 
-final String? _label = Base.prod ? null : 'Test';
-
 class CustomAppMenu extends StatelessWidget {
   const CustomAppMenu({
     super.key,
@@ -84,13 +82,22 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
               Logo(
                 width: 200,
               ),
-              if (_label != null) ...[
-                const SizedBox(
-                  width: 12,
-                ),
-                Text(
-                  _label!,
-                  style: FontsTheme.h5Bold(color: ColorTheme.atention),
+              if (!Base.prod) ...[
+                const SizedBox(width: CustomSpacer.large),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.error,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Entorno de pruebas',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.surface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
                 ),
               ],
               const Spacer(),
@@ -115,8 +122,7 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
                 child: IconButton(
                     icon: Icon(
                       _isDarkMode ? Icons.nightlight : Icons.sunny,
-                      color:
-                          _isDarkMode ? ColorTheme.aD100 : ColorTheme.atention,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     onPressed: () {
                       ThemeManager.themeNotifier.toggleTheme();
@@ -197,10 +203,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Theme.of(context).cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.zero,
-      ),
       child: ListView(
         padding: EdgeInsets.only(
           top: CustomSpacer.xlarge + CustomSpacer.xlarge + CustomSpacer.medium,
@@ -209,9 +211,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
         children: [
           Center(
             child: Text(UserData.name ?? 'Usuario',
-                style: FontsTheme.h5Bold(
-                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-                )),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    )),
           ),
           const Divider(
             height: 24,
@@ -219,14 +222,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
           ListTile(
             leading: Icon(
               Icons.dashboard_outlined,
-              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
             ),
-            tileColor: Theme.of(context).cardColor,
             title: Text(
               'Dashboard',
-              style: TextStyle(
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-              ),
+              style: TextStyle(),
             ),
             onTap: () {
               Navigator.push(
@@ -240,15 +239,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
           ListTile(
             leading: Icon(
               Icons.add,
-              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
             ),
             title: Text(
               'Nueva orden',
-              style: TextStyle(
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-              ),
             ),
-            tileColor: Theme.of(context).cardColor,
             onTap: () {
               Navigator.push(
                 context,
@@ -261,14 +255,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
           ListTile(
             leading: Icon(
               Icons.attach_money_outlined,
-              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
             ),
-            tileColor: Theme.of(context).cardColor,
             title: Text(
               'Mis ordenes',
-              style: TextStyle(
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-              ),
+              style: TextStyle(),
             ),
             onTap: () {
               Navigator.push(
@@ -283,15 +273,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
             ListTile(
               leading: Icon(
                 Icons.sd_card_alert_outlined,
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
               ),
               title: Text(
                 'Nota de crédito',
-                style: TextStyle(
-                  color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-                ),
               ),
-              tileColor: Theme.of(context).cardColor,
               onTap: () {
                 Navigator.push(
                   context,
@@ -306,14 +291,9 @@ class _MenuDrawerState extends State<MenuDrawer> {
           ListTile(
             leading: Icon(
               Icons.inventory_2_outlined,
-              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
             ),
-            tileColor: Theme.of(context).cardColor,
             title: Text(
               'Productos',
-              style: TextStyle(
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-              ),
             ),
             onTap: () {
               Navigator.push(
@@ -327,14 +307,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
           ListTile(
             leading: Icon(
               Icons.people_alt_outlined,
-              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
             ),
             tileColor: Theme.of(context).cardColor,
             title: Text(
               'Clientes',
-              style: TextStyle(
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-              ),
             ),
             onTap: () {
               Navigator.push(
@@ -345,18 +321,13 @@ class _MenuDrawerState extends State<MenuDrawer> {
               );
             },
           ),
-
           ListTile(
             leading: Icon(
               Icons.settings,
-              color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
             ),
             tileColor: Theme.of(context).cardColor,
             title: Text(
               'Debug Panel',
-              style: TextStyle(
-                color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-              ),
             ),
             onTap: () {
               Navigator.push(
@@ -367,25 +338,24 @@ class _MenuDrawerState extends State<MenuDrawer> {
               );
             },
           ),
-          // ListTile(
-          //   tileColor: Theme.of(context).cardColor,
-          //   leading: Icon(
-          //     _isDarkMode ? Icons.nightlight : Icons.sunny,
-          //     color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.atention,
-          //   ),
-          //   title: Text(
-          //     _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-          //     style: TextStyle(
-          //       color: _isDarkMode ? ColorTheme.aD100 : ColorTheme.tD300,
-          //     ),
-          //   ),
-          //   onTap: () {
-          //     ThemeManager.themeNotifier.toggleTheme();
-          //     _loadTheme();
-          //   },
-          // ),
           ListTile(
             tileColor: Theme.of(context).cardColor,
+            leading: Icon(
+              _isDarkMode ? Icons.nightlight : Icons.sunny,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            onTap: () {
+              ThemeManager.themeNotifier.toggleTheme();
+              _loadTheme();
+            },
+          ),
+          ListTile(
             leading: Icon(
               Icons.logout_outlined,
               color: ColorTheme.error,

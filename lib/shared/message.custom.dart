@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import '../theme/colors.dart';
-import '../theme/fonts.dart';
 
 enum SnackType { success, failure, warning, help }
 
@@ -14,17 +13,18 @@ class SnackMessage {
   }) {
     showTopSnackBar(
       Overlay.of(context),
-      _buildCustomSnackBar(message, type),
+      _buildCustomSnackBar(context, message, type),
     );
   }
 
-  static CustomSnackBar _buildCustomSnackBar(String message, SnackType type) {
+  static CustomSnackBar _buildCustomSnackBar(
+      BuildContext context, String message, SnackType type) {
     switch (type) {
       case SnackType.success:
         return CustomSnackBar.success(
           message: message,
           backgroundColor: ColorTheme.success,
-          textStyle: FontsTheme.h4(color: ColorTheme.textLight),
+          textStyle: Theme.of(context).textTheme.bodySmall!,
           icon: const Icon(Icons.check_circle_outline,
               color: Color(0x15000000), size: 120),
         );
@@ -32,7 +32,7 @@ class SnackMessage {
         return CustomSnackBar.error(
           message: message,
           backgroundColor: ColorTheme.error,
-          textStyle: FontsTheme.h4(),
+          textStyle: Theme.of(context).textTheme.bodyMedium!,
           icon: const Icon(Icons.error_outline,
               color: Color(0x15000000), size: 120),
         );
@@ -42,13 +42,13 @@ class SnackMessage {
           backgroundColor: ColorTheme.atention,
           icon: const Icon(Icons.error_outline,
               color: Color(0x15000000), size: 120),
-          textStyle: FontsTheme.h4(),
+          textStyle: Theme.of(context).textTheme.bodyMedium!,
         );
       case SnackType.help:
         return CustomSnackBar.info(
           message: message,
           backgroundColor: ColorTheme.info,
-          textStyle: FontsTheme.h4(),
+          textStyle: Theme.of(context).textTheme.bodyMedium!,
           icon: const Icon(Icons.info_outline,
               color: Color(0x15000000), size: 120),
         );

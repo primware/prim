@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/colors.dart';
 
 // ignore: must_be_immutable
 class TextfieldTheme extends StatefulWidget {
@@ -17,37 +16,41 @@ class TextfieldTheme extends StatefulWidget {
     this.inputType = TextInputType.text,
     this.inputFormatters,
     this.readOnly = false,
-    this.colorEmpty,
+    this.colorEmpty = false,
     this.maxLength,
     this.focusNode,
-    this.textAlign = TextAlign.start,
+    this.textAlign,
   });
 
   final String? texto;
   final String? pista;
   final IconData? icono;
+  final TextAlign? textAlign;
   final TextEditingController? controlador;
   bool obscure;
   final void Function(String)? onSubmitted, onChanged;
-  final bool showSubIcon, readOnly;
+  final bool showSubIcon, readOnly, colorEmpty;
   final TextInputType inputType;
   List<TextInputFormatter>? inputFormatters;
-  final Color? colorEmpty;
+
   final int? maxLength;
   final FocusNode? focusNode;
-  final TextAlign textAlign;
 
   @override
   State<TextfieldTheme> createState() => _TextfieldThemeState();
 }
 
 class _TextfieldThemeState extends State<TextfieldTheme> {
-  Widget suFixIcono = const Icon(
-    Icons.visibility_off_outlined,
-    color: ColorTheme.accentLight,
-  );
-
   bool mostrarClave = false;
+
+  Widget get suFixIcono => Icon(
+        mostrarClave
+            ? Icons.visibility_outlined
+            : Icons.visibility_off_outlined,
+        color: mostrarClave
+            ? Theme.of(context).colorScheme.error
+            : Theme.of(context).colorScheme.secondary,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -61,29 +64,30 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
       readOnly: widget.readOnly,
       inputFormatters: widget.inputFormatters ?? [],
       keyboardType: widget.inputType,
+      textAlign: widget.textAlign ?? TextAlign.start,
       decoration: InputDecoration(
+        counterText: '',
         hintText: widget.pista,
-        hintStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onSecondary.withAlpha(60)),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary.withAlpha(140),
+        hintStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
+        filled: true, // Habilita el relleno del fondo
+        fillColor: Theme.of(context).colorScheme.onPrimary,
         hoverColor: Theme.of(context).primaryColor.withAlpha(40),
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control
           borderSide: BorderSide(
-              width: 1,
-              color: widget.colorEmpty ??
-                  Theme.of(context)
-                      .primaryColor), // Color del borde cuando está enfocado
+              width: 2,
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary), // Color del borde cuando está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
         enabledBorder: OutlineInputBorder(
           //Cuando no estoy en el control
           borderSide: BorderSide(
-              color: widget.colorEmpty ??
-                  Theme.of(context)
-                      .colorScheme
-                      .secondary), // Color del borde cuando no está enfocado
+              color: widget.colorEmpty
+                  ? Theme.of(context).colorScheme.errorContainer
+                  : Theme.of(context)
+                      .primaryColor), // Color del borde cuando no está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
         border: const OutlineInputBorder(
@@ -92,7 +96,8 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
           ),
         ),
         labelText: widget.texto,
-        labelStyle: Theme.of(context).textTheme.bodyMedium,
+        labelStyle: Theme.of(context).textTheme.bodyLarge,
+
         prefixIcon: widget.icono != null
             ? Padding(
                 padding: const EdgeInsets.only(left: 12, right: 8),
@@ -104,26 +109,12 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
             ? GestureDetector(
                 onTap: () {
                   setState(() {
-                    if (mostrarClave) {
-                      mostrarClave = false;
-                      widget.obscure = true;
-                      suFixIcono = Icon(
-                        Icons.visibility_off_outlined,
-                        color: Theme.of(context).colorScheme.onSecondary,
-                      );
-                    } else {
-                      mostrarClave = true;
-                      widget.obscure = false;
-                      suFixIcono = Icon(
-                        Icons.visibility_outlined,
-                        color: Theme.of(context).primaryColor,
-                      );
-                    }
+                    mostrarClave = !mostrarClave;
+                    widget.obscure = !widget.obscure;
                   });
                 },
                 child: MouseRegion(
-                  cursor:
-                      SystemMouseCursors.click, // Cambia el cursor a una mano
+                  cursor: SystemMouseCursors.click,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 16, right: 8),
                     child: suFixIcono,
@@ -135,7 +126,6 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
         contentPadding: const EdgeInsets.all(16),
       ),
       style: Theme.of(context).textTheme.bodyLarge,
-      textAlign: widget.textAlign,
     );
   }
 }
@@ -147,14 +137,14 @@ class TextFieldComments extends StatefulWidget {
       this.controlador,
       this.readOnly = false,
       this.texto,
-      this.colorEmpty,
       this.onSubmitted,
+      this.colorEmpty = false,
       this.onChanged});
 
   final String? pista, texto;
   final TextEditingController? controlador;
-  final bool readOnly;
-  final Color? colorEmpty;
+  final bool readOnly, colorEmpty;
+
   final void Function(String)? onSubmitted, onChanged;
 
   @override
@@ -169,31 +159,30 @@ class _TextFieldCommentsState extends State<TextFieldComments> {
       maxLines: null,
       minLines: 4,
       readOnly: widget.readOnly,
-      onChanged: widget.onChanged,
       onSubmitted: widget.onSubmitted,
+      onChanged: widget.onChanged,
       decoration: InputDecoration(
         hintText: widget.pista,
-        hintStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onSecondary.withAlpha(60)),
-        filled: true, // Habilita el relleno del fondo
-        fillColor: Theme.of(context).colorScheme.secondary.withAlpha(140),
-        hoverColor: Theme.of(context).primaryColor.withAlpha(40),
+        hintStyle: TextStyle(color: Theme.of(context).colorScheme.outline),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+        hoverColor: Theme.of(context).colorScheme.primary.withAlpha(40),
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control
           borderSide: BorderSide(
-              width: 1,
-              color: widget.colorEmpty ??
-                  Theme.of(context)
-                      .primaryColor), // Color del borde cuando está enfocado
+              width: 2,
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary), // Color del borde cuando está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
         enabledBorder: OutlineInputBorder(
           //Cuando no estoy en el control
           borderSide: BorderSide(
-              color: widget.colorEmpty ??
-                  Theme.of(context)
-                      .colorScheme
-                      .secondary), // Color del borde cuando no está enfocado
+              color: widget.colorEmpty
+                  ? Theme.of(context).colorScheme.errorContainer
+                  : Theme.of(context)
+                      .primaryColor), // Color del borde cuando no está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
         border: const OutlineInputBorder(
@@ -204,13 +193,10 @@ class _TextFieldCommentsState extends State<TextFieldComments> {
         labelText: widget.texto,
         labelStyle: Theme.of(context).textTheme.bodyMedium,
         alignLabelWithHint: true,
-        floatingLabelStyle: const TextStyle(
-          color: ColorTheme.accentLight,
-          fontSize: 14,
-        ),
+        floatingLabelStyle: Theme.of(context).textTheme.bodyLarge,
         contentPadding: const EdgeInsets.all(16),
       ),
-      style: Theme.of(context).textTheme.bodyLarge,
+      style: Theme.of(context).textTheme.bodyMedium,
     );
   }
 }

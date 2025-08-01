@@ -4,7 +4,7 @@ import 'package:primware/shared/custom_spacer.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
 import '../../../shared/shimmer_list.dart';
-import '../../../shared/textfield.widget.dart';
+import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
 import 'bpartner_funtions.dart';
 
@@ -179,8 +179,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   TextfieldTheme(
                     controlador: nameController,
                     texto: 'Nombre *',
-                    colorEmpty:
-                        nameController.text.isEmpty ? ColorTheme.error : null,
+                    colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -227,18 +226,14 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   TextfieldTheme(
                     controlador: emailController,
                     texto: 'Correo electrónico',
-                    colorEmpty: !isValidEmail(emailController.text)
-                        ? ColorTheme.error
-                        : null,
+                    colorEmpty: !isValidEmail(emailController.text),
                     inputType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: locationController,
                     texto: 'Dirección *',
-                    colorEmpty: locationController.text.isEmpty
-                        ? ColorTheme.error
-                        : null,
+                    colorEmpty: locationController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
                   const SizedBox(height: CustomSpacer.xlarge),

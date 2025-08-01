@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:primware/theme/fonts.dart';
-
-import '../theme/colors.dart';
 
 class CustomCheckbox extends StatefulWidget {
   final bool value;
@@ -54,8 +51,8 @@ class _CustomCheckboxState extends State<CustomCheckbox> {
         children: [
           Checkbox(
             value: _status,
-            checkColor: ColorTheme.textDark,
-            activeColor: ColorTheme.accentLight,
+            checkColor: Theme.of(context).colorScheme.surface,
+            activeColor: Theme.of(context).colorScheme.primary,
             onChanged: (bool? value) {
               if (value != null) {
                 _toggleCheckbox();
@@ -63,10 +60,7 @@ class _CustomCheckboxState extends State<CustomCheckbox> {
             },
           ),
           const SizedBox(width: 4),
-          Text(
-            widget.text,
-            style: FontsTheme.p(),
-          ),
+          Text(widget.text, style: Theme.of(context).textTheme.bodyLarge),
         ],
       ),
     );

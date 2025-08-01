@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:primware/views/Auth/login_view.dart';
-import '../../../shared/textfield.widget.dart';
+import '../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/fonts.dart';
 import '../../shared/button.widget.dart';
@@ -155,130 +155,127 @@ class _RegisterUserState extends State<RegisterUser> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: ColorTheme.backgroundLight,
         body: Stack(children: [
-          SingleChildScrollView(
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
-                constraints: const BoxConstraints(
-                  maxWidth: 800,
+      SingleChildScrollView(
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+            constraints: const BoxConstraints(
+              maxWidth: 800,
+            ),
+            child: Column(
+              children: [
+                Text('Crear Empresa',
+                    style: Theme.of(context).textTheme.headlineLarge),
+                const SizedBox(height: CustomSpacer.medium),
+                TextfieldTheme(
+                  texto: 'Nombre de la empresa',
+                  controlador: clientNameController,
+                  colorEmpty: clientNameController.text.isEmpty,
+                  inputType: TextInputType.name,
+                  onChanged: (p0) => _validateForm(),
                 ),
-                child: Column(
-                  children: [
-                    Text('Crear Empresa',
-                        style: Theme.of(context).textTheme.headlineLarge),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(
-                      texto: 'Nombre de la empresa',
-                      controlador: clientNameController,
-                      colorEmpty: clientNameController.text.isEmpty
-                          ? ColorTheme.error
-                          : null,
-                      inputType: TextInputType.name,
-                      onChanged: (p0) => _validateForm(),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(
-                      texto: 'Correo del usuario administrador',
-                      controlador: adminUserEmailController,
-                      colorEmpty: !isValidEmail(adminUserEmailController.text)
-                          ? ColorTheme.error
-                          : null,
-                      inputType: TextInputType.emailAddress,
-                      onChanged: (p0) => _validateForm(),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    isLoading
-                        ? _buildShimmerField()
-                        : CustomSearchField(
-                            options: currencyOptions,
-                            labelText: 'Moneda',
-                            onItemSelected: (p0) {
-                              setState(() {
-                                selectedCurrencyID = p0['id'];
-                                _validateForm();
-                              });
-                            },
-                            itemBuilder: (p0) => Text(
-                              p0['name'],
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    isLoading
-                        ? _buildShimmerField()
-                        : CustomSearchField(
-                            options: countryOptions,
-                            labelText: 'País',
-                            searchBy: 'CountryCode',
-                            searchByText: 'código del país',
-                            onItemSelected: (p0) {
-                              setState(() {
-                                selectedCountryID = p0['id'];
-                                _validateForm();
-                              });
-                            },
-                            itemBuilder: (p0) => Text(
-                              '${p0['CountryCode'] ?? ''} - ${p0['name'] ?? ''}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                    const SizedBox(
-                        height: CustomSpacer.medium + CustomSpacer.xlarge),
-                    Container(
-                      child: isValid
-                          ? isLoading
-                              ? ButtonLoading()
-                              : ButtonPrimary(
-                                  texto: 'Crear Empresa',
-                                  fullWidth: true,
-                                  onPressed: _funcionRegister,
-                                )
-                          : Center(
-                              child: Text(
-                                'Completa todos los campos para registrar',
-                                style:
-                                    FontsTheme.h5Bold(color: ColorTheme.error),
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Ya tengo cuenta',
-                          style: FontsTheme.p(),
+                const SizedBox(height: CustomSpacer.medium),
+                TextfieldTheme(
+                  texto: 'Correo del usuario administrador',
+                  controlador: adminUserEmailController,
+                  colorEmpty: !isValidEmail(adminUserEmailController.text),
+                  inputType: TextInputType.emailAddress,
+                  onChanged: (p0) => _validateForm(),
+                ),
+                const SizedBox(height: CustomSpacer.medium),
+                isLoading
+                    ? _buildShimmerField()
+                    : CustomSearchField(
+                        options: currencyOptions,
+                        labelText: 'Moneda',
+                        onItemSelected: (p0) {
+                          setState(() {
+                            selectedCurrencyID = p0['id'];
+                            _validateForm();
+                          });
+                        },
+                        itemBuilder: (p0) => Text(
+                          p0['name'],
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          ' - ',
-                          style: FontsTheme.p(),
+                      ),
+                const SizedBox(height: CustomSpacer.medium),
+                isLoading
+                    ? _buildShimmerField()
+                    : CustomSearchField(
+                        options: countryOptions,
+                        labelText: 'País',
+                        searchBy: 'CountryCode',
+                        searchByText: 'código del país',
+                        onItemSelected: (p0) {
+                          setState(() {
+                            selectedCountryID = p0['id'];
+                            _validateForm();
+                          });
+                        },
+                        itemBuilder: (p0) => Text(
+                          '${p0['CountryCode'] ?? ''} - ${p0['name'] ?? ''}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        InkWell(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LoginPage(),
-                            ),
-                          ),
+                      ),
+                const SizedBox(
+                    height: CustomSpacer.medium + CustomSpacer.xlarge),
+                Container(
+                  child: isValid
+                      ? isLoading
+                          ? ButtonLoading()
+                          : ButtonPrimary(
+                              texto: 'Crear Empresa',
+                              fullWidth: true,
+                              onPressed: _funcionRegister,
+                            )
+                      : Center(
                           child: Text(
-                            'Iniciar sesión',
-                            style:
-                                FontsTheme.pBold(color: ColorTheme.textLight),
+                            'Completa todos los campos para registrar',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: ColorTheme.error,
+                                ),
                           ),
                         ),
-                      ],
+                ),
+                const SizedBox(height: CustomSpacer.medium),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Ya tengo cuenta',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    Text(
+                      ' - ',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LoginPage(),
+                        ),
+                      ),
+                      child: Text(
+                        'Iniciar sesión',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
-          if (isLoading) LoadingContainer(),
-        ]));
+        ),
+      ),
+      if (isLoading) LoadingContainer(),
+    ]));
   }
 }

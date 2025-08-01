@@ -52,7 +52,7 @@ class SearchableDropdown<T> extends StatelessWidget {
           displayItem != null
               ? displayItem!(selectedItem ?? {})
               : selectedItem?['name'] ?? '',
-          style: FontsTheme.h5(),
+          style: Theme.of(context).textTheme.bodyMedium,
         );
       },
       decoratorProps: DropDownDecoratorProps(

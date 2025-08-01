@@ -7,7 +7,7 @@ import 'package:primware/views/Home/product/product_funtions.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
 import '../../../shared/formater.dart';
-import '../../../shared/textfield.widget.dart';
+import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -163,8 +163,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   TextfieldTheme(
                     controlador: nameController,
                     texto: 'Nombre*',
-                    colorEmpty:
-                        nameController.text.isEmpty ? ColorTheme.error : null,
+                    colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -213,8 +212,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   TextfieldTheme(
                     controlador: priceController,
                     texto: 'Precio*',
-                    colorEmpty:
-                        priceController.text.isEmpty ? ColorTheme.error : null,
+                    colorEmpty: priceController.text.isEmpty,
                     inputType: TextInputType.number,
                     inputFormatters: [NumericTextFormatterWithDecimal()],
                   ),
