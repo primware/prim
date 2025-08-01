@@ -7,9 +7,6 @@ import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/invoice/invoice_funtions.dart';
 import 'package:primware/views/Home/invoice/my_invoice_detail.dart';
 import 'package:primware/views/Home/invoice/my_invoice_new.dart';
-import 'package:shimmer/shimmer.dart';
-
-import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 
 class OrderListPage extends StatefulWidget {
