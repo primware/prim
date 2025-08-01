@@ -1,5 +1,4 @@
 // ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:primware/API/token.api.dart';
 import 'package:primware/shared/custom_spacer.dart';
@@ -14,7 +13,6 @@ import '../API/pos.api.dart';
 import '../API/user.api.dart';
 import '../main.dart';
 import '../theme/colors.dart';
-import '../theme/fonts.dart';
 import '../views/Home/bpartner/bpartner_view.dart';
 import '../views/Home/invoice/my_invoice_view.dart';
 import 'custom_flat_button.dart';
@@ -308,7 +306,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
             leading: Icon(
               Icons.people_alt_outlined,
             ),
-            tileColor: Theme.of(context).cardColor,
             title: Text(
               'Clientes',
             ),
@@ -325,7 +322,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
             leading: Icon(
               Icons.settings,
             ),
-            tileColor: Theme.of(context).cardColor,
             title: Text(
               'Debug Panel',
             ),
@@ -339,7 +335,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
             },
           ),
           ListTile(
-            tileColor: Theme.of(context).cardColor,
             leading: Icon(
               _isDarkMode ? Icons.nightlight : Icons.sunny,
               color: Theme.of(context).colorScheme.onSurface,

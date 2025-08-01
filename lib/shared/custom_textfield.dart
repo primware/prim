@@ -70,7 +70,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
         hintText: widget.pista,
         hintStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
         filled: true, // Habilita el relleno del fondo
-        fillColor: Theme.of(context).colorScheme.onPrimary,
+        fillColor: Theme.of(context).cardColor,
         hoverColor: Theme.of(context).primaryColor.withAlpha(40),
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control
@@ -165,7 +165,7 @@ class _TextFieldCommentsState extends State<TextFieldComments> {
         hintText: widget.pista,
         hintStyle: TextStyle(color: Theme.of(context).colorScheme.outline),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
+        fillColor: Theme.of(context).cardColor,
         hoverColor: Theme.of(context).colorScheme.primary.withAlpha(40),
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control

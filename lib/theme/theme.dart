@@ -10,19 +10,15 @@ class AppThemes {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: colorScheme.secondaryFixed,
+      scaffoldBackgroundColor: colorScheme.primaryFixed,
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.tertiary,
-        foregroundColor: colorScheme.onTertiary,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.poppins(
-            fontSize: 28,
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onTertiary),
       ),
       drawerTheme: DrawerThemeData(
-        backgroundColor: colorScheme.primaryFixed,
+        backgroundColor: colorScheme.onPrimary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
         ),
@@ -31,7 +27,7 @@ class AppThemes {
         bodyColor: colorScheme.onSecondaryContainer,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: colorScheme.onPrimaryFixedVariant,
+        backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
       ),
       cardColor: colorScheme.surface,
@@ -39,7 +35,6 @@ class AppThemes {
       listTileTheme: ListTileThemeData(
         textColor: colorScheme.onSurface,
         iconColor: colorScheme.onSurfaceVariant,
-        tileColor: colorScheme.surfaceContainerLowest,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -60,16 +55,18 @@ class AppThemes {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: colorScheme.secondaryFixed,
+      scaffoldBackgroundColor: colorScheme.surfaceDim,
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.secondary,
         foregroundColor: colorScheme.onSecondary,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.poppins(
-            fontSize: 28,
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSecondary),
+      ),
+      drawerTheme: DrawerThemeData(
+        backgroundColor: colorScheme.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
       ),
       textTheme: GoogleFonts.poppinsTextTheme().apply(
         bodyColor: colorScheme.onSurface,
@@ -80,7 +77,6 @@ class AppThemes {
       listTileTheme: ListTileThemeData(
         textColor: colorScheme.onSurface,
         iconColor: colorScheme.onSurfaceVariant,
-        tileColor: colorScheme.surfaceContainerLowest,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

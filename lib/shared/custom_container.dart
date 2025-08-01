@@ -23,7 +23,7 @@ class CustomContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.onSurface.withAlpha(40),
+            color: Theme.of(context).colorScheme.shadow.withAlpha(40),
             spreadRadius: 2,
             blurRadius: 12,
             offset: const Offset(12, 12),

@@ -63,11 +63,7 @@ class _DashboardPageState extends State<DashboardPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Dashboard',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineLarge
-                  ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
+          title: Text('Dashboard'),
         ),
         drawer: MenuDrawer(),
         body: SafeArea(

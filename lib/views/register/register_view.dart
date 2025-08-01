@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import '../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
-import '../../../theme/fonts.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_searchfield.dart';
 import '../../shared/custom_spacer.dart';
