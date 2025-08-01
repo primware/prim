@@ -184,18 +184,20 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                       ? ShimmerList(
                           count: 1,
                         )
-                      : SearchableDropdown<int>(
-                          value: selectedTaxTypeID,
-                          options: taxTypes,
-                          showSearchBox: false,
-                          labelText: 'Persona *',
-                          onChanged: (int? newValue) {
-                            setState(() {
-                              selectedTaxTypeID = newValue;
-                              _isFormValid();
-                            });
-                          },
-                        ),
+                      : (taxTypes != []) //? Si no hay tipos de persona
+                          ? SearchableDropdown<int>(
+                              value: selectedTaxTypeID,
+                              options: taxTypes,
+                              showSearchBox: false,
+                              labelText: 'Persona *',
+                              onChanged: (int? newValue) {
+                                setState(() {
+                                  selectedTaxTypeID = newValue;
+                                  _isFormValid();
+                                });
+                              },
+                            )
+                          : const SizedBox(),
                   const SizedBox(height: CustomSpacer.medium),
                   _isGroupLoading
                       ? ShimmerList(
