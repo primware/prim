@@ -12,7 +12,7 @@ class DebugPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const SelectableText('Settings'),
+        title: Text('Settings'),
       ),
       body: SingleChildScrollView(
         child: Center(

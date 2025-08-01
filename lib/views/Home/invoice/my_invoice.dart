@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/custom_textfield.dart';
+import 'package:primware/shared/shimmer_list.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/invoice/invoice_funtions.dart';
 import 'package:primware/views/Home/invoice/my_invoice_detail.dart';
@@ -45,29 +46,6 @@ class _OrderListPageState extends State<OrderListPage> {
             .toLowerCase()
             .contains(_searchQuery.toLowerCase()))
         .toList();
-  }
-
-  Widget _buildShimmerList() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: Column(
-          children: List.generate(4, (index) {
-            return Container(
-              height: 80,
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            );
-          }),
-        ),
-      ),
-    );
   }
 
   Widget _buildOrderList(List<Map<String, dynamic>> orders) {
@@ -165,10 +143,10 @@ class _OrderListPageState extends State<OrderListPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-            title: Text('Mis órdenes',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.secondary))),
-        drawer: POS.isPOS ? MenuDrawer() : null,
+            title: Text(
+          'Mis órdenes',
+        )),
+        drawer: MenuDrawer(),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             Navigator.push(
@@ -205,7 +183,9 @@ class _OrderListPageState extends State<OrderListPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isLoading
-                      ? _buildShimmerList()
+                      ? ShimmerList(
+                          separation: CustomSpacer.medium,
+                        )
                       : _buildOrderList(_getFilteredOrders()),
                 ],
               ),

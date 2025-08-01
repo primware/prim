@@ -163,12 +163,9 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Cliente nuevo',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineLarge
-                  ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
-          centerTitle: true,
+          title: Text(
+            'Cliente nuevo',
+          ),
         ),
         body: SafeArea(
           child: SingleChildScrollView(

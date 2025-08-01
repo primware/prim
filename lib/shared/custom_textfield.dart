@@ -101,8 +101,8 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
         prefixIcon: widget.icono != null
             ? Padding(
                 padding: const EdgeInsets.only(left: 12, right: 8),
-                child:
-                    Icon(widget.icono, color: Theme.of(context).primaryColor),
+                child: Icon(widget.icono,
+                    color: Theme.of(context).colorScheme.primary),
               )
             : null,
         suffixIcon: widget.showSubIcon

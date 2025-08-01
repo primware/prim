@@ -17,12 +17,9 @@ class OrderDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Orden #${order['DocumentNo']}',
-            style: Theme.of(context)
-                .textTheme
-                .headlineLarge
-                ?.copyWith(color: Theme.of(context).colorScheme.secondary)),
-        centerTitle: true,
+        title: Text(
+          'Orden #${order['DocumentNo']}',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),

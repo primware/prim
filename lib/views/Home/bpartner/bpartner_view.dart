@@ -101,11 +101,11 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
             child: ListTile(
               title: Text(record['name'],
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSecondary)),
+                      color: Theme.of(context).colorScheme.secondary)),
               subtitle: Text(
                   '${record['LCO_TaxIdTypeName']} ${record['TaxID'] ?? ''}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSecondary)),
+                      color: Theme.of(context).colorScheme.secondary)),
             ),
           ),
         );

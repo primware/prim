@@ -116,7 +116,7 @@ class _ProductListPageState extends State<ProductListPage> {
             child: ListTile(
               title: Text('${record['name']} (${record['sku']})',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSecondary)),
+                      color: Theme.of(context).colorScheme.secondary)),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

@@ -318,22 +318,23 @@ class _MenuDrawerState extends State<MenuDrawer> {
               );
             },
           ),
-          ListTile(
-            leading: Icon(
-              Icons.settings,
+          if (!Base.prod)
+            ListTile(
+              leading: Icon(
+                Icons.settings,
+              ),
+              title: Text(
+                'Debug Panel',
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DebugPage(),
+                  ),
+                );
+              },
             ),
-            title: Text(
-              'Debug Panel',
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DebugPage(),
-                ),
-              );
-            },
-          ),
           ListTile(
             leading: Icon(
               _isDarkMode ? Icons.nightlight : Icons.sunny,
