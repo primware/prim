@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:primware/views/Home/invoice/my_invoice_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../API/token.api.dart';
-import '../../../main.dart';
 import '../../API/pos.api.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/localization/app_locale.dart';
