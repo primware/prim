@@ -3,11 +3,7 @@ class Base {
   static bool local = false;
   static String title = prod ? 'Prod' : 'Test';
 
-  static String baseURL = local
-      ? 'https://localhost:8443'
-      : prod
-          ? 'https://demo.primware.net'
-          : 'https://testidempiere.com';
+  static String? baseURL;
 }
 
 class EndPoints {
