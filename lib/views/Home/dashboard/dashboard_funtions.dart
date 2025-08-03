@@ -25,12 +25,24 @@ Future<Map<String, double>> fetchSalesChartData({
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
       final List records = jsonResponse['records'];
 
+      final now = DateTime.now();
+
       final Map<String, double> groupedTotals = {};
       for (var record in records) {
         final date = DateTime.parse(record['DateOrdered']);
+
+        if (groupBy == 'month' && date.year != now.year) {
+          continue;
+        }
+        if (groupBy == 'day' &&
+            (date.year != now.year || date.month != now.month)) {
+          continue;
+        }
+
         final key = groupBy == 'day'
             ? '${date.year}-${date.month}-${date.day}'
             : '${date.year}-${date.month}';
+
         groupedTotals[key] =
             (groupedTotals[key] ?? 0) + (record['GrandTotal'] ?? 0);
       }

@@ -71,13 +71,12 @@ class _OrderListPageState extends State<OrderListPage> {
               title: Row(
                 children: [
                   Icon(Icons.person_outline,
-                      color: Theme.of(context).colorScheme.onSecondary),
+                      color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: CustomSpacer.small),
                   Expanded(
                     child: Text(
                         '${order['bpartner']['name']} #${order['DocumentNo']}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSecondary)),
+                        style: Theme.of(context).textTheme.bodyMedium),
                   ),
                 ],
               ),
@@ -91,13 +90,7 @@ class _OrderListPageState extends State<OrderListPage> {
                       const SizedBox(width: CustomSpacer.small),
                       Expanded(
                         child: Text(order['GrandTotal'].toString(),
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSecondary)),
+                            style: Theme.of(context).textTheme.bodyLarge),
                       ),
                     ],
                   ),
