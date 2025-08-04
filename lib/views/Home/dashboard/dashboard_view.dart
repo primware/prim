@@ -110,7 +110,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: Logo(width: 280)),
+                    Center(child: Logo(width: 169)),
                     SizedBox(height: CustomSpacer.xlarge),
                     Row(
                       children: [
@@ -147,132 +147,141 @@ class _DashboardPageState extends State<DashboardPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : LineChart(
-                              LineChartData(
-                                lineTouchData: LineTouchData(
-                                  touchTooltipData: LineTouchTooltipData(
-                                    getTooltipColor: (touchedSpot) =>
-                                        Theme.of(context)
-                                            .colorScheme
-                                            .primaryContainer,
-                                    fitInsideHorizontally: true,
-                                    fitInsideVertically: true,
-                                    getTooltipItems: (touchedSpots) {
-                                      return touchedSpots.map((spot) {
-                                        return LineTooltipItem(
-                                          '${spot.y.toStringAsFixed(2)} USD', //TODO Moneda del grupo empresarial
-                                          Theme.of(context)
-                                              .textTheme
-                                              .titleMedium!
-                                              .copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        );
-                                      }).toList();
-                                    },
-                                  ),
-                                ),
-                                gridData: FlGridData(
-                                  show: true,
-                                  drawVerticalLine: false,
-                                  horizontalInterval: (salesData.isNotEmpty
-                                      ? (salesData.map((e) => e.y).reduce(
-                                                  (a, b) => a > b ? a : b) /
-                                              5)
-                                          .roundToDouble()
-                                      : 10000),
-                                  getDrawingHorizontalLine: (value) {
-                                    return FlLine(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .secondaryContainer
-                                          .withOpacity(0.6),
-                                      strokeWidth: 1,
-                                    );
-                                  },
-                                ),
-                                titlesData: FlTitlesData(
-                                  bottomTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      reservedSize: 24,
-                                      getTitlesWidget: (value, meta) {
-                                        final index = value.toInt();
-                                        if (index >= 0 &&
-                                            index < dataKeys.length) {
-                                          return Text(
-                                              formatLabel(dataKeys[index]),
-                                              style: Theme.of(context)
+                          : salesData.isEmpty
+                              ? Center(
+                                  child: Text('No hay datos para este filtro',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium))
+                              : LineChart(
+                                  LineChartData(
+                                    lineTouchData: LineTouchData(
+                                      touchTooltipData: LineTouchTooltipData(
+                                        getTooltipColor: (touchedSpot) =>
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .primaryContainer,
+                                        fitInsideHorizontally: true,
+                                        fitInsideVertically: true,
+                                        getTooltipItems: (touchedSpots) {
+                                          return touchedSpots.map((spot) {
+                                            return LineTooltipItem(
+                                              '${spot.y.toStringAsFixed(2)} USD', //TODO Moneda del grupo empresarial
+                                              Theme.of(context)
                                                   .textTheme
-                                                  .titleSmall);
-                                        }
-                                        return const SizedBox();
-                                      },
+                                                  .titleMedium!
+                                                  .copyWith(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            );
+                                          }).toList();
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                  leftTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      interval: (salesData.isNotEmpty
+                                    gridData: FlGridData(
+                                      show: true,
+                                      drawVerticalLine: false,
+                                      horizontalInterval: (salesData.isNotEmpty
                                           ? (salesData.map((e) => e.y).reduce(
                                                       (a, b) => a > b ? a : b) /
                                                   5)
                                               .roundToDouble()
                                           : 10000),
-                                      getTitlesWidget: (value, meta) {
-                                        return Text(
-                                          '${(value / 1000).round()}k',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleSmall,
+                                      getDrawingHorizontalLine: (value) {
+                                        return FlLine(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .secondaryContainer
+                                              .withOpacity(0.6),
+                                          strokeWidth: 1,
                                         );
                                       },
                                     ),
-                                  ),
-                                  topTitles: AxisTitles(
-                                      sideTitles:
-                                          SideTitles(showTitles: false)),
-                                  rightTitles: AxisTitles(
-                                      sideTitles:
-                                          SideTitles(showTitles: false)),
-                                ),
-                                borderData: FlBorderData(show: false),
-                                minX: 0,
-                                maxX: salesData.isNotEmpty
-                                    ? salesData.length.toDouble() - 1
-                                    : 0,
-                                minY: 0,
-                                lineBarsData: [
-                                  LineChartBarData(
-                                    spots: salesData,
-                                    isCurved: true,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                    barWidth: 3,
-                                    isStrokeCapRound: true,
-                                    dotData: FlDotData(show: false),
-                                    belowBarData: BarAreaData(
-                                      show: true,
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .surfaceTint
-                                              .withOpacity(0.5),
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .surfaceTint
-                                              .withOpacity(0),
-                                        ],
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
+                                    titlesData: FlTitlesData(
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          reservedSize: 24,
+                                          getTitlesWidget: (value, meta) {
+                                            final index = value.toInt();
+                                            if (index >= 0 &&
+                                                index < dataKeys.length) {
+                                              return Text(
+                                                  formatLabel(dataKeys[index]),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleSmall);
+                                            }
+                                            return const SizedBox();
+                                          },
+                                        ),
                                       ),
+                                      leftTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          interval: (salesData.isNotEmpty
+                                              ? (salesData
+                                                          .map((e) => e.y)
+                                                          .reduce((a, b) =>
+                                                              a > b ? a : b) /
+                                                      5)
+                                                  .roundToDouble()
+                                              : 10000),
+                                          getTitlesWidget: (value, meta) {
+                                            return Text(
+                                              '${(value / 1000).round()}k',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall,
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      topTitles: AxisTitles(
+                                          sideTitles:
+                                              SideTitles(showTitles: false)),
+                                      rightTitles: AxisTitles(
+                                          sideTitles:
+                                              SideTitles(showTitles: false)),
                                     ),
+                                    borderData: FlBorderData(show: false),
+                                    minX: 0,
+                                    maxX: salesData.isNotEmpty
+                                        ? salesData.length.toDouble() - 1
+                                        : 0,
+                                    minY: 0,
+                                    lineBarsData: [
+                                      LineChartBarData(
+                                        spots: salesData,
+                                        isCurved: true,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        barWidth: 3,
+                                        isStrokeCapRound: true,
+                                        dotData: FlDotData(show: false),
+                                        belowBarData: BarAreaData(
+                                          show: true,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceTint
+                                                  .withOpacity(0.5),
+                                              Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceTint
+                                                  .withOpacity(0),
+                                            ],
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
                     ),
                   ],
                 ),

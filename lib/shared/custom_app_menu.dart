@@ -335,22 +335,22 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 );
               },
             ),
-          ListTile(
-            leading: Icon(
-              _isDarkMode ? Icons.nightlight : Icons.sunny,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            title: Text(
-              _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            onTap: () {
-              ThemeManager.themeNotifier.toggleTheme();
-              _loadTheme();
-            },
-          ),
+          // ListTile(
+          //   leading: Icon(
+          //     _isDarkMode ? Icons.nightlight : Icons.sunny,
+          //     color: Theme.of(context).colorScheme.onSurface,
+          //   ),
+          //   title: Text(
+          //     _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+          //     style: TextStyle(
+          //       color: Theme.of(context).colorScheme.onSurface,
+          //     ),
+          //   ),
+          //   onTap: () {
+          //     ThemeManager.themeNotifier.toggleTheme();
+          //     _loadTheme();
+          //   },
+          // ),
           ListTile(
             leading: Icon(
               Icons.logout_outlined,

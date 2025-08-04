@@ -30,14 +30,17 @@ Future<Map<String, double>> fetchSalesChartData({
       final Map<String, double> groupedTotals = {};
       for (var record in records) {
         final date = DateTime.parse(record['DateOrdered']);
-
-        if (groupBy == 'month' && date.year != now.year) {
-          continue;
+        // Filter based on groupBy selection
+        if (groupBy == 'month') {
+          if (date.year != now.year) {
+            continue;
+          }
+        } else if (groupBy == 'day') {
+          if (date.year != now.year || date.month != now.month) {
+            continue;
+          }
         }
-        if (groupBy == 'day' &&
-            (date.year != now.year || date.month != now.month)) {
-          continue;
-        }
+        print('Processing record: ${record['DateOrdered']} - Passed filter');
 
         final key = groupBy == 'day'
             ? '${date.year}-${date.month}-${date.day}'

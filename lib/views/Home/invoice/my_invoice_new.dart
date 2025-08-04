@@ -1190,7 +1190,7 @@ class _InvoicePageState extends State<InvoicePage> {
                 child: Column(
                   children: [
                     Center(
-                      child: Text('Resumen de la Factura',
+                      child: Text('Resumen',
                           style: Theme.of(context).textTheme.titleLarge),
                     ),
                     const SizedBox(height: CustomSpacer.medium),
