@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 
 import 'package:primware/views/Home/invoice/my_invoice_detail_pdf_generator.dart';
 import 'package:printing/printing.dart';
+
+import '../../../localization/app_locale.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -18,12 +21,12 @@ class OrderDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Orden #${order['DocumentNo']}',
+          '${AppLocale.orderHash.getString(context)}${order['DocumentNo']}',
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            tooltip: 'Exportar PDF',
+            tooltip: AppLocale.exportPdf.getString(context),
             onPressed: () async {
               final pdf = await generateOrderSummaryPdf(order);
               await Printing.sharePdf(
@@ -41,7 +44,7 @@ class OrderDetailPage extends StatelessWidget {
             children: [
               _buildHeader(order: order, context: context),
               const SizedBox(height: CustomSpacer.large),
-              Text('Resumen de productos',
+              Text(AppLocale.productSummary.getString(context),
                   style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: CustomSpacer.small),
               Expanded(
@@ -51,7 +54,7 @@ class OrderDetailPage extends StatelessWidget {
                     final line = lines[index];
                     final String name =
                         (line['M_Product_ID']?['identifier']?.toString() ??
-                                'Sin nombre')
+                                AppLocale.noName.getString(context))
                             .split('_')
                             .skip(1)
                             .join(' ');
@@ -77,7 +80,7 @@ class OrderDetailPage extends StatelessWidget {
                         title: Text(name,
                             style: Theme.of(context).textTheme.bodyMedium),
                         subtitle: Text(
-                            "Cantidad: $qty | Precio: \$${price.toStringAsFixed(2)}",
+                            "${AppLocale.quantity.getString(context)}: $qty | ${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
                             style: Theme.of(context).textTheme.bodySmall),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -91,14 +94,14 @@ class OrderDetailPage extends StatelessWidget {
                                   ?.copyWith(fontSize: 12),
                             ),
                             Text(
-                              "Subtotal: \$${net.toStringAsFixed(2)}",
+                              "${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
                                   ?.copyWith(fontSize: 12),
                             ),
                             Text(
-                              "Total: \$${total.toStringAsFixed(2)}",
+                              "${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -196,16 +199,20 @@ class OrderDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Resumen final:", style: Theme.of(context).textTheme.titleMedium),
+        Text(AppLocale.finalSummary.getString(context),
+            style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: CustomSpacer.small),
-        Text("Total bruto: \$${totalNeto.toStringAsFixed(2)}",
+        Text(
+            "${AppLocale.grossTotal.getString(context)} \$${totalNeto.toStringAsFixed(2)}",
             style: Theme.of(context).textTheme.bodyMedium),
         ...taxSummary.entries.map((entry) => Text(
             "${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}",
             style: Theme.of(context).textTheme.bodyMedium)),
-        Text("Total impuesto: \$${totalImpuesto.toStringAsFixed(2)}",
+        Text(
+            "${AppLocale.taxTotal.getString(context)} \$${totalImpuesto.toStringAsFixed(2)}",
             style: Theme.of(context).textTheme.titleMedium),
-        Text("Total final: \$${grandTotal.toStringAsFixed(2)}",
+        Text(
+            "${AppLocale.finalTotal.getString(context)} \$${grandTotal.toStringAsFixed(2)}",
             style: Theme.of(context).textTheme.titleMedium),
       ],
     );

@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/logo.dart';
 import '../../../API/token.api.dart';
@@ -10,6 +11,7 @@ import '../../Auth/login_view.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
 import 'dashboard_funtions.dart';
+import '../../../localization/app_locale.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -74,9 +76,9 @@ class _DashboardPageState extends State<DashboardPage> {
           lastBackPressed = now;
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Presione nuevamente para cerrar sesión"),
-              duration: Duration(seconds: 2),
+            SnackBar(
+              content: Text(AppLocale.pressAgainToLogout.getString(context)),
+              duration: const Duration(seconds: 2),
             ),
           );
 
@@ -100,7 +102,7 @@ class _DashboardPageState extends State<DashboardPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Dashboard'),
+          title: Text(AppLocale.dashboard.getString(context)),
         ),
         drawer: MenuDrawer(),
         body: SafeArea(
@@ -114,15 +116,19 @@ class _DashboardPageState extends State<DashboardPage> {
                     SizedBox(height: CustomSpacer.xlarge),
                     Row(
                       children: [
-                        Text('Total Vendido por',
+                        Text('${AppLocale.totalSoldBy.getString(context)}',
                             style: Theme.of(context).textTheme.titleMedium),
                         const SizedBox(width: CustomSpacer.medium),
                         DropdownButton<String>(
                           value: groupBy,
                           items: [
-                            DropdownMenuItem(value: 'day', child: Text('Días')),
                             DropdownMenuItem(
-                                value: 'month', child: Text('Meses')),
+                                value: 'day',
+                                child: Text(AppLocale.days.getString(context))),
+                            DropdownMenuItem(
+                                value: 'month',
+                                child:
+                                    Text(AppLocale.months.getString(context))),
                           ],
                           onChanged: (value) {
                             if (value != null) {
@@ -149,7 +155,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             )
                           : salesData.isEmpty
                               ? Center(
-                                  child: Text('No hay datos para este filtro',
+                                  child: Text(
+                                      AppLocale.noDataForFilter
+                                          .getString(context),
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium))

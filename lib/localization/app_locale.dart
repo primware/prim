@@ -45,6 +45,30 @@ class AppLocale {
   static const String update = 'update';
   static const String errorUpdateCustomer = 'errorUpdateCustomer';
 
+  static const String dashboard = 'dashboard';
+  static const String totalSoldBy = 'totalSoldBy';
+  static const String days = 'days';
+  static const String months = 'months';
+  static const String noDataForFilter = 'noDataForFilter';
+  static const String pressAgainToLogout = 'pressAgainToLogout';
+
+  static const String myOrders = 'myOrders';
+  static const String searchOrder = 'searchOrder';
+  static const String errorNoOrders = 'errorNoOrders';
+
+  static const String orderHash = 'orderHash';
+  static const String exportPdf = 'exportPdf';
+  static const String productSummary = 'productSummary';
+  static const String quantity = 'quantity';
+  static const String price = 'price';
+  static const String subtotal = 'subtotal';
+  static const String total = 'total';
+  static const String noName = 'noName';
+  static const String finalSummary = 'finalSummary';
+  static const String grossTotal = 'grossTotal';
+  static const String taxTotal = 'taxTotal';
+  static const String finalTotal = 'finalTotal';
+
   static const Map<String, dynamic> en = {
     login: 'Login',
     user: 'User',
@@ -88,6 +112,27 @@ class AppLocale {
     customerDetail: 'Customer detail',
     update: 'Update',
     errorUpdateCustomer: 'Error updating customer',
+    dashboard: 'Dashboard',
+    totalSoldBy: 'Total sold by',
+    days: 'Days',
+    months: 'Months',
+    noDataForFilter: 'No data available for the selected filter.',
+    pressAgainToLogout: 'Press again to log out',
+    myOrders: 'My orders',
+    searchOrder: 'Search order',
+    errorNoOrders: 'No orders found.',
+    orderHash: 'Order #',
+    exportPdf: 'Export PDF',
+    productSummary: 'Product summary',
+    quantity: 'Quantity',
+    price: 'Price',
+    subtotal: 'Subtotal',
+    total: 'Total',
+    noName: 'No name',
+    finalSummary: 'Final summary:',
+    grossTotal: 'Gross total:',
+    taxTotal: 'Tax total:',
+    finalTotal: 'Final total:',
   };
 
   static const Map<String, dynamic> es = {
@@ -132,5 +177,26 @@ class AppLocale {
     customerDetail: 'Detalle cliente',
     update: 'Actualizar',
     errorUpdateCustomer: 'Error al actualizar cliente',
+    dashboard: 'Panel',
+    totalSoldBy: 'Total vendido por',
+    days: 'Días',
+    months: 'Meses',
+    noDataForFilter: 'No hay datos disponibles para el filtro seleccionado.',
+    pressAgainToLogout: 'Presione nuevamente para cerrar sesión',
+    myOrders: 'Mis órdenes',
+    searchOrder: 'Buscar orden',
+    errorNoOrders: 'No se encontraron órdenes.',
+    orderHash: 'Orden #',
+    exportPdf: 'Exportar PDF',
+    productSummary: 'Resumen de productos',
+    quantity: 'Cantidad',
+    price: 'Precio',
+    subtotal: 'Subtotal',
+    total: 'Total',
+    noName: 'Sin nombre',
+    finalSummary: 'Resumen final:',
+    grossTotal: 'Total bruto:',
+    taxTotal: 'Total impuesto:',
+    finalTotal: 'Total final:',
   };
 }

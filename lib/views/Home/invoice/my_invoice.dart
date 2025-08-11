@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/custom_textfield.dart';
@@ -8,6 +9,7 @@ import 'package:primware/views/Home/invoice/invoice_funtions.dart';
 import 'package:primware/views/Home/invoice/my_invoice_detail.dart';
 import 'package:primware/views/Home/invoice/my_invoice_new.dart';
 import '../../../shared/custom_app_menu.dart';
+import '../../../localization/app_locale.dart';
 
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
@@ -46,6 +48,11 @@ class _OrderListPageState extends State<OrderListPage> {
   }
 
   Widget _buildOrderList(List<Map<String, dynamic>> orders) {
+    if (orders.isEmpty) {
+      return Center(
+        child: Text(AppLocale.errorNoOrders.getString(context)),
+      );
+    }
     return Column(
       children: orders.map((order) {
         return GestureDetector(
@@ -134,7 +141,7 @@ class _OrderListPageState extends State<OrderListPage> {
       child: Scaffold(
         appBar: AppBar(
             title: Text(
-          'Mis órdenes',
+          AppLocale.myOrders.getString(context),
         )),
         drawer: MenuDrawer(),
         floatingActionButton: FloatingActionButton(
@@ -157,7 +164,7 @@ class _OrderListPageState extends State<OrderListPage> {
                     children: [
                       Expanded(
                         child: TextfieldTheme(
-                          texto: 'Buscar orden',
+                          texto: AppLocale.searchOrder.getString(context),
                           icono: Icons.search,
                           onChanged: (value) {
                             setState(() => _searchQuery = value);
