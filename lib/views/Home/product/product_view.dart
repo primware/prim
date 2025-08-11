@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
+import 'package:primware/localization/app_locale.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/shimmer_list.dart';
@@ -157,7 +159,7 @@ class _ProductListPageState extends State<ProductListPage> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: Text('Productos'),
+            title: Text(AppLocale.products.getString(context)),
           ),
           drawer: MenuDrawer(),
           floatingActionButton: FloatingActionButton(
@@ -325,7 +327,7 @@ class _ProductListPageState extends State<ProductListPage> {
                     children: [
                       Expanded(
                         child: TextfieldTheme(
-                          texto: 'Buscar producto',
+                          texto: AppLocale.searchProducts.getString(context),
                           controlador: productController,
                           icono: Icons.search,
                           onChanged: (_) => debouncedLoadProduct(),
@@ -341,7 +343,17 @@ class _ProductListPageState extends State<ProductListPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   _isLoading
                       ? ShimmerList(separation: CustomSpacer.medium)
-                      : _buildOrderList(_getFilteredOrders()),
+                      : _getFilteredOrders().isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 32.0),
+                              child: Center(
+                                child: Text(
+                                  AppLocale.noProductsFound.getString(context),
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                            )
+                          : _buildOrderList(_getFilteredOrders()),
                 ],
               )),
             ),

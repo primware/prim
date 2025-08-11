@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/shimmer_list.dart';
 import 'package:primware/views/Home/product/product_funtions.dart';
 
+import '../../../localization/app_locale.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
 import '../../../shared/formater.dart';
@@ -93,17 +95,17 @@ class _ProductNewPageState extends State<ProductNewPage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          title: Text('Crear producto'),
+          title: Text(AppLocale.newProduct.getString(context)),
           content: Text('¿Está seguro de que desea crear el producto?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
+              child: Text(AppLocale.cancel.getString(context)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
-                'Confirmar',
+                AppLocale.save.getString(context),
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -136,11 +138,19 @@ class _ProductNewPageState extends State<ProductNewPage> {
         'created': true,
         'product': result['product'],
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Center(
+              child: Text(
+                  AppLocale.productCreatedSuccessfully.getString(context))),
+          backgroundColor: ColorTheme.success,
+        ),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(
-              child: Text(result['message'] ?? 'Error al crear producto')),
+              child: Text(AppLocale.errorCreatingProduct.getString(context))),
           backgroundColor: ColorTheme.error,
         ),
       );
@@ -150,7 +160,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('Producto nuevo')),
+        appBar: AppBar(title: Text(AppLocale.newProduct.getString(context))),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
@@ -159,20 +169,20 @@ class _ProductNewPageState extends State<ProductNewPage> {
                 children: [
                   TextfieldTheme(
                     controlador: nameController,
-                    texto: 'Nombre*',
+                    texto: '${AppLocale.name.getString(context)}*',
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: skuController,
-                    texto: 'SKU',
+                    texto: AppLocale.code.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: upcController,
-                    texto: 'UPC',
+                    texto: AppLocale.description.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -184,7 +194,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           value: selectedCategoryID,
                           options: categories,
                           showSearchBox: true,
-                          labelText: 'Categoría *',
+                          labelText:
+                              '${AppLocale.category.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedCategoryID = newValue;
@@ -201,7 +212,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           value: selectedTaxID,
                           options: taxies,
                           showSearchBox: true,
-                          labelText: 'Impuesto *',
+                          labelText: '${AppLocale.price.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxID = newValue;
@@ -212,7 +223,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,
-                    texto: 'Precio*',
+                    texto: '${AppLocale.price.getString(context)}*',
                     colorEmpty: priceController.text.isEmpty,
                     inputType: TextInputType.number,
                     inputFormatters: [NumericTextFormatterWithDecimal()],
@@ -221,7 +232,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   if (!isLoading) ...[
                     ButtonSecondary(
                       fullWidth: true,
-                      texto: 'Cancelar',
+                      texto: AppLocale.cancel.getString(context),
                       onPressed: () {
                         Navigator.pop(context);
                       },
@@ -234,7 +245,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto: 'Completar',
+                                texto: AppLocale.save.getString(context),
                                 onPressed: _createProduct,
                               )
                         : null,

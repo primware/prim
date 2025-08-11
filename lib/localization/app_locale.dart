@@ -1,5 +1,12 @@
 class AppLocale {
   static const String login = 'login';
+  static const String products = 'products';
+  static const String searchProducts = 'searchProducts';
+  static const String productCode = 'productCode';
+  static const String productName = 'productName';
+  static const String productPrice = 'productPrice';
+  static const String productStock = 'productStock';
+  static const String noProductsFound = 'noProductsFound';
   static const String user = 'user';
   static const String pass = 'pass';
   static const String rememberLogin = 'remenberLogin';
@@ -62,27 +69,39 @@ class AppLocale {
   static const String grossTotal = 'grossTotal';
   static const String taxTotal = 'taxTotal';
   static const String finalTotal = 'finalTotal';
-  static const String creditNote = 'creditNote';
-  static const String categories = 'categories';
-  static const String selectCategories = 'selectCategories';
-  static const String apply = 'apply';
-  static const String product = 'product';
-  static const String paymentMethods = 'paymentMethods';
-  static const String paymentSumMustEqualTotal = 'paymentSumMustEqualTotal';
-  static const String summary = 'summary';
-  static const String taxes = 'taxes';
-  static const String totalTaxes = 'totalTaxes';
-  static const String documentAction = 'documentAction';
-  static const String taxType = 'taxType';
-  static const String descriptionOptional = 'descriptionOptional';
-  static const String change = 'change';
-  static const String orderCompleted = 'orderCompleted';
-  static const String creditNoteCompleted = 'creditNoteCompleted';
-  static const String confirmCompleteOrder = 'confirmCompleteOrder';
-  static const String confirmCompleteCreditNote = 'confirmCompleteCreditNote';
-  static const String noTax = 'noTax';
+
+  static const String productDetail = 'productDetail';
+  static const String code = 'code';
+  static const String name = 'name';
+  static const String description = 'description';
+  static const String priceKey = 'priceKey';
+  static const String stockKey = 'stockKey';
+  static const String category = 'category';
+  static const String addToCart = 'addToCart';
+  static const String updateProduct = 'updateProduct';
+  static const String deleteProduct = 'deleteProduct';
+  static const String confirmDeleteProduct = 'confirmDeleteProduct';
+  static const String productDeletedSuccessfully = 'productDeletedSuccessfully';
+  static const String errorDeletingProduct = 'errorDeletingProduct';
+  static const String editProduct = 'editProduct';
+  static const String saveChanges = 'saveChanges';
+  static const String productUpdatedSuccessfully = 'productUpdatedSuccessfully';
+  static const String errorUpdatingProduct = 'errorUpdatingProduct';
+
+  static const String newProduct = 'newProduct';
+  static const String save = 'save';
+  static const String productCreatedSuccessfully = 'productCreatedSuccessfully';
+  static const String errorCreatingProduct = 'errorCreatingProduct';
+  static const String requiredField = 'requiredField';
 
   static const Map<String, dynamic> en = {
+    products: 'Products',
+    searchProducts: 'Search products',
+    productCode: 'Code',
+    productName: 'Name',
+    productPrice: 'Price',
+    productStock: 'Stock',
+    noProductsFound: 'No products found.',
     login: 'Login',
     user: 'User',
     pass: 'Password',
@@ -146,29 +165,38 @@ class AppLocale {
     grossTotal: 'Gross total:',
     taxTotal: 'Tax total:',
     finalTotal: 'Final total:',
-    creditNote: 'Credit note',
-    categories: 'Categories',
-    selectCategories: 'Select categories',
-    apply: 'Apply',
-    product: 'Product',
-    paymentMethods: 'Payment methods',
-    paymentSumMustEqualTotal: 'The sum of payments must equal the total.',
-    summary: 'Summary',
-    taxes: 'Taxes',
-    totalTaxes: 'Total taxes',
-    documentAction: 'Document action',
-    taxType: 'Tax type',
-    descriptionOptional: 'Description (optional)',
-    change: 'Change',
-    orderCompleted: 'Order completed',
-    creditNoteCompleted: 'Credit note completed',
-    confirmCompleteOrder: 'Are you sure you want to complete the order?',
-    confirmCompleteCreditNote:
-        'Are you sure you want to complete the credit note?',
-    noTax: 'No tax',
+    productDetail: 'Product Detail',
+    code: 'Code',
+    name: 'Name',
+    description: 'Description',
+    priceKey: 'Price',
+    stockKey: 'Stock',
+    category: 'Category',
+    addToCart: 'Add to Cart',
+    updateProduct: 'Update Product',
+    deleteProduct: 'Delete Product',
+    confirmDeleteProduct: 'Are you sure you want to delete this product?',
+    productDeletedSuccessfully: 'Product deleted successfully.',
+    errorDeletingProduct: 'Error deleting product.',
+    editProduct: 'Edit Product',
+    saveChanges: 'Save Changes',
+    productUpdatedSuccessfully: 'Product updated successfully.',
+    errorUpdatingProduct: 'Error updating product.',
+    newProduct: 'New Product',
+    save: 'Save',
+    productCreatedSuccessfully: 'Product created successfully.',
+    errorCreatingProduct: 'Error creating product.',
+    requiredField: 'Required field',
   };
 
   static const Map<String, dynamic> es = {
+    products: 'Productos',
+    searchProducts: 'Buscar productos',
+    productCode: 'Código',
+    productName: 'Nombre',
+    productPrice: 'Precio',
+    productStock: 'Stock',
+    noProductsFound: 'No se encontraron productos.',
     login: 'Iniciar Sesión',
     user: 'Usuario',
     pass: 'Contraseña',
@@ -231,25 +259,27 @@ class AppLocale {
     grossTotal: 'Total bruto:',
     taxTotal: 'Total impuesto:',
     finalTotal: 'Total final:',
-    creditNote: 'Nota de crédito',
-    categories: 'Categorías',
-    selectCategories: 'Selecciona las categorías',
-    apply: 'Aplicar',
-    product: 'Producto',
-    paymentMethods: 'Métodos de pago',
-    paymentSumMustEqualTotal: 'La suma de los pagos debe ser igual al total.',
-    summary: 'Resumen',
-    taxes: 'Impuestos',
-    totalTaxes: 'Total impuestos',
-    documentAction: 'Acción del Documento',
-    taxType: 'Tipo de impuesto',
-    descriptionOptional: 'Descripción (opcional)',
-    change: 'Vuelto',
-    orderCompleted: 'Orden completada',
-    creditNoteCompleted: 'Nota de crédito completada',
-    confirmCompleteOrder: '¿Está seguro de que desea completar la orden?',
-    confirmCompleteCreditNote:
-        '¿Está seguro de que desea completar la nota de crédito?',
-    noTax: 'Sin impuesto',
+    productDetail: 'Detalle de producto',
+    code: 'Código',
+    name: 'Nombre',
+    description: 'Descripción',
+    priceKey: 'Precio',
+    stockKey: 'Stock',
+    category: 'Categoría',
+    addToCart: 'Agregar al carrito',
+    updateProduct: 'Actualizar producto',
+    deleteProduct: 'Eliminar producto',
+    confirmDeleteProduct: '¿Está seguro de que desea eliminar este producto?',
+    productDeletedSuccessfully: 'Producto eliminado con éxito.',
+    errorDeletingProduct: 'Error al eliminar el producto.',
+    editProduct: 'Editar producto',
+    saveChanges: 'Guardar cambios',
+    productUpdatedSuccessfully: 'Producto actualizado con éxito.',
+    errorUpdatingProduct: 'Error al actualizar el producto.',
+    newProduct: 'Nuevo producto',
+    save: 'Guardar',
+    productCreatedSuccessfully: 'Producto creado con éxito.',
+    errorCreatingProduct: 'Error al crear el producto.',
+    requiredField: 'Campo requerido',
   };
 }

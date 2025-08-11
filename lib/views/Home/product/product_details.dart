@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/shimmer_list.dart';
 import 'package:primware/views/Home/product/product_funtions.dart';
 
+import '../../../localization/app_locale.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
 import '../../../shared/formater.dart';
@@ -97,18 +99,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          title: const Text('Actualizar producto'),
-          content:
-              const Text('¿Está seguro de que desea actualizar el producto?'),
+          title: Text(AppLocale.updateProduct.getString(context)),
+          content: Text(AppLocale.confirmDeleteProduct.getString(context)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
+              child: Text(AppLocale.cancel.getString(context)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
-                'Confirmar',
+                AppLocale.updateProduct.getString(context),
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -139,11 +140,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
     if (result['success'] == true) {
       Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Center(
+              child: Text(
+                  AppLocale.productUpdatedSuccessfully.getString(context))),
+          backgroundColor: ColorTheme.success,
+        ),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(
-              child: Text(result['message'] ?? 'Error al actualizar producto')),
+              child: Text(AppLocale.errorUpdatingProduct.getString(context))),
           backgroundColor: ColorTheme.error,
         ),
       );
@@ -153,7 +162,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('Detalle de producto')),
+        appBar: AppBar(title: Text(AppLocale.productDetail.getString(context))),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
@@ -162,20 +171,20 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 children: [
                   TextfieldTheme(
                     controlador: nameController,
-                    texto: 'Nombre*',
+                    texto: '${AppLocale.name.getString(context)}*',
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: skuController,
-                    texto: 'SKU',
+                    texto: AppLocale.code.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: upcController,
-                    texto: 'UPC',
+                    texto: AppLocale.description.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -185,7 +194,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           value: selectedCategoryID,
                           options: categories,
                           showSearchBox: true,
-                          labelText: 'Categoría *',
+                          labelText:
+                              '${AppLocale.category.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedCategoryID = newValue;
@@ -200,7 +210,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           value: selectedTaxID,
                           options: taxies,
                           showSearchBox: true,
-                          labelText: 'Impuesto *',
+                          labelText: '${AppLocale.price.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxID = newValue;
@@ -211,7 +221,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,
-                    texto: 'Precio*',
+                    texto: '${AppLocale.price.getString(context)}*',
                     colorEmpty: priceController.text.isEmpty,
                     inputType: TextInputType.number,
                     inputFormatters: [NumericTextFormatterWithDecimal()],
@@ -220,7 +230,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   if (!isLoading) ...[
                     ButtonSecondary(
                       fullWidth: true,
-                      texto: 'Cancelar',
+                      texto: AppLocale.cancel.getString(context),
                       onPressed: () {
                         Navigator.pop(context);
                       },
@@ -233,7 +243,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto: 'Actualizar',
+                                texto:
+                                    AppLocale.updateProduct.getString(context),
                                 onPressed: _updateProduct,
                               )
                         : null,
