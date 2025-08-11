@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import '../../../shared/button.widget.dart';
@@ -7,6 +8,7 @@ import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
 import 'bpartner_funtions.dart';
+import '../../../localization/app_locale.dart';
 
 class BPartnerDetailPage extends StatefulWidget {
   final Map<String, dynamic> bpartner;
@@ -103,18 +105,17 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          title: const Text('Actualizar cliente'),
-          content:
-              const Text('¿Está seguro de que desea actualizar el cliente?'),
+          title: Text(AppLocale.updateCustomer.getString(context)),
+          content: Text(AppLocale.confirmUpdateCustomer.getString(context)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
+              child: Text(AppLocale.cancel.getString(context)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
-                'Confirmar',
+                AppLocale.confirm.getString(context),
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -151,7 +152,8 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(
-              child: Text(result['message'] ?? 'Error al actualizar cliente')),
+              child: Text(result['message'] ??
+                  AppLocale.errorUpdateCustomer.getString(context))),
           backgroundColor: ColorTheme.error,
         ),
       );
@@ -162,7 +164,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Detalle cliente'),
+          title: Text(AppLocale.customerDetail.getString(context)),
           centerTitle: true,
         ),
         body: SafeArea(
@@ -173,7 +175,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                 children: [
                   TextfieldTheme(
                     controlador: nameController,
-                    texto: 'Nombre *',
+                    texto: AppLocale.nameReq.getString(context),
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
@@ -184,7 +186,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                           value: selectedTaxTypeID,
                           options: taxTypes,
                           showSearchBox: false,
-                          labelText: 'Persona *',
+                          labelText: AppLocale.personTypeReq.getString(context),
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxTypeID = newValue;
@@ -199,7 +201,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                           value: selectedBPartnerGroupID,
                           options: bPartnerGroups,
                           showSearchBox: false,
-                          labelText: 'Grupo *',
+                          labelText: AppLocale.groupReq.getString(context),
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedBPartnerGroupID = newValue;
@@ -210,20 +212,20 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: taxController,
-                    texto: 'Nro. de identificación',
+                    texto: AppLocale.taxId.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: emailController,
-                    texto: 'Correo electrónico',
+                    texto: AppLocale.email.getString(context),
                     colorEmpty: !isValidEmail(emailController.text),
                     inputType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: locationController,
-                    texto: 'Dirección *',
+                    texto: AppLocale.addressReq.getString(context),
                     colorEmpty: locationController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
@@ -231,7 +233,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                   if (!isLoading) ...[
                     ButtonSecondary(
                       fullWidth: true,
-                      texto: 'Cancelar',
+                      texto: AppLocale.cancel.getString(context),
                       onPressed: () {
                         Navigator.pop(context);
                       },
@@ -244,7 +246,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto: 'Actualizar',
+                                texto: AppLocale.update.getString(context),
                                 onPressed: _updateBPartner,
                               )
                         : null,

@@ -21,6 +21,30 @@ class AppLocale {
   static const String invalidCredentials = 'invalidCredentials';
   static const String serverSaved = 'serverSaved';
 
+  static const String customers = 'customers';
+  static const String searchCustomer = 'searchCustomer';
+  static const String add = 'add';
+  static const String refresh = 'refresh';
+
+  static const String newCustomer = 'newCustomer';
+  static const String nameReq = 'nameReq';
+  static const String personTypeReq = 'personTypeReq';
+  static const String groupReq = 'groupReq';
+  static const String taxId = 'taxId';
+  static const String email = 'email';
+  static const String addressReq = 'addressReq';
+  static const String createCustomer = 'createCustomer';
+  static const String confirmCreateCustomer = 'confirmCreateCustomer';
+  static const String confirm = 'confirm';
+  static const String errorCreateCustomer = 'errorCreateCustomer';
+  static const String complete = 'complete';
+
+  static const String updateCustomer = 'updateCustomer';
+  static const String confirmUpdateCustomer = 'confirmUpdateCustomer';
+  static const String customerDetail = 'customerDetail';
+  static const String update = 'update';
+  static const String errorUpdateCustomer = 'errorUpdateCustomer';
+
   static const Map<String, dynamic> en = {
     login: 'Login',
     user: 'User',
@@ -43,6 +67,27 @@ class AppLocale {
     rememberConfig: 'Remember configuration',
     invalidCredentials: 'Invalid credentials',
     serverSaved: 'Server address saved.',
+    customers: 'Customers',
+    searchCustomer: 'Search customer',
+    add: 'Add',
+    refresh: 'Refresh',
+    newCustomer: 'New Customer',
+    nameReq: 'Name *',
+    personTypeReq: 'Person *',
+    groupReq: 'Group *',
+    taxId: 'Tax ID',
+    email: 'Email',
+    addressReq: 'Address *',
+    createCustomer: 'Create customer',
+    confirmCreateCustomer: 'Are you sure you want to create the customer?',
+    confirm: 'Confirm',
+    errorCreateCustomer: 'Error creating customer',
+    complete: 'Complete',
+    updateCustomer: 'Update customer',
+    confirmUpdateCustomer: 'Are you sure you want to update the customer?',
+    customerDetail: 'Customer detail',
+    update: 'Update',
+    errorUpdateCustomer: 'Error updating customer',
   };
 
   static const Map<String, dynamic> es = {
@@ -66,5 +111,26 @@ class AppLocale {
     rememberConfig: 'Recordar configuración',
     invalidCredentials: 'Credenciales incorrectas',
     serverSaved: 'Se guardó la dirección del servidor.',
+    customers: 'Clientes',
+    searchCustomer: 'Buscar cliente',
+    add: 'Agregar',
+    refresh: 'Actualizar',
+    newCustomer: 'Cliente nuevo',
+    nameReq: 'Nombre *',
+    personTypeReq: 'Persona *',
+    groupReq: 'Grupo *',
+    taxId: 'Nro. de identificación',
+    email: 'Correo electrónico',
+    addressReq: 'Dirección *',
+    createCustomer: 'Crear cliente',
+    confirmCreateCustomer: '¿Está seguro de que desea crear el cliente?',
+    confirm: 'Confirmar',
+    errorCreateCustomer: 'Error al crear cliente',
+    complete: 'Completar',
+    updateCustomer: 'Actualizar cliente',
+    confirmUpdateCustomer: '¿Está seguro de que desea actualizar el cliente?',
+    customerDetail: 'Detalle cliente',
+    update: 'Actualizar',
+    errorUpdateCustomer: 'Error al actualizar cliente',
   };
 }

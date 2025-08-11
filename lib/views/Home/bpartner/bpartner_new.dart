@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import '../../../shared/button.widget.dart';
@@ -6,6 +7,7 @@ import '../../../shared/custom_dropdown.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
+import '../../../localization/app_locale.dart';
 import 'bpartner_funtions.dart';
 
 class BPartnerNewPage extends StatefulWidget {
@@ -104,17 +106,17 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          title: Text('Crear cliente'),
-          content: Text('¿Está seguro de que desea crear el cliente?'),
+          title: Text(AppLocale.createCustomer.getString(context)),
+          content: Text(AppLocale.confirmCreateCustomer.getString(context)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
+              child: Text(AppLocale.cancel.getString(context)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
-                'Confirmar',
+                AppLocale.confirm.getString(context),
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -152,7 +154,8 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(
-              child: Text(result['message'] ?? 'Error al crear cliente')),
+              child: Text(result['message'] ??
+                  AppLocale.errorCreateCustomer.getString(context))),
           backgroundColor: ColorTheme.error,
         ),
       );
@@ -164,7 +167,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     return Scaffold(
         appBar: AppBar(
           title: Text(
-            'Cliente nuevo',
+            AppLocale.newCustomer.getString(context),
           ),
         ),
         body: SafeArea(
@@ -175,7 +178,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                 children: [
                   TextfieldTheme(
                     controlador: nameController,
-                    texto: 'Nombre *',
+                    texto: AppLocale.nameReq.getString(context),
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
@@ -189,7 +192,8 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                               value: selectedTaxTypeID,
                               options: taxTypes,
                               showSearchBox: false,
-                              labelText: 'Persona *',
+                              labelText:
+                                  AppLocale.personTypeReq.getString(context),
                               onChanged: (int? newValue) {
                                 setState(() {
                                   selectedTaxTypeID = newValue;
@@ -207,7 +211,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                           value: selectedBPartnerGroupID,
                           options: bPartnerGroups,
                           showSearchBox: false,
-                          labelText: 'Grupo *',
+                          labelText: AppLocale.groupReq.getString(context),
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedBPartnerGroupID = newValue;
@@ -218,20 +222,20 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: taxController,
-                    texto: 'Nro. de identificación',
+                    texto: AppLocale.taxId.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: emailController,
-                    texto: 'Correo electrónico',
+                    texto: AppLocale.email.getString(context),
                     colorEmpty: !isValidEmail(emailController.text),
                     inputType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: locationController,
-                    texto: 'Dirección *',
+                    texto: AppLocale.addressReq.getString(context),
                     colorEmpty: locationController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
@@ -239,7 +243,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   if (!isLoading) ...[
                     ButtonSecondary(
                       fullWidth: true,
-                      texto: 'Cancelar',
+                      texto: AppLocale.cancel.getString(context),
                       onPressed: () {
                         clearPartnerFields();
                         Navigator.pop(context);
@@ -253,7 +257,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto: 'Completar',
+                                texto: AppLocale.complete.getString(context),
                                 onPressed: _createBPartner,
                               )
                         : null,

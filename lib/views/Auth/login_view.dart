@@ -47,11 +47,11 @@ class _LoginPageState extends State<LoginPage> {
     bool? remember = prefs.getBool('rememberUser');
     if (remember != null && remember) {
       String? usuario = prefs.getString('usuario');
-      String? clave = prefs.getString('clave');
+      // String? clave = prefs.getString('clave');
 
-      if (usuario != null && clave != null) {
+      if (usuario != null) {
         usuarioController.text = usuario;
-        claveController.text = clave;
+        // claveController.text = clave;
         setState(() {
           rememberUser = true;
         });
@@ -102,22 +102,10 @@ class _LoginPageState extends State<LoginPage> {
             AppLocale.server.getString(context),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextfieldTheme(
-                texto: 'URL',
-                controlador: baseURLController,
-              ),
-              Text(
-                'Ej: https://test.idempiere.org',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(color: Theme.of(context).primaryColor),
-              )
-            ],
+          content: TextfieldTheme(
+            texto: 'URL',
+            controlador: baseURLController,
+            pista: 'Ej: https://test.idempiere.org',
           ),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [

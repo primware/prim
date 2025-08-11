@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
+import '../../../localization/app_locale.dart';
 import '../dashboard/dashboard_view.dart';
 import '../invoice/invoice_funtions.dart';
 import 'bpartner_details.dart';
@@ -124,9 +126,10 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
         return Future.value(false);
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Clientes')),
+        appBar: AppBar(title: Text(AppLocale.customers.getString(context))),
         drawer: MenuDrawer(),
         floatingActionButton: FloatingActionButton(
+          tooltip: AppLocale.add.getString(context),
           onPressed: () {
             Navigator.push(
               context,
@@ -152,7 +155,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                     children: [
                       Expanded(
                         child: TextfieldTheme(
-                          texto: 'Buscar cliente',
+                          texto: AppLocale.searchCustomer.getString(context),
                           controlador: searchController,
                           icono: Icons.search,
                           onChanged: (_) => debouncedLoadBPartner(),
@@ -160,6 +163,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       IconButton(
+                        tooltip: AppLocale.refresh.getString(context),
                         icon: const Icon(Icons.refresh),
                         onPressed: _fetchBPartners,
                       ),

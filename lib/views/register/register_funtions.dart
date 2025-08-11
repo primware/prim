@@ -19,7 +19,7 @@ Future<List<Map<String, dynamic>>> fetchCurrency() async {
             '${EndPoints.cCurrency}?\$skip=$skip&\$select=ISO_Code&\$orderby=Name'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': Token.tokenRegister,
+          // 'Authorization': Token.tokenRegister,
         },
       );
 
@@ -64,7 +64,7 @@ Future<List<Map<String, dynamic>>> fetchCountry() async {
             '${EndPoints.cCountry}?\$skip=$skip&\$select=Name,CountryCode&\$orderby=Name'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': Token.tokenRegister,
+          // 'Authorization': Token.tokenRegister,
         },
       );
 
@@ -124,7 +124,7 @@ Future<Map<String, dynamic>> postNewTenant({
       Uri.parse(EndPoints.initialclientsetup),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': Token.tokenRegister,
+        // 'Authorization': Token.tokenRegister,
       },
       body: jsonEncode(data),
     );
