@@ -20,12 +20,10 @@ class AppLocale {
   static const String rememberConfig = 'rememberConfig';
   static const String invalidCredentials = 'invalidCredentials';
   static const String serverSaved = 'serverSaved';
-
   static const String customers = 'customers';
   static const String searchCustomer = 'searchCustomer';
   static const String add = 'add';
   static const String refresh = 'refresh';
-
   static const String newCustomer = 'newCustomer';
   static const String nameReq = 'nameReq';
   static const String personTypeReq = 'personTypeReq';
@@ -38,24 +36,20 @@ class AppLocale {
   static const String confirm = 'confirm';
   static const String errorCreateCustomer = 'errorCreateCustomer';
   static const String complete = 'complete';
-
   static const String updateCustomer = 'updateCustomer';
   static const String confirmUpdateCustomer = 'confirmUpdateCustomer';
   static const String customerDetail = 'customerDetail';
   static const String update = 'update';
   static const String errorUpdateCustomer = 'errorUpdateCustomer';
-
   static const String dashboard = 'dashboard';
   static const String totalSoldBy = 'totalSoldBy';
   static const String days = 'days';
   static const String months = 'months';
   static const String noDataForFilter = 'noDataForFilter';
   static const String pressAgainToLogout = 'pressAgainToLogout';
-
   static const String myOrders = 'myOrders';
   static const String searchOrder = 'searchOrder';
   static const String errorNoOrders = 'errorNoOrders';
-
   static const String orderHash = 'orderHash';
   static const String exportPdf = 'exportPdf';
   static const String productSummary = 'productSummary';
@@ -68,6 +62,25 @@ class AppLocale {
   static const String grossTotal = 'grossTotal';
   static const String taxTotal = 'taxTotal';
   static const String finalTotal = 'finalTotal';
+  static const String creditNote = 'creditNote';
+  static const String categories = 'categories';
+  static const String selectCategories = 'selectCategories';
+  static const String apply = 'apply';
+  static const String product = 'product';
+  static const String paymentMethods = 'paymentMethods';
+  static const String paymentSumMustEqualTotal = 'paymentSumMustEqualTotal';
+  static const String summary = 'summary';
+  static const String taxes = 'taxes';
+  static const String totalTaxes = 'totalTaxes';
+  static const String documentAction = 'documentAction';
+  static const String taxType = 'taxType';
+  static const String descriptionOptional = 'descriptionOptional';
+  static const String change = 'change';
+  static const String orderCompleted = 'orderCompleted';
+  static const String creditNoteCompleted = 'creditNoteCompleted';
+  static const String confirmCompleteOrder = 'confirmCompleteOrder';
+  static const String confirmCompleteCreditNote = 'confirmCompleteCreditNote';
+  static const String noTax = 'noTax';
 
   static const Map<String, dynamic> en = {
     login: 'Login',
@@ -133,6 +146,26 @@ class AppLocale {
     grossTotal: 'Gross total:',
     taxTotal: 'Tax total:',
     finalTotal: 'Final total:',
+    creditNote: 'Credit note',
+    categories: 'Categories',
+    selectCategories: 'Select categories',
+    apply: 'Apply',
+    product: 'Product',
+    paymentMethods: 'Payment methods',
+    paymentSumMustEqualTotal: 'The sum of payments must equal the total.',
+    summary: 'Summary',
+    taxes: 'Taxes',
+    totalTaxes: 'Total taxes',
+    documentAction: 'Document action',
+    taxType: 'Tax type',
+    descriptionOptional: 'Description (optional)',
+    change: 'Change',
+    orderCompleted: 'Order completed',
+    creditNoteCompleted: 'Credit note completed',
+    confirmCompleteOrder: 'Are you sure you want to complete the order?',
+    confirmCompleteCreditNote:
+        'Are you sure you want to complete the credit note?',
+    noTax: 'No tax',
   };
 
   static const Map<String, dynamic> es = {
@@ -198,5 +231,25 @@ class AppLocale {
     grossTotal: 'Total bruto:',
     taxTotal: 'Total impuesto:',
     finalTotal: 'Total final:',
+    creditNote: 'Nota de crédito',
+    categories: 'Categorías',
+    selectCategories: 'Selecciona las categorías',
+    apply: 'Aplicar',
+    product: 'Producto',
+    paymentMethods: 'Métodos de pago',
+    paymentSumMustEqualTotal: 'La suma de los pagos debe ser igual al total.',
+    summary: 'Resumen',
+    taxes: 'Impuestos',
+    totalTaxes: 'Total impuestos',
+    documentAction: 'Acción del Documento',
+    taxType: 'Tipo de impuesto',
+    descriptionOptional: 'Descripción (opcional)',
+    change: 'Vuelto',
+    orderCompleted: 'Orden completada',
+    creditNoteCompleted: 'Nota de crédito completada',
+    confirmCompleteOrder: '¿Está seguro de que desea completar la orden?',
+    confirmCompleteCreditNote:
+        '¿Está seguro de que desea completar la nota de crédito?',
+    noTax: 'Sin impuesto',
   };
 }
