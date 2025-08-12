@@ -1,7 +1,7 @@
 class Base {
   static bool prod = true;
   static bool local = false;
-  static String title = prod ? 'Prod' : 'Test';
+  static String title = prod ? 'Prim App' : 'Demo Prim App';
 
   static String? baseURL;
 }
