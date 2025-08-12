@@ -105,7 +105,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.secondary)),
               subtitle: Text(
-                  '${record['LCO_TaxIdTypeName']} ${record['TaxID'] ?? ''}',
+                  '${record['LCO_TaxIdTypeName'] ?? ''}  ${record['TaxID'] ?? ''}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.secondary)),
             ),

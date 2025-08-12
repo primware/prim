@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+import 'package:primware/localization/app_locale.dart';
 import 'dart:async';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_dropdown.dart';
@@ -10,6 +12,7 @@ import '../../../shared/custom_spacer.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new.dart';
+import '../product/product_new.dart';
 import 'invoice_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -390,7 +393,7 @@ class _InvoicePageState extends State<InvoicePage> {
                         Expanded(
                           child: TextfieldTheme(
                             controlador: quantityController,
-                            texto: 'Cantidad',
+                            texto: AppLocale.quantity.getString(context),
                             inputType: TextInputType.number,
                             onSubmitted: (_) => onSubmitted(dialogContext),
                             textAlign: TextAlign.center,
@@ -417,13 +420,13 @@ class _InvoicePageState extends State<InvoicePage> {
                       pista: product['price'] == 0
                           ? product['price'].toString()
                           : null,
-                      texto: 'Precio',
+                      texto: AppLocale.price.getString(context),
                       inputType: TextInputType.number,
                       onSubmitted: (_) => onSubmitted,
                     ),
                     const SizedBox(height: CustomSpacer.medium),
                     SearchableDropdown<int>(
-                      labelText: 'Tipo de impuesto',
+                      labelText: AppLocale.taxType.getString(context),
                       showSearchBox: false,
                       options: taxOptions,
                       value: selectedTaxID,
@@ -438,7 +441,7 @@ class _InvoicePageState extends State<InvoicePage> {
                     const SizedBox(height: CustomSpacer.medium),
                     TextFieldComments(
                       controlador: descriptionController,
-                      texto: 'Descripción (opcional)',
+                      texto: AppLocale.descriptionOptional.getString(context),
                       onSubmitted: (_) => onSubmitted,
                     ),
                   ],
@@ -451,12 +454,12 @@ class _InvoicePageState extends State<InvoicePage> {
                   productController.clear();
                   Navigator.pop(dialogContext, false);
                 },
-                child: const Text('Cancelar'),
+                child: Text(AppLocale.cancel.getString(context)),
               ),
               ElevatedButton(
                 onPressed: () => onSubmitted(dialogContext),
                 child: Text(
-                  'Agregar',
+                  AppLocale.add.getString(context),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.surface,
                       ),
@@ -511,18 +514,21 @@ class _InvoicePageState extends State<InvoicePage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          title: Text('Completar'),
+          title: Text(AppLocale.complete.getString(context)),
           content: Text(
-              '¿Está seguro de que desea completar la ${widget.isRefund == true ? 'nota de crédido' : 'orden'}?'),
+            widget.isRefund
+                ? AppLocale.confirmCompleteCreditNote.getString(context)
+                : AppLocale.confirmCompleteOrder.getString(context),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
+              child: Text(AppLocale.cancel.getString(context)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
-                'Confirmar',
+                AppLocale.confirm.getString(context),
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -578,7 +584,7 @@ class _InvoicePageState extends State<InvoicePage> {
           builder: (_) => AlertDialog(
             backgroundColor: Theme.of(context).cardColor,
             title: Text(
-              'Vuelto',
+              AppLocale.change.getString(context),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             content: Text(
@@ -591,7 +597,7 @@ class _InvoicePageState extends State<InvoicePage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cerrar'),
+                child: Text(AppLocale.close.getString(context)),
               ),
             ],
           ),
@@ -600,8 +606,8 @@ class _InvoicePageState extends State<InvoicePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(widget.isRefund
-              ? 'Nota de crédito compleata'
-              : 'Orden completada'),
+              ? AppLocale.creditNote.getString(context)
+              : AppLocale.newOrder.getString(context)),
           backgroundColor: Colors.green,
         ),
       );
@@ -618,7 +624,8 @@ class _InvoicePageState extends State<InvoicePage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? "Error al completar la orden"),
+          content: Text(result['message'] ??
+              AppLocale.errorCompleteOrder.getString(context)),
           backgroundColor: ColorTheme.error,
         ),
       );
@@ -636,7 +643,7 @@ class _InvoicePageState extends State<InvoicePage> {
       final tax =
           taxOptions.firstWhere((t) => t['id'] == taxID, orElse: () => {});
       final rate = (tax['rate'] ?? 0).toDouble();
-      final name = tax['name'] ?? 'Sin impuesto';
+      final name = tax['name'] ?? AppLocale.noTax.getString(context);
 
       final taxAmount = price * quantity * (rate / 100);
       groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] =
@@ -656,7 +663,9 @@ class _InvoicePageState extends State<InvoicePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isRefund ? 'Nota de crédito' : 'Nueva orden'),
+        title: Text(widget.isRefund
+            ? AppLocale.creditNote.getString(context)
+            : AppLocale.newOrder.getString(context)),
         backgroundColor:
             widget.isRefund ? Theme.of(context).colorScheme.error : null,
       ),
@@ -684,7 +693,8 @@ class _InvoicePageState extends State<InvoicePage> {
                             ? _buildShimmerField()
                             : CustomSearchField(
                                 options: bPartnerOptions,
-                                labelText: "Cliente",
+                                labelText:
+                                    AppLocale.customer.getString(context),
                                 searchBy: "TaxID",
                                 controller: clienteController,
                                 showCreateButtonIfNotFound: true,
@@ -748,7 +758,8 @@ class _InvoicePageState extends State<InvoicePage> {
                                                         .onSecondary),
                                           ),
                                           icon: const Icon(Icons.category),
-                                          label: const Text("Categorías"),
+                                          label: Text(AppLocale.categories
+                                              .getString(context)),
                                           onPressed: () async {
                                             Set<int> tempSelected =
                                                 Set<int>.from(
@@ -784,7 +795,10 @@ class _InvoicePageState extends State<InvoicePage> {
                                                                         .all(
                                                                         16.0),
                                                                 child: Text(
-                                                                  "Selecciona las categorías",
+                                                                  AppLocale
+                                                                      .selectCategories
+                                                                      .getString(
+                                                                          context),
                                                                   style: Theme.of(
                                                                           context)
                                                                       .textTheme
@@ -849,8 +863,12 @@ class _InvoicePageState extends State<InvoicePage> {
                                                                         Navigator.pop(
                                                                             context);
                                                                       },
-                                                                      child: const Text(
-                                                                          "Cancelar"),
+                                                                      child:
+                                                                          Text(
+                                                                        AppLocale
+                                                                            .cancel
+                                                                            .getString(context),
+                                                                      ),
                                                                     ),
                                                                     const SizedBox(
                                                                         width:
@@ -862,8 +880,12 @@ class _InvoicePageState extends State<InvoicePage> {
                                                                             context,
                                                                             tempSelected);
                                                                       },
-                                                                      child: const Text(
-                                                                          "Aplicar"),
+                                                                      child:
+                                                                          Text(
+                                                                        AppLocale
+                                                                            .apply
+                                                                            .getString(context),
+                                                                      ),
                                                                     ),
                                                                   ],
                                                                 ),
@@ -933,8 +955,9 @@ class _InvoicePageState extends State<InvoicePage> {
                                   CustomSearchField(
                                     options: productOptions,
                                     controller: productController,
-                                    labelText: "Producto",
-                                    searchBy: "Codigo",
+                                    labelText:
+                                        AppLocale.product.getString(context),
+                                    searchBy: AppLocale.code.getString(context),
                                     onItemSelected: (item) {
                                       _showQuantityDialog(item);
                                     },
@@ -982,38 +1005,37 @@ class _InvoicePageState extends State<InvoicePage> {
                                     ),
                                   ),
                                   // //? crear producto si no existe
-                                  // if (productOptions.isEmpty &&
-                                  //     productController.text
-                                  //         .trim()
-                                  //         .isNotEmpty) ...[
-                                  //   const SizedBox(height: 8),
-                                  //   ElevatedButton.icon(
-                                  //     icon: const Icon(Icons.add),
-                                  //     label: Text(
-                                  //         'Crear "${productController.text.trim()}"'),
-                                  //     onPressed: () async {
-                                  //       final result = await Navigator.push(
-                                  //         context,
-                                  //         MaterialPageRoute(
-                                  //           builder: (_) => ProductNewPage(
-                                  //               productName: productController
-                                  //                   .text
-                                  //                   .trim()),
-                                  //         ),
-                                  //       );
-                                  //       if (result != null &&
-                                  //           result['created'] == true) {
-                                  //         _onProductCreated(
-                                  //             result['product']);
-                                  //       }
-                                  //     },
-                                  //   ),
-                                  // ],
+                                  if (productOptions.isEmpty &&
+                                      productController.text
+                                          .trim()
+                                          .isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    ElevatedButton.icon(
+                                      icon: const Icon(Icons.add),
+                                      label: Text(
+                                          'Crear "${productController.text.trim()}"'),
+                                      onPressed: () async {
+                                        final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => ProductNewPage(
+                                                productName: productController
+                                                    .text
+                                                    .trim()),
+                                          ),
+                                        );
+                                        if (result != null &&
+                                            result['created'] == true) {
+                                          debouncedLoadProduct();
+                                        }
+                                      },
+                                    ),
+                                  ],
                                 ],
                               ),
                         if (invoiceLines.isNotEmpty) ...[
                           const SizedBox(height: CustomSpacer.large),
-                          Text('Detalle de productos',
+                          Text(AppLocale.productSummary.getString(context),
                               style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: CustomSpacer.medium),
                           Wrap(
@@ -1028,7 +1050,7 @@ class _InvoicePageState extends State<InvoicePage> {
                               );
                               final taxRate = tax['rate'] != null
                                   ? '${tax['rate']}%'
-                                  : 'Sin impuesto';
+                                  : AppLocale.noTax.getString(context);
                               return Tooltip(
                                 message: line['name'],
                                 child: InputChip(
@@ -1092,7 +1114,7 @@ class _InvoicePageState extends State<InvoicePage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Métodos de pago",
+                          Text(AppLocale.paymentMethods.getString(context),
                               style: Theme.of(context).textTheme.titleMedium),
                           const SizedBox(height: 12),
                           if (isPaymentMethodsLoading)
@@ -1175,7 +1197,8 @@ class _InvoicePageState extends State<InvoicePage> {
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
-                            'La suma de los pagos debe ser igual al total.',
+                            AppLocale.paymentSumMustEqualTotal
+                                .getString(context),
                             style: TextStyle(
                                 color: ColorTheme.error, fontSize: 13),
                           ),
@@ -1190,14 +1213,14 @@ class _InvoicePageState extends State<InvoicePage> {
                 child: Column(
                   children: [
                     Center(
-                      child: Text('Resumen',
+                      child: Text(AppLocale.summary.getString(context),
                           style: Theme.of(context).textTheme.titleLarge),
                     ),
                     const SizedBox(height: CustomSpacer.medium),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Subtotal',
+                        Text(AppLocale.subtotal.getString(context),
                             style: Theme.of(context).textTheme.bodyMedium),
                         Text('\$${subtotal.toStringAsFixed(2)}',
                             style: Theme.of(context).textTheme.bodyMedium),
@@ -1208,7 +1231,7 @@ class _InvoicePageState extends State<InvoicePage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Impuestos',
+                          Text(AppLocale.taxes.getString(context),
                               style: Theme.of(context).textTheme.titleMedium),
                           const SizedBox(height: CustomSpacer.small),
                           ...getGroupedTaxTotals().entries.map(
@@ -1231,7 +1254,7 @@ class _InvoicePageState extends State<InvoicePage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Total impuestos',
+                              Text(AppLocale.totalTaxes.getString(context),
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
@@ -1255,7 +1278,7 @@ class _InvoicePageState extends State<InvoicePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Total',
+                        Text(AppLocale.total.getString(context),
                             style: Theme.of(context).textTheme.titleLarge),
                         Text('\$${total.toStringAsFixed(2)}',
                             style: Theme.of(context).textTheme.titleLarge),
@@ -1265,7 +1288,7 @@ class _InvoicePageState extends State<InvoicePage> {
                     const SizedBox(height: CustomSpacer.xlarge),
                     CustomSearchField(
                       options: POS.documentActions,
-                      labelText: "Acción del Documento",
+                      labelText: AppLocale.documentAction.getString(context),
                       searchBy: "name",
                       showCreateButtonIfNotFound: false,
                       controller: TextEditingController(
@@ -1287,7 +1310,7 @@ class _InvoicePageState extends State<InvoicePage> {
                           ? ButtonLoading(fullWidth: true)
                           : ButtonPrimary(
                               fullWidth: true,
-                              texto: 'Procesar',
+                              texto: AppLocale.process.getString(context),
                               enable: _isInvoiceValid,
                               onPressed: () => _isInvoiceValid
                                   ? _createInvoice(
@@ -1301,7 +1324,7 @@ class _InvoicePageState extends State<InvoicePage> {
                     if (!isSending)
                       ButtonSecondary(
                         fullWidth: true,
-                        texto: 'Cancelar',
+                        texto: AppLocale.cancel.getString(context),
                         onPressed: () {
                           clearInvoiceFields();
                           Navigator.push(

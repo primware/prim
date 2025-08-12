@@ -247,7 +247,7 @@ class _ConfigPageState extends State<ConfigPage> {
               const SizedBox(height: CustomSpacer.medium),
               CustomCheckbox(
                 value: rememberConfig,
-                text: AppLocale.rememberConfig.getString(context),
+                text: AppLocale.rememberMe.getString(context),
                 onChanged: (newValue) {
                   setState(() {
                     rememberConfig = newValue;

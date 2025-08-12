@@ -189,7 +189,7 @@ class _ProductListPageState extends State<ProductListPage> {
                           Theme.of(context).colorScheme.onSecondary),
                     ),
                     icon: const Icon(Icons.category),
-                    label: const Text("Categorías"),
+                    label: Text(AppLocale.categories.getString(context)),
                     onPressed: () async {
                       Set<int> tempSelected = Set<int>.from(selectedCategories);
                       await showModalBottomSheet(
@@ -212,7 +212,8 @@ class _ProductListPageState extends State<ProductListPage> {
                                         Padding(
                                           padding: const EdgeInsets.all(16.0),
                                           child: Text(
-                                            "Selecciona las categorías",
+                                            AppLocale.selectCategories
+                                                .getString(context),
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodyLarge,
@@ -258,7 +259,8 @@ class _ProductListPageState extends State<ProductListPage> {
                                                 onPressed: () {
                                                   Navigator.pop(context);
                                                 },
-                                                child: const Text("Cancelar"),
+                                                child: Text(AppLocale.cancel
+                                                    .getString(context)),
                                               ),
                                               const SizedBox(width: 8),
                                               ElevatedButton(
@@ -266,7 +268,8 @@ class _ProductListPageState extends State<ProductListPage> {
                                                   Navigator.pop(
                                                       context, tempSelected);
                                                 },
-                                                child: const Text("Aplicar"),
+                                                child: Text(AppLocale.apply
+                                                    .getString(context)),
                                               ),
                                             ],
                                           ),

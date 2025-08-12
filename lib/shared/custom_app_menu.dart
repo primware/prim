@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/API/token.api.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
@@ -11,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../API/endpoint.api.dart';
 import '../API/pos.api.dart';
 import '../API/user.api.dart';
+import '../localization/app_locale.dart';
 import '../main.dart';
 import '../theme/colors.dart';
 import '../views/Home/bpartner/bpartner_view.dart';
@@ -198,6 +200,26 @@ class _MenuDrawerState extends State<MenuDrawer> {
     });
   }
 
+  Future<bool?> _showLogoutConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocale.confirmLogout.getString(context)),
+        content: Text(AppLocale.logoutMessage.getString(context)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -222,7 +244,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
               Icons.dashboard_outlined,
             ),
             title: Text(
-              'Dashboard',
+              AppLocale.home.getString(context),
               style: TextStyle(),
             ),
             onTap: () {
@@ -239,7 +261,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
               Icons.add,
             ),
             title: Text(
-              'Nueva orden',
+              AppLocale.newOrder.getString(context),
             ),
             onTap: () {
               Navigator.push(
@@ -255,7 +277,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
               Icons.attach_money_outlined,
             ),
             title: Text(
-              'Mis ordenes',
+              AppLocale.myOrders.getString(context),
               style: TextStyle(),
             ),
             onTap: () {
@@ -273,7 +295,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 Icons.sd_card_alert_outlined,
               ),
               title: Text(
-                'Nota de crédito',
+                AppLocale.creditNote.getString(context),
               ),
               onTap: () {
                 Navigator.push(
@@ -291,7 +313,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
               Icons.inventory_2_outlined,
             ),
             title: Text(
-              'Productos',
+              AppLocale.products.getString(context),
             ),
             onTap: () {
               Navigator.push(
@@ -307,7 +329,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
               Icons.people_alt_outlined,
             ),
             title: Text(
-              'Clientes',
+              AppLocale.customers.getString(context),
             ),
             onTap: () {
               Navigator.push(
@@ -324,7 +346,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 Icons.settings,
               ),
               title: Text(
-                'Debug Panel',
+                AppLocale.settings.getString(context),
               ),
               onTap: () {
                 Navigator.push(
@@ -357,25 +379,28 @@ class _MenuDrawerState extends State<MenuDrawer> {
               color: ColorTheme.error,
             ),
             title: Text(
-              'Cerrar sesión',
+              AppLocale.logout.getString(context),
               style: TextStyle(
                 color: ColorTheme.error,
               ),
             ),
-            onTap: () {
-              Token.auth = null;
-              usuarioController.clear();
-              claveController.clear();
+            onTap: () async {
+              final confirmed = await _showLogoutConfirmation(context);
+              if (confirmed == true) {
+                Token.auth = null;
+                usuarioController.clear();
+                claveController.clear();
 
-              UserData.rolName = null;
-              UserData.imageBytes = null;
+                UserData.rolName = null;
+                UserData.imageBytes = null;
 
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginPage(),
-                ),
-              );
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(),
+                  ),
+                );
+              }
             },
           ),
         ],

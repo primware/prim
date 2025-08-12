@@ -272,7 +272,7 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: CustomSpacer.small),
                       CustomCheckbox(
                         value: rememberUser,
-                        text: AppLocale.rememberLogin.getString(context),
+                        text: AppLocale.rememberMe.getString(context),
                         onChanged: (newValue) {
                           setState(() {
                             rememberUser = newValue;

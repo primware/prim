@@ -9,7 +9,7 @@ class AppLocale {
   static const String noProductsFound = 'noProductsFound';
   static const String user = 'user';
   static const String pass = 'pass';
-  static const String rememberLogin = 'remenberLogin';
+  static const String rememberMe = 'remenberLogin';
   static const String server = 'server';
   static const String lang = 'lang';
   static const String newOrder = 'newOrder';
@@ -24,7 +24,6 @@ class AppLocale {
       'selectCompanyRoleOrganization';
   static const String continueKey = 'continueKey';
   static const String back = 'back';
-  static const String rememberConfig = 'rememberConfig';
   static const String invalidCredentials = 'invalidCredentials';
   static const String serverSaved = 'serverSaved';
   static const String customers = 'customers';
@@ -93,6 +92,34 @@ class AppLocale {
   static const String productCreatedSuccessfully = 'productCreatedSuccessfully';
   static const String errorCreatingProduct = 'errorCreatingProduct';
   static const String requiredField = 'requiredField';
+  static const String home = 'home';
+  static const String orders = 'orders';
+  static const String settings = 'settings';
+  static const String logout = 'logout';
+  static const String confirmLogout = 'confirmLogout';
+  static const String logoutMessage = 'logoutMessage';
+  static const String yes = 'yes';
+  static const String no = 'no';
+  static const String creditNote = 'creditNote';
+  static const String categories = 'categories';
+  static const String selectCategories = 'selectCategories';
+  static const String apply = 'apply';
+  static const String product = 'product';
+  static const String paymentMethods = 'paymentMethods';
+  static const String paymentSumMustEqualTotal = 'paymentSumMustEqualTotal';
+  static const String summary = 'summary';
+  static const String taxes = 'taxes';
+  static const String totalTaxes = 'totalTaxes';
+  static const String documentAction = 'documentAction';
+  static const String taxType = 'taxType';
+  static const String descriptionOptional = 'descriptionOptional';
+  static const String change = 'change';
+  static const String close = 'close';
+  static const String confirmCompleteOrder = 'confirmCompleteOrder';
+  static const String confirmCompleteCreditNote = 'confirmCompleteCreditNote';
+  static const String noTax = 'noTax';
+  static const String fillWithRemaining = 'fillWithRemaining';
+  static const String errorCompleteOrder = 'errorCompleteOrder';
 
   static const Map<String, dynamic> en = {
     products: 'Products',
@@ -105,7 +132,7 @@ class AppLocale {
     login: 'Login',
     user: 'User',
     pass: 'Password',
-    rememberLogin: 'Remember Config',
+    rememberMe: 'Remember Me',
     server: 'Server',
     lang: 'Language',
     newOrder: 'New Order',
@@ -120,7 +147,6 @@ class AppLocale {
         'Please select a company, role, and organization',
     continueKey: 'Continue',
     back: 'Back',
-    rememberConfig: 'Remember configuration',
     invalidCredentials: 'Invalid credentials',
     serverSaved: 'Server address saved.',
     customers: 'Customers',
@@ -187,6 +213,35 @@ class AppLocale {
     productCreatedSuccessfully: 'Product created successfully.',
     errorCreatingProduct: 'Error creating product.',
     requiredField: 'Required field',
+    home: 'Home',
+    orders: 'Orders',
+    settings: 'Settings',
+    logout: 'Logout',
+    confirmLogout: 'Confirm Logout',
+    logoutMessage: 'Are you sure you want to logout?',
+    yes: 'Yes',
+    no: 'No',
+    creditNote: 'Credit Note',
+    categories: 'Categories',
+    selectCategories: 'Select Categories',
+    apply: 'Apply',
+    product: 'Product',
+    paymentMethods: 'Payment methods',
+    paymentSumMustEqualTotal: 'The sum of payments must equal the total.',
+    summary: 'Summary',
+    taxes: 'Taxes',
+    totalTaxes: 'Total taxes',
+    documentAction: 'Document Action',
+    taxType: 'Tax type',
+    descriptionOptional: 'Description (optional)',
+    change: 'Change',
+    close: 'Close',
+    confirmCompleteOrder: 'Are you sure you want to complete the order?',
+    confirmCompleteCreditNote:
+        'Are you sure you want to complete the credit note?',
+    noTax: 'No tax',
+    fillWithRemaining: 'Fill with the remaining amount',
+    errorCompleteOrder: 'Error completing order',
   };
 
   static const Map<String, dynamic> es = {
@@ -200,7 +255,7 @@ class AppLocale {
     login: 'Iniciar Sesión',
     user: 'Usuario',
     pass: 'Contraseña',
-    rememberLogin: 'Recordar Configuración',
+    rememberMe: 'Recuerdame',
     server: 'Servidor',
     lang: 'Idioma',
     newOrder: 'Nueva Orden',
@@ -214,7 +269,6 @@ class AppLocale {
     selectCompanyRoleOrganization: 'Seleccione una empresa, rol y organización',
     continueKey: 'Continuar',
     back: 'Volver',
-    rememberConfig: 'Recordar configuración',
     invalidCredentials: 'Credenciales incorrectas',
     serverSaved: 'Se guardó la dirección del servidor.',
     customers: 'Clientes',
@@ -281,5 +335,34 @@ class AppLocale {
     productCreatedSuccessfully: 'Producto creado con éxito.',
     errorCreatingProduct: 'Error al crear el producto.',
     requiredField: 'Campo requerido',
+    home: 'Inicio',
+    orders: 'Órdenes',
+    settings: 'Configuración',
+    logout: 'Cerrar sesión',
+    confirmLogout: 'Confirmar cierre de sesión',
+    logoutMessage: '¿Está seguro de que desea cerrar sesión?',
+    yes: 'Sí',
+    no: 'No',
+    creditNote: 'Nota de crédito',
+    categories: 'Categorías',
+    selectCategories: 'Seleccionar categorías',
+    apply: 'Aplicar',
+    product: 'Producto',
+    paymentMethods: 'Métodos de pago',
+    paymentSumMustEqualTotal: 'La suma de los pagos debe ser igual al total.',
+    summary: 'Resumen',
+    taxes: 'Impuestos',
+    totalTaxes: 'Total impuestos',
+    documentAction: 'Acción del Documento',
+    taxType: 'Tipo de impuesto',
+    descriptionOptional: 'Descripción (opcional)',
+    change: 'Vuelto',
+    close: 'Cerrar',
+    confirmCompleteOrder: '¿Está seguro de que desea completar la orden?',
+    confirmCompleteCreditNote:
+        '¿Está seguro de que desea completar la nota de crédito?',
+    noTax: 'Sin impuesto',
+    fillWithRemaining: 'Llenar con el monto restante',
+    errorCompleteOrder: 'Error al completar la orden',
   };
 }

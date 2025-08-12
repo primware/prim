@@ -24,7 +24,7 @@ class AppThemes {
         ),
       ),
       textTheme: GoogleFonts.poppinsTextTheme().apply(
-        bodyColor: colorScheme.onSecondaryContainer,
+        bodyColor: colorScheme.primary,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,
