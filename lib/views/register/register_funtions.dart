@@ -3,7 +3,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../API/endpoint.api.dart';
-import '../../API/token.api.dart';
 
 Future<List<Map<String, dynamic>>> fetchCurrency() async {
   List<Map<String, dynamic>> allCurrencys = [];

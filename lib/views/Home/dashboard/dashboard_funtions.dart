@@ -43,8 +43,8 @@ Future<Map<String, double>> fetchSalesChartData({
         print('Processing record: ${record['DateOrdered']} - Passed filter');
 
         final key = groupBy == 'day'
-            ? '${date.year}-${date.month}-${date.day}'
-            : '${date.year}-${date.month}';
+            ? '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'
+            : '${date.year}-${date.month.toString().padLeft(2, '0')}';
 
         groupedTotals[key] =
             (groupedTotals[key] ?? 0) + (record['GrandTotal'] ?? 0);

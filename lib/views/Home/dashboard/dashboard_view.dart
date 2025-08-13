@@ -34,7 +34,7 @@ class _DashboardPageState extends State<DashboardPage> {
         await fetchSalesChartData(context: context, groupBy: groupBy);
     setState(() {
       salesData = [];
-      dataKeys = groupedData.keys.toList();
+      dataKeys = groupedData.keys.toList()..sort();
       double xIndex = 0;
       for (var key in dataKeys) {
         salesData.add(FlSpot(
@@ -47,20 +47,56 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadSalesChart();
+  static const List<String> _monthsEs = [
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic'
+  ];
+  static const List<String> _monthsEn = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ];
+
+  List<String> _monthsForLocale(BuildContext context) {
+    final lang = Localizations.localeOf(context).languageCode.toLowerCase();
+    return lang == 'es' ? _monthsEs : _monthsEn;
   }
 
   String formatLabel(String key) {
     final parts = key.split('-');
-    if (parts.length == 2) {
-      return '${parts[1].padLeft(2, '0')}/${parts[0]}';
-    } else if (parts.length == 3) {
-      return '${parts[2].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}';
+    // Expecting keys like YYYY-MM or YYYY-MM-DD
+    if (parts.length >= 2) {
+      final monthIndex = int.tryParse(parts[1]) ?? 1; // 1-12
+      final months = _monthsForLocale(context);
+      final idx = (monthIndex.clamp(1, 12)) - 1;
+      return months[idx];
     }
     return key;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSalesChart();
   }
 
   @override
@@ -213,15 +249,24 @@ class _DashboardPageState extends State<DashboardPage> {
                                           reservedSize: 24,
                                           getTitlesWidget: (value, meta) {
                                             final index = value.toInt();
-                                            if (index >= 0 &&
-                                                index < dataKeys.length) {
-                                              return Text(
-                                                  formatLabel(dataKeys[index]),
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleSmall);
+                                            if (index < 0 ||
+                                                index >= dataKeys.length) {
+                                              return const SizedBox();
                                             }
-                                            return const SizedBox();
+                                            final total = dataKeys.length;
+                                            final step = (total / 6)
+                                                .ceil(); // show up to ~6 labels
+                                            if (step > 1 &&
+                                                index % step != 0 &&
+                                                index != total - 1) {
+                                              return const SizedBox();
+                                            }
+                                            return Text(
+                                              formatLabel(dataKeys[index]),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall,
+                                            );
                                           },
                                         ),
                                       ),
