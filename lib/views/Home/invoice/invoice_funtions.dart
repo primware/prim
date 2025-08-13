@@ -164,6 +164,7 @@ Future<Map<String, dynamic>> postInvoice({
   required BuildContext context,
   required String docAction,
   required bool isRefund,
+  int? doctypeID,
 }) async {
   try {
     await usuarioAuth(
@@ -193,9 +194,10 @@ Future<Map<String, dynamic>> postInvoice({
       "C_BPartner_ID": {"id": cBPartnerID},
       "AD_Org_ID": {"id": Token.organitation},
       "M_Warehouse_ID": {"id": Token.warehouseID},
-      "C_DocTypeTarget_ID": isRefund
-          ? POS.docTypeRefundID
-          : POS.docTypeID ?? {"identifier": "POS Order"},
+      "C_DocTypeTarget_ID": doctypeID ??
+          (isRefund
+              ? POS.docTypeRefundID
+              : POS.docTypeID ?? {"identifier": "POS Order"}),
       "SalesRep_ID": {"id": UserData.id},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",

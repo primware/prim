@@ -1,5 +1,5 @@
 class Base {
-  static bool prod = true;
+  static bool prod = false;
   static bool local = false;
   static String title = prod ? 'Prim App' : 'Demo Prim App';
 

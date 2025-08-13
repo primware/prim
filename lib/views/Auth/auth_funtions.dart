@@ -309,6 +309,7 @@ Future<void> _loadPOSData(BuildContext context) async {
         POS.priceListVersionID =
             await _getMPriceListVersion(POS.priceListID ?? 0);
         await fetchTaxs();
+        await _getCDocTypeComplete();
 
         return;
       }
@@ -408,6 +409,33 @@ Future<int?> _getMPriceListVersion(int id) async {
     }
   } catch (e) {
     print('Error en _getMPriceListID: $e');
+  }
+  return null;
+}
+
+Future<int?> _getCDocTypeComplete() async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final records = responseData['records'] as List;
+      POS.docTypesComplete = records
+          .map((r) => {'id': r['id'].toString(), 'name': r['Name'] ?? ''})
+          .toList();
+    } else {
+      print(
+          'Error en _getCDocTypeComplete: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en _getCDocTypeComplete: $e');
   }
   return null;
 }

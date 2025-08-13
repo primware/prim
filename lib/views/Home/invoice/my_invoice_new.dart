@@ -20,8 +20,11 @@ import 'my_invoice.dart';
 
 class InvoicePage extends StatefulWidget {
   final bool isRefund;
+  final int? doctypeID;
+  final String? orderName;
 
-  const InvoicePage({super.key, this.isRefund = false});
+  const InvoicePage(
+      {super.key, this.isRefund = false, this.doctypeID, this.orderName});
 
   @override
   State<InvoicePage> createState() => _InvoicePageState();
@@ -575,6 +578,7 @@ class _InvoicePageState extends State<InvoicePage> {
       context: context,
       docAction: selectedDocActionCode ?? 'DR',
       isRefund: widget.isRefund,
+      doctypeID: widget.doctypeID,
     );
 
     if (result['success'] == true) {
@@ -663,9 +667,11 @@ class _InvoicePageState extends State<InvoicePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isRefund
-            ? AppLocale.creditNote.getString(context)
-            : AppLocale.newOrder.getString(context)),
+        title: Text(widget.orderName != null
+            ? widget.orderName!
+            : widget.isRefund
+                ? AppLocale.creditNote.getString(context)
+                : AppLocale.newOrder.getString(context)),
         backgroundColor:
             widget.isRefund ? Theme.of(context).colorScheme.error : null,
       ),

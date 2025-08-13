@@ -256,22 +256,70 @@ class _MenuDrawerState extends State<MenuDrawer> {
               );
             },
           ),
-          ListTile(
-            leading: Icon(
-              Icons.add,
+
+          if (POS.docTypesComplete.isEmpty)
+            ListTile(
+              leading: Icon(
+                Icons.add,
+              ),
+              title: Text(
+                AppLocale.newOrder.getString(context),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const InvoicePage(),
+                  ),
+                );
+              },
             ),
-            title: Text(
-              AppLocale.newOrder.getString(context),
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const InvoicePage(),
+          if (POS.docTypesComplete.isNotEmpty) ...[
+            Column(
+              children: [
+                const Divider(
+                  height: 24,
                 ),
-              );
-            },
-          ),
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: CustomSpacer.medium),
+                  child: Text(
+                    'Nueva orden',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
+                ),
+                ...POS.docTypesComplete.map((doc) {
+                  final dynamic rawId = doc['id'];
+                  final int? docTypeId = rawId is int
+                      ? rawId
+                      : int.tryParse(rawId?.toString() ?? '');
+                  final String title =
+                      (doc['name'] ?? doc['Name'] ?? '').toString();
+                  return ListTile(
+                    leading: const Icon(Icons.add),
+                    title: Text(title.isEmpty ? 'Documento' : title),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InvoicePage(
+                            doctypeID: docTypeId,
+                            orderName: doc['name'],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }),
+                const Divider(
+                  height: 24,
+                ),
+              ],
+            ),
+          ],
           ListTile(
             leading: Icon(
               Icons.attach_money_outlined,
