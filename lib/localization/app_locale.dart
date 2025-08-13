@@ -255,7 +255,7 @@ class AppLocale {
     login: 'Iniciar Sesión',
     user: 'Usuario',
     pass: 'Contraseña',
-    rememberMe: 'Recuerdame',
+    rememberMe: 'Recuérdame',
     server: 'Servidor',
     lang: 'Idioma',
     newOrder: 'Nueva Orden',
