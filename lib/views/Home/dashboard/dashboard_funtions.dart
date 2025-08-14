@@ -11,10 +11,14 @@ Future<Map<String, double>> fetchSalesChartData({
   String groupBy = 'month',
 }) async {
   try {
+    // Get the current date and time
+    DateTime now = DateTime.now();
+    // Calculate the date one year ago
+    DateTime oneYearAgo = now.subtract(const Duration(days: 365)); 
     await usuarioAuth(context: context);
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id} and DocStatus eq \'CO\'&\$orderby=DateOrdered desc'),
+          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id} and DocStatus eq \'CO\' and DateOrdered gt \'$oneYearAgo\'&\$orderby=DateOrdered'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
