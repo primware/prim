@@ -182,6 +182,24 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
+                  
+                  const SizedBox(height: CustomSpacer.medium),
+                  _isGroupLoading
+                      ? ShimmerList(
+                          count: 1,
+                        )
+                      : SearchableDropdown<int>(
+                          value: selectedBPartnerGroupID,
+                          options: bPartnerGroups,
+                          showSearchBox: false,
+                          labelText: AppLocale.groupReq.getString(context),
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              selectedBPartnerGroupID = newValue;
+                              _isFormValid();
+                            });
+                          },
+                        ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isTaxTypeLoading
                       ? ShimmerList(
@@ -202,23 +220,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                               },
                             )
                           : const SizedBox(),
-                  const SizedBox(height: CustomSpacer.medium),
-                  _isGroupLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
-                      : SearchableDropdown<int>(
-                          value: selectedBPartnerGroupID,
-                          options: bPartnerGroups,
-                          showSearchBox: false,
-                          labelText: AppLocale.groupReq.getString(context),
-                          onChanged: (int? newValue) {
-                            setState(() {
-                              selectedBPartnerGroupID = newValue;
-                              _isFormValid();
-                            });
-                          },
-                        ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: taxController,
