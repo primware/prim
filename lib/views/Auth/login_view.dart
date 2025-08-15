@@ -85,7 +85,8 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _loadBaseURL() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? baseURL = prefs.getString('baseURL') ?? 'https://localhost:8443';
+    String? baseURL =
+        prefs.getString('baseURL') ?? 'https://test.idempiere.org';
 
     setState(() {
       baseURLController.text = baseURL;
