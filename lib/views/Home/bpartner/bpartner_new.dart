@@ -258,7 +258,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto: AppLocale.complete.getString(context),
+                                texto: AppLocale.save.getString(context),
                                 onPressed: _createBPartner,
                               )
                         : null,

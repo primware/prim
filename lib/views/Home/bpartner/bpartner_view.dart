@@ -8,7 +8,7 @@ import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../localization/app_locale.dart';
 import '../dashboard/dashboard_view.dart';
-import '../invoice/invoice_funtions.dart';
+import '../order/order_funtions.dart';
 import 'bpartner_details.dart';
 import 'bpartner_new.dart';
 

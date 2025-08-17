@@ -13,10 +13,10 @@ import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new.dart';
 import '../product/product_new.dart';
-import 'invoice_funtions.dart';
+import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'my_invoice.dart';
+import 'my_order.dart';
 
 class InvoicePage extends StatefulWidget {
   final bool isRefund;

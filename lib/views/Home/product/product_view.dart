@@ -8,7 +8,7 @@ import '../../../shared/custom_spacer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../dashboard/dashboard_view.dart';
-import '../invoice/invoice_funtions.dart';
+import '../order/order_funtions.dart';
 import 'product_new.dart';
 import 'product_details.dart';
 

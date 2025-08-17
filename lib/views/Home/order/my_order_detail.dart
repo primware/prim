@@ -3,7 +3,7 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 
-import 'package:primware/views/Home/invoice/my_invoice_detail_pdf_generator.dart';
+import 'package:primware/views/Home/order/my_order_detail_pdf_generator.dart';
 import 'package:printing/printing.dart';
 
 import '../../../localization/app_locale.dart';

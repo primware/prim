@@ -5,9 +5,9 @@ import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/custom_textfield.dart';
 import 'package:primware/shared/shimmer_list.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
-import 'package:primware/views/Home/invoice/invoice_funtions.dart';
-import 'package:primware/views/Home/invoice/my_invoice_detail.dart';
-import 'package:primware/views/Home/invoice/my_invoice_new.dart';
+import 'package:primware/views/Home/order/order_funtions.dart';
+import 'package:primware/views/Home/order/my_order_detail.dart';
+import 'package:primware/views/Home/order/my_order_new.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
 
