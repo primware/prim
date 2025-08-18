@@ -149,7 +149,7 @@ class _OrderListPageState extends State<OrderListPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const InvoicePage(),
+                builder: (context) => const OrderNewPage(),
               ),
             );
           },

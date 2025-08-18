@@ -18,19 +18,19 @@ import 'package:shimmer/shimmer.dart';
 
 import 'my_order.dart';
 
-class InvoicePage extends StatefulWidget {
+class OrderNewPage extends StatefulWidget {
   final bool isRefund;
   final int? doctypeID;
   final String? orderName;
 
-  const InvoicePage(
+  const OrderNewPage(
       {super.key, this.isRefund = false, this.doctypeID, this.orderName});
 
   @override
-  State<InvoicePage> createState() => _InvoicePageState();
+  State<OrderNewPage> createState() => _OrderNewPageState();
 }
 
-class _InvoicePageState extends State<InvoicePage> {
+class _OrderNewPageState extends State<OrderNewPage> {
   Timer? _debounce;
   double calculatedChange = 0.0;
   TextEditingController clienteController = TextEditingController();
@@ -312,7 +312,9 @@ class _InvoicePageState extends State<InvoicePage> {
 
   Future<void> _showQuantityDialog(Map<String, dynamic> product,
       {int? index}) async {
-    int? selectedTaxID = product['tax']?['id'];
+    int? selectedTaxID = index != null
+        ? (product['C_Tax_ID'] ?? product['tax']?['id'])
+        : (product['tax']?['id'] ?? selectedTax?['id']);
     final quantityController = TextEditingController(
       text: index != null && product['quantity'] != null
           ? product['quantity'].toString()
@@ -342,7 +344,7 @@ class _InvoicePageState extends State<InvoicePage> {
           ...product,
           'quantity': qty,
           'price': price,
-          'C_Tax_ID': selectedTaxID,
+          'C_Tax_ID': selectedTaxID ?? selectedTax?['id'],
           'Description': description,
         });
       });

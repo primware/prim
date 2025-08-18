@@ -269,7 +269,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const InvoicePage(),
+                    builder: (context) => const OrderNewPage(),
                   ),
                 );
               },
@@ -305,7 +305,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => InvoicePage(
+                          builder: (context) => OrderNewPage(
                             doctypeID: docTypeId,
                             orderName: doc['name'],
                           ),
@@ -349,7 +349,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const InvoicePage(
+                    builder: (context) => const OrderNewPage(
                       isRefund: true,
                     ),
                   ),
