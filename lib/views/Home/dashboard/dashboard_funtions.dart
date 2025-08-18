@@ -14,7 +14,7 @@ Future<Map<String, double>> fetchSalesChartData({
     // Get the current date and time
     DateTime now = DateTime.now();
     // Calculate the date one year ago
-    DateTime oneYearAgo = now.subtract(const Duration(days: 365)); 
+    DateTime oneYearAgo = now.subtract(const Duration(days: 365));
     await usuarioAuth(context: context);
     final response = await get(
       Uri.parse(
@@ -44,7 +44,6 @@ Future<Map<String, double>> fetchSalesChartData({
             continue;
           }
         }
-        print('Processing record: ${record['DateOrdered']} - Passed filter');
 
         final key = groupBy == 'day'
             ? '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'
