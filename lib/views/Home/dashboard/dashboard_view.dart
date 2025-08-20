@@ -93,6 +93,17 @@ class _DashboardPageState extends State<DashboardPage> {
     return key;
   }
 
+  double _gridInterval() {
+    if (salesData.isEmpty) {
+      return 1000; // sensible default when no data
+    }
+    final double maxY =
+        salesData.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+    final double interval = maxY / 5;
+    // fl_chart asserts interval must be > 0
+    return interval <= 0 ? 1 : interval;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -152,7 +163,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     SizedBox(height: CustomSpacer.xlarge),
                     Row(
                       children: [
-                        Text('${AppLocale.totalSoldBy.getString(context)}',
+                        Text(AppLocale.totalSoldBy.getString(context),
                             style: Theme.of(context).textTheme.titleMedium),
                         const SizedBox(width: CustomSpacer.medium),
                         DropdownButton<String>(
@@ -226,12 +237,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     gridData: FlGridData(
                                       show: true,
                                       drawVerticalLine: false,
-                                      horizontalInterval: (salesData.isNotEmpty
-                                          ? (salesData.map((e) => e.y).reduce(
-                                                      (a, b) => a > b ? a : b) /
-                                                  5)
-                                              .roundToDouble()
-                                          : 10000),
+                                      horizontalInterval: _gridInterval(),
                                       getDrawingHorizontalLine: (value) {
                                         return FlLine(
                                           color: Theme.of(context)
@@ -273,14 +279,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                       leftTitles: AxisTitles(
                                         sideTitles: SideTitles(
                                           showTitles: true,
-                                          interval: (salesData.isNotEmpty
-                                              ? (salesData
-                                                          .map((e) => e.y)
-                                                          .reduce((a, b) =>
-                                                              a > b ? a : b) /
-                                                      5)
-                                                  .roundToDouble()
-                                              : 10000),
+                                          interval: _gridInterval(),
                                           getTitlesWidget: (value, meta) {
                                             return Text(
                                               '${(value / 1000).round()}k',

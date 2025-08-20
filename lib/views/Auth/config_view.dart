@@ -182,7 +182,12 @@ class _ConfigPageState extends State<ConfigPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => POS.isPOS ? OrderNewPage() : DashboardPage(),
+            builder: (context) => POS.isPOS
+                ? OrderNewPage(
+                    doctypeID: POS.docTypeID,
+                    orderName: POS.docTypeName,
+                  )
+                : DashboardPage(),
           ),
         );
 

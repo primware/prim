@@ -342,3 +342,58 @@ Future<List<Map<String, dynamic>>> fetchProductCategory() async {
     return [];
   }
 }
+
+Future<void> fetchDocumentActions({required int docTypeID}) async {
+  POS.documentActions.clear();
+  final response = await get(
+    Uri.parse(
+        GetDocumentActions(roleID: Token.rol!, docTypeID: docTypeID).endPoint),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': Token.auth!,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+    final records = jsonResponse['records'] as List;
+
+    final Map<String, Map<String, String>> actionMap = {
+      'Complete': {'code': 'CO', 'name': 'Completar'},
+      'Draft': {'code': 'DR', 'name': 'Borrador'},
+      'Prepare': {'code': 'PR', 'name': 'Preparar'},
+      'Approve': {'code': 'AP', 'name': 'Aprobar'},
+      'Reject': {'code': 'RJ', 'name': 'Rechazar'},
+      'Close': {'code': 'CL', 'name': 'Cerrar'},
+      'Void': {'code': 'VO', 'name': 'Anular'},
+      'WaitComplete': {'code': 'WC', 'name': 'Esperar Completar'},
+      'Unlock': {'code': 'XL', 'name': 'Desbloquear'},
+      'Invalidate': {'code': 'IN', 'name': 'Invalidar'},
+      'ReverseCorrect': {'code': 'RC', 'name': 'Reversar Correcto'},
+      'ReverseAccrual': {'code': 'RA', 'name': 'Reversar Devengo'},
+      'ReActivate': {'code': 'RE', 'name': 'Reactivar'},
+      'Post': {'code': 'PO', 'name': 'Contabilizar'},
+      'UnPost': {'code': 'UP', 'name': 'Descontabilizar'},
+      'Schedule': {'code': 'SC', 'name': 'Programar'},
+      'Release': {'code': 'RL', 'name': 'Liberar'},
+      'Confirm': {'code': 'CF', 'name': 'Confirmar'},
+      'Start': {'code': 'ST', 'name': 'Iniciar'},
+      'Finish': {'code': 'FI', 'name': 'Finalizar'},
+      'ApprovePromotion': {'code': 'APr', 'name': 'Aprobar Promoción'},
+    };
+
+    final List<Map<String, String>> result = [...POS.documentActions];
+
+    for (var record in records) {
+      final identifier = record['AD_Ref_List_ID']?['identifier'];
+      final action = actionMap[identifier];
+      if (action != null && !result.any((e) => e['code'] == action['code'])) {
+        result.add(action);
+      }
+    }
+
+    POS.documentActions = result;
+  } else {
+    print('Error al obtener acciones de documento: ${response.statusCode}');
+  }
+}

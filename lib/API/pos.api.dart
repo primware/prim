@@ -2,6 +2,7 @@ class POS {
   static int? priceListID;
   static int? priceListVersionID;
   static int? docTypeID;
+  static String? docTypeName;
   static int? docTypeRefundID;
   static int? templatePartnerID;
   static bool isPOS = false;
@@ -9,7 +10,7 @@ class POS {
   static List<Map<String, dynamic>> docTypesComplete = [];
 
   static List<Map<String, String>> documentActions = [
-    {'code': 'DR', 'name': 'Borrador'}
+    // {'code': 'DR', 'name': 'Borrador'}
   ];
 
   static Map<dynamic, dynamic> principalTaxs = {};

@@ -4,6 +4,7 @@ import 'package:primware/localization/app_locale.dart';
 import 'dart:async';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_dropdown.dart';
+import 'package:primware/shared/logo.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
@@ -79,8 +80,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBPartner();
+      _loadDocumentActions();
       initialLoadProduct();
       _loadTax();
       _loadProductCategory();
@@ -91,6 +94,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     if (POS.documentActions.isNotEmpty) {
       selectedDocActionCode = POS.documentActions.first['code'];
+    }
+  }
+
+  Future<void> _loadDocumentActions() async {
+    await fetchDocumentActions(docTypeID: widget.doctypeID!);
+    if (mounted &&
+        POS.documentActions.isNotEmpty &&
+        selectedDocActionCode == null) {
+      setState(() {
+        selectedDocActionCode = POS.documentActions.first['code'];
+      });
     }
   }
 
@@ -676,6 +690,21 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 : AppLocale.newOrder.getString(context)),
         backgroundColor:
             widget.isRefund ? Theme.of(context).colorScheme.error : null,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: CustomSpacer.medium),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(CustomSpacer.medium),
+                color: Colors.white,
+              ),
+              padding: EdgeInsets.all(CustomSpacer.small),
+              child: Logo(
+                width: 40,
+              ),
+            ),
+          )
+        ],
       ),
       drawer: MenuDrawer(),
       body: SingleChildScrollView(
