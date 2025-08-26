@@ -220,6 +220,41 @@ class _MenuDrawerState extends State<MenuDrawer> {
     );
   }
 
+  Future<void> cleanSessionData() async {
+    // Limpiar controladores
+    usuarioController.clear();
+    claveController.clear();
+    
+    // Limpiar tokens
+    Token.auth = null;
+    Token.preAuth = null;
+    Token.superAuth = null;
+    Token.warehouseID = null;
+    Token.client = null;
+    Token.rol = null;
+    Token.organitation = null;
+    
+    // Limpiar datos de usuario
+    UserData.id = null;
+    UserData.name = null;
+    UserData.email = null;
+    UserData.phone = null;
+    UserData.imageBytes = null;
+    UserData.rolName = null;
+    
+    // Limpiar datos POS
+    POS.priceListID = null;
+    POS.priceListVersionID = null;
+    POS.docTypeID = null;
+    POS.docTypeName = null;
+    POS.templatePartnerID = null;
+    POS.docTypeRefundID = null;
+    POS.isPOS = false;
+    POS.documentActions.clear();
+    POS.principalTaxs.clear();
+    POS.docTypesComplete.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -435,12 +470,14 @@ class _MenuDrawerState extends State<MenuDrawer> {
             onTap: () async {
               final confirmed = await _showLogoutConfirmation(context);
               if (confirmed == true) {
-                Token.auth = null;
-                usuarioController.clear();
-                claveController.clear();
+                //Token.auth = null;
+                //usuarioController.clear();
+                //claveController.clear();
 
-                UserData.rolName = null;
-                UserData.imageBytes = null;
+                //UserData.rolName = null;
+                //UserData.imageBytes = null;
+
+                await cleanSessionData();
 
                 Navigator.pushReplacement(
                   context,
