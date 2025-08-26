@@ -30,7 +30,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool isValid = false,
       isLoading = false,
       _isCategoryLoading = true,
-      _isTaxiesLoading = true;
+      _isTaxiesLoading = true,
+      _taxError = false;
 
   int? selectedCategoryID;
   int? selectedTaxID;
@@ -58,23 +59,32 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Future<void> _loadCategories() async {
-    final fetchedCategories = await getMProductCategoryID(context);
-    if (fetchedCategories != null) {
+    final fetchedCategories = await getMProductCategoryID(context) ?? [];
+    /*if (fetchedCategories != null) {
       setState(() {
         categories = fetchedCategories;
         _isCategoryLoading = false;
       });
-    }
+    }*/
+    setState(() {
+      categories = fetchedCategories;
+      _isCategoryLoading = false;
+    });
   }
 
   Future<void> _loadTaxies() async {
-    final fetchedTaxies = await getCTaxCategoryID(context);
-    if (fetchedTaxies != null) {
+    final fetchedTaxies = await getCTaxCategoryID(context) ?? [];
+    /*if (fetchedTaxies != null) {
       setState(() {
         taxies = fetchedTaxies;
         _isTaxiesLoading = false;
       });
-    }
+    }*/
+    setState(() {
+      taxies = fetchedTaxies;
+      _isTaxiesLoading = false;
+      _taxError = taxies.isEmpty;
+    });
   }
 
   void _isFormValid() {
@@ -82,7 +92,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       isValid = nameController.text.isNotEmpty &&
           priceController.text.isNotEmpty &&
           selectedCategoryID != null &&
-          selectedTaxID != null;
+          selectedTaxID != null &&
+          !_taxError;
     });
   }
 
@@ -218,6 +229,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             });
                           },
                         ),
+                        // Mensaje de error si taxTypes está vacío
+                        if (_taxError && !_isTaxiesLoading)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                            child: Text(
+                              AppLocale.noTaxCategoryAvailable.getString(context),
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,

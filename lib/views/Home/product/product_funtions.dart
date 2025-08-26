@@ -39,6 +39,7 @@ Future<Map<String, dynamic>> postProduct({
       "C_TaxCategory_ID": taxID,
       if (sku != null && sku.isNotEmpty) "SKU": sku,
       if (upc != null && upc.isNotEmpty) "UPC": upc,
+      "Value": (sku != null && sku.isNotEmpty) ? sku : name,
       "IsSold": true,
     };
 
@@ -138,13 +139,14 @@ Future<int?> getMPriceListVersionID() async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true&\$expand=M_PriceList_Version'),
+          //'${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true&\$expand=M_PriceList_Version'),
+          '${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true&\$expand=M_PriceList_Version'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
       },
     );
-
+    
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       return responseData['records'][0]['M_PriceList_Version']?[0]['id'];
