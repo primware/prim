@@ -524,6 +524,27 @@ class _OrderNewPageState extends State<OrderNewPage> {
     });
   }
 
+  // Función para mostrar la confirmación de imprimir ticket
+  Future<bool?> _printTicketConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocale.confirmPrintTicket.getString(context)),
+        content: Text(AppLocale.printTicketMessage.getString(context)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _createInvoice({
     required List<Map<String, dynamic>> product,
     required int bPartner,
@@ -623,6 +644,25 @@ class _OrderNewPageState extends State<OrderNewPage> {
           ),
         );
       }
+
+      // Mostrar diálogo de confirmación de imprimir ticket después de guardar exitosamente
+      final confirmPrintTicket = await _printTicketConfirmation(context);
+
+      if (confirmPrintTicket == true) {
+        // Aquí va la lógica para cerrar sesión
+        // Por ejemplo: 
+        // await AuthService.logout();
+        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginPage()));
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            //content: Text(AppLocale.logoutSuccess.getString(context)),
+            content: Text('Imprimir Ticket'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(widget.isRefund
@@ -995,10 +1035,24 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     labelText:
                                         AppLocale.product.getString(context),
                                     searchBy: AppLocale.code.getString(context),
+                                    showCreateButtonIfNotFound: true,
                                     onItemSelected: (item) {
                                       _showQuantityDialog(item);
                                     },
                                     onChanged: (_) => debouncedLoadProduct(),
+                                    onCreate: (value) async {
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              ProductNewPage(productName: value),
+                                        ),
+                                      );
+                                      if (result != null &&
+                                          result['created'] == true) {
+                                        debouncedLoadProduct();
+                                      }
+                                    },
                                     itemBuilder: (item) => Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
@@ -1042,7 +1096,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     ),
                                   ),
                                   // //? crear producto si no existe
-                                  if (productOptions.isEmpty &&
+                                  /*if (productOptions.isEmpty &&
                                       productController.text
                                           .trim()
                                           .isNotEmpty) ...[
@@ -1067,7 +1121,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         }
                                       },
                                     ),
-                                  ],
+                                  ],*/
                                 ],
                               ),
                         if (invoiceLines.isNotEmpty) ...[

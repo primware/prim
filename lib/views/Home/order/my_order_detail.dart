@@ -13,6 +13,27 @@ class OrderDetailPage extends StatelessWidget {
 
   const OrderDetailPage({super.key, required this.order});
 
+  // Función para mostrar la confirmación de imprimir ticket
+  Future<bool?> _printTicketConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocale.confirmPrintTicket.getString(context)),
+        content: Text(AppLocale.printTicketMessage.getString(context)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lines = (order['C_OrderLine'] as List?) ?? [];
@@ -21,7 +42,8 @@ class OrderDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${AppLocale.orderHash.getString(context)}${order['DocumentNo']}',
+          //'${AppLocale.orderHash.getString(context)}${order['DocumentNo']}',
+          '${order['doctypetarget']['name']} #${order['DocumentNo']}',
         ),
         actions: [
           IconButton(
@@ -33,7 +55,30 @@ class OrderDetailPage extends StatelessWidget {
                   bytes: await pdf.save(),
                   filename: 'Order_${order['DocumentNo']}.pdf');
             },
-          )
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: AppLocale.logout.getString(context),
+            onPressed: () async {
+              final bool? confirmPrintTicket = await _printTicketConfirmation(context);
+              if (confirmPrintTicket == true) {
+                // Aquí va tu lógica de logout
+                // Por ejemplo: 
+                // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));
+                // O si usas un state management:
+                // context.read<AuthProvider>().logout();
+                
+                // Mientras tanto, mostramos un snackbar de confirmación
+                ScaffoldMessenger.of(context).showSnackBar(
+                  //SnackBar(content: Text(AppLocale.logoutSuccess.getString(context))),
+                  SnackBar(content: Text('Mensaje')),
+                );
+                
+                // Cerrar la página actual y volver al login
+                //Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
+          ),
         ],
       ),
       body: Center(

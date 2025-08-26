@@ -268,6 +268,10 @@ Future<List<Map<String, dynamic>>> fetchOrders(
             'id': record['C_BPartner_ID']?['id'],
             'name': record['C_BPartner_ID']?['identifier'],
           },
+          'doctypetarget': {
+            'id': record['C_DocTypeTarget_ID']?['id'],
+            'name': record['C_DocTypeTarget_ID']?['identifier'],
+          },
           'C_OrderLine': record['C_OrderLine'] ?? [],
         };
       }).toList();
