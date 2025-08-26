@@ -120,6 +120,11 @@ class AppLocale {
   static const String noTax = 'noTax';
   static const String fillWithRemaining = 'fillWithRemaining';
   static const String errorCompleteOrder = 'errorCompleteOrder';
+  static const String printTicket = 'printTicket';
+  static const String confirmPrintTicket = 'confirmPrintTicket';
+  static const String printTicketMessage = 'printTicketMessage';
+  static const String noTaxTypesAvailable = 'noTaxTypesAvailable';
+  static const String noTaxCategoryAvailable = 'noTaxCategoryAvailable';
 
   static const Map<String, dynamic> en = {
     products: 'Products',
@@ -242,6 +247,11 @@ class AppLocale {
     noTax: 'No tax',
     fillWithRemaining: 'Fill with the remaining amount',
     errorCompleteOrder: 'Error completing order',
+    printTicket: 'Print Ticket',
+    confirmPrintTicket: 'Confirm LoPrint Ticketgout',
+    printTicketMessage: 'Are you want to print ticket?',
+    noTaxTypesAvailable: 'No tax ID types available',
+    noTaxCategoryAvailable: 'No tax categories available',
   };
 
   static const Map<String, dynamic> es = {
@@ -364,5 +374,10 @@ class AppLocale {
     noTax: 'Sin impuesto',
     fillWithRemaining: 'Llenar con el monto restante',
     errorCompleteOrder: 'Error al completar la orden',
+    printTicket: 'Imprimir ticket',
+    confirmPrintTicket: 'Confirmar imprimir ticket',
+    printTicketMessage: '¿Desea imprimir ticket?',
+    noTaxTypesAvailable: 'No hay tipos de identificación fiscal disponibles',
+    noTaxCategoryAvailable: 'No hay categorías de impuestos disponibles',
   };
 }
