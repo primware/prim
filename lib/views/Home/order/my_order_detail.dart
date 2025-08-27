@@ -8,6 +8,9 @@ import 'package:printing/printing.dart';
 
 import '../../../localization/app_locale.dart';
 
+import 'package:pdf/widgets.dart' as pw;
+import 'dart:typed_data';
+
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
 
@@ -34,6 +37,108 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
+  Future<Uint8List> _generateTicketPdf(Map<String, dynamic> order) async {
+    final pdf = pw.Document();
+
+    // Obtener líneas del pedido
+    final lines = (order['C_OrderLine'] as List?) ?? [];
+    final taxSummary = _calculateTaxSummary([order]);
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text('Pedido #${order['DocumentNo']}',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 10),
+            pw.Text('Cliente: ${order['bpartner']['name']}'),
+            pw.Text('Fecha: ${order['DateOrdered']}'),
+            pw.Divider(),
+            pw.Text('Resumen de productos', style: pw.TextStyle(fontSize: 16)),
+            pw.SizedBox(height: 10),
+            ...lines.map((line) {
+              final name = (line['M_Product_ID']?['identifier']?.toString() ??
+                      'Sin nombre')
+                  .split('_')
+                  .skip(1)
+                  .join(' ');
+              final qty = (line['QtyOrdered'] as num).toDouble();
+              final price = (line['PriceActual'] as num).toDouble();
+              final net = (line['LineNetAmt'] as num).toDouble();
+              final rate = (line['C_Tax_ID']['Rate'] as num).toDouble();
+              final tax = net * (rate / 100);
+              final total = net + tax;
+
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(name, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text('Cantidad: $qty | Precio: \$${price.toStringAsFixed(2)}'),
+                  pw.Text('Impuesto: \$${tax.toStringAsFixed(2)}'),
+                  pw.Text('Total: \$${total.toStringAsFixed(2)}'),
+                  pw.Divider(),
+                ],
+              );
+            }),
+            pw.Divider(),
+            pw.Text('Resumen final', style: pw.TextStyle(fontSize: 16)),
+            pw.SizedBox(height: 10),
+            pw.Text('Subtotal: \$${(order['GrandTotal'] as num).toDouble().toStringAsFixed(2)}'),
+            ...taxSummary.entries.map((entry) => pw.Text(
+                '${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}')),
+            pw.Text(
+                'Total impuestos: \$${taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b).toStringAsFixed(2)}'),
+            pw.Text(
+                'Total final: \$${(order['GrandTotal'] as num).toDouble().toStringAsFixed(2)}',
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  // Agrega este método a tu clase OrderDetailPage
+  Future<void> _showPdfPreview(BuildContext context, Uint8List pdfBytes) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          //title: Text(AppLocale.previewTicket.getString(context)),
+          title: Text('asdadsdad'),
+          content: Container(
+            width: double.maxFinite,
+            height: 500,
+            child: PdfPreview(
+              build: (format) => pdfBytes,
+              allowSharing: true,
+              allowPrinting: true,
+              canChangePageFormat: false,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(AppLocale.close.getString(context)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              //child: Text(AppLocale.print.getString(context)),
+              child: Text('asdadaddd'),
+              onPressed: () {
+                Printing.layoutPdf(onLayout: (_) => pdfBytes);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lines = (order['C_OrderLine'] as List?) ?? [];
@@ -57,22 +162,31 @@ class OrderDetailPage extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: AppLocale.logout.getString(context),
+            icon: const Icon(Icons.receipt),
+            tooltip: AppLocale.printTicket.getString(context),
             onPressed: () async {
               final bool? confirmPrintTicket = await _printTicketConfirmation(context);
               if (confirmPrintTicket == true) {
-                // Aquí va tu lógica de logout
-                // Por ejemplo: 
-                // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));
-                // O si usas un state management:
-                // context.read<AuthProvider>().logout();
+                // Aquí va tu lógica 
+
+                // Generar el PDF
+                //final pdfDocument = await generateOrderSummaryPdf(order);
+                final pdfBytes = await _generateTicketPdf(order);
+                //final pdfBytes = await pdfDocument.save();
+
+                // Mostrar la vista previa del PDF
+                //await _showPdfPreview(context, pdfBytes);
+                
+                // Mostrar la vista previa del PDF
+                await Printing.layoutPdf(
+                  onLayout: (_) => pdfBytes,
+                );
                 
                 // Mientras tanto, mostramos un snackbar de confirmación
-                ScaffoldMessenger.of(context).showSnackBar(
+                /*ScaffoldMessenger.of(context).showSnackBar(
                   //SnackBar(content: Text(AppLocale.logoutSuccess.getString(context))),
                   SnackBar(content: Text('Mensaje')),
-                );
+                );*/
                 
                 // Cerrar la página actual y volver al login
                 //Navigator.of(context).popUntil((route) => route.isFirst);
