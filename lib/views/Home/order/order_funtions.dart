@@ -229,10 +229,58 @@ Future<Map<String, dynamic>> postInvoice({
       };
     }
 
-    return {'success': true};
+    // Convertir el JSON a un Map
+    Map<String, dynamic> jsonData = jsonDecode(orderResponse.body);
+ 
+    return {'success': true, 'Record_ID': jsonData['id']};
   } catch (e) {
     print('Excepción general: $e');
     return {'success': false, 'message': 'Excepción inesperada: $e'};
+  }
+}
+
+Future<Map<String, dynamic>?> fetchOrderById({
+  required BuildContext context, 
+  required int orderId
+}) async {
+  try {
+    await usuarioAuth(context: context);
+
+    final response = await get(
+      Uri.parse('${EndPoints.cOrder}/$orderId'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final record = json.decode(utf8.decode(response.bodyBytes));
+       
+      return {
+        'id': record['id'],
+        'Created': record['Created'],
+        'DocumentNo': record['DocumentNo'],
+        'DateOrdered': record['DateOrdered'],
+        'GrandTotal': record['GrandTotal'],
+        'TotalLines': record['TotalLines'],
+        'bpartner': {
+          'id': record['C_BPartner_ID']?['id'],
+          'name': record['C_BPartner_ID']?['identifier'],
+        },
+        'doctypetarget': {
+          'id': record['C_DocTypeTarget_ID']?['id'],
+          'name': record['C_DocTypeTarget_ID']?['identifier'],
+        },
+        'C_OrderLine': record['C_OrderLine'] ?? [],
+      };
+    } else {
+      debugPrint('Error al obtener la orden: ${response.body}');
+      return null;
+    }
+  } catch (e) {
+    debugPrint('Error de red en fetchOrderById: $e');
+    return null;
   }
 }
 
