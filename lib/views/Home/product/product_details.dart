@@ -35,9 +35,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   int? selectedCategoryID;
   int? selectedTaxID;
+  String? selectedProductType;
+
 
   List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> taxies = [];
+
+  // Opciones para el tipo de producto
+  final List<Map<String, dynamic>> productTypes = [
+    {'value': 'I', 'label': 'Artículo'},
+    {'value': 'S', 'label': 'Servicio'},
+  ];
 
   @override
   void initState() {
@@ -53,7 +61,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
     selectedCategoryID = widget.product['category'];
     selectedTaxID = widget.product['C_TaxCategory_ID'];
-
+    selectedProductType = widget.product['ProductType']?? '';
+   
     nameController.addListener(_isFormValid);
     priceController.addListener(_isFormValid);
   }
@@ -93,6 +102,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           priceController.text.isNotEmpty &&
           selectedCategoryID != null &&
           selectedTaxID != null &&
+          selectedProductType != null &&
           !_taxError;
     });
   }
@@ -144,6 +154,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       taxID: selectedTaxID!,
       categoryID: selectedCategoryID!,
       price: priceController.text,
+      productType: selectedProductType!,
       context: context,
     );
 
@@ -197,6 +208,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     controlador: upcController,
                     texto: AppLocale.description.getString(context),
                     inputType: TextInputType.text,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  SearchableDropdown<String>(
+                    value: selectedProductType,
+                    options: productTypes.map((type) => {
+                      'id': type['value'],
+                      'name': type['label'],
+                    }).toList(),
+                    labelText: '${AppLocale.productType.getString(context)} *',
+                    showSearchBox: false,
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedProductType = newValue;
+                          _isFormValid();
+                        });
+                      }
+                    },
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isCategoryLoading

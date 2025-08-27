@@ -72,7 +72,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
         '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), ${searchTerm.toLowerCase()}) or contains(tolower(SKU), ${searchTerm.toLowerCase()}))' : ''}'
         '$categoryFilter';
     final url =
-        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
+        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
     final response = await get(
       Uri.parse(url),
       headers: {
@@ -112,6 +112,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
               : null,
           'C_TaxCategory_ID': taxCategoryID,
           'tax': assignedTax,
+          'ProductType': record['ProductType']['id'],
         });
       }
 

@@ -125,6 +125,7 @@ class AppLocale {
   static const String printTicketMessage = 'printTicketMessage';
   static const String noTaxTypesAvailable = 'noTaxTypesAvailable';
   static const String noTaxCategoryAvailable = 'noTaxCategoryAvailable';
+  static const String productType = 'productType';
 
   static const Map<String, dynamic> en = {
     products: 'Products',
@@ -252,6 +253,7 @@ class AppLocale {
     printTicketMessage: 'Are you want to print ticket?',
     noTaxTypesAvailable: 'No tax ID types available',
     noTaxCategoryAvailable: 'No tax categories available',
+    productType: 'Product Type',
   };
 
   static const Map<String, dynamic> es = {
@@ -379,5 +381,6 @@ class AppLocale {
     printTicketMessage: '¿Desea imprimir ticket?',
     noTaxTypesAvailable: 'No hay tipos de identificación fiscal disponibles',
     noTaxCategoryAvailable: 'No hay categorías de impuestos disponibles',
+    productType: 'Tipo de Producto',
   };
 }

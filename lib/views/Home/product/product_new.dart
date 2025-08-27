@@ -35,9 +35,16 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   int? selectedCategoryID;
   int? selectedTaxID;
+  String? selectedProductType = 'I'; // Valor por defecto: Artículo
 
   List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> taxies = [];
+
+  // Opciones para el tipo de producto
+  final List<Map<String, dynamic>> productTypes = [
+    {'value': 'I', 'label': 'Artículo'},
+    {'value': 'S', 'label': 'Servicio'},
+  ];
 
   @override
   void initState() {
@@ -88,6 +95,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
           priceController.text.isNotEmpty &&
           selectedCategoryID != null &&
           selectedTaxID != null &&
+          selectedProductType != null &&
           !_taxError;
     });
   }
@@ -139,6 +147,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
       taxID: selectedTaxID!,
       categoryID: selectedCategoryID!,
       price: priceController.text,
+      productType: selectedProductType!,
       context: context,
     );
 
@@ -195,6 +204,24 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     controlador: upcController,
                     texto: AppLocale.description.getString(context),
                     inputType: TextInputType.text,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  SearchableDropdown<String>(
+                    value: selectedProductType,
+                    options: productTypes.map((type) => {
+                      'id': type['value'],
+                      'name': type['label'],
+                    }).toList(),
+                    labelText: '${AppLocale.productType.getString(context)} *',
+                    showSearchBox: false,
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedProductType = newValue;
+                          _isFormValid();
+                        });
+                      }
+                    },
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isCategoryLoading
