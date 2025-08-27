@@ -554,7 +554,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     // Obtener líneas del pedido
     final lines = (order['C_OrderLine'] as List?) ?? [];
-    //final taxSummary = _calculateTaxSummary([order]);
+    final taxSummary = _calculateTaxSummary([order]);
 
     pdf.addPage(
       pw.Page(
@@ -568,7 +568,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
             pw.Text('Fecha: ${order['DateOrdered']}'),
             pw.Divider(),
             pw.Text('Resumen de productos', style: pw.TextStyle(fontSize: 16)),
-            /*pw.SizedBox(height: 10),
+            pw.SizedBox(height: 10),
             ...lines.map((line) {
               final name = (line['M_Product_ID']?['identifier']?.toString() ??
                       'Sin nombre')
@@ -603,7 +603,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 'Total impuestos: \$${taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b).toStringAsFixed(2)}'),
             pw.Text(
                 'Total final: \$${(order['GrandTotal'] as num).toDouble().toStringAsFixed(2)}',
-                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),*/
+                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           ],
         ),
       ),
@@ -789,7 +789,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         context: context, 
         orderId: int.parse(result['Record_ID'].toString())
       );
-
+   
       if (order != null) {
         // Mostrar diálogo de confirmación de imprimir ticket después de guardar exitosamente
         final confirmPrintTicket = await _printTicketConfirmation(context);

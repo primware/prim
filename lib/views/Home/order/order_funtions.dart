@@ -247,16 +247,19 @@ Future<Map<String, dynamic>?> fetchOrderById({
     await usuarioAuth(context: context);
 
     final response = await get(
-      Uri.parse('${EndPoints.cOrder}/$orderId'),
+      //Uri.parse('${EndPoints.cOrder}/$orderId?\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
+      Uri.parse('${EndPoints.cOrder}?\$filter=C_Order_ID eq ${orderId}&\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
+
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
       },
     );
-
+    
     if (response.statusCode == 200) {
-      final record = json.decode(utf8.decode(response.bodyBytes));
-       
+      Map<String, dynamic> responseData = json.decode(utf8.decode(response.bodyBytes));
+      final record = responseData['records'][0];
+     
       return {
         'id': record['id'],
         'Created': record['Created'],
