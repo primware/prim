@@ -202,7 +202,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                           },
                         ),
                         // Mensaje de error si taxTypes está vacío
-                        if (_taxTypeError && !_isTaxTypeLoading)
+                        /*if (_taxTypeError && !_isTaxTypeLoading)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0, left: 12.0),
                             child: Text(
@@ -212,7 +212,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                                 fontSize: 12,
                               ),
                             ),
-                          ),
+                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   _isGroupLoading
                       ? ShimmerList(count: 1)

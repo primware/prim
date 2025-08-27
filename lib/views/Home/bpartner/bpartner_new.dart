@@ -232,7 +232,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                             )
                           : const SizedBox(),
                           // Mensaje de error si taxTypes está vacío
-                          if (_taxTypeError && !_isTaxTypeLoading)
+                          /*if (_taxTypeError && !_isTaxTypeLoading)
                             Padding(
                               padding: const EdgeInsets.only(top: 8.0, left: 12.0),
                               child: Text(
@@ -242,7 +242,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                                   fontSize: 12,
                                 ),
                               ),
-                            ),
+                            ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: taxController,

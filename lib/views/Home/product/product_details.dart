@@ -230,7 +230,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           },
                         ),
                         // Mensaje de error si taxTypes está vacío
-                        if (_taxError && !_isTaxiesLoading)
+                        /*if (_taxError && !_isTaxiesLoading)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0, left: 12.0),
                             child: Text(
@@ -240,7 +240,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 fontSize: 12,
                               ),
                             ),
-                          ),
+                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,
