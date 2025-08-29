@@ -82,7 +82,7 @@ class _OrderListPageState extends State<OrderListPage> {
                   const SizedBox(width: CustomSpacer.small),
                   Expanded(
                     child: Text(
-                        '${order['bpartner']['name']} #${order['DocumentNo']}',
+                        '${order['bpartner']['name']} - ${order['doctypetarget']['name']} #${order['DocumentNo']}',
                         style: Theme.of(context).textTheme.bodyMedium),
                   ),
                 ],

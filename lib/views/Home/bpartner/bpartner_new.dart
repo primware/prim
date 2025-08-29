@@ -28,7 +28,8 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
   bool isValid = false,
       isLoading = false,
       _isTaxTypeLoading = true,
-      _isGroupLoading = true;
+      _isGroupLoading = true,
+      _taxTypeError = false;
 
   int? selectedTaxTypeID, selectedBPartnerGroupID;
 
@@ -49,23 +50,32 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
   }
 
   Future<void> _loadTaxType() async {
-    final fetchedTaxTypes = await getCTaxTypeID(context);
-    if (fetchedTaxTypes != null) {
+    final fetchedTaxTypes = await getCTaxTypeID(context) ?? [];
+    /*if (fetchedTaxTypes != null) {
       setState(() {
         taxTypes = fetchedTaxTypes;
         _isTaxTypeLoading = false;
       });
-    }
+    }*/
+    setState(() {
+      taxTypes = fetchedTaxTypes;
+      _isTaxTypeLoading = false;
+      _taxTypeError = taxTypes.isEmpty;
+    });
   }
 
   Future<void> _loadBPartnerGroups() async {
-    final fetchedGroups = await getCBPGroup(context);
-    if (fetchedGroups != null) {
+    final fetchedGroups = await getCBPGroup(context) ?? [];
+    /*if (fetchedGroups != null) {
       setState(() {
         bPartnerGroups = fetchedGroups;
         _isGroupLoading = false;
       });
-    }
+    }*/
+    setState(() {
+      bPartnerGroups = fetchedGroups;
+      _isGroupLoading = false;
+    });
   }
 
   void clearPartnerFields() {
@@ -80,7 +90,8 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
       isValid = nameController.text.isNotEmpty &&
           locationController.text.isNotEmpty &&
           selectedTaxTypeID != null &&
-          selectedBPartnerGroupID != null;
+          selectedBPartnerGroupID != null &&
+          !_taxTypeError;
     });
   }
 
@@ -220,6 +231,18 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                               },
                             )
                           : const SizedBox(),
+                          // Mensaje de error si taxTypes está vacío
+                          /*if (_taxTypeError && !_isTaxTypeLoading)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                              child: Text(
+                                AppLocale.noTaxTypesAvailable.getString(context),
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: taxController,

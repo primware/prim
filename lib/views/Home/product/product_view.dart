@@ -116,7 +116,7 @@ class _ProductListPageState extends State<ProductListPage> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: ListTile(
-              title: Text('${record['name']} (${record['sku']})',
+              title: Text('${record['name']} ${record['sku'] != null ? '(${record['sku']})' : ''}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.secondary)),
               subtitle: Column(

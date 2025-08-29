@@ -28,7 +28,8 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
   bool isValid = false,
       isLoading = false,
       _isTaxTypeLoading = true,
-      _isGroupLoading = true;
+      _isGroupLoading = true,
+      _taxTypeError = false;
 
   int? selectedTaxTypeID, selectedBPartnerGroupID;
 
@@ -57,13 +58,18 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
   }
 
   Future<void> _loadTaxType() async {
-    final fetchedTaxTypes = await getCTaxTypeID(context);
-    if (fetchedTaxTypes != null) {
+    final fetchedTaxTypes = await getCTaxTypeID(context) ?? [];
+    /*if (fetchedTaxTypes != null) {
       setState(() {
         taxTypes = fetchedTaxTypes;
         _isTaxTypeLoading = false;
       });
-    }
+    }*/
+    setState(() {
+      taxTypes = fetchedTaxTypes;
+      _isTaxTypeLoading = false;
+      _taxTypeError = taxTypes.isEmpty;
+    });
   }
 
   Future<void> _loadBPartnerGroups() async {
@@ -82,7 +88,8 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
       isValid = nameController.text.isNotEmpty &&
           locationController.text.isNotEmpty &&
           selectedTaxTypeID != null &&
-          selectedBPartnerGroupID != null;
+          selectedBPartnerGroupID != null &&
+          !_taxTypeError;
     });
   }
 
@@ -194,6 +201,18 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                             });
                           },
                         ),
+                        // Mensaje de error si taxTypes está vacío
+                        /*if (_taxTypeError && !_isTaxTypeLoading)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                            child: Text(
+                              AppLocale.noTaxTypesAvailable.getString(context),
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   _isGroupLoading
                       ? ShimmerList(count: 1)

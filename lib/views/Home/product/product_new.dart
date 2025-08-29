@@ -30,13 +30,21 @@ class _ProductNewPageState extends State<ProductNewPage> {
   bool isValid = false,
       isLoading = false,
       _isCategoryLoading = true,
-      _isTaxiesLoading = true;
+      _isTaxiesLoading = true,
+      _taxError = false;
 
   int? selectedCategoryID;
   int? selectedTaxID;
+  String? selectedProductType = 'I'; // Valor por defecto: Artículo
 
   List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> taxies = [];
+
+  // Opciones para el tipo de producto
+  final List<Map<String, dynamic>> productTypes = [
+    {'value': 'I', 'label': 'Artículo'},
+    {'value': 'S', 'label': 'Servicio'},
+  ];
 
   @override
   void initState() {
@@ -53,23 +61,32 @@ class _ProductNewPageState extends State<ProductNewPage> {
   }
 
   Future<void> _loadCategories() async {
-    final fetchedCategories = await getMProductCategoryID(context);
-    if (fetchedCategories != null) {
+    final fetchedCategories = await getMProductCategoryID(context) ?? [];
+    /*if (fetchedCategories != null) {
       setState(() {
         categories = fetchedCategories;
         _isCategoryLoading = false;
       });
-    }
+    }*/
+    setState(() {
+      categories = fetchedCategories;
+      _isCategoryLoading = false;
+    });
   }
 
   Future<void> _loadTaxies() async {
-    final fetchedTaxies = await getCTaxCategoryID(context);
-    if (fetchedTaxies != null) {
+    final fetchedTaxies = await getCTaxCategoryID(context) ?? [];
+    /*if (fetchedTaxies != null) {
       setState(() {
         taxies = fetchedTaxies;
         _isTaxiesLoading = false;
       });
-    }
+    }*/
+    setState(() {
+      taxies = fetchedTaxies;
+      _isTaxiesLoading = false;
+      _taxError = taxies.isEmpty;
+    });
   }
 
   void _isFormValid() {
@@ -77,7 +94,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
       isValid = nameController.text.isNotEmpty &&
           priceController.text.isNotEmpty &&
           selectedCategoryID != null &&
-          selectedTaxID != null;
+          selectedTaxID != null &&
+          selectedProductType != null &&
+          !_taxError;
     });
   }
 
@@ -128,6 +147,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
       taxID: selectedTaxID!,
       categoryID: selectedCategoryID!,
       price: priceController.text,
+      productType: selectedProductType!,
       context: context,
     );
 
@@ -186,6 +206,24 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
+                  SearchableDropdown<String>(
+                    value: selectedProductType,
+                    options: productTypes.map((type) => {
+                      'id': type['value'],
+                      'name': type['label'],
+                    }).toList(),
+                    labelText: '${AppLocale.productType.getString(context)} *',
+                    showSearchBox: false,
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedProductType = newValue;
+                          _isFormValid();
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
                   _isCategoryLoading
                       ? ShimmerList(
                           count: 1,
@@ -220,6 +258,18 @@ class _ProductNewPageState extends State<ProductNewPage> {
                             });
                           },
                         ),
+                        // Mensaje de error si taxTypes está vacío
+                        /*if (_taxError && !_isTaxiesLoading)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                            child: Text(
+                              AppLocale.noTaxCategoryAvailable.getString(context),
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,

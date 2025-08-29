@@ -12,6 +12,7 @@ Future<Map<String, dynamic>> postProduct({
   required int categoryID,
   required int taxID,
   required String price,
+  required String productType,
   required BuildContext context,
 }) async {
   try {
@@ -39,7 +40,9 @@ Future<Map<String, dynamic>> postProduct({
       "C_TaxCategory_ID": taxID,
       if (sku != null && sku.isNotEmpty) "SKU": sku,
       if (upc != null && upc.isNotEmpty) "UPC": upc,
+      "Value": (sku != null && sku.isNotEmpty) ? sku : name,
       "IsSold": true,
+      "ProductType": productType,
     };
 
     final productResponse = await post(
@@ -138,13 +141,14 @@ Future<int?> getMPriceListVersionID() async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true&\$expand=M_PriceList_Version'),
+          //'${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true&\$expand=M_PriceList_Version'),
+          '${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true&\$expand=M_PriceList_Version'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
       },
     );
-
+    
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       return responseData['records'][0]['M_PriceList_Version']?[0]['id'];
@@ -272,6 +276,7 @@ Future<Map<String, dynamic>> putProduct({
   required int taxID,
   required int categoryID,
   required String price,
+  required String productType,
   required BuildContext context,
 }) async {
   try {
@@ -283,7 +288,8 @@ Future<Map<String, dynamic>> putProduct({
       if (sku != null && sku.isNotEmpty) "SKU": sku,
       if (upc != null && upc.isNotEmpty) "UPC": upc,
       "C_TaxCategory_ID": {"id": taxID},
-      "M_Product_Category_ID": {"id": categoryID}
+      "M_Product_Category_ID": {"id": categoryID},
+      "ProductType": productType,
     };
 
     final response = await put(
