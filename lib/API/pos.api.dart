@@ -19,3 +19,14 @@ class POS {
 class POSTenderType {
   static bool isMultiPayment = false;
 }
+
+class Yappy {
+  static String? token;
+  // static String? transactionId;
+  static String? secretKey;
+  static String? apiKey;
+  static int? yappyConfigID;
+  static String? groupId;
+  static String? deviceId;
+  static bool? isTest;
+}

@@ -212,48 +212,6 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
   return false;
 }
 
-Future<bool> superAuth(
-    String usuario, String clave, BuildContext context) async {
-  try {
-    if (usuario.isEmpty || clave.isEmpty) {
-      return false;
-    }
-
-    final Map<String, dynamic> data = {
-      "userName": usuario,
-      "password": clave,
-      "parameters": {
-        "clientId": Token.client,
-        "roleId": 1000032, //! Produccion
-        "organizationId": Token.organitation,
-        "warehouseId": 0,
-        "language": "en_US"
-      }
-    };
-
-    final response = await post(
-      Uri.parse(EndPoints.postUserAuth),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(data),
-    );
-
-    if (response.statusCode == 200) {
-      Token.superAuth = 'Bearer ${json.decode(response.body)["token"]}';
-
-      return true;
-    } else {
-      print('Error: ${response.statusCode}, ${response.body}');
-    }
-  } catch (e) {
-    if (e is ClientException) {
-      handle401(context);
-    }
-  }
-  return false;
-}
-
 Future<bool> _loadUserData(BuildContext context) async {
   try {
     final response = await get(
@@ -328,6 +286,20 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.isPOS = docSubType == 'WR';
+
+      //? Tomamos la informacion del Yappy si existe, si no se mantiene en null
+      Yappy.yappyConfigID = posData?['CDS_YappyConf_ID']?['id'];
+      Yappy.groupId = posData?['CDS_YappyGroup_ID']?['identifier'];
+      Yappy.deviceId = posData?['CDS_YappyReceiptUnit_ID']?['identifier'];
+
+      if (Yappy.yappyConfigID != null &&
+          Yappy.groupId != null &&
+          Yappy.deviceId != null) {
+        await _getYappyEndPoint();
+        await _getYappyKeys();
+      }
+
+      await _getCDocTypeComplete();
     } else {
       print(
           'Error al cargar loadPOSData, código: ${response.statusCode}, detalle: ${response.body}');
@@ -356,6 +328,59 @@ Future<bool> _posTenderExists() async {
     print(
         'Error al verificar existencia de PosTenderExists: ${response.statusCode}, ${response.body}');
     return false;
+  }
+}
+
+Future<void> _getYappyKeys() async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.cdsYappyGroup}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,Value,CDS_API_Key,CDS_Secret_Key'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
+      Yappy.apiKey = record['CDS_API_Key'];
+      Yappy.secretKey = record['CDS_Secret_Key'];
+    } else {
+      print(
+          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en _getMPriceListID: $e');
+  }
+}
+
+Future<void> _getYappyEndPoint() async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.cdsYappyConf}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,CDS_YappyEndPoint,CDS_IsYappyTest'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
+      Base.yappyURL = record['CDS_YappyEndPoint'];
+
+      Yappy.isTest = record['CDS_IsYappyTest'] ?? false;
+    } else {
+      print(
+          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en _getMPriceListID: $e');
   }
 }
 

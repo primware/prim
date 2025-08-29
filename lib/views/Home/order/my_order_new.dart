@@ -16,9 +16,9 @@ import '../bpartner/bpartner_new.dart';
 import '../product/product_new.dart';
 import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
-
+import 'package:qr_flutter/qr_flutter.dart';
 import 'my_order.dart';
-
+import '../../../shared/message.custom.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:typed_data';
@@ -42,14 +42,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
   TextEditingController qtyProductController = TextEditingController();
   TextEditingController productController = TextEditingController();
   TextEditingController taxController = TextEditingController();
-  bool isSending = false;
-  bool isBPartnerLoading = true;
-  bool isProductLoading = true;
-  bool isProductSearchLoading = false;
-  bool isCustomerSearchLoading = false;
-  bool isProductCategoryLoading = true;
-  bool isTaxLoading = true;
+  bool isSending = false,
+      isTaxLoading = true,
+      isProductCategoryLoading = true,
+      isCustomerSearchLoading = false,
+      isProductSearchLoading = false,
+      isProductLoading = true,
+      isBPartnerLoading = true,
+      isYappyLoading = false;
 
+  final Set<int> _lockedPayments = {};
   List<Map<String, dynamic>> bPartnerOptions = [];
   List<Map<String, dynamic>> productOptions = [];
   List<Map<String, dynamic>> categpryOptions = [];
@@ -67,12 +69,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
   bool _isInvoiceValid = false;
 
   int? selectedBPartnerID;
-  String? selectedDocActionCode;
+  String? selectedDocActionCode, yappyTransactionId;
   Map<String, dynamic>? selectedTax;
 
   double subtotal = 0.0;
   double iva = 0.0;
   double total = 0.0;
+
+  // ==== Helpers for monetary rounding and comparisons ====
+  static const double _EPS = 0.01; // tolerancia de 1 centavo
+  double _r2(num v) => (v * 100).round() / 100.0; // redondea a 2 decimales
+  // ==== Helpers for monetary rounding and comparisons ====
 
   void clearInvoiceFields() {
     clienteController.clear();
@@ -86,6 +93,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+//TODO manejar cuando no hay yappycunfiguration
+
       _loadBPartner();
       _loadDocumentActions();
       initialLoadProduct();
@@ -174,6 +183,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     for (final controller in paymentControllers.values) {
       controller.dispose();
     }
+
     super.dispose();
   }
 
@@ -182,24 +192,32 @@ class _OrderNewPageState extends State<OrderNewPage> {
   double get totalAmount => total;
 
   void _validateForm() {
-    final totalPayment = paymentControllers.values
-        .map((c) => double.tryParse(c.text) ?? 0.0)
-        .fold(0.0, (sum, val) => sum + val);
+    final totalPayment = _r2(
+      paymentControllers.values
+          .map(
+              (c) => _r2(double.tryParse((c.text).replaceAll(',', '.')) ?? 0.0))
+          .fold(0.0, (sum, val) => sum + val),
+    );
 
-    final totalCash = paymentControllers.entries
-        .where((entry) {
-          final method = paymentMethods.firstWhere(
-            (m) => m['id'] == entry.key,
-            orElse: () => {},
-          );
-          return method['isCash'] == true;
-        })
-        .map((entry) => double.tryParse(entry.value.text) ?? 0.0)
-        .fold(0.0, (sum, val) => sum + val);
+    final totalCash = _r2(
+      paymentControllers.entries
+          .where((entry) {
+            final method = paymentMethods.firstWhere(
+              (m) => m['id'] == entry.key,
+              orElse: () => {},
+            );
+            return method['isCash'] == true;
+          })
+          .map((entry) => _r2(
+              double.tryParse((entry.value.text).replaceAll(',', '.')) ?? 0.0))
+          .fold(0.0, (sum, val) => sum + val),
+    );
 
-    final change = (totalPayment > totalAmount)
-        ? (totalCash - (totalAmount - (totalPayment - totalCash)))
-        : 0.0;
+    final amount = _r2(totalAmount);
+
+    final overpay = _r2(totalPayment - amount);
+    final change =
+        overpay > 0 ? _r2(totalCash >= overpay ? overpay : totalCash) : 0.0;
 
     setState(() {
       if (paymentMethods.isEmpty) {
@@ -207,7 +225,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       } else {
         _isInvoiceValid = clientSelected &&
             products.isNotEmpty &&
-            totalPayment >= totalAmount;
+            (totalPayment + _EPS) >= amount;
       }
       calculatedChange = change > 0 ? change : 0.0;
     });
@@ -294,7 +312,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final quantity = (line['quantity'] ?? 1) as num;
       final taxID = line['C_Tax_ID'];
 
-      newSubtotal += price * quantity;
+      newSubtotal += (price * quantity);
 
       final tax = taxOptions.firstWhere(
         (t) => t['id'] == taxID,
@@ -302,13 +320,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
       );
       final taxPercent = double.tryParse('${tax['rate'] ?? '0'}') ?? 0.0;
 
-      newIVA += price * quantity * (taxPercent / 100);
+      newIVA += (price * quantity) * (taxPercent / 100);
     }
 
     setState(() {
-      subtotal = newSubtotal;
-      iva = newIVA;
-      total = subtotal + iva;
+      subtotal = _r2(newSubtotal);
+      iva = _r2(newIVA);
+      total = _r2(subtotal + iva);
     });
   }
 
@@ -509,6 +527,181 @@ class _OrderNewPageState extends State<OrderNewPage> {
   //   }
   // }
 
+  //? para mostrar el dialogo de Yappy
+  Future<void> _showYappyQRDialog({
+    required double subTotal,
+    required double totalTax,
+    required double total,
+    required int methodId,
+  }) async {
+    setState(() {
+      isYappyLoading = true;
+    });
+
+    // 1) Solicitar el QR dinámico (hash + transactionId)
+    final result = await showYappyQR(
+      subTotal: double.parse(subTotal.toStringAsFixed(2)),
+      totalTax: double.parse(totalTax.toStringAsFixed(2)),
+      total: double.parse(total.toStringAsFixed(2)),
+      context: context,
+    );
+
+    if (result['success'] != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'No se pudo generar el QR'),
+          backgroundColor: ColorTheme.error,
+        ),
+      );
+      setState(() {
+        isYappyLoading = false;
+      });
+      return;
+    }
+
+    final String hash = result['hash'] as String;
+    yappyTransactionId = result['transactionId'] as String;
+
+    int secondsLeft = 300;
+    Timer? ticker;
+    bool closed = false;
+
+    setState(() {
+      isYappyLoading = false;
+    });
+
+    await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            // Iniciar el ticker una sola vez
+            ticker ??= Timer.periodic(const Duration(seconds: 1), (t) async {
+              if (closed) return;
+
+              // Reducir contador
+              if (secondsLeft > 0) {
+                setModalState(() {
+                  secondsLeft -= 1;
+                });
+              }
+
+              // Polling de estado
+              try {
+                final paid = await checkYappyStatus(yappyTransactionId!);
+                if (paid) {
+                  if (mounted) {
+                    setState(() {
+                      _lockedPayments.add(methodId); // bloquear campo de pago
+                    });
+                  }
+                  closed = true;
+                  t.cancel();
+                  SnackMessage.show(
+                    context: context,
+                    message: 'Pago recibido correctamente',
+                    type: SnackType.success,
+                  );
+                  if (Navigator.of(dialogContext).canPop()) {
+                    Navigator.of(dialogContext).pop(true);
+                  }
+                  return;
+                }
+              } catch (_) {
+                // Ignorar errores de polling por ahora
+              }
+
+              // Tiempo agotado => cancelar
+              if (secondsLeft == 0) {
+                closed = true;
+                t.cancel();
+                await cancelYappyTransaction(
+                    transactionId: yappyTransactionId!);
+                yappyTransactionId = null;
+                SnackMessage.show(
+                  context: context,
+                  message: 'Pago cancelado o tiempo agotado',
+                  type: SnackType.failure,
+                );
+                if (Navigator.of(dialogContext).canPop()) {
+                  Navigator.of(dialogContext).pop(false);
+                }
+              }
+            });
+
+            final mm = (secondsLeft ~/ 60).toString().padLeft(2, '0');
+            final ss = (secondsLeft % 60).toString().padLeft(2, '0');
+
+            return WillPopScope(
+              onWillPop: () async => false,
+              child: AlertDialog(
+                backgroundColor: Theme.of(context).cardColor,
+                contentPadding: const EdgeInsets.all(16),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Center(
+                    //   child: Image.asset(
+                    //     'assets/img/logo-itse.png',
+                    //     width: 160,
+                    //   ),
+                    // ),
+
+                    // QR grande centrado
+                    SizedBox(
+                      width: 280,
+                      height: 280,
+                      child: Center(
+                        child: QrImageView(
+                          data: hash,
+                          version: QrVersions.auto,
+                          size: 260,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Contador
+                    Text(
+                      'Tiempo restante: $mm:$ss',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    // Id de transacción (pequeño)
+                    Text(
+                      'Transacción: $yappyTransactionId',
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      closed = true;
+                      ticker?.cancel();
+                      cancelYappyTransaction(
+                          transactionId: yappyTransactionId!);
+                      yappyTransactionId = null;
+                      SnackMessage.show(
+                        context: context,
+                        message: 'Pago cancelado o tiempo agotado',
+                        type: SnackType.failure,
+                      );
+                      Navigator.of(dialogContext).pop(false);
+                    },
+                    child: Text(AppLocale.cancel.getString(context)),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    ticker?.cancel();
+  }
+
   void _deleteLine(int index) {
     setState(() {
       invoiceLines.removeAt(index);
@@ -562,7 +755,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text('Pedido #${order['DocumentNo']}',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 10),
             pw.Text('Cliente: ${order['bpartner']['name']}'),
             pw.Text('Fecha: ${order['DateOrdered']}'),
@@ -585,8 +779,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
               return pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text(name, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                  pw.Text('Cantidad: $qty | Precio: \$${price.toStringAsFixed(2)}'),
+                  pw.Text(name,
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text(
+                      'Cantidad: $qty | Precio: \$${price.toStringAsFixed(2)}'),
                   pw.Text('Impuesto: \$${tax.toStringAsFixed(2)}'),
                   pw.Text('Total: \$${total.toStringAsFixed(2)}'),
                   pw.Divider(),
@@ -596,14 +792,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
             pw.Divider(),
             pw.Text('Resumen final', style: pw.TextStyle(fontSize: 16)),
             pw.SizedBox(height: 10),
-            pw.Text('Subtotal: \$${(order['GrandTotal'] as num).toDouble().toStringAsFixed(2)}'),
+            pw.Text(
+                'Subtotal: \$${(order['GrandTotal'] as num).toDouble().toStringAsFixed(2)}'),
             ...taxSummary.entries.map((entry) => pw.Text(
                 '${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}')),
             pw.Text(
                 'Total impuestos: \$${taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b).toStringAsFixed(2)}'),
             pw.Text(
                 'Total final: \$${(order['GrandTotal'] as num).toDouble().toStringAsFixed(2)}',
-                style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                style:
+                    pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
           ],
         ),
       ),
@@ -786,10 +984,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
       }
 
       final Map<String, dynamic>? order = await fetchOrderById(
-        context: context, 
-        orderId: int.parse(result['Record_ID'].toString())
-      );
-   
+          context: context, orderId: int.parse(result['Record_ID'].toString()));
+
       if (order != null) {
         // Mostrar diálogo de confirmación de imprimir ticket después de guardar exitosamente
         final confirmPrintTicket = await _printTicketConfirmation(context);
@@ -802,12 +998,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
           // Mostrar la vista previa del PDF
           //await _showPdfPreview(context, pdfBytes);
-          
+
           // Mostrar la vista previa del PDF
           await Printing.layoutPdf(
             onLayout: (_) => pdfBytes,
           );
-          
+
           /*ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               //content: Text(AppLocale.logoutSuccess.getString(context)),
@@ -871,7 +1067,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   double getTotalTaxAmount() {
     final taxes = getGroupedTaxTotals();
-    return taxes.values.fold(0.0, (sum, amount) => sum + amount);
+    return _r2(taxes.values.fold(0.0, (sum, amount) => sum + amount));
   }
 
   @override
@@ -1199,8 +1395,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       final result = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) =>
-                                              ProductNewPage(productName: value),
+                                          builder: (_) => ProductNewPage(
+                                              productName: value),
                                         ),
                                       );
                                       if (result != null &&
@@ -1382,6 +1578,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 method['id']],
                                             texto: method['name'],
                                             inputType: TextInputType.number,
+                                            readOnly: _lockedPayments
+                                                .contains(method['id']),
                                             onChanged: (_) => _validateForm(),
                                           ),
                                         ),
@@ -1402,15 +1600,84 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                         0.0)
                                                     .fold(0.0, (a, b) => a + b);
 
-                                            final remaining =
+                                            final remaining = _r2(
                                                 (totalAmount - currentSum)
-                                                    .clamp(0.0, totalAmount);
+                                                    .clamp(0.0, totalAmount));
                                             paymentControllers[method['id']]
                                                     ?.text =
                                                 remaining.toStringAsFixed(2);
                                             _validateForm();
                                           },
                                         ),
+                                        if (method['name']
+                                                .toString()
+                                                .toLowerCase()
+                                                .contains('yappy') &&
+                                            paymentControllers[method['id']]
+                                                    ?.text !=
+                                                null &&
+                                            (paymentControllers[method['id']]
+                                                        ?.text ??
+                                                    '0.0') !=
+                                                '0.0')
+                                          isYappyLoading
+                                              ? SizedBox(
+                                                  width: 24,
+                                                  height: 24,
+                                                  child:
+                                                      CircularProgressIndicator())
+                                              : IconButton(
+                                                  icon:
+                                                      const Icon(Icons.qr_code),
+                                                  tooltip: 'Mostrar código QR',
+                                                  onPressed: () {
+                                                    _showYappyQRDialog(
+                                                      subTotal: subtotal,
+                                                      totalTax:
+                                                          getTotalTaxAmount(),
+                                                      total: totalAmount,
+                                                      methodId: method['id'],
+                                                    );
+                                                  },
+                                                ),
+                                        if (yappyTransactionId != null &&
+                                            method['name']
+                                                .toString()
+                                                .toLowerCase()
+                                                .contains('yappy') &&
+                                            paymentControllers[method['id']]
+                                                    ?.text !=
+                                                null &&
+                                            (paymentControllers[method['id']]
+                                                        ?.text ??
+                                                    '0.0') !=
+                                                '0.0')
+                                          if (yappyTransactionId != null)
+                                            IconButton(
+                                                icon: const Icon(Icons.cancel),
+                                                tooltip:
+                                                    'Anular transacción Yappy',
+                                                onPressed: () async {
+                                                  final paid =
+                                                      await cancelYappyTransaction(
+                                                          transactionId:
+                                                              yappyTransactionId!);
+                                                  if (paid) {
+                                                    if (mounted) {
+                                                      paymentControllers[
+                                                              method['id']]
+                                                          ?.text = '0.0';
+                                                      yappyTransactionId = null;
+                                                      _validateForm();
+                                                      SnackMessage.show(
+                                                        context: context,
+                                                        message:
+                                                            'Pago anulado correctamente',
+                                                        type: SnackType.help,
+                                                      );
+                                                    }
+                                                  }
+                                                }),
                                       ],
                                     ),
                                     if (calculatedChange > 0 &&

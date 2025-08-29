@@ -232,7 +232,7 @@ Future<Map<String, dynamic>> postInvoice({
 
     // Convertir el JSON a un Map
     Map<String, dynamic> jsonData = jsonDecode(orderResponse.body);
- 
+
     return {'success': true, 'Record_ID': jsonData['id']};
   } catch (e) {
     print('Excepción general: $e');
@@ -240,27 +240,27 @@ Future<Map<String, dynamic>> postInvoice({
   }
 }
 
-Future<Map<String, dynamic>?> fetchOrderById({
-  required BuildContext context, 
-  required int orderId
-}) async {
+Future<Map<String, dynamic>?> fetchOrderById(
+    {required BuildContext context, required int orderId}) async {
   try {
     await usuarioAuth(context: context);
 
     final response = await get(
       //Uri.parse('${EndPoints.cOrder}/$orderId?\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
-      Uri.parse('${EndPoints.cOrder}?\$filter=C_Order_ID eq ${orderId}&\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
+      Uri.parse(
+          '${EndPoints.cOrder}?\$filter=C_Order_ID eq ${orderId}&\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
 
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
       },
     );
-    
+
     if (response.statusCode == 200) {
-      Map<String, dynamic> responseData = json.decode(utf8.decode(response.bodyBytes));
+      Map<String, dynamic> responseData =
+          json.decode(utf8.decode(response.bodyBytes));
       final record = responseData['records'][0];
-     
+
       return {
         'id': record['id'],
         'Created': record['Created'],
@@ -451,5 +451,158 @@ Future<void> fetchDocumentActions({required int docTypeID}) async {
     POS.documentActions = result;
   } else {
     print('Error al obtener acciones de documento: ${response.statusCode}');
+  }
+}
+
+Future<Map<String, dynamic>> showYappyQR({
+  required double subTotal,
+  required double totalTax,
+  required double total,
+  required BuildContext context,
+}) async {
+  try {
+    final Map<String, dynamic> openDeviceData = {
+      "body": {
+        "device": {
+          "id": Yappy.deviceId,
+          "name": Yappy.deviceId,
+          "user": Yappy.deviceId,
+        },
+        "group_id": Yappy.groupId
+      }
+    };
+
+    final Map<String, dynamic> generateQRData = {
+      "body": {
+        "charge_amount": {
+          "sub_total": subTotal,
+          "tax": totalTax,
+          "tip": 0,
+          "discount": 0,
+          "total": total
+        }
+      }
+    };
+
+    final deviceResponse = await post(
+      Uri.parse(EndPoints.yappyDevice),
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': Yappy.apiKey!,
+        'secret-key': Yappy.secretKey!,
+      },
+      body: jsonEncode(openDeviceData),
+    );
+
+    if (deviceResponse.statusCode != 200) {
+      print('Error al abrir la caja de yappi: ${deviceResponse.statusCode}');
+      print(deviceResponse.body);
+      return {
+        'success': false,
+        'message': 'Error al abrir la caja de yappi.',
+      };
+    }
+
+    Yappy.token = json.decode(deviceResponse.body)['body']['token'];
+
+    final qrResponse = await post(
+      Uri.parse(EndPoints.yappyQRGeneratorDYN),
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': Yappy.apiKey!,
+        'secret-key': Yappy.secretKey!,
+        'authorization': Yappy.token!,
+      },
+      body: jsonEncode(generateQRData),
+    );
+
+    if (qrResponse.statusCode != 200) {
+      print('Error al generar el QR de yappy: ${qrResponse.statusCode}');
+      print(qrResponse.body);
+
+      return {
+        'success': false,
+        'message': 'Error al generar el QR de yappy.',
+      };
+    }
+
+    return {
+      'success': true,
+      'hash': json.decode(qrResponse.body)['body']['hash'],
+      'transactionId': json.decode(qrResponse.body)['body']['transactionId'],
+    };
+  } catch (e) {
+    print('Excepción general: $e');
+    return {'success': false, 'message': 'Excepción inesperada: $e'};
+  }
+}
+
+Future<bool> checkYappyStatus(String transactionId) async {
+  try {
+    final response = await get(
+      Uri.parse('${EndPoints.yappyTransaction}/$transactionId'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'api-key': Yappy.apiKey!,
+        'secret-key': Yappy.secretKey!,
+        'authorization': Yappy.token!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+
+      final status = jsonResponse['body']['status'];
+      if (status == 'COMPLETED') {
+        return true;
+      } else if (status == 'PENDING') {
+        return false;
+      } else {
+        debugPrint('Transacción fallida o cancelada: $status');
+        return false;
+      }
+    } else {
+      debugPrint('Error al verificar el estado de Yappy: ${response.body}');
+      return false;
+    }
+  } catch (e) {
+    debugPrint('Error de red en checkYappyStatus: $e');
+    return false;
+  }
+}
+
+Future<bool> cancelYappyTransaction({required String transactionId}) async {
+  try {
+    final response = await put(
+      Uri.parse('${EndPoints.yappyTransaction}/$transactionId'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'api-key': Yappy.apiKey!,
+        'secret-key': Yappy.secretKey!,
+        'authorization': Yappy.token!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+
+      final status = jsonResponse['status']['code'];
+      print('Status de la cancelación: $status');
+      if (status == 'YP-0000') {
+        print('Transacción cancelada exitosamente: $transactionId');
+        return true;
+      } else {
+        debugPrint(
+            'Operacion para cancelar transacion fallida: ${response.body}');
+        return false;
+      }
+    } else {
+      debugPrint(
+          'Operacion para cancelar transacion fallida: ${response.body}');
+      return false;
+    }
+  } catch (e) {
+    debugPrint('Error de red en cancelYappyTransaction: $e');
+    return false;
   }
 }

@@ -4,6 +4,7 @@ class Base {
   static String title = prod ? 'Prim App' : 'Demo Prim App';
 
   static String? baseURL;
+  static String? yappyURL;
 }
 
 class EndPoints {
@@ -62,8 +63,18 @@ class EndPoints {
 
   static String cBPGroup = '${Base.baseURL}/api/v1/models/C_BP_Group';
 
+  static String cdsYappyConf = '${Base.baseURL}/api/v1/models/CDS_YappyConf';
+
+  static String cdsYappyGroup = '${Base.baseURL}/api/v1/models/CDS_YappyGroup';
+
   static String cPOSTenderType =
       '${Base.baseURL}/api/v1/models/C_POSTenderType';
+
+  static String yappyDevice = '${Base.yappyURL}/session/device';
+
+  static String yappyQRGeneratorDYN = '${Base.yappyURL}/qr/generate/DYN';
+
+  static String yappyTransaction = '${Base.yappyURL}/transaction';
 }
 
 class GetCustomerData {
