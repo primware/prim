@@ -4,7 +4,6 @@ import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/shimmer_list.dart';
 import 'package:primware/views/Home/product/product_funtions.dart';
-
 import '../../../localization/app_locale.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
@@ -208,10 +207,12 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   SearchableDropdown<String>(
                     value: selectedProductType,
-                    options: productTypes.map((type) => {
-                      'id': type['value'],
-                      'name': type['label'],
-                    }).toList(),
+                    options: productTypes
+                        .map((type) => {
+                              'id': type['value'],
+                              'name': type['label'],
+                            })
+                        .toList(),
                     labelText: '${AppLocale.productType.getString(context)} *',
                     showSearchBox: false,
                     onChanged: (String? newValue) {
@@ -258,8 +259,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
                             });
                           },
                         ),
-                        // Mensaje de error si taxTypes está vacío
-                        /*if (_taxError && !_isTaxiesLoading)
+                  // Mensaje de error si taxTypes está vacío
+                  /*if (_taxError && !_isTaxiesLoading)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0, left: 12.0),
                             child: Text(

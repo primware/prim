@@ -12,7 +12,7 @@ import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
 import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
-import '../../shared/message.custom.dart';
+import '../../shared/toast_message.dart';
 import '../Home/dashboard/dashboard_view.dart';
 import 'auth_funtions.dart';
 import '../../API/user.api.dart';
@@ -196,10 +196,10 @@ class _ConfigPageState extends State<ConfigPage> {
         });
       }
     } else {
-      SnackMessage.show(
+      ToastMessage.show(
         context: context,
         message: AppLocale.selectCompanyRoleOrganization.getString(context),
-        type: SnackType.failure,
+        type: ToastType.failure,
       );
     }
   }

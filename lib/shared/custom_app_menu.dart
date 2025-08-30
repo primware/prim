@@ -185,19 +185,9 @@ class MenuDrawer extends StatefulWidget {
 }
 
 class _MenuDrawerState extends State<MenuDrawer> {
-  bool _isDarkMode = false;
   @override
   void initState() {
     super.initState();
-    _loadTheme();
-  }
-
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    });
   }
 
   Future<bool?> _showLogoutConfirmation(BuildContext context) {
@@ -224,7 +214,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     // Limpiar controladores
     usuarioController.clear();
     claveController.clear();
-    
+
     // Limpiar tokens
     Token.auth = null;
     Token.preAuth = null;
@@ -233,7 +223,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     Token.client = null;
     Token.rol = null;
     Token.organitation = null;
-    
+
     // Limpiar datos de usuario
     UserData.id = null;
     UserData.name = null;
@@ -241,7 +231,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     UserData.phone = null;
     UserData.imageBytes = null;
     UserData.rolName = null;
-    
+
     // Limpiar datos POS
     POS.priceListID = null;
     POS.priceListVersionID = null;
@@ -291,7 +281,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
               );
             },
           ),
-
           if (POS.docTypesComplete.isEmpty)
             ListTile(
               leading: Icon(
@@ -440,22 +429,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 );
               },
             ),
-          // ListTile(
-          //   leading: Icon(
-          //     _isDarkMode ? Icons.nightlight : Icons.sunny,
-          //     color: Theme.of(context).colorScheme.onSurface,
-          //   ),
-          //   title: Text(
-          //     _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-          //     style: TextStyle(
-          //       color: Theme.of(context).colorScheme.onSurface,
-          //     ),
-          //   ),
-          //   onTap: () {
-          //     ThemeManager.themeNotifier.toggleTheme();
-          //     _loadTheme();
-          //   },
-          // ),
           ListTile(
             leading: Icon(
               Icons.logout_outlined,
@@ -470,13 +443,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
             onTap: () async {
               final confirmed = await _showLogoutConfirmation(context);
               if (confirmed == true) {
-                //Token.auth = null;
-                //usuarioController.clear();
-                //claveController.clear();
-
-                //UserData.rolName = null;
-                //UserData.imageBytes = null;
-
                 await cleanSessionData();
 
                 Navigator.pushReplacement(

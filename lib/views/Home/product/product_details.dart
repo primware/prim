@@ -4,7 +4,6 @@ import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/shimmer_list.dart';
 import 'package:primware/views/Home/product/product_funtions.dart';
-
 import '../../../localization/app_locale.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
@@ -37,7 +36,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   int? selectedTaxID;
   String? selectedProductType;
 
-
   List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> taxies = [];
 
@@ -61,8 +59,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
     selectedCategoryID = widget.product['category'];
     selectedTaxID = widget.product['C_TaxCategory_ID'];
-    selectedProductType = widget.product['ProductType']?? '';
-   
+    selectedProductType = widget.product['ProductType'] ?? '';
+
     nameController.addListener(_isFormValid);
     priceController.addListener(_isFormValid);
   }
@@ -212,10 +210,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   SearchableDropdown<String>(
                     value: selectedProductType,
-                    options: productTypes.map((type) => {
-                      'id': type['value'],
-                      'name': type['label'],
-                    }).toList(),
+                    options: productTypes
+                        .map((type) => {
+                              'id': type['value'],
+                              'name': type['label'],
+                            })
+                        .toList(),
                     labelText: '${AppLocale.productType.getString(context)} *',
                     showSearchBox: false,
                     onChanged: (String? newValue) {
@@ -258,8 +258,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             });
                           },
                         ),
-                        // Mensaje de error si taxTypes está vacío
-                        /*if (_taxError && !_isTaxiesLoading)
+                  // Mensaje de error si taxTypes está vacío
+                  /*if (_taxError && !_isTaxiesLoading)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0, left: 12.0),
                             child: Text(

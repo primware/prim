@@ -7,8 +7,7 @@ import '../../API/endpoint.api.dart';
 import '../../API/pos.api.dart';
 import '../../API/token.api.dart';
 import '../../main.dart';
-import '../../shared/message.custom.dart';
-
+import '../../shared/toast_message.dart';
 import 'login_view.dart';
 import '../../API/user.api.dart';
 
@@ -25,10 +24,10 @@ Future<void> handle401(BuildContext context) async {
       builder: (context) => MainApp(),
     ),
   );
-  SnackMessage.show(
+  ToastMessage.show(
     context: context,
     message: "Por su seguridad la sesión a expirado",
-    type: SnackType.warning,
+    type: ToastType.warning,
   );
 }
 
