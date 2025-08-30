@@ -281,6 +281,9 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
 
+      POS.docNoSequence = await _getDocNoSequence(
+          posData['C_DocType_ID']?['DocNoSequence_ID']?['id']);
+
       await fetchTaxs();
 
       final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
@@ -434,6 +437,31 @@ Future<int?> _getMPriceListVersion(int id) async {
     }
   } catch (e) {
     print('Error en _getMPriceListID: $e');
+  }
+  return null;
+}
+
+Future<int?> _getDocNoSequence(int id) async {
+  try {
+    final response = await get(
+      Uri.parse('${EndPoints.adSequence}?\$filter=AD_Sequence_ID eq $id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
+      return record['CurrentNext'];
+    } else {
+      print(
+          'Error en _getDocNoSequence: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en _getDocNoSequence: $e');
   }
   return null;
 }

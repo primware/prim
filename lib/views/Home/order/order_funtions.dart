@@ -480,7 +480,8 @@ Future<Map<String, dynamic>> showYappyQR({
           "tip": 0,
           "discount": 0,
           "total": total
-        }
+        },
+        if (POS.docNoSequence != null) "order_id": "${POS.docNoSequence}",
       }
     };
 

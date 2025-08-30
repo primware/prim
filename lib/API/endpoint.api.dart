@@ -55,6 +55,8 @@ class EndPoints {
 
   static String cTax = '${Base.baseURL}/api/v1/models/C_Tax';
 
+  static String adSequence = '${Base.baseURL}/api/v1/models/AD_Sequence';
+
   static String cTaxCategory = '${Base.baseURL}/api/v1/models/C_TaxCategory';
 
   static String cDocType = '${Base.baseURL}/api/v1/models/C_DocType';

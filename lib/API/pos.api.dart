@@ -6,7 +6,7 @@ class POS {
   static int? docTypeRefundID;
   static int? templatePartnerID;
   static bool isPOS = false;
-
+  static int? docNoSequence;
   static List<Map<String, dynamic>> docTypesComplete = [];
 
   static List<Map<String, String>> documentActions = [
@@ -22,7 +22,6 @@ class POSTenderType {
 
 class Yappy {
   static String? token;
-  // static String? transactionId;
   static String? secretKey;
   static String? apiKey;
   static int? yappyConfigID;
