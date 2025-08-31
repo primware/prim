@@ -1,37 +1,80 @@
 name: Build Windows (Flutter)
 
-# 👇 Solo se ejecuta manualmente desde la pestaña Actions
 on:
   workflow_dispatch:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    # Fijamos imagen estable con VS 2022 (evita cambios del "latest")
+    runs-on: windows-2022
+
+    env:
+      ARTIFACT_PREFIX: windows-release-
+      ARTIFACT_NAME: windows-release-${{ github.run_number }}
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Configurar Flutter
+      - name: Configurar Flutter 3.32.1 (stable)
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.32.1'
           cache: true
+
+      - name: Verificar versiones
+        run: |
+          flutter --version
+          dart --version
 
       - name: Habilitar Windows Desktop
         run: flutter config --enable-windows-desktop
 
-      - name: Flutter doctor (debug)
-        run: flutter doctor -v
-
-      - name: Obtener dependencias
+      - name: Resolver dependencias
         run: flutter pub get
 
       - name: Compilar release para Windows
         run: flutter build windows --release
 
-      - name: Subir artefacto compilado
+      # Empaquetar la carpeta Release (x64 o la que corresponda) en un ZIP único
+      - name: Empaquetar ZIP
+        shell: pwsh
+        run: |
+          $releaseDir = Get-ChildItem -Directory build/windows -Recurse -Filter Release | Select-Object -First 1
+          if (-not $releaseDir) { throw "No se encontró la carpeta 'Release' dentro de build/windows/**/runner/Release" }
+          $zipName = "windows-release.zip"
+          if (Test-Path $zipName) { Remove-Item $zipName -Force }
+          Compress-Archive -Path "$($releaseDir.FullName)\*" -DestinationPath $zipName -Force
+          Write-Host "Empaquetado: $($releaseDir.FullName) -> $zipName"
+
+      - name: Subir artefacto (.zip)
         uses: actions/upload-artifact@v4
         with:
-          name: windows-release
-          path: build/windows/**/runner/Release/
+          name: ${{ env.ARTIFACT_NAME }}
+          path: windows-release.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      # Borrar artefactos previos y dejar solo el más reciente con el prefijo dado
+      - name: Borrar artefactos anteriores y conservar solo el más nuevo
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prefix = process.env.ARTIFACT_PREFIX;
+            const keep = process.env.ARTIFACT_NAME;
+            let page = 1, per_page = 100, toDelete = [];
+            while (true) {
+              const { data } = await github.rest.actions.listArtifactsForRepo({
+                owner: context.repo.owner, repo: context.repo.repo, per_page, page
+              });
+              const matches = data.artifacts.filter(a => a.name.startsWith(prefix) && a.name !== keep);
+              for (const a of matches) toDelete.push(a.id);
+              if (data.artifacts.length < per_page) break;
+              page++;
+            }
+            for (const id of toDelete) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner, repo: context.repo.repo, artifact_id: id
+              });
+            }
