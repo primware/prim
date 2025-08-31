@@ -1,0 +1,37 @@
+name: Build Windows (Flutter)
+
+# 👇 Solo se ejecuta manualmente desde la pestaña Actions
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Habilitar Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Flutter doctor (debug)
+        run: flutter doctor -v
+
+      - name: Obtener dependencias
+        run: flutter pub get
+
+      - name: Compilar release para Windows
+        run: flutter build windows --release
+
+      - name: Subir artefacto compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: build/windows/**/runner/Release/
