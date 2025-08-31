@@ -14,6 +14,7 @@ import '../../../shared/custom_textfield.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/toast_message.dart';
 import '../../../theme/colors.dart';
+import '../../Auth/auth_funtions.dart';
 import '../bpartner/bpartner_new.dart';
 import '../product/product_new.dart';
 import 'order_funtions.dart';
@@ -79,7 +80,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   double total = 0.0;
 
   // ==== Helpers for monetary rounding and comparisons ====
-  static const double _EPS = 0.01; // tolerancia de 1 centavo
+  static const double eps = 0.01; // tolerancia de 1 centavo
   double _r2(num v) => (v * 100).round() / 100.0; // redondea a 2 decimales
   // ==== Helpers for monetary rounding and comparisons ====
 
@@ -114,8 +115,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-//TODO manejar cuando no hay yappycunfiguration
-
       _loadBPartner();
       _loadDocumentActions();
       initialLoadProduct();
@@ -132,6 +131,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     if (Yappy.apiKey != null && Yappy.secretKey != null) {
       isYappyConfigAvailable = true;
+    }
+
+    if (POS.docNoSequenceID != null) {
+      getDocNoSequence().then((value) {
+        setState(() {
+          POS.docNoSequence = value;
+        });
+      });
     }
   }
 
@@ -205,8 +212,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   @override
   void dispose() {
+    //todo si me voy a otra pantalla que no sea la de ordenes o la de despues de procesar entnces si cancelar
     // Cancela Yappy si quedó pendiente al cerrar esta pantalla
-    _cancelPendingYappy(silent: true);
+    //  _cancelPendingYappy(silent: true);
 
     for (final controller in paymentControllers.values) {
       controller.dispose();
@@ -253,7 +261,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       } else {
         _isInvoiceValid = clientSelected &&
             products.isNotEmpty &&
-            (totalPayment + _EPS) >= amount;
+            (totalPayment + eps) >= amount;
       }
       calculatedChange = change > 0 ? change : 0.0;
     });
@@ -600,7 +608,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      barrierColor: Color(0xFF1996E6),
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
@@ -646,7 +653,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 t.cancel();
                 await cancelYappyTransaction(
                     transactionId: yappyTransactionId!);
-                yappyTransactionId = null;
+                setState(() {
+                  yappyTransactionId = null;
+                });
+
                 ToastMessage.show(
                   context: context,
                   message: 'Pago cancelado o tiempo agotado',
@@ -664,62 +674,109 @@ class _OrderNewPageState extends State<OrderNewPage> {
             return WillPopScope(
               onWillPop: () async => false,
               child: AlertDialog(
-                backgroundColor: Theme.of(context).cardColor,
-                contentPadding: const EdgeInsets.all(16),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Center(
-                    //   child: Image.asset(
-                    //     'assets/img/logo-itse.png',
-                    //     width: 160,
-                    //   ),
-                    // ),
-
-                    // QR grande centrado
-                    SizedBox(
-                      width: 280,
-                      height: 280,
-                      child: Center(
-                        child: QrImageView(
-                          data: hash,
-                          version: QrVersions.auto,
-                          size: 260,
+                backgroundColor: Color(0xFF1996E6),
+                contentPadding: const EdgeInsets.all(0),
+                content: SizedBox(
+                  width: 640,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(24),
+                            topRight: Radius.circular(24),
+                          ),
+                          color: Colors.white,
+                        ),
+                        child: Center(
+                          child: Image.asset(
+                            'assets/img/yappyLogo.png',
+                            width: 240,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Contador
-                    Text(
-                      'Tiempo restante: $mm:$ss',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 6),
-                    // Id de transacción (pequeño)
-                    Text(
-                      'Transacción: $yappyTransactionId',
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      closed = true;
-                      ticker?.cancel();
-                      cancelYappyTransaction(
-                          transactionId: yappyTransactionId!);
-                      yappyTransactionId = null;
-                      ToastMessage.show(
-                        context: context,
-                        message: 'Pago cancelado o tiempo agotado',
-                        type: ToastType.failure,
-                      );
-                      Navigator.of(dialogContext).pop(false);
-                    },
-                    child: Text(AppLocale.cancel.getString(context)),
+                      const SizedBox(height: CustomSpacer.xlarge),
+
+                      // QR grande centrado
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        width: 280,
+                        // height: 280,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                        ),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              QrImageView(
+                                data: hash,
+                                version: QrVersions.auto,
+                                size: 260,
+                              ),
+                              // Contador
+                              Text(
+                                'Tiempo restante: $mm:$ss',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 6),
+                              // Id de transacción (pequeño)
+                              Text(
+                                'Transacción: $yappyTransactionId',
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                              const SizedBox(height: CustomSpacer.medium),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  backgroundColor:
+                                      ColorTheme.error.withOpacity(0.2),
+                                ),
+                                onPressed: () {
+                                  closed = true;
+                                  ticker?.cancel();
+                                  cancelYappyTransaction(
+                                      transactionId: yappyTransactionId!);
+                                  setState(() {
+                                    yappyTransactionId = null;
+                                  });
+
+                                  ToastMessage.show(
+                                    context: context,
+                                    message: 'Pago cancelado o tiempo agotado',
+                                    type: ToastType.failure,
+                                  );
+                                  Navigator.of(dialogContext).pop(false);
+                                },
+                                child: Text(
+                                  AppLocale.cancel.getString(context),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: CustomSpacer.xlarge),
+                      Text(
+                          'Escanéalo desde Yappy App o desde Yappy en el App de tu banco',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(
+                                color: Colors.white,
+                              ),
+                          textAlign: TextAlign.center),
+                      const SizedBox(height: CustomSpacer.xlarge),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -872,45 +929,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     return taxSummary;
   }
 
-  // Agrega este método a tu clase OrderDetailPage
-  Future<void> _showPdfPreview(BuildContext context, Uint8List pdfBytes) async {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          //title: Text(AppLocale.previewTicket.getString(context)),
-          title: Text('asdadsdad'),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 500,
-            child: PdfPreview(
-              build: (format) => pdfBytes,
-              allowSharing: true,
-              allowPrinting: true,
-              canChangePageFormat: false,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(AppLocale.close.getString(context)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              //child: Text(AppLocale.print.getString(context)),
-              child: Text('asdadaddd'),
-              onPressed: () {
-                Printing.layoutPdf(onLayout: (_) => pdfBytes);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Future<void> _createInvoice({
     required List<Map<String, dynamic>> product,
     required int bPartner,
@@ -1041,16 +1059,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
           );*/
         }
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.isRefund
-              ? AppLocale.creditNote.getString(context)
-              : AppLocale.newOrder.getString(context)),
-          backgroundColor: Colors.green,
-        ),
+      ToastMessage.show(
+        context: context,
+        message: widget.isRefund
+            ? AppLocale.creditNote.getString(context)
+            : AppLocale.newOrder.getString(context),
+        type: ToastType.success,
       );
+
       clearInvoiceFields();
+      POS.docNoSequence = await getDocNoSequence();
       setState(() {
         invoiceLines.clear();
         subtotal = 0.0;
@@ -1061,12 +1079,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
         _validateForm();
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ??
-              AppLocale.errorCompleteOrder.getString(context)),
-          backgroundColor: ColorTheme.error,
-        ),
+      ToastMessage.show(
+        context: context,
+        message: result['message'] ??
+            AppLocale.errorCompleteOrder.getString(context),
+        type: ToastType.failure,
       );
     }
     setState(() => isSending = false);
@@ -1102,15 +1119,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        await _cancelPendingYappy(silent: false);
+        //TODO manejar lo de cancelar el yappy si me salgo
+        // await _cancelPendingYappy(silent: false);
         return true;
       },
       child: Scaffold(
         appBar: AppBar(
+          //TODO manejar el titulo cuando no es refund
           title: Text(widget.orderName != null
-              ? widget.orderName!
+              ? '${widget.orderName!} : ${POS.docNoSequence ?? ""}'
               : widget.isRefund
-                  ? AppLocale.creditNote.getString(context)
+                  ? '${AppLocale.creditNote.getString(context)} : ${POS.docNoSequence ?? ""}'
                   : AppLocale.newOrder.getString(context)),
           backgroundColor:
               widget.isRefund ? Theme.of(context).colorScheme.error : null,
@@ -1145,13 +1164,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Nro. Documento: ${POS.docNoSequence ?? ""}'),
                           const SizedBox(height: CustomSpacer.medium),
                           if (isCustomerSearchLoading) ...[
                             const SizedBox(height: 4),
                             const LinearProgressIndicator(),
                             const SizedBox(height: 8),
                           ],
+                          //TODO manejar porder buscar por Cedula y que no me seleccione el tercero por defecto cuando busco
                           isBPartnerLoading
                               ? _buildShimmerField()
                               : CustomSearchField(

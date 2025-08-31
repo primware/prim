@@ -276,13 +276,13 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.priceListID = posData['M_PriceList_ID']?['id'];
       POS.docTypeID = posData['C_DocType_ID']?['id'];
       POS.docTypeName = posData['C_DocType_ID']?['PrintName'];
+      //TODO traer el identifier del tercero por defecto para mejorar la carga del pos
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
 
-      POS.docNoSequence = await _getDocNoSequence(
-          posData['C_DocType_ID']?['DocNoSequence_ID']?['id']);
+      POS.docNoSequenceID = posData['C_DocType_ID']?['DocNoSequence_ID']?['id'];
 
       await fetchTaxs();
 
@@ -441,10 +441,11 @@ Future<int?> _getMPriceListVersion(int id) async {
   return null;
 }
 
-Future<int?> _getDocNoSequence(int id) async {
+Future<int?> getDocNoSequence() async {
   try {
     final response = await get(
-      Uri.parse('${EndPoints.adSequence}?\$filter=AD_Sequence_ID eq $id'),
+      Uri.parse(
+          '${EndPoints.adSequence}?\$filter=AD_Sequence_ID eq ${POS.docNoSequenceID}'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
@@ -537,7 +538,7 @@ Future<void> _fetchDocumentActions() async {
       'Prepare': {'code': 'PR', 'name': 'Preparar'},
     };
 
-    final List<Map<String, String>> result = [...POS.documentActions];
+    final List<Map<String, String>> result = [];
 
     for (var record in records) {
       final identifier = record['AD_Ref_List_ID']?['identifier'];

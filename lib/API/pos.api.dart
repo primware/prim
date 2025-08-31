@@ -7,6 +7,7 @@ class POS {
   static int? templatePartnerID;
   static bool isPOS = false;
   static int? docNoSequence;
+  static int? docNoSequenceID;
   static List<Map<String, dynamic>> docTypesComplete = [];
 
   static List<Map<String, String>> documentActions = [

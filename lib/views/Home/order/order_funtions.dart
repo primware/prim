@@ -438,7 +438,7 @@ Future<void> fetchDocumentActions({required int docTypeID}) async {
       'ApprovePromotion': {'code': 'APr', 'name': 'Aprobar Promoción'},
     };
 
-    final List<Map<String, String>> result = [...POS.documentActions];
+    final List<Map<String, String>> result = [];
 
     for (var record in records) {
       final identifier = record['AD_Ref_List_ID']?['identifier'];

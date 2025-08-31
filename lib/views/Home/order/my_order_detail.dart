@@ -102,45 +102,6 @@ class OrderDetailPage extends StatelessWidget {
     return pdf.save();
   }
 
-  // Agrega este método a tu clase OrderDetailPage
-  Future<void> _showPdfPreview(BuildContext context, Uint8List pdfBytes) async {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          //title: Text(AppLocale.previewTicket.getString(context)),
-          title: Text('asdadsdad'),
-          content: Container(
-            width: double.maxFinite,
-            height: 500,
-            child: PdfPreview(
-              build: (format) => pdfBytes,
-              allowSharing: true,
-              allowPrinting: true,
-              canChangePageFormat: false,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(AppLocale.close.getString(context)),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              //child: Text(AppLocale.print.getString(context)),
-              child: Text('asdadaddd'),
-              onPressed: () {
-                Printing.layoutPdf(onLayout: (_) => pdfBytes);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final lines = (order['C_OrderLine'] as List?) ?? [];
