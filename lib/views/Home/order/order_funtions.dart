@@ -188,6 +188,7 @@ Future<Map<String, dynamic>> postInvoice({
       return {
         "C_POSTenderType_ID": {"id": payment['C_POSTenderType_ID']},
         "PayAmt": payment['PayAmt'],
+        if (payment['RoutingNo'] != null) "RoutingNo": payment['RoutingNo'],
       };
     }).toList();
 

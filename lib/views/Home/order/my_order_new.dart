@@ -989,6 +989,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       return {
         'PayAmt': double.parse(entry.value.text),
         'C_POSTenderType_ID': entry.key,
+        //TODO colocar aca si es yappy en el valor "RoutingNo" el numero de transaccion de yappy
       };
     }).toList();
 
