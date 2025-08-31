@@ -981,16 +981,34 @@ class _OrderNewPageState extends State<OrderNewPage> {
       };
     }).toList();
 
-    final paymentData = paymentControllers.entries
-        .where((entry) =>
-            double.tryParse(entry.value.text) != null &&
-            double.parse(entry.value.text) > 0)
-        .map((entry) {
-      return {
-        'PayAmt': double.parse(entry.value.text),
+    final paymentData = paymentControllers.entries.where((entry) {
+      final txt = entry.value.text.trim();
+      final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
+      return amt > 0;
+    }).map((entry) {
+      final txt = entry.value.text.trim();
+      final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
+
+      final method = paymentMethods.firstWhere(
+        (m) => m['id'] == entry.key,
+        orElse: () => const <String, dynamic>{},
+      );
+      final bool isYappy =
+          (method['name']?.toString().toLowerCase().contains('yappy') == true);
+
+      final Map<String, dynamic> data = {
+        'PayAmt': double.parse(amt.toStringAsFixed(2)),
         'C_POSTenderType_ID': entry.key,
-        //TODO colocar aca si es yappy en el valor "RoutingNo" el numero de transaccion de yappy
       };
+
+      // Si es Yappy y hay transacción, incluirla como RoutingNo
+      if (isYappy &&
+          yappyTransactionId != null &&
+          yappyTransactionId!.isNotEmpty) {
+        data['RoutingNo'] = yappyTransactionId;
+      }
+
+      return data;
     }).toList();
 
     final result = await postInvoice(
