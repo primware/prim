@@ -51,7 +51,7 @@ class ToastMessage {
         overflow: TextOverflow.visible,
       ),
       alignment: Alignment.bottomCenter,
-      autoCloseDuration: const Duration(seconds: 4),
+      autoCloseDuration: const Duration(seconds: 8),
       icon: Icon(icon, color: backgroundColor),
       showProgressBar: true,
       progressBarTheme: ProgressIndicatorThemeData(

@@ -11,6 +11,7 @@ import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/custom_textfield.dart';
+import '../../../shared/formater.dart';
 import '../../../shared/toast_message.dart';
 import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new.dart';
@@ -49,7 +50,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isProductSearchLoading = false,
       isProductLoading = true,
       isBPartnerLoading = true,
-      isYappyLoading = false;
+      isYappyLoading = false,
+      isYappyConfigAvailable = false;
 
   final Set<int> _lockedPayments = {};
   List<Map<String, dynamic>> bPartnerOptions = [];
@@ -126,6 +128,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     if (POS.documentActions.isNotEmpty) {
       selectedDocActionCode = POS.documentActions.first['code'];
+    }
+
+    if (Yappy.apiKey != null && Yappy.secretKey != null) {
+      isYappyConfigAvailable = true;
     }
   }
 
@@ -569,11 +575,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
 
     if (result['success'] != true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'No se pudo generar el QR'),
-          backgroundColor: ColorTheme.error,
-        ),
+      ToastMessage.show(
+        context: context,
+        message: result['message'] ?? 'No se pudo generar el QR',
+        type: ToastType.failure,
       );
       setState(() {
         isYappyLoading = false;
@@ -595,6 +600,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     await showDialog<bool>(
       context: context,
       barrierDismissible: false,
+      barrierColor: Color(0xFF1996E6),
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
@@ -1611,6 +1617,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                   method['id']],
                                               texto: method['name'],
                                               inputType: TextInputType.number,
+                                              inputFormatters: [
+                                                NumericTextFormatterWithDecimal()
+                                              ],
                                               readOnly: _lockedPayments
                                                   .contains(method['id']),
                                               onChanged: (_) => _validateForm(),
@@ -1647,13 +1656,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                   .toString()
                                                   .toLowerCase()
                                                   .contains('yappy') &&
+                                              isYappyConfigAvailable &&
                                               paymentControllers[method['id']]
                                                       ?.text !=
                                                   null &&
-                                              (paymentControllers[method['id']]
-                                                          ?.text ??
-                                                      '0.0') !=
-                                                  '0.0')
+                                              (double.tryParse(
+                                                          paymentControllers[
+                                                                      method[
+                                                                          'id']]
+                                                                  ?.text ??
+                                                              '0') ??
+                                                      0) >
+                                                  0)
                                             isYappyLoading
                                                 ? SizedBox(
                                                     width: 24,
@@ -1844,7 +1858,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         searchBy: "name",
                         showCreateButtonIfNotFound: false,
                         controller: TextEditingController(
-                          text: POS.documentActions.first['name'],
+                          text: POS.documentActions.isNotEmpty
+                              ? (POS.documentActions.first['name'] ?? '')
+                              : '',
                         ),
                         onItemSelected: (item) {
                           setState(() {
