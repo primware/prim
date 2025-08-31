@@ -200,7 +200,6 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
       bool success = await _loadUserData(context);
       await _loadPOSData(context);
       POSTenderType.isMultiPayment = await _posTenderExists();
-      await _fetchDocumentActions();
       return success;
     } else {
       print('Error: ${response.statusCode}, ${response.body}');
@@ -281,8 +280,6 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
-
-      POS.docNoSequenceID = posData['C_DocType_ID']?['DocNoSequence_ID']?['id'];
 
       await fetchTaxs();
 
@@ -441,32 +438,6 @@ Future<int?> _getMPriceListVersion(int id) async {
   return null;
 }
 
-Future<int?> getDocNoSequence() async {
-  try {
-    final response = await get(
-      Uri.parse(
-          '${EndPoints.adSequence}?\$filter=AD_Sequence_ID eq ${POS.docNoSequenceID}'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': Token.auth!,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      final record = responseData['records'][0];
-
-      return record['CurrentNext'];
-    } else {
-      print(
-          'Error en _getDocNoSequence: ${response.statusCode}, ${response.body}');
-    }
-  } catch (e) {
-    print('Error en _getDocNoSequence: $e');
-  }
-  return null;
-}
-
 Future<int?> _getCDocTypeComplete() async {
   try {
     final response = await get(
@@ -515,43 +486,6 @@ Future<int?> _getCDocType() async {
     print('Error en _getCDocType: $e');
   }
   return null;
-}
-
-Future<void> _fetchDocumentActions() async {
-  if (POS.docTypeID == null || Token.rol == null) return;
-
-  final response = await get(
-    Uri.parse(GetDocumentActions(roleID: Token.rol!, docTypeID: POS.docTypeID!)
-        .endPoint),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': Token.auth!,
-    },
-  );
-
-  if (response.statusCode == 200) {
-    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-    final records = jsonResponse['records'] as List;
-
-    final Map<String, Map<String, String>> actionMap = {
-      'Complete': {'code': 'CO', 'name': 'Completar'},
-      'Prepare': {'code': 'PR', 'name': 'Preparar'},
-    };
-
-    final List<Map<String, String>> result = [];
-
-    for (var record in records) {
-      final identifier = record['AD_Ref_List_ID']?['identifier'];
-      final action = actionMap[identifier];
-      if (action != null && !result.any((e) => e['code'] == action['code'])) {
-        result.add(action);
-      }
-    }
-
-    POS.documentActions = result;
-  } else {
-    print('Error al obtener acciones de documento: ${response.statusCode}');
-  }
 }
 
 Future<List<Map<String, dynamic>>?> getOrganizationsAfterLogin(

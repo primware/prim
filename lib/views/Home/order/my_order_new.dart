@@ -14,7 +14,6 @@ import '../../../shared/custom_textfield.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/toast_message.dart';
 import '../../../theme/colors.dart';
-import '../../Auth/auth_funtions.dart';
 import '../bpartner/bpartner_new.dart';
 import '../product/product_new.dart';
 import 'order_funtions.dart';
@@ -71,7 +70,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   bool isFormValid = false;
   bool _isInvoiceValid = false;
 
-  int? selectedBPartnerID;
+  int? selectedBPartnerID, docNoSequenceID, docNoSequenceNumber;
   String? selectedDocActionCode, yappyTransactionId;
   Map<String, dynamic>? selectedTax;
 
@@ -133,13 +132,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isYappyConfigAvailable = true;
     }
 
-    if (POS.docNoSequenceID != null) {
-      getDocNoSequence().then((value) {
-        setState(() {
-          POS.docNoSequence = value;
-        });
-      });
-    }
+    _loadSequence();
   }
 
   Future<void> _loadDocumentActions() async {
@@ -189,6 +182,38 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _loadPayment() async {
+    setState(() {
+      isPaymentMethodsLoading = true;
+    });
+    try {
+      final result = await fetchPaymentMethods();
+      setState(() {
+        paymentMethods = result;
+        for (var method in result) {
+          paymentControllers.putIfAbsent(
+              method['id'], () => TextEditingController());
+        }
+        isPaymentMethodsLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isPaymentMethodsLoading = false;
+      });
+      print('Error al cargar métodos de pago: $e');
+    }
+  }
+
+  Future<void> _loadSequence() async {
+    docNoSequenceID = await getDocNoSequenceID(recordID: widget.doctypeID!);
+
+    if (docNoSequenceID != null) {
+      getDocNoSequence(docNoSequenceID: docNoSequenceID!).then((value) {
+        setState(() {
+          docNoSequenceNumber = value;
+        });
+      });
+    }
+
     setState(() {
       isPaymentMethodsLoading = true;
     });
@@ -579,6 +604,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       subTotal: double.parse(subTotal.toStringAsFixed(2)),
       totalTax: double.parse(totalTax.toStringAsFixed(2)),
       total: double.parse(total.toStringAsFixed(2)),
+      docNoSequence: docNoSequenceNumber!,
       context: context,
     );
 
@@ -1087,7 +1113,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       );
 
       clearInvoiceFields();
-      POS.docNoSequence = await getDocNoSequence();
+      _loadSequence();
       setState(() {
         invoiceLines.clear();
         subtotal = 0.0;
@@ -1144,12 +1170,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          //TODO manejar el titulo cuando no es refund
-          title: Text(widget.orderName != null
-              ? '${widget.orderName!} : ${POS.docNoSequence ?? ""}'
-              : widget.isRefund
-                  ? '${AppLocale.creditNote.getString(context)} : ${POS.docNoSequence ?? ""}'
-                  : AppLocale.newOrder.getString(context)),
+          title: Text(
+            widget.orderName != null
+                ? '${widget.orderName!} : ${docNoSequenceNumber ?? ""}'
+                : widget.isRefund
+                    ? '${AppLocale.creditNote.getString(context)} : ${docNoSequenceNumber ?? ""}'
+                    : '${AppLocale.newOrder.getString(context)} : ${docNoSequenceNumber ?? ""}',
+          ),
           backgroundColor:
               widget.isRefund ? Theme.of(context).colorScheme.error : null,
           actions: [
@@ -1189,7 +1216,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             const LinearProgressIndicator(),
                             const SizedBox(height: 8),
                           ],
-                          //TODO manejar porder buscar por Cedula y que no me seleccione el tercero por defecto cuando busco
                           isBPartnerLoading
                               ? _buildShimmerField()
                               : CustomSearchField(
@@ -1219,6 +1245,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                   },
                                   onItemSelected: (item) {
                                     setState(() {
+                                      //TODO agregar aca una variable para la ubicacion o localizacion que ya la tengo en la informaicon del resultado
+                                      //TODO buscar por cedula el cliente
                                       selectedBPartnerID = item['id'];
                                     });
                                   },

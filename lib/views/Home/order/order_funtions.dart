@@ -16,7 +16,7 @@ Future<List<Map<String, dynamic>>> fetchBPartner({
       context: context,
     );
     final filterQuery = 'IsCustomer eq true'
-        '${searchTerm!.isNotEmpty ? ' and contains(tolower(Name), ${searchTerm.toLowerCase()})' : ''}';
+        '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), ${searchTerm.toLowerCase()}) or contains(tolower(TaxID), ${searchTerm.toLowerCase()})) ' : ''}';
 
     final response = await get(
       Uri.parse(
@@ -249,7 +249,7 @@ Future<Map<String, dynamic>?> fetchOrderById(
     final response = await get(
       //Uri.parse('${EndPoints.cOrder}/$orderId?\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=C_Order_ID eq ${orderId}&\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
+          '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
 
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -459,6 +459,7 @@ Future<Map<String, dynamic>> showYappyQR({
   required double subTotal,
   required double totalTax,
   required double total,
+  required int docNoSequence,
   required BuildContext context,
 }) async {
   try {
@@ -482,7 +483,7 @@ Future<Map<String, dynamic>> showYappyQR({
           "discount": 0,
           "total": total
         },
-        if (POS.docNoSequence != null) "order_id": "${POS.docNoSequence}",
+        "order_id": "$docNoSequence",
       }
     };
 
@@ -607,4 +608,55 @@ Future<bool> cancelYappyTransaction({required String transactionId}) async {
     debugPrint('Error de red en cancelYappyTransaction: $e');
     return false;
   }
+}
+
+Future<int?> getDocNoSequenceID({required int recordID}) async {
+  try {
+    final response = await get(
+      Uri.parse('${EndPoints.cDocType}?\$filter=C_DocType_ID eq $recordID'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
+      return record['DocNoSequence_ID']?['id'];
+    } else {
+      print(
+          'Error en getDocNoSequenceID: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en getDocNoSequenceID: $e');
+  }
+  return null;
+}
+
+Future<int?> getDocNoSequence({required int docNoSequenceID}) async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.adSequence}?\$filter=AD_Sequence_ID eq $docNoSequenceID'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
+      return record['CurrentNext'];
+    } else {
+      print(
+          'Error en _getDocNoSequence: ${response.statusCode}, ${response.body}');
+    }
+  } catch (e) {
+    print('Error en _getDocNoSequence: $e');
+  }
+  return null;
 }
