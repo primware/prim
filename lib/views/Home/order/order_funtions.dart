@@ -15,8 +15,8 @@ Future<List<Map<String, dynamic>>> fetchBPartner({
     await usuarioAuth(
       context: context,
     );
-    final filterQuery = 'IsCustomer eq true'
-        '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), ${searchTerm.toLowerCase()}) or contains(tolower(TaxID), ${searchTerm.toLowerCase()}))' : ''}';
+    final filterQuery =
+        'IsCustomer eq true${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), ${searchTerm.toLowerCase()}) or contains(tolower(TaxID), ${searchTerm.toLowerCase()}))' : ''}';
 
     final response = await get(
       Uri.parse(

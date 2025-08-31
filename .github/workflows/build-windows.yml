@@ -3,24 +3,27 @@ name: Build Windows (Flutter)
 on:
   workflow_dispatch:
 
+# Permisos mínimos (no borraremos artifacts)
+permissions:
+  contents: read
+
 jobs:
   build-windows:
-    # Fijamos imagen estable con VS 2022 (evita cambios del "latest")
     runs-on: windows-2022
 
     env:
-      ARTIFACT_PREFIX: windows-release-
+      FLUTTER_VERSION: '3.32.1'
       ARTIFACT_NAME: windows-release-${{ github.run_number }}
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Configurar Flutter 3.32.1 (stable)
+      - name: Configurar Flutter ${{ env.FLUTTER_VERSION }} (stable)
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.32.1'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Verificar versiones
@@ -37,44 +40,41 @@ jobs:
       - name: Compilar release para Windows
         run: flutter build windows --release
 
-      # Empaquetar la carpeta Release (x64 o la que corresponda) en un ZIP único
+      # <<< Selecciona la carpeta de salida correcta y verifica contenido >>>
+      - name: Verificar carpeta Release y listar contenido
+        shell: pwsh
+        run: |
+          $candidates = @(
+            'build/windows/x64/runner/Release',
+            'build/windows/arm64/runner/Release',
+            'build/windows/runner/Release' # ruta legacy
+          )
+          $releaseDir = $null
+          foreach ($p in $candidates) { if (Test-Path $p) { $releaseDir = $p; break } }
+          if (-not $releaseDir) { throw "No se encontró ninguna carpeta Release en: $($candidates -join ', ')" }
+
+          Write-Host "Carpeta Release detectada: $releaseDir"
+          Get-ChildItem -Recurse $releaseDir | Select-Object Length, FullName | Format-Table -AutoSize
+
+          # Guardar ruta para el siguiente paso
+          echo "RELEASE_DIR=$releaseDir" >> $env:GITHUB_ENV
+
+      # Empaquetar la carpeta Release correcta en un ZIP único
       - name: Empaquetar ZIP
         shell: pwsh
         run: |
-          $releaseDir = Get-ChildItem -Directory build/windows -Recurse -Filter Release | Select-Object -First 1
-          if (-not $releaseDir) { throw "No se encontró la carpeta 'Release' dentro de build/windows/**/runner/Release" }
-          $zipName = "windows-release.zip"
+          $zipName = "${{ env.ARTIFACT_NAME }}.zip"
           if (Test-Path $zipName) { Remove-Item $zipName -Force }
-          Compress-Archive -Path "$($releaseDir.FullName)\*" -DestinationPath $zipName -Force
-          Write-Host "Empaquetado: $($releaseDir.FullName) -> $zipName"
+          Compress-Archive -Path "$env:RELEASE_DIR\*" -DestinationPath $zipName -Force
+          Write-Host "Empaquetado: $env:RELEASE_DIR -> $zipName"
+
+          # Mostrar tamaño final del ZIP
+          Get-Item $zipName | Select-Object Name, Length | Format-Table -AutoSize
 
       - name: Subir artefacto (.zip)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: windows-release.zip
+          path: ${{ env.ARTIFACT_NAME }}.zip
           if-no-files-found: error
           retention-days: 30
-
-      # Borrar artefactos previos y dejar solo el más reciente con el prefijo dado
-      - name: Borrar artefactos anteriores y conservar solo el más nuevo
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const prefix = process.env.ARTIFACT_PREFIX;
-            const keep = process.env.ARTIFACT_NAME;
-            let page = 1, per_page = 100, toDelete = [];
-            while (true) {
-              const { data } = await github.rest.actions.listArtifactsForRepo({
-                owner: context.repo.owner, repo: context.repo.repo, per_page, page
-              });
-              const matches = data.artifacts.filter(a => a.name.startsWith(prefix) && a.name !== keep);
-              for (const a of matches) toDelete.push(a.id);
-              if (data.artifacts.length < per_page) break;
-              page++;
-            }
-            for (const id of toDelete) {
-              await github.rest.actions.deleteArtifact({
-                owner: context.repo.owner, repo: context.repo.repo, artifact_id: id
-              });
-            }
