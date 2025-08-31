@@ -1145,6 +1145,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text('Nro. Documento: ${POS.docNoSequence ?? ""}'),
+                          const SizedBox(height: CustomSpacer.medium),
                           if (isCustomerSearchLoading) ...[
                             const SizedBox(height: 4),
                             const LinearProgressIndicator(),
