@@ -118,7 +118,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // clienteController.text = POS.templatePartnerName ?? '';
+      //TODO agregar un campo para colocar la cedula en el cliente y pasar eso directo al campo de busqueda
       _loadBPartner();
       _loadDocumentActions();
       initialLoadProduct();
@@ -1884,10 +1884,21 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                         'Mostrar código QR',
                                                     onPressed: () {
                                                       _showYappyQRDialog(
-                                                        subTotal: subtotal,
-                                                        totalTax:
-                                                            getTotalTaxAmount(),
-                                                        total: totalAmount,
+                                                        subTotal: double.parse(
+                                                            paymentControllers[
+                                                                        method[
+                                                                            'id']]
+                                                                    ?.text
+                                                                    .toString() ??
+                                                                '0'),
+                                                        totalTax: 0,
+                                                        total: double.parse(
+                                                            paymentControllers[
+                                                                        method[
+                                                                            'id']]
+                                                                    ?.text
+                                                                    .toString() ??
+                                                                '0'),
                                                         methodId: method['id'],
                                                       );
                                                     },
