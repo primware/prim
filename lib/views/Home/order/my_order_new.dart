@@ -110,6 +110,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     productController.clear();
     taxController.clear();
     yappyTransactionId = null;
+    _lockedPayments.clear();
   }
 
   @override
@@ -897,8 +898,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     // Render PDF
     pdf.addPage(
       pw.Page(
-        pageFormat: pageFormat.copyWith(
-            marginLeft: 8, marginRight: 8, marginTop: 8, marginBottom: 8),
+        pageFormat: pageFormat.copyWith(marginTop: 8, marginBottom: 8),
         theme: theme,
         build: (context) {
           return pw.Column(
@@ -1211,18 +1211,24 @@ class _OrderNewPageState extends State<OrderNewPage> {
         if (confirmPrintTicket == true) {
           final pdfBytes = await _generateTicketPdf(order);
 
-          final printers = await Printing.listPrinters();
-          final defaultPrinter = printers.firstWhere(
-            (p) => p.isDefault,
-            orElse: () => printers.isNotEmpty
-                ? printers.first
-                : throw Exception('No hay impresoras disponibles'),
-          );
+          try {
+            final printers = await Printing.listPrinters();
+            final defaultPrinter = printers.firstWhere(
+              (p) => p.isDefault,
+              orElse: () => printers.isNotEmpty
+                  ? printers.first
+                  : throw Exception('No hay impresoras disponibles'),
+            );
 
-          await Printing.directPrintPdf(
-            printer: defaultPrinter,
-            onLayout: (_) => pdfBytes,
-          );
+            await Printing.directPrintPdf(
+              printer: defaultPrinter,
+              onLayout: (_) => pdfBytes,
+            );
+          } catch (e) {
+            await Printing.layoutPdf(
+              onLayout: (_) => pdfBytes,
+            );
+          }
         }
       }
       ToastMessage.show(

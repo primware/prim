@@ -79,8 +79,7 @@ class OrderDetailPage extends StatelessWidget {
     // Render PDF
     pdf.addPage(
       pw.Page(
-        pageFormat: pageFormat.copyWith(
-            marginLeft: 8, marginRight: 8, marginTop: 8, marginBottom: 8),
+        pageFormat: pageFormat.copyWith(marginTop: 8, marginBottom: 8),
         theme: theme,
         build: (context) {
           return pw.Column(
@@ -213,6 +212,17 @@ class OrderDetailPage extends StatelessWidget {
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 10),
 
+//TODO agregar la cantidad por formas de pago
+              // Formas de pago
+              pw.Text('Formas de Pago:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              ...?order['payments']?.map<pw.Widget>((payment) {
+                final payType = payment['tenderType'] ?? 'Otro';
+                final amount = (payment['amount'] as num?)?.toDouble() ?? 0.0;
+                return pw.Text('- $payType: ${money(amount)}');
+              }),
+              pw.SizedBox(height: 10),
+
               // Impuestos
               pw.Text('Neto sin ITBMS: ${money(netSum)}',
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
@@ -262,18 +272,24 @@ class OrderDetailPage extends StatelessWidget {
               if (confirmPrintTicket == true) {
                 final pdfBytes = await _generateTicketPdf(order);
 
-                final printers = await Printing.listPrinters();
-                final defaultPrinter = printers.firstWhere(
-                  (p) => p.isDefault,
-                  orElse: () => printers.isNotEmpty
-                      ? printers.first
-                      : throw Exception('No hay impresoras disponibles'),
-                );
+                try {
+                  final printers = await Printing.listPrinters();
+                  final defaultPrinter = printers.firstWhere(
+                    (p) => p.isDefault,
+                    orElse: () => printers.isNotEmpty
+                        ? printers.first
+                        : throw Exception('No hay impresoras disponibles'),
+                  );
 
-                await Printing.directPrintPdf(
-                  printer: defaultPrinter,
-                  onLayout: (_) => pdfBytes,
-                );
+                  await Printing.directPrintPdf(
+                    printer: defaultPrinter,
+                    onLayout: (_) => pdfBytes,
+                  );
+                } catch (e) {
+                  await Printing.layoutPdf(
+                    onLayout: (_) => pdfBytes,
+                  );
+                }
               }
             },
           ),
