@@ -115,7 +115,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      clienteController.text = POS.templatePartnerName ?? '';
+      // clienteController.text = POS.templatePartnerName ?? '';
       _loadBPartner();
       _loadDocumentActions();
       initialLoadProduct();
@@ -306,20 +306,25 @@ class _OrderNewPageState extends State<OrderNewPage> {
       searchTerm: clienteController.text.trim(),
     );
 
-    //? Busca el cliente por defecto según el ID en POS
-    final defaultPartner = partner.firstWhere(
-      (p) => p['id'] == POS.templatePartnerID,
-      orElse: () => {},
-    );
+    // //? Busca el cliente por defecto según el ID en POS
+    // final defaultPartner = partner.firstWhere(
+    //   (p) => p['id'] == POS.templatePartnerID,
+    //   orElse: () => {},
+    // );
 
     setState(() {
       bPartnerOptions = partner;
       isCustomerSearchLoading = false;
-      if (defaultPartner.isNotEmpty) {
-        selectedBPartnerID = defaultPartner['id'];
+      if (partner.length == 1) {
+        selectedBPartnerID = partner.first['id'];
         clienteController.text =
-            '${defaultPartner['TaxID'] ?? ''} - ${defaultPartner['name'] ?? ''}';
+            '${partner.first['TaxID'] ?? ''} - ${partner.first['name'] ?? ''}';
       }
+      // if (defaultPartner.isNotEmpty) {
+      //   selectedBPartnerID = defaultPartner['id'];
+      //   clienteController.text =
+      //       '${defaultPartner['TaxID'] ?? ''} - ${defaultPartner['name'] ?? ''}';
+      // }
     });
   }
 
@@ -1316,6 +1321,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
           ],
         ),
         drawer: MenuDrawer(),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Text(
+            'www.primware.net',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
         body: SingleChildScrollView(
           child: Center(
             child: Wrap(
