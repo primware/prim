@@ -832,7 +832,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(AppLocale.no.getString(context)),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: Text(AppLocale.yes.getString(context)),
           ),

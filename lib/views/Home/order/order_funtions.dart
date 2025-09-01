@@ -722,8 +722,8 @@ Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
   // Render PDF
   pdf.addPage(
     pw.Page(
-      pageFormat:
-          pageFormat.copyWith(marginTop: 8, marginBottom: 8, marginRight: 4),
+      pageFormat: pageFormat.copyWith(
+          marginTop: 8, marginBottom: 8, width: 75 * PdfPageFormat.mm),
       // theme: theme,
       build: (context) {
         return pw.Column(
@@ -808,9 +808,9 @@ Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
                             crossAxisAlignment: pw.CrossAxisAlignment.start,
                             children: [
                               pw.Text(
-                                truncate(name, 24),
-                                maxLines: 1,
-                                overflow: pw.TextOverflow.clip,
+                                name,
+                                // maxLines: 1,
+                                overflow: pw.TextOverflow.span,
                               ),
                               pw.Text(
                                 '${money(price)} x ${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)}',
