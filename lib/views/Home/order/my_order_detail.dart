@@ -260,29 +260,20 @@ class OrderDetailPage extends StatelessWidget {
               final bool? confirmPrintTicket =
                   await _printTicketConfirmation(context);
               if (confirmPrintTicket == true) {
-                // Aquí va tu lógica
-
-                // Generar el PDF
-                //final pdfDocument = await generateOrderSummaryPdf(order);
                 final pdfBytes = await _generateTicketPdf(order);
-                //final pdfBytes = await pdfDocument.save();
 
-                // Mostrar la vista previa del PDF
-                //await _showPdfPreview(context, pdfBytes);
-
-                // Mostrar la vista previa del PDF
-                await Printing.layoutPdf(
-                  onLayout: (_) => pdfBytes,
+                final printers = await Printing.listPrinters();
+                final defaultPrinter = printers.firstWhere(
+                  (p) => p.isDefault,
+                  orElse: () => printers.isNotEmpty
+                      ? printers.first
+                      : throw Exception('No hay impresoras disponibles'),
                 );
 
-                // Mientras tanto, mostramos un snackbar de confirmación
-                /*ScaffoldMessenger.of(context).showSnackBar(
-                  //SnackBar(content: Text(AppLocale.logoutSuccess.getString(context))),
-                  SnackBar(content: Text('Mensaje')),
-                );*/
-
-                // Cerrar la página actual y volver al login
-                //Navigator.of(context).popUntil((route) => route.isFirst);
+                await Printing.directPrintPdf(
+                  printer: defaultPrinter,
+                  onLayout: (_) => pdfBytes,
+                );
               }
             },
           ),

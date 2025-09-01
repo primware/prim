@@ -1211,7 +1211,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
         if (confirmPrintTicket == true) {
           final pdfBytes = await _generateTicketPdf(order);
 
-          await Printing.layoutPdf(
+          final printers = await Printing.listPrinters();
+          final defaultPrinter = printers.firstWhere(
+            (p) => p.isDefault,
+            orElse: () => printers.isNotEmpty
+                ? printers.first
+                : throw Exception('No hay impresoras disponibles'),
+          );
+
+          await Printing.directPrintPdf(
+            printer: defaultPrinter,
             onLayout: (_) => pdfBytes,
           );
         }
