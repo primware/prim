@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:primware/API/pos.api.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Home/order/my_order_detail_pdf_generator.dart';
@@ -58,10 +59,10 @@ class OrderDetailPage extends StatelessWidget {
     final docNo = str(order['DocumentNo']);
     final date = str(order['DateOrdered']);
     final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
-    final account = str(order['PaymentRule'] ?? 'CONTADO');
-    final bp = order['bpartner'] ?? {};
-    final customerName = str(bp['name'] ?? 'CONTADO');
-    final customeLocation = str(bp['location'] ?? '');
+    final taxID = str(order['bpartner']['taxID'] ?? '');
+    final phone = str(order['bpartner']['phone'] ?? '');
+    final customerName = str(order['bpartner']?['name'] ?? 'CONTADO');
+    final customeLocation = str(order['bpartner']?['location'] ?? '');
 
     // Lines & taxes
     final List lines = (order['C_OrderLine'] as List?) ?? const [];
@@ -88,31 +89,40 @@ class OrderDetailPage extends StatelessWidget {
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
               // Encabezado centrado
-              pw.Text('Punto de Venta Lirion', textAlign: pw.TextAlign.center),
-              pw.Text('Punto de Venta Táctil', textAlign: pw.TextAlign.center),
-              pw.Text('Derechos reservados (c) 2009–2018 Lirion',
+              POSPrinter.logo != null
+                  ? pw.Center(
+                      child: pw.Image(pw.MemoryImage(POSPrinter.logo!),
+                          width: 60, height: 60, fit: pw.BoxFit.contain))
+                  : pw.SizedBox(),
+              pw.SizedBox(height: 4),
+              pw.Text(POSPrinter.headerName ?? '',
                   textAlign: pw.TextAlign.center),
-              pw.Text('Cambie el encabezado en Configuración',
+              pw.Text(POSPrinter.headerAddress ?? '',
                   textAlign: pw.TextAlign.center),
-              pw.Text('Impresión de Ticket', textAlign: pw.TextAlign.center),
-              pw.SizedBox(height: 6),
+              pw.Text(POSPrinter.headerPhone ?? '',
+                  textAlign: pw.TextAlign.center),
+              pw.Text(POSPrinter.headerEmail ?? '',
+                  textAlign: pw.TextAlign.center),
+
+              pw.SizedBox(height: 12),
 
               // Detalles (alineados a la izquierda)
               pw.Text('Recibo: $docNo'),
               pw.Text('Fecha: $date'),
               if (servedBy.isNotEmpty) pw.Text('Atendido por: $servedBy'),
-              pw.Text('Cuenta #: $account'),
+              pw.Text('Cédula: $taxID'),
               pw.Text('Cliente: $customerName'),
-              if (customeLocation.isNotEmpty)
-                pw.Text('Dirección: $customeLocation'),
-              pw.SizedBox(height: 6),
+
+              pw.Text('Dirección: $customeLocation'),
+              pw.Text('Teléfono: $phone'),
+              pw.SizedBox(height: 12),
 
               // Tabla de ítems (alineada en 4 columnas)
               pw.Row(
                 children: [
                   pw.Expanded(
                     flex: 20,
-                    child: pw.Text('Artículo', maxLines: 1),
+                    child: pw.Text('Item', maxLines: 1),
                   ),
                   pw.Expanded(
                     flex: 15,
@@ -132,12 +142,13 @@ class OrderDetailPage extends StatelessWidget {
                     flex: 10,
                     child: pw.Align(
                       alignment: pw.Alignment.centerLeft,
-                      child: pw.Text('Importe', maxLines: 1),
+                      child: pw.Text('total', maxLines: 1),
                     ),
                   ),
                 ],
               ),
               pw.Divider(),
+              pw.SizedBox(height: 6),
               ...lines.map((line) {
                 final name = (line['M_Product_ID']?['identifier'] ?? 'Ítem')
                     .toString()
@@ -159,7 +170,6 @@ class OrderDetailPage extends StatelessWidget {
                     pw.Row(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        // Proporciones similares al ticket: 20/10/5/10
                         pw.Expanded(
                           flex: 20,
                           child: pw.Text(
@@ -192,34 +202,28 @@ class OrderDetailPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    pw.SizedBox(height: 6),
-                    pw.Text(
-                        'Impuesto ${rate.toStringAsFixed(0)}%: ${money(tax)}',
-                        textAlign: pw.TextAlign.left,
-                        maxLines: 1),
                   ],
                 );
               }),
 
               pw.SizedBox(height: 6),
 
-              // Totales
-              pw.Text('Cantidad de artículos: ${lines.length}'),
               pw.Divider(),
+              // Totales
+              pw.Text('Cant. Items: ${lines.length}'),
               pw.Text('Total: ${money(grandTotal)}',
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 6),
+              pw.SizedBox(height: 10),
 
               // Impuestos
-              pw.Text('Neto (sin impuesto): ${money(netSum)}'),
-              pw.Text('Impuestos: ${money(taxTotal)}'),
-              pw.SizedBox(height: 6),
+              pw.Text('Neto sin ITBMS: ${money(netSum)}',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.Text('ITBMS: ${money(taxTotal)}'),
+              pw.SizedBox(height: 12),
 
               // Footer
-              pw.Text('Cambie el texto del pie en Configuración'),
-              pw.Divider(),
-              pw.Text('Gracias por su compra'),
-              pw.Text('Por favor vuelva pronto'),
+              pw.Text('Gracias por mantener sus pagos al día',
+                  textAlign: pw.TextAlign.center),
             ],
           );
         },

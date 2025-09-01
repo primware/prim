@@ -65,6 +65,8 @@ class EndPoints {
 
   static String cBPGroup = '${Base.baseURL}/api/v1/models/C_BP_Group';
 
+  static String adOrgInfo = '${Base.baseURL}/api/v1/models/AD_OrgInfo';
+
   static String cdsYappyConf = '${Base.baseURL}/api/v1/models/CDS_YappyConf';
 
   static String cdsYappyGroup = '${Base.baseURL}/api/v1/models/CDS_YappyGroup';

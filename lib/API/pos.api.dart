@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class POS {
   static int? priceListID;
   static int? priceListVersionID;
@@ -20,6 +22,14 @@ class POSTenderType {
   static bool isMultiPayment = false;
 }
 
+class POSPrinter {
+  static String? headerName;
+  static String? headerAddress;
+  static String? headerPhone;
+  static String? headerEmail;
+  static Uint8List? logo;
+}
+
 class Yappy {
   static String? token;
   static String? secretKey;
@@ -28,4 +38,5 @@ class Yappy {
   static String? groupId;
   static String? deviceId;
   static bool? isTest;
+  static int? cPOSTenderTypeID;
 }

@@ -241,16 +241,11 @@ Future<Map<String, dynamic>> postInvoice({
   }
 }
 
-Future<Map<String, dynamic>?> fetchOrderById(
-    {required BuildContext context, required int orderId}) async {
+Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
   try {
-    await usuarioAuth(context: context);
-
     final response = await get(
-      //Uri.parse('${EndPoints.cOrder}/$orderId?\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$expand=C_Tax_ID)'),
-
+          '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -271,11 +266,19 @@ Future<Map<String, dynamic>?> fetchOrderById(
         'TotalLines': record['TotalLines'],
         'bpartner': {
           'id': record['C_BPartner_ID']?['id'],
-          'name': record['C_BPartner_ID']?['identifier'],
+          'name': record['C_BPartner_ID']?['Name'],
+          'location': record['Bill_Location_ID']?['C_Location_ID']
+              ?['identifier'],
+          'taxID': record['C_BPartner_ID']?['TaxID'],
+          'phone': record['Bill_User_ID']?['Phone'],
         },
         'doctypetarget': {
           'id': record['C_DocTypeTarget_ID']?['id'],
           'name': record['C_DocTypeTarget_ID']?['identifier'],
+        },
+        'SalesRep_ID': {
+          'id': record['SalesRep_ID']?['id'],
+          'name': record['SalesRep_ID']?['identifier'],
         },
         'C_OrderLine': record['C_OrderLine'] ?? [],
       };
@@ -298,7 +301,7 @@ Future<List<Map<String, dynamic>>> fetchOrders(
 
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID'),
+          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -319,9 +322,11 @@ Future<List<Map<String, dynamic>>> fetchOrders(
           'TotalLines': record['TotalLines'],
           'bpartner': {
             'id': record['C_BPartner_ID']?['id'],
-            'name': record['C_BPartner_ID']?['identifier'],
+            'name': record['C_BPartner_ID']?['Name'],
             'location': record['Bill_Location_ID']?['C_Location_ID']
                 ?['identifier'],
+            'taxID': record['C_BPartner_ID']?['TaxID'],
+            'phone': record['Bill_User_ID']?['Phone'],
           },
           'doctypetarget': {
             'id': record['C_DocTypeTarget_ID']?['id'],

@@ -199,6 +199,7 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
       UserData.id = json.decode(response.body)["userId"];
       bool success = await _loadUserData(context);
       await _loadPOSData(context);
+      await _loadPOSPrinterData();
       POSTenderType.isMultiPayment = await _posTenderExists();
       return success;
     } else {
@@ -235,6 +236,40 @@ Future<bool> _loadUserData(BuildContext context) async {
     } else {
       print(
           'Error al cargar loadUserData, codigo: ${response.statusCode}, detalle: ${response.body}');
+    }
+  } catch (e) {
+    print(e);
+  }
+
+  return false;
+}
+
+Future<bool> _loadPOSPrinterData() async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final record = json.decode(utf8.decode(response.bodyBytes))['records'][0];
+
+      POSPrinter.headerName = record['AD_Client_ID']?['identifier'];
+      POSPrinter.headerAddress = record['Address1'];
+      POSPrinter.headerPhone = record['Phone'];
+      POSPrinter.headerEmail = record['EMail'];
+
+      if (record['Logo_ID'] != null) {
+        POSPrinter.logo = base64Decode(record['Logo_ID']['data']);
+      }
+      return true;
+    } else {
+      print(
+          'Error al cargar _loadPOSPrinterData, codigo: ${response.statusCode}, detalle: ${response.body}');
     }
   } catch (e) {
     print(e);

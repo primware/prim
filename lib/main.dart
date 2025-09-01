@@ -1,5 +1,7 @@
 // main.dart
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/views/Auth/login_view.dart';
@@ -10,19 +12,19 @@ import 'API/endpoint.api.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // HttpOverrides.global = MyHttpOverrides();
+  HttpOverrides.global = MyHttpOverrides();
   await FlutterLocalization.instance.ensureInitialized();
   runApp(const MainApp());
 }
 
-// class MyHttpOverrides extends HttpOverrides {
-//   @override
-//   HttpClient createHttpClient(SecurityContext? context) {
-//     return super.createHttpClient(context)
-//       ..badCertificateCallback =
-//           (X509Certificate cert, String host, int port) => true;
-//   }
-// }
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
