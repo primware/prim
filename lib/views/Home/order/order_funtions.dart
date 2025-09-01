@@ -203,6 +203,7 @@ Future<Map<String, dynamic>> postInvoice({
       "SalesRep_ID": {"id": UserData.id},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",
+      "InvoiceRule": "I",
       "PriorityRule": "5",
       "FreightCostRule": "I",
       "PaymentRule": POSTenderType.isMultiPayment ? "M" : "B",
@@ -245,7 +246,7 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID'),
+          '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -428,7 +429,7 @@ Future<void> fetchDocumentActions({required int docTypeID}) async {
 
     final Map<String, Map<String, String>> actionMap = {
       'Complete': {'code': 'CO', 'name': 'Completar'},
-      'Draft': {'code': 'DR', 'name': 'Borrador'},
+      '<None>': {'code': 'DR', 'name': 'Borrador'},
       'Prepare': {'code': 'PR', 'name': 'Preparar'},
       'Approve': {'code': 'AP', 'name': 'Aprobar'},
       'Reject': {'code': 'RJ', 'name': 'Rechazar'},
@@ -602,7 +603,7 @@ Future<bool> cancelYappyTransaction({required String transactionId}) async {
 
       final status = jsonResponse['status']['code'];
       print('Status de la cancelación: $status');
-      if (status == 'YP-0000') {
+      if (status == 'YP-0000' || status == 'YP-0016') {
         print('Transacción cancelada exitosamente: $transactionId');
         return true;
       } else {

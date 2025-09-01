@@ -108,6 +108,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     qtyProductController.clear();
     productController.clear();
     taxController.clear();
+    yappyTransactionId = null;
   }
 
   @override
@@ -206,6 +207,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _loadSequence() async {
+    //TODO cargar secuencia con el fortmato, buscar si hay un proceso que lo traiga
     docNoSequenceID = await getDocNoSequenceID(recordID: widget.doctypeID!);
 
     if (docNoSequenceID != null) {
@@ -320,11 +322,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
         clienteController.text =
             '${partner.first['TaxID'] ?? ''} - ${partner.first['name'] ?? ''}';
       }
-      // if (defaultPartner.isNotEmpty) {
-      //   selectedBPartnerID = defaultPartner['id'];
-      //   clienteController.text =
-      //       '${defaultPartner['TaxID'] ?? ''} - ${defaultPartner['name'] ?? ''}';
-      // }
     });
   }
 
@@ -1903,6 +1900,56 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                   tooltip:
                                                       'Anular transacción Yappy',
                                                   onPressed: () async {
+                                                    final confirm =
+                                                        await showDialog(
+                                                      context: context,
+                                                      builder: (context) {
+                                                        return AlertDialog(
+                                                          backgroundColor:
+                                                              Theme.of(context)
+                                                                  .cardColor,
+                                                          title: Text(AppLocale
+                                                              .cancelYappyTransaction
+                                                              .getString(
+                                                                  context)),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                      context,
+                                                                      false),
+                                                              child: Text(AppLocale
+                                                                  .cancel
+                                                                  .getString(
+                                                                      context)),
+                                                            ),
+                                                            ElevatedButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                      context,
+                                                                      true),
+                                                              child: Text(
+                                                                AppLocale
+                                                                    .confirm
+                                                                    .getString(
+                                                                        context),
+                                                                style: Theme.of(
+                                                                        context)
+                                                                    .textTheme
+                                                                    .bodySmall
+                                                                    ?.copyWith(
+                                                                        color: Theme.of(context)
+                                                                            .colorScheme
+                                                                            .surface),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+
+                                                    if (confirm != true) return;
+
                                                     final paid =
                                                         await cancelYappyTransaction(
                                                             transactionId:

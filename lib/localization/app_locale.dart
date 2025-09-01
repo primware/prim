@@ -117,6 +117,7 @@ class AppLocale {
   static const String close = 'close';
   static const String confirmCompleteOrder = 'confirmCompleteOrder';
   static const String confirmCompleteCreditNote = 'confirmCompleteCreditNote';
+  static const String cancelYappyTransaction = 'cancelYappyTransaction';
   static const String noTax = 'noTax';
   static const String fillWithRemaining = 'fillWithRemaining';
   static const String errorCompleteOrder = 'errorCompleteOrder';
@@ -254,6 +255,7 @@ class AppLocale {
     noTaxTypesAvailable: 'No tax ID types available',
     noTaxCategoryAvailable: 'No tax categories available',
     productType: 'Product Type',
+    cancelYappyTransaction: 'Cancel Yappy Transaction?',
   };
 
   static const Map<String, dynamic> es = {
@@ -382,5 +384,6 @@ class AppLocale {
     noTaxTypesAvailable: 'No hay tipos de identificación fiscal disponibles',
     noTaxCategoryAvailable: 'No hay categorías de impuestos disponibles',
     productType: 'Tipo de Producto',
+    cancelYappyTransaction: '¿Cancelar Transacción Yappy?',
   };
 }
