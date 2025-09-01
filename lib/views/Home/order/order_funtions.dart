@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:pdf/pdf.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/API/user.api.dart';
 import '../../../API/endpoint.api.dart';
 import 'dart:convert';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 Future<List<Map<String, dynamic>>> fetchBPartner({
   required BuildContext context,
@@ -302,7 +306,7 @@ Future<List<Map<String, dynamic>>> fetchOrders(
 
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID'),
+          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -338,6 +342,7 @@ Future<List<Map<String, dynamic>>> fetchOrders(
             'name': record['SalesRep_ID']?['identifier'],
           },
           'C_OrderLine': record['C_OrderLine'] ?? [],
+          'payments': record['C_POSPayment'] ?? [],
         };
       }).toList();
     } else {
@@ -671,4 +676,236 @@ Future<int?> getDocNoSequence({required int docNoSequenceID}) async {
     print('Error en _getDocNoSequence: $e');
   }
   return null;
+}
+
+Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
+  final pdf = pw.Document();
+
+  // Page format: 80mm roll (use PdfPageFormat.roll57 for 58mm if needed)
+  final pageFormat = PdfPageFormat.roll80;
+
+  // final theme = pw.ThemeData.withFont(
+  //   base: pw.Font.courier(),
+  //   bold: pw.Font.courierBold(),
+
+  // );
+
+  // Helpers
+  String str(dynamic v) => v?.toString() ?? '';
+  String money(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
+  String truncate(String s, int max) =>
+      s.length <= max ? s : s.substring(0, max);
+
+  // Order fields (safe access)
+  final docNo = str(order['DocumentNo']);
+  final date = str(order['DateOrdered']);
+  final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
+  final taxID = str(order['bpartner']['taxID'] ?? '');
+  final phone = str(order['bpartner']['phone'] ?? '');
+  final customerName = str(order['bpartner']?['name'] ?? 'CONTADO');
+  final customeLocation = str(order['bpartner']?['location'] ?? '');
+
+  // Lines & taxes
+  final List lines = (order['C_OrderLine'] as List?) ?? const [];
+  final taxSummary = _calculateTaxSummary([order]);
+
+  final double taxTotal = taxSummary.values
+      .map((e) => e['tax'] as double)
+      .fold(0.0, (a, b) => a + b);
+  final double grandTotal = (order['GrandTotal'] as num?)?.toDouble() ?? 0.0;
+
+  // Taxes summary (net + taxes)
+  final netSum = taxSummary.values
+      .map((e) => e['net'] as double)
+      .fold(0.0, (a, b) => a + b);
+
+  // Render PDF
+  pdf.addPage(
+    pw.Page(
+      pageFormat:
+          pageFormat.copyWith(marginTop: 8, marginBottom: 8, marginRight: 4),
+      // theme: theme,
+      build: (context) {
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            // Encabezado centrado
+            POSPrinter.logo != null
+                ? pw.Center(
+                    child: pw.Image(pw.MemoryImage(POSPrinter.logo!),
+                        width: 60, height: 60, fit: pw.BoxFit.contain))
+                : pw.SizedBox(),
+            pw.SizedBox(height: 4),
+            pw.Text(POSPrinter.headerName ?? '',
+                textAlign: pw.TextAlign.center),
+            pw.Text(POSPrinter.headerAddress ?? '',
+                textAlign: pw.TextAlign.center),
+            pw.Text(POSPrinter.headerPhone ?? '',
+                textAlign: pw.TextAlign.center),
+            pw.Text(POSPrinter.headerEmail ?? '',
+                textAlign: pw.TextAlign.center),
+
+            pw.SizedBox(height: 12),
+
+            // Detalles (alineados a la izquierda)
+            pw.Text('Recibo: $docNo'),
+            pw.Text('Fecha: $date'),
+            if (servedBy.isNotEmpty) pw.Text('Atendido por: $servedBy'),
+            pw.Text('Cédula: $taxID'),
+            pw.Text('Cliente: $customerName'),
+
+            pw.Text('Dirección: $customeLocation'),
+            pw.Text('Teléfono: $phone'),
+            pw.SizedBox(height: 12),
+
+            // Tabla de ítems (alineada en 4 columnas)
+            pw.Row(
+              children: [
+                pw.Expanded(
+                    flex: 20,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Ítem', maxLines: 1),
+                        pw.Text('Precio x Cant',
+                            maxLines: 1, style: pw.TextStyle(fontSize: 12)),
+                      ],
+                    )),
+                pw.Expanded(
+                  flex: 15,
+                  child: pw.Align(
+                    alignment: pw.Alignment.centerRight,
+                    child: pw.Text('Subtotal', maxLines: 1),
+                  ),
+                ),
+              ],
+            ),
+            pw.Divider(),
+            pw.SizedBox(height: 6),
+            ...lines.map((line) {
+              final name = (line['M_Product_ID']?['identifier'] ?? 'Ítem')
+                  .toString()
+                  .split('_')
+                  .skip(1)
+                  .join(' ');
+              final qty = (line['QtyOrdered'] as num?)?.toDouble() ?? 0.0;
+              final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
+              final net = (line['LineNetAmt'] as num?)?.toDouble() ?? 0.0;
+              final rate =
+                  (line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0;
+              final tax = double.parse((net * (rate / 100)).toStringAsFixed(2));
+              final value = net + tax;
+
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Expanded(
+                          flex: 20,
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                truncate(name, 24),
+                                maxLines: 1,
+                                overflow: pw.TextOverflow.clip,
+                              ),
+                              pw.Text(
+                                '${money(price)} x ${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)}',
+                                maxLines: 1,
+                                style: pw.TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          )),
+                      pw.Expanded(
+                        flex: 15,
+                        child: pw.Align(
+                          alignment: pw.Alignment.centerRight,
+                          child: pw.Text(
+                            money(value),
+                            maxLines: 1,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              );
+            }),
+
+            pw.SizedBox(height: 6),
+
+            pw.Divider(),
+            // Totales
+            pw.Text('Cant. Items: ${lines.length}'),
+            pw.SizedBox(height: 12),
+            pw.Text('Total: ${money(grandTotal)}',
+                style:
+                    pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+            pw.SizedBox(height: 10),
+
+//TODO agregar la cantidad por formas de pago
+            // Formas de pago
+            pw.Text('Formas de Pago:',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            ...?order['payments']?.map<pw.Widget>((payment) {
+              final payType =
+                  payment['C_POSTenderType_ID']['identifier'] ?? 'Otro';
+              final amount = (payment['PayAmt'] as num?)?.toDouble() ?? 0.0;
+              return pw.Text('- $payType: ${money(amount)}');
+            }),
+            pw.SizedBox(height: 10),
+
+            // Impuestos
+            pw.Text('Neto sin ITBMS: ${money(netSum)}',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text('ITBMS: ${money(taxTotal)}'),
+            pw.SizedBox(height: 12),
+
+            // Footer
+            pw.Text('Gracias por mantener sus pagos al día',
+                textAlign: pw.TextAlign.center),
+          ],
+        );
+      },
+    ),
+  );
+
+  return pdf.save();
+}
+
+Map<String, Map<String, double>> _calculateTaxSummary(List<dynamic> records) {
+  final Map<String, Map<String, double>> taxSummary = {};
+
+  for (var order in records) {
+    if (order.containsKey("C_OrderLine")) {
+      for (var line in order["C_OrderLine"]) {
+        final tax = line["C_Tax_ID"];
+        final String taxName = tax["Name"];
+        final double taxRate = (tax["Rate"] as num).toDouble();
+        final double lineNetAmt = (line["LineNetAmt"] as num).toDouble();
+
+        final taxKey = "$taxName (${taxRate.toStringAsFixed(0)}%)";
+
+        taxSummary.putIfAbsent(
+            taxKey,
+            () => {
+                  "net": 0.0,
+                  "tax": 0.0,
+                  "total": 0.0,
+                });
+
+        final double taxAmount =
+            double.parse((lineNetAmt * (taxRate / 100)).toStringAsFixed(2));
+        taxSummary[taxKey]!["net"] = taxSummary[taxKey]!["net"]! + lineNetAmt;
+        taxSummary[taxKey]!["tax"] = taxSummary[taxKey]!["tax"]! + taxAmount;
+        taxSummary[taxKey]!["total"] =
+            taxSummary[taxKey]!["total"]! + lineNetAmt + taxAmount;
+      }
+    }
+  }
+
+  return taxSummary;
 }

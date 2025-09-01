@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:pdf/pdf.dart';
 import 'package:primware/API/user.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'dart:async';
@@ -23,8 +22,6 @@ import 'package:shimmer/shimmer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'my_order.dart';
 import 'package:printing/printing.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'dart:typed_data';
 
 class OrderNewPage extends StatefulWidget {
   final bool isRefund;
@@ -177,7 +174,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (searchText.length < 4 && searchText.isNotEmpty) {
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 1000), () {
+    _debounce = Timer(const Duration(milliseconds: 3000), () {
       _loadBPartner(showLoadingIndicator: true);
     });
   }
@@ -306,20 +303,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
       searchTerm: clienteController.text.trim(),
     );
 
-    // //? Busca el cliente por defecto según el ID en POS
-    // final defaultPartner = partner.firstWhere(
-    //   (p) => p['id'] == POS.templatePartnerID,
-    //   orElse: () => {},
-    // );
-
     setState(() {
       bPartnerOptions = partner;
       isCustomerSearchLoading = false;
-      if (partner.length == 1) {
-        selectedBPartnerID = partner.first['id'];
-        clienteController.text =
-            '${partner.first['TaxID'] ?? ''} - ${partner.first['name'] ?? ''}';
-      }
     });
   }
 
@@ -855,234 +841,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
   }
 
-  Future<Uint8List> _generateTicketPdf(Map<String, dynamic> order) async {
-    final pdf = pw.Document();
-
-    // Page format: 80mm roll (use PdfPageFormat.roll57 for 58mm if needed)
-    final pageFormat = PdfPageFormat.roll80;
-
-    final theme = pw.ThemeData.withFont(
-      base: pw.Font.courier(),
-      bold: pw.Font.courierBold(),
-    );
-
-    // Helpers
-    String str(dynamic v) => v?.toString() ?? '';
-    String money(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
-    String truncate(String s, int max) =>
-        s.length <= max ? s : s.substring(0, max);
-
-    // Order fields (safe access)
-    final docNo = str(order['DocumentNo']);
-    final date = str(order['DateOrdered']);
-    final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
-    final taxID = str(order['bpartner']['taxID'] ?? '');
-    final phone = str(order['bpartner']['phone'] ?? '');
-    final customerName = str(order['bpartner']?['name'] ?? 'CONTADO');
-    final customeLocation = str(order['bpartner']?['location'] ?? '');
-
-    // Lines & taxes
-    final List lines = (order['C_OrderLine'] as List?) ?? const [];
-    final taxSummary = _calculateTaxSummary([order]);
-
-    final double taxTotal = taxSummary.values
-        .map((e) => e['tax'] as double)
-        .fold(0.0, (a, b) => a + b);
-    final double grandTotal = (order['GrandTotal'] as num?)?.toDouble() ?? 0.0;
-
-    // Taxes summary (net + taxes)
-    final netSum = taxSummary.values
-        .map((e) => e['net'] as double)
-        .fold(0.0, (a, b) => a + b);
-
-    // Render PDF
-    pdf.addPage(
-      pw.Page(
-        pageFormat: pageFormat.copyWith(marginTop: 8, marginBottom: 8),
-        theme: theme,
-        build: (context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-            children: [
-              // Encabezado centrado
-              POSPrinter.logo != null
-                  ? pw.Center(
-                      child: pw.Image(pw.MemoryImage(POSPrinter.logo!),
-                          width: 60, height: 60, fit: pw.BoxFit.contain))
-                  : pw.SizedBox(),
-              pw.SizedBox(height: 4),
-              pw.Text(POSPrinter.headerName ?? '',
-                  textAlign: pw.TextAlign.center),
-              pw.Text(POSPrinter.headerAddress ?? '',
-                  textAlign: pw.TextAlign.center),
-              pw.Text(POSPrinter.headerPhone ?? '',
-                  textAlign: pw.TextAlign.center),
-              pw.Text(POSPrinter.headerEmail ?? '',
-                  textAlign: pw.TextAlign.center),
-
-              pw.SizedBox(height: 12),
-
-              // Detalles (alineados a la izquierda)
-              pw.Text('Recibo: $docNo'),
-              pw.Text('Fecha: $date'),
-              if (servedBy.isNotEmpty) pw.Text('Atendido por: $servedBy'),
-              pw.Text('Cédula: $taxID'),
-              pw.Text('Cliente: $customerName'),
-
-              pw.Text('Dirección: $customeLocation'),
-              pw.Text('Teléfono: $phone'),
-              pw.SizedBox(height: 12),
-
-              // Tabla de ítems (alineada en 4 columnas)
-              pw.Row(
-                children: [
-                  pw.Expanded(
-                    flex: 20,
-                    child: pw.Text('Item', maxLines: 1),
-                  ),
-                  pw.Expanded(
-                    flex: 15,
-                    child: pw.Align(
-                      alignment: pw.Alignment.centerLeft,
-                      child: pw.Text('B/.', maxLines: 1),
-                    ),
-                  ),
-                  pw.Expanded(
-                    flex: 10,
-                    child: pw.Align(
-                      alignment: pw.Alignment.centerLeft,
-                      child: pw.Text('#', maxLines: 1),
-                    ),
-                  ),
-                  pw.Expanded(
-                    flex: 10,
-                    child: pw.Align(
-                      alignment: pw.Alignment.centerLeft,
-                      child: pw.Text('total', maxLines: 1),
-                    ),
-                  ),
-                ],
-              ),
-              pw.Divider(),
-              pw.SizedBox(height: 6),
-              ...lines.map((line) {
-                final name = (line['M_Product_ID']?['identifier'] ?? 'Ítem')
-                    .toString()
-                    .split('_')
-                    .skip(1)
-                    .join(' ');
-                final qty = (line['QtyOrdered'] as num?)?.toDouble() ?? 0.0;
-                final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
-                final net = (line['LineNetAmt'] as num?)?.toDouble() ?? 0.0;
-                final rate =
-                    (line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0;
-                final tax =
-                    double.parse((net * (rate / 100)).toStringAsFixed(2));
-                final value = net + tax;
-
-                return pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Row(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Expanded(
-                          flex: 20,
-                          child: pw.Text(
-                            truncate(name, 24),
-                            maxLines: 1,
-                            overflow: pw.TextOverflow.clip,
-                          ),
-                        ),
-                        pw.Expanded(
-                          flex: 15,
-                          child: pw.Align(
-                            alignment: pw.Alignment.centerLeft,
-                            child: pw.Text(money(price), maxLines: 1),
-                          ),
-                        ),
-                        pw.Expanded(
-                          flex: 10,
-                          child: pw.Align(
-                            alignment: pw.Alignment.centerLeft,
-                            child: pw.Text(
-                                qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2),
-                                maxLines: 1),
-                          ),
-                        ),
-                        pw.Expanded(
-                          flex: 10,
-                          child: pw.Align(
-                            child: pw.Text(money(value), maxLines: 1),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              }),
-
-              pw.SizedBox(height: 6),
-
-              pw.Divider(),
-              // Totales
-              pw.Text('Cant. Items: ${lines.length}'),
-              pw.Text('Total: ${money(grandTotal)}',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 10),
-
-              // Impuestos
-              pw.Text('Neto sin ITBMS: ${money(netSum)}',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.Text('ITBMS: ${money(taxTotal)}'),
-              pw.SizedBox(height: 12),
-
-              // Footer
-              pw.Text('Gracias por mantener sus pagos al día',
-                  textAlign: pw.TextAlign.center),
-            ],
-          );
-        },
-      ),
-    );
-
-    return pdf.save();
-  }
-
-  Map<String, Map<String, double>> _calculateTaxSummary(List<dynamic> records) {
-    final Map<String, Map<String, double>> taxSummary = {};
-
-    for (var order in records) {
-      if (order.containsKey("C_OrderLine")) {
-        for (var line in order["C_OrderLine"]) {
-          final tax = line["C_Tax_ID"];
-          final String taxName = tax["Name"];
-          final double taxRate = (tax["Rate"] as num).toDouble();
-          final double lineNetAmt = (line["LineNetAmt"] as num).toDouble();
-
-          final taxKey = "$taxName (${taxRate.toStringAsFixed(0)}%)";
-
-          taxSummary.putIfAbsent(
-              taxKey,
-              () => {
-                    "net": 0.0,
-                    "tax": 0.0,
-                    "total": 0.0,
-                  });
-
-          final double taxAmount =
-              double.parse((lineNetAmt * (taxRate / 100)).toStringAsFixed(2));
-          taxSummary[taxKey]!["net"] = taxSummary[taxKey]!["net"]! + lineNetAmt;
-          taxSummary[taxKey]!["tax"] = taxSummary[taxKey]!["tax"]! + taxAmount;
-          taxSummary[taxKey]!["total"] =
-              taxSummary[taxKey]!["total"]! + lineNetAmt + taxAmount;
-        }
-      }
-    }
-
-    return taxSummary;
-  }
-
   Future<void> _createInvoice({
     required List<Map<String, dynamic>> product,
     required int bPartner,
@@ -1209,7 +967,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         final confirmPrintTicket = await _printTicketConfirmation(context);
 
         if (confirmPrintTicket == true) {
-          final pdfBytes = await _generateTicketPdf(order);
+          final pdfBytes = await generateTicketPdf(order);
 
           try {
             final printers = await Printing.listPrinters();
@@ -1360,8 +1118,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             key: ValueKey('customer_${bPartnerOptions.length}'),
                             options: bPartnerOptions,
                             labelText: AppLocale.customer.getString(context),
-                            searchBy:
-                                "TaxID", // clave real que devuelves en fetchBPartner
+                            searchBy: "TaxID",
                             controller: clienteController,
                             showCreateButtonIfNotFound: true,
                             onChanged: (_) => debouncedLoadCustomer(),
@@ -1396,10 +1153,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                               ? _buildShimmerField()
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     // Segmento de selección de categorías con botón y modal
                                     if (!isProductCategoryLoading)
                                       Column(
+                                        mainAxisSize: MainAxisSize.min,
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [

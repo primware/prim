@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:primware/API/pos.api.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Home/order/my_order_detail_pdf_generator.dart';
 import 'package:printing/printing.dart';
 import '../../../localization/app_locale.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:pdf/pdf.dart';
-import 'dart:typed_data';
+
+import 'order_funtions.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -34,211 +32,6 @@ class OrderDetailPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<Uint8List> _generateTicketPdf(Map<String, dynamic> order) async {
-    final pdf = pw.Document();
-
-    // Page format: 80mm roll (use PdfPageFormat.roll57 for 58mm if needed)
-    final pageFormat = PdfPageFormat.roll80;
-
-    final theme = pw.ThemeData.withFont(
-      base: pw.Font.courier(),
-      bold: pw.Font.courierBold(),
-    );
-
-    // Helpers
-    String str(dynamic v) => v?.toString() ?? '';
-    String money(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
-    String truncate(String s, int max) =>
-        s.length <= max ? s : s.substring(0, max);
-
-    // Order fields (safe access)
-    final docNo = str(order['DocumentNo']);
-    final date = str(order['DateOrdered']);
-    final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
-    final taxID = str(order['bpartner']['taxID'] ?? '');
-    final phone = str(order['bpartner']['phone'] ?? '');
-    final customerName = str(order['bpartner']?['name'] ?? 'CONTADO');
-    final customeLocation = str(order['bpartner']?['location'] ?? '');
-
-    // Lines & taxes
-    final List lines = (order['C_OrderLine'] as List?) ?? const [];
-    final taxSummary = _calculateTaxSummary([order]);
-
-    final double taxTotal = taxSummary.values
-        .map((e) => e['tax'] as double)
-        .fold(0.0, (a, b) => a + b);
-    final double grandTotal = (order['GrandTotal'] as num?)?.toDouble() ?? 0.0;
-
-    // Taxes summary (net + taxes)
-    final netSum = taxSummary.values
-        .map((e) => e['net'] as double)
-        .fold(0.0, (a, b) => a + b);
-
-    // Render PDF
-    pdf.addPage(
-      pw.Page(
-        pageFormat: pageFormat.copyWith(marginTop: 8, marginBottom: 8),
-        theme: theme,
-        build: (context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-            children: [
-              // Encabezado centrado
-              POSPrinter.logo != null
-                  ? pw.Center(
-                      child: pw.Image(pw.MemoryImage(POSPrinter.logo!),
-                          width: 60, height: 60, fit: pw.BoxFit.contain))
-                  : pw.SizedBox(),
-              pw.SizedBox(height: 4),
-              pw.Text(POSPrinter.headerName ?? '',
-                  textAlign: pw.TextAlign.center),
-              pw.Text(POSPrinter.headerAddress ?? '',
-                  textAlign: pw.TextAlign.center),
-              pw.Text(POSPrinter.headerPhone ?? '',
-                  textAlign: pw.TextAlign.center),
-              pw.Text(POSPrinter.headerEmail ?? '',
-                  textAlign: pw.TextAlign.center),
-
-              pw.SizedBox(height: 12),
-
-              // Detalles (alineados a la izquierda)
-              pw.Text('Recibo: $docNo'),
-              pw.Text('Fecha: $date'),
-              if (servedBy.isNotEmpty) pw.Text('Atendido por: $servedBy'),
-              pw.Text('Cédula: $taxID'),
-              pw.Text('Cliente: $customerName'),
-
-              pw.Text('Dirección: $customeLocation'),
-              pw.Text('Teléfono: $phone'),
-              pw.SizedBox(height: 12),
-
-              // Tabla de ítems (alineada en 4 columnas)
-              pw.Row(
-                children: [
-                  pw.Expanded(
-                    flex: 20,
-                    child: pw.Text('Item', maxLines: 1),
-                  ),
-                  pw.Expanded(
-                    flex: 15,
-                    child: pw.Align(
-                      alignment: pw.Alignment.centerLeft,
-                      child: pw.Text('B/.', maxLines: 1),
-                    ),
-                  ),
-                  pw.Expanded(
-                    flex: 10,
-                    child: pw.Align(
-                      alignment: pw.Alignment.centerLeft,
-                      child: pw.Text('#', maxLines: 1),
-                    ),
-                  ),
-                  pw.Expanded(
-                    flex: 10,
-                    child: pw.Align(
-                      alignment: pw.Alignment.centerLeft,
-                      child: pw.Text('total', maxLines: 1),
-                    ),
-                  ),
-                ],
-              ),
-              pw.Divider(),
-              pw.SizedBox(height: 6),
-              ...lines.map((line) {
-                final name = (line['M_Product_ID']?['identifier'] ?? 'Ítem')
-                    .toString()
-                    .split('_')
-                    .skip(1)
-                    .join(' ');
-                final qty = (line['QtyOrdered'] as num?)?.toDouble() ?? 0.0;
-                final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
-                final net = (line['LineNetAmt'] as num?)?.toDouble() ?? 0.0;
-                final rate =
-                    (line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0;
-                final tax =
-                    double.parse((net * (rate / 100)).toStringAsFixed(2));
-                final value = net + tax;
-
-                return pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Row(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Expanded(
-                          flex: 20,
-                          child: pw.Text(
-                            truncate(name, 24),
-                            maxLines: 1,
-                            overflow: pw.TextOverflow.clip,
-                          ),
-                        ),
-                        pw.Expanded(
-                          flex: 15,
-                          child: pw.Align(
-                            alignment: pw.Alignment.centerLeft,
-                            child: pw.Text(money(price), maxLines: 1),
-                          ),
-                        ),
-                        pw.Expanded(
-                          flex: 10,
-                          child: pw.Align(
-                            alignment: pw.Alignment.centerLeft,
-                            child: pw.Text(
-                                qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2),
-                                maxLines: 1),
-                          ),
-                        ),
-                        pw.Expanded(
-                          flex: 10,
-                          child: pw.Align(
-                            child: pw.Text(money(value), maxLines: 1),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              }),
-
-              pw.SizedBox(height: 6),
-
-              pw.Divider(),
-              // Totales
-              pw.Text('Cant. Items: ${lines.length}'),
-              pw.Text('Total: ${money(grandTotal)}',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 10),
-
-//TODO agregar la cantidad por formas de pago
-              // Formas de pago
-              pw.Text('Formas de Pago:',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              ...?order['payments']?.map<pw.Widget>((payment) {
-                final payType = payment['tenderType'] ?? 'Otro';
-                final amount = (payment['amount'] as num?)?.toDouble() ?? 0.0;
-                return pw.Text('- $payType: ${money(amount)}');
-              }),
-              pw.SizedBox(height: 10),
-
-              // Impuestos
-              pw.Text('Neto sin ITBMS: ${money(netSum)}',
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              pw.Text('ITBMS: ${money(taxTotal)}'),
-              pw.SizedBox(height: 12),
-
-              // Footer
-              pw.Text('Gracias por mantener sus pagos al día',
-                  textAlign: pw.TextAlign.center),
-            ],
-          );
-        },
-      ),
-    );
-
-    return pdf.save();
   }
 
   @override
@@ -270,7 +63,7 @@ class OrderDetailPage extends StatelessWidget {
               final bool? confirmPrintTicket =
                   await _printTicketConfirmation(context);
               if (confirmPrintTicket == true) {
-                final pdfBytes = await _generateTicketPdf(order);
+                final pdfBytes = await generateTicketPdf(order);
 
                 try {
                   final printers = await Printing.listPrinters();
