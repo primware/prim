@@ -6,6 +6,7 @@ import 'package:primware/views/Home/order/my_order_detail_pdf_generator.dart';
 import 'package:printing/printing.dart';
 import '../../../localization/app_locale.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
 import 'dart:typed_data';
 
 class OrderDetailPage extends StatelessWidget {
@@ -35,67 +36,193 @@ class OrderDetailPage extends StatelessWidget {
   }
 
   Future<Uint8List> _generateTicketPdf(Map<String, dynamic> order) async {
+    // Thermal ticket on 80mm roll with monospace layout
     final pdf = pw.Document();
 
-    // Obtener líneas del pedido
-    final lines = (order['C_OrderLine'] as List?) ?? [];
+    // Page format: 80mm roll (use PdfPageFormat.roll57 for 58mm if needed)
+    final pageFormat = PdfPageFormat.roll80;
+
+    // Monospace fonts to align columns
+    final theme = pw.ThemeData.withFont(
+      base: pw.Font.courier(),
+      bold: pw.Font.courierBold(),
+    );
+
+    // Helpers
+    String str(dynamic v) => v?.toString() ?? '';
+    String money(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
+    String truncate(String s, int max) =>
+        s.length <= max ? s : s.substring(0, max);
+
+    // Order fields (safe access)
+    final docNo = str(order['DocumentNo']);
+    final date = str(order['DateOrdered']);
+    final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
+    final account = str(order['PaymentRule'] ?? 'CONTADO');
+    final bp = order['bpartner'] ?? {};
+    final customerName = str(bp['name'] ?? 'CONTADO');
+    final customeLocation = str(bp['location'] ?? '');
+
+    // Lines & taxes
+    final List lines = (order['C_OrderLine'] as List?) ?? const [];
     final taxSummary = _calculateTaxSummary([order]);
 
+    final double taxTotal = taxSummary.values
+        .map((e) => e['tax'] as double)
+        .fold(0.0, (a, b) => a + b);
+    final double grandTotal = (order['GrandTotal'] as num?)?.toDouble() ?? 0.0;
+
+    // Taxes summary (net + taxes)
+    final netSum = taxSummary.values
+        .map((e) => e['net'] as double)
+        .fold(0.0, (a, b) => a + b);
+
+    // Render PDF
     pdf.addPage(
       pw.Page(
-        build: (pw.Context context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text('Pedido #${order['DocumentNo']}',
-                style:
-                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 10),
-            pw.Text('Cliente: ${order['bpartner']['name']}'),
-            pw.Text('Fecha: ${order['DateOrdered']}'),
-            pw.Divider(),
-            pw.Text('Resumen de productos', style: pw.TextStyle(fontSize: 16)),
-            pw.SizedBox(height: 10),
-            ...lines.map((line) {
-              final name = (line['M_Product_ID']?['identifier']?.toString() ??
-                      'Sin nombre')
-                  .split('_')
-                  .skip(1)
-                  .join(' ');
-              final qty = (line['QtyOrdered'] as num).toDouble();
-              final price = (line['PriceActual'] as num).toDouble();
-              final net = (line['LineNetAmt'] as num).toDouble();
-              final rate = (line['C_Tax_ID']['Rate'] as num).toDouble();
-              final tax = net * (rate / 100);
-              final total = net + tax;
+        pageFormat: pageFormat.copyWith(
+            marginLeft: 8, marginRight: 8, marginTop: 8, marginBottom: 8),
+        theme: theme,
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              // Encabezado centrado
+              pw.Text('Punto de Venta Lirion', textAlign: pw.TextAlign.center),
+              pw.Text('Punto de Venta Táctil', textAlign: pw.TextAlign.center),
+              pw.Text('Derechos reservados (c) 2009–2018 Lirion',
+                  textAlign: pw.TextAlign.center),
+              pw.Text('Cambie el encabezado en Configuración',
+                  textAlign: pw.TextAlign.center),
+              pw.Text('Impresión de Ticket', textAlign: pw.TextAlign.center),
+              pw.SizedBox(height: 6),
 
-              return pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
+              // Detalles (alineados a la izquierda)
+              pw.Text('Recibo: $docNo'),
+              pw.Text('Fecha: $date'),
+              if (servedBy.isNotEmpty) pw.Text('Atendido por: $servedBy'),
+              pw.Text('Cuenta #: $account'),
+              pw.Text('Cliente: $customerName'),
+              if (customeLocation.isNotEmpty)
+                pw.Text('Dirección: $customeLocation'),
+              pw.SizedBox(height: 6),
+
+              // Tabla de ítems (alineada en 4 columnas)
+              pw.Row(
                 children: [
-                  pw.Text(name,
-                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                  pw.Text(
-                      'Cantidad: $qty | Precio: \$${price.toStringAsFixed(2)}'),
-                  pw.Text('Impuesto: \$${tax.toStringAsFixed(2)}'),
-                  pw.Text('Total: \$${total.toStringAsFixed(2)}'),
-                  pw.Divider(),
+                  pw.Expanded(
+                    flex: 20,
+                    child: pw.Text('Artículo', maxLines: 1),
+                  ),
+                  pw.Expanded(
+                    flex: 15,
+                    child: pw.Align(
+                      alignment: pw.Alignment.centerLeft,
+                      child: pw.Text('B/.', maxLines: 1),
+                    ),
+                  ),
+                  pw.Expanded(
+                    flex: 10,
+                    child: pw.Align(
+                      alignment: pw.Alignment.centerLeft,
+                      child: pw.Text('#', maxLines: 1),
+                    ),
+                  ),
+                  pw.Expanded(
+                    flex: 10,
+                    child: pw.Align(
+                      alignment: pw.Alignment.centerLeft,
+                      child: pw.Text('Importe', maxLines: 1),
+                    ),
+                  ),
                 ],
-              );
-            }),
-            pw.Divider(),
-            pw.Text('Resumen final', style: pw.TextStyle(fontSize: 16)),
-            pw.SizedBox(height: 10),
-            pw.Text(
-                'Subtotal: \$${(order['GrandTotal'] as num).toDouble().toStringAsFixed(2)}'),
-            ...taxSummary.entries.map((entry) => pw.Text(
-                '${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}')),
-            pw.Text(
-                'Total impuestos: \$${taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b).toStringAsFixed(2)}'),
-            pw.Text(
-                'Total final: \$${(order['GrandTotal'] as num).toDouble().toStringAsFixed(2)}',
-                style:
-                    pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-          ],
-        ),
+              ),
+              pw.Divider(),
+              ...lines.map((line) {
+                final name = (line['M_Product_ID']?['identifier'] ?? 'Ítem')
+                    .toString()
+                    .split('_')
+                    .skip(1)
+                    .join(' ');
+                final qty = (line['QtyOrdered'] as num?)?.toDouble() ?? 0.0;
+                final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
+                final net = (line['LineNetAmt'] as num?)?.toDouble() ?? 0.0;
+                final rate =
+                    (line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0;
+                final tax =
+                    double.parse((net * (rate / 100)).toStringAsFixed(2));
+                final value = net + tax;
+
+                return pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        // Proporciones similares al ticket: 20/10/5/10
+                        pw.Expanded(
+                          flex: 20,
+                          child: pw.Text(
+                            truncate(name, 24),
+                            maxLines: 1,
+                            overflow: pw.TextOverflow.clip,
+                          ),
+                        ),
+                        pw.Expanded(
+                          flex: 15,
+                          child: pw.Align(
+                            alignment: pw.Alignment.centerLeft,
+                            child: pw.Text(money(price), maxLines: 1),
+                          ),
+                        ),
+                        pw.Expanded(
+                          flex: 10,
+                          child: pw.Align(
+                            alignment: pw.Alignment.centerLeft,
+                            child: pw.Text(
+                                qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2),
+                                maxLines: 1),
+                          ),
+                        ),
+                        pw.Expanded(
+                          flex: 10,
+                          child: pw.Align(
+                            child: pw.Text(money(value), maxLines: 1),
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.SizedBox(height: 6),
+                    pw.Text(
+                        'Impuesto ${rate.toStringAsFixed(0)}%: ${money(tax)}',
+                        textAlign: pw.TextAlign.left,
+                        maxLines: 1),
+                  ],
+                );
+              }),
+
+              pw.SizedBox(height: 6),
+
+              // Totales
+              pw.Text('Cantidad de artículos: ${lines.length}'),
+              pw.Divider(),
+              pw.Text('Total: ${money(grandTotal)}',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 6),
+
+              // Impuestos
+              pw.Text('Neto (sin impuesto): ${money(netSum)}'),
+              pw.Text('Impuestos: ${money(taxTotal)}'),
+              pw.SizedBox(height: 6),
+
+              // Footer
+              pw.Text('Cambie el texto del pie en Configuración'),
+              pw.Divider(),
+              pw.Text('Gracias por su compra'),
+              pw.Text('Por favor vuelva pronto'),
+            ],
+          );
+        },
       ),
     );
 
