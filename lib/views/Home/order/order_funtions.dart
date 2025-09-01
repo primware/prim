@@ -208,6 +208,7 @@ Future<Map<String, dynamic>> postInvoice({
       "SalesRep_ID": {"id": UserData.id},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",
+      "DateOrdered": DateTime.now().toIso8601String(),
       "InvoiceRule": "I",
       "PriorityRule": "5",
       "FreightCostRule": "I",
