@@ -163,6 +163,7 @@ Future<List<Map<String, dynamic>>> fetchTax() async {
 }
 
 Future<Map<String, dynamic>> postInvoice({
+  //TODO agregar el dateordered con la fecha y hora de hoy
   required int cBPartnerID,
   required List<Map<String, dynamic>> invoiceLines,
   required List<Map<String, dynamic>> payments,
