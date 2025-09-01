@@ -8,6 +8,7 @@ import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
 import 'package:primware/views/Home/order/my_order_detail.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
+import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
 
@@ -144,17 +145,22 @@ class _OrderListPageState extends State<OrderListPage> {
           AppLocale.myOrders.getString(context),
         )),
         drawer: MenuDrawer(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const OrderNewPage(),
-              ),
-            );
-          },
-          child: const Icon(Icons.add),
-        ),
+        floatingActionButton: POS.docTypeID != null
+            ? FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OrderNewPage(
+                        doctypeID: POS.docTypeID,
+                        orderName: POS.docTypeName,
+                      ),
+                    ),
+                  );
+                },
+                child: const Icon(Icons.add),
+              )
+            : null,
         body: SingleChildScrollView(
           child: Center(
             child: CustomContainer(

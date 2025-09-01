@@ -45,6 +45,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   TextEditingController qtyProductController = TextEditingController();
   TextEditingController productController = TextEditingController();
   TextEditingController taxController = TextEditingController();
+  TextEditingController docActionController = TextEditingController();
   bool isSending = false,
       isTaxLoading = true,
       isProductCategoryLoading = true,
@@ -127,10 +128,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
       }
     });
 
-    if (POS.documentActions.isNotEmpty) {
-      selectedDocActionCode = POS.documentActions.first['code'];
-    }
-
     if (Yappy.apiKey != null && Yappy.secretKey != null) {
       isYappyConfigAvailable = true;
     }
@@ -140,11 +137,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   Future<void> _loadDocumentActions() async {
     await fetchDocumentActions(docTypeID: widget.doctypeID!);
-    if (mounted &&
-        POS.documentActions.isNotEmpty &&
-        selectedDocActionCode == null) {
+
+    if (POS.documentActions.isNotEmpty) {
       setState(() {
         selectedDocActionCode = POS.documentActions.first['code'];
+        docActionController.text = POS.documentActions.first['name'] ?? '';
       });
     }
   }
@@ -1318,13 +1315,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
           ],
         ),
         drawer: MenuDrawer(),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: Text(
-            'www.primware.net',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+        bottomNavigationBar: Text(
+          'www.primware.net',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
         ),
         body: SingleChildScrollView(
           child: Center(
@@ -1334,7 +1328,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
               alignment: WrapAlignment.end,
               children: [
                 CustomContainer(
-                  maxWidthContainer: 360,
+                  maxWidthContainer: 320,
+                  margin: EdgeInsets.only(top: 12),
                   child: Column(
                     children: [
                       Column(
@@ -1778,7 +1773,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 ),
                 if (POSTenderType.isMultiPayment)
                   CustomContainer(
-                    maxWidthContainer: 360,
+                    maxWidthContainer: 320,
+                    margin: EdgeInsets.only(top: 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -2015,7 +2011,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
                 //? Resumen de la factura
                 CustomContainer(
-                  maxWidthContainer: 360,
+                  maxWidthContainer: 320,
+                  margin: EdgeInsets.only(top: 12),
                   child: Column(
                     children: [
                       Center(
@@ -2099,11 +2096,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         labelText: AppLocale.documentAction.getString(context),
                         searchBy: "name",
                         showCreateButtonIfNotFound: false,
-                        controller: TextEditingController(
-                          text: POS.documentActions.isNotEmpty
-                              ? (POS.documentActions.first['name'] ?? '')
-                              : '',
-                        ),
+                        controller: docActionController,
                         onItemSelected: (item) {
                           setState(() {
                             selectedDocActionCode = item['code'];
