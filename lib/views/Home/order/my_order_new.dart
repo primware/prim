@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:pdf/pdf.dart';
+import 'package:primware/API/user.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'dart:async';
 import 'package:primware/shared/custom_container.dart';
@@ -50,7 +51,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isCustomerSearchLoading = false,
       isProductSearchLoading = false,
       isProductLoading = true,
-      isBPartnerLoading = true,
       isYappyLoading = false,
       isYappyConfigAvailable = false;
 
@@ -115,6 +115,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      clienteController.text = POS.templatePartnerName ?? '';
       _loadBPartner();
       _loadDocumentActions();
       initialLoadProduct();
@@ -299,6 +300,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         isCustomerSearchLoading = true;
       });
     }
+
     final partner = await fetchBPartner(
       context: context,
       searchTerm: clienteController.text.trim(),
@@ -312,7 +314,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     setState(() {
       bPartnerOptions = partner;
-      isBPartnerLoading = false;
       isCustomerSearchLoading = false;
       if (defaultPartner.isNotEmpty) {
         selectedBPartnerID = defaultPartner['id'];
@@ -855,13 +856,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<Uint8List> _generateTicketPdf(Map<String, dynamic> order) async {
-    // Thermal ticket on 80mm roll with monospace layout
     final pdf = pw.Document();
 
     // Page format: 80mm roll (use PdfPageFormat.roll57 for 58mm if needed)
     final pageFormat = PdfPageFormat.roll80;
 
-    // Monospace fonts to align columns
     final theme = pw.ThemeData.withFont(
       base: pw.Font.courier(),
       bold: pw.Font.courierBold(),
@@ -1284,12 +1283,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            widget.orderName != null
-                ? '${widget.orderName!} : ${docNoSequenceNumber ?? ""}'
-                : widget.isRefund
-                    ? '${AppLocale.creditNote.getString(context)} : ${docNoSequenceNumber ?? ""}'
-                    : '${AppLocale.newOrder.getString(context)} : ${docNoSequenceNumber ?? ""}',
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${AppLocale.user.getString(context)}: ${UserData.name} -'),
+              const SizedBox(width: 4),
+              Text(
+                widget.orderName != null
+                    ? '${widget.orderName!} : ${docNoSequenceNumber ?? ""}'
+                    : widget.isRefund
+                        ? '${AppLocale.creditNote.getString(context)} : ${docNoSequenceNumber ?? ""}'
+                        : '${AppLocale.newOrder.getString(context)} : ${docNoSequenceNumber ?? ""}',
+              ),
+            ],
           ),
           backgroundColor:
               widget.isRefund ? Theme.of(context).colorScheme.error : null,
@@ -1303,7 +1309,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 ),
                 padding: EdgeInsets.all(CustomSpacer.small),
                 child: Logo(
-                  width: 40,
+                  width: 60,
                 ),
               ),
             )
@@ -1330,47 +1336,41 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             const LinearProgressIndicator(),
                             const SizedBox(height: 8),
                           ],
-                          isBPartnerLoading
-                              ? _buildShimmerField()
-                              : CustomSearchField(
-                                  options: bPartnerOptions,
-                                  labelText:
-                                      AppLocale.customer.getString(context),
-                                  searchBy: "TaxID",
-                                  controller: clienteController,
-                                  showCreateButtonIfNotFound: true,
-                                  onChanged: (_) => debouncedLoadCustomer(),
-                                  onCreate: (value) async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => BPartnerNewPage(
-                                            bpartnerName: value),
-                                      ),
-                                    );
-                                    if (result != null &&
-                                        result['created'] == true) {
-                                      await _loadBPartner();
-                                      setState(() {
-                                        selectedBPartnerID =
-                                            result['bpartner']['id'];
-                                      });
-                                    }
-                                  },
-                                  onItemSelected: (item) {
-                                    setState(() {
-                                      //TODO agregar aca una variable para la ubicacion o localizacion que ya la tengo en la informaicon del resultado
-                                      //TODO buscar por cedula el cliente
-                                      selectedBPartnerID = item['id'];
-                                    });
-                                  },
-                                  itemBuilder: (item) => Text(
-                                    '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                          CustomSearchField(
+                            key: ValueKey('customer_${bPartnerOptions.length}'),
+                            options: bPartnerOptions,
+                            labelText: AppLocale.customer.getString(context),
+                            searchBy:
+                                "TaxID", // clave real que devuelves en fetchBPartner
+                            controller: clienteController,
+                            showCreateButtonIfNotFound: true,
+                            onChanged: (_) => debouncedLoadCustomer(),
+                            onCreate: (value) async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      BPartnerNewPage(bpartnerName: value),
                                 ),
+                              );
+                              if (result != null && result['created'] == true) {
+                                await _loadBPartner();
+                                setState(() {
+                                  selectedBPartnerID = result['bpartner']['id'];
+                                });
+                              }
+                            },
+                            onItemSelected: (item) {
+                              setState(() {
+                                selectedBPartnerID = item['id'];
+                              });
+                            },
+                            itemBuilder: (item) => Text(
+                              '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           const SizedBox(height: CustomSpacer.medium),
                           isProductLoading
                               ? _buildShimmerField()
@@ -1601,8 +1601,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       controller: productController,
                                       labelText:
                                           AppLocale.product.getString(context),
-                                      searchBy:
-                                          AppLocale.code.getString(context),
+                                      searchBy: 'UPC',
                                       showCreateButtonIfNotFound: true,
                                       onItemSelected: (item) {
                                         _showQuantityDialog(item);

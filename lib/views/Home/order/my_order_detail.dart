@@ -37,13 +37,11 @@ class OrderDetailPage extends StatelessWidget {
   }
 
   Future<Uint8List> _generateTicketPdf(Map<String, dynamic> order) async {
-    // Thermal ticket on 80mm roll with monospace layout
     final pdf = pw.Document();
 
     // Page format: 80mm roll (use PdfPageFormat.roll57 for 58mm if needed)
     final pageFormat = PdfPageFormat.roll80;
 
-    // Monospace fonts to align columns
     final theme = pw.ThemeData.withFont(
       base: pw.Font.courier(),
       bold: pw.Font.courierBold(),

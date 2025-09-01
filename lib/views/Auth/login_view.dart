@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:primware/API/pos.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../API/endpoint.api.dart';
@@ -29,14 +31,15 @@ TextEditingController claveController = TextEditingController();
 
 class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
-  final TextEditingController baseURLController = TextEditingController();
+  final TextEditingController baseURLController = TextEditingController(),
+      cPosController = TextEditingController();
   bool rememberUser = false;
   String version = '';
 
   @override
   void initState() {
     super.initState();
-    _loadBaseURL();
+    _loadConfig();
     _loadRememberedUser();
     _loadSavedLanguage();
     _checkVersion();
@@ -76,21 +79,28 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  Future<void> _saveBaseURL() async {
+  Future<void> _saveConfig() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String baseURL = baseURLController.text.trim();
+    String cPosID = cPosController.text.trim();
     await prefs.setString('baseURL', baseURL);
+    await prefs.setString('cPosID', cPosID);
     Base.baseURL = baseURL;
+    POS.cPosID = int.tryParse(cPosID);
   }
 
-  Future<void> _loadBaseURL() async {
+  Future<void> _loadConfig() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? baseURL =
         prefs.getString('baseURL') ?? 'https://test.idempiere.org';
 
+    String? cPosID = prefs.getString('cPosID');
+
     setState(() {
       baseURLController.text = baseURL;
+      cPosController.text = cPosID ?? '';
       Base.baseURL = baseURL;
+      POS.cPosID = int.tryParse(cPosController.text);
     });
   }
 
@@ -103,10 +113,22 @@ class _LoginPageState extends State<LoginPage> {
             AppLocale.server.getString(context),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
-          content: TextfieldTheme(
-            texto: 'URL',
-            controlador: baseURLController,
-            pista: 'Ej: https://test.idempiere.org',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextfieldTheme(
+                texto: 'URL',
+                controlador: baseURLController,
+                pista: 'Ej: https://test.idempiere.org',
+              ),
+              const SizedBox(height: CustomSpacer.medium),
+              TextfieldTheme(
+                texto: 'POS ID',
+                controlador: cPosController,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                inputType: TextInputType.number,
+              ),
+            ],
           ),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
@@ -118,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             IconButton(
               onPressed: () {
-                _saveBaseURL();
+                _saveConfig();
                 Navigator.of(context).pop();
                 _resetDialog();
               },
@@ -176,7 +198,7 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.remove('clave');
         await prefs.setBool('rememberUser', false);
       }
-      _saveBaseURL();
+      _saveConfig();
 
       Navigator.push(
         context,
@@ -208,10 +230,9 @@ class _LoginPageState extends State<LoginPage> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        floatingActionButton: FloatingActionButton.extended(
+        floatingActionButton: FloatingActionButton(
           onPressed: _showBaseURLDialog,
-          icon: const Icon(Icons.settings),
-          label: Text(AppLocale.server.getString(context)),
+          child: Icon(Icons.settings),
         ),
         body: Center(
           child: SingleChildScrollView(

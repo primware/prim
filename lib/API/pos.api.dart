@@ -1,12 +1,14 @@
 import 'dart:typed_data';
 
 class POS {
+  static int? cPosID;
   static int? priceListID;
   static int? priceListVersionID;
   static int? docTypeID;
   static String? docTypeName;
   static int? docTypeRefundID;
   static int? templatePartnerID;
+  static String? templatePartnerName;
   static bool isPOS = false;
 
   static List<Map<String, dynamic>> docTypesComplete = [];

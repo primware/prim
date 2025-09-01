@@ -280,9 +280,12 @@ Future<bool> _loadPOSPrinterData() async {
 
 Future<void> _loadPOSData(BuildContext context) async {
   try {
+    final String filter = POS.cPosID != null
+        ? 'C_POS_ID eq ${POS.cPosID}'
+        : 'SalesRep_ID eq ${UserData.id}';
+
     final response = await get(
-      Uri.parse(
-          '${EndPoints.cPos}?\$filter=SalesRep_ID eq ${UserData.id}&\$expand=C_DocType_ID'),
+      Uri.parse('${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -310,8 +313,8 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.priceListID = posData['M_PriceList_ID']?['id'];
       POS.docTypeID = posData['C_DocType_ID']?['id'];
       POS.docTypeName = posData['C_DocType_ID']?['PrintName'];
-      //TODO traer el identifier del tercero por defecto para mejorar la carga del pos
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
+      POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
       POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
@@ -319,7 +322,7 @@ Future<void> _loadPOSData(BuildContext context) async {
       await fetchTaxs();
 
       final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
-      POS.isPOS = docSubType == 'WR';
+      POS.isPOS = docSubType == 'WR' || POS.cPosID != null;
 
       //? Tomamos la informacion del Yappy si existe, si no se mantiene en null
       Yappy.yappyConfigID = posData?['CDS_YappyConf_ID']?['id'];
