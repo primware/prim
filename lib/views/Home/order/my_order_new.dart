@@ -893,23 +893,41 @@ class _OrderNewPageState extends State<OrderNewPage> {
       };
     }).toList();
 
-    final paymentData = paymentControllers.entries.where((entry) {
-      final txt = entry.value.text.trim();
-      final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
-      return amt > 0;
-    }).map((entry) {
-      final txt = entry.value.text.trim();
-      final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
+    // Construir paymentData ajustando el efectivo por el vuelto (change)
+    // Regla: si hay cambio, se descuenta del (los) método(s) en efectivo (isCash)
+    final entriesWithAmt = paymentControllers.entries
+        .map((e) {
+          final raw = e.value.text.trim();
+          final amt = double.tryParse(raw.replaceAll(',', '.')) ?? 0.0;
+          return MapEntry(e.key, amt);
+        })
+        .where((e) => e.value > 0)
+        .toList();
 
+    double remainingChange = calculatedChange > 0 ? _r2(calculatedChange) : 0.0;
+
+    final List<Map<String, dynamic>> paymentData = [];
+    for (final entry in entriesWithAmt) {
       final method = paymentMethods.firstWhere(
         (m) => m['id'] == entry.key,
         orElse: () => const <String, dynamic>{},
       );
+      final bool isCash = method['isCash'] == true;
       final bool isYappy =
           (method['name']?.toString().toLowerCase().contains('yappy') == true);
 
+      double adjusted = _r2(entry.value);
+      if (isCash && remainingChange > 0) {
+        final deduction =
+            (adjusted >= remainingChange) ? remainingChange : adjusted;
+        adjusted = _r2(adjusted - deduction);
+        remainingChange = _r2(remainingChange - deduction);
+      }
+
+      if (adjusted <= 0) continue;
+
       final Map<String, dynamic> data = {
-        'PayAmt': double.parse(amt.toStringAsFixed(2)),
+        'PayAmt': double.parse(adjusted.toStringAsFixed(2)),
         'C_POSTenderType_ID': entry.key,
       };
 
@@ -920,8 +938,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
         data['RoutingNo'] = yappyTransactionId;
       }
 
-      return data;
-    }).toList();
+      paymentData.add(data);
+    }
 
     final result = await postInvoice(
       cBPartnerID: bPartner,
