@@ -31,14 +31,3 @@ class POSPrinter {
   static String? headerEmail;
   static Uint8List? logo;
 }
-
-class Yappy {
-  static String? token;
-  static String? secretKey;
-  static String? apiKey;
-  static int? yappyConfigID;
-  static String? groupId;
-  static String? deviceId;
-  static bool? isTest;
-  static int? cPOSTenderTypeID;
-}

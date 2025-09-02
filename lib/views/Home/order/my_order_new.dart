@@ -48,9 +48,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isProductCategoryLoading = true,
       isCustomerSearchLoading = false,
       isProductSearchLoading = false,
-      isProductLoading = true,
-      isYappyLoading = false,
-      isYappyConfigAvailable = false;
+      isProductLoading = true;
 
   final Set<int> _lockedPayments = {};
   List<Map<String, dynamic>> bPartnerOptions = [];
@@ -70,7 +68,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   bool _isInvoiceValid = false;
 
   int? selectedBPartnerID, docNoSequenceID, docNoSequenceNumber;
-  String? selectedDocActionCode, yappyTransactionId;
+  String? selectedDocActionCode;
   Map<String, dynamic>? selectedTax;
 
   double subtotal = 0.0;
@@ -82,31 +80,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
   double _r2(num v) => (v * 100).round() / 100.0; // redondea a 2 decimales
   // ==== Helpers for monetary rounding and comparisons ====
 
-  Future<void> _cancelPendingYappy({bool silent = false}) async {
-    if (yappyTransactionId != null) {
-      try {
-        await cancelYappyTransaction(transactionId: yappyTransactionId!);
-      } catch (_) {
-        // Ignorar cualquier error de cancelación
-      } finally {
-        yappyTransactionId = null;
-        if (!silent && mounted) {
-          ToastMessage.show(
-            context: context,
-            message: 'Transacción Yappy cancelada',
-            type: ToastType.help,
-          );
-        }
-      }
-    }
-  }
-
   void clearInvoiceFields() {
     clienteController.clear();
     qtyProductController.clear();
     productController.clear();
     taxController.clear();
-    yappyTransactionId = null;
     _lockedPayments.clear();
   }
 
@@ -125,10 +103,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
         _loadPayment();
       }
     });
-
-    if (Yappy.apiKey != null && Yappy.secretKey != null) {
-      isYappyConfigAvailable = true;
-    }
 
     _loadSequence();
   }
@@ -576,231 +550,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
   //   }
   // }
 
-  //? para mostrar el dialogo de Yappy
-  Future<void> _showYappyQRDialog({
-    required double subTotal,
-    required double totalTax,
-    required double total,
-    required int methodId,
-  }) async {
-    setState(() {
-      isYappyLoading = true;
-    });
-
-    // 1) Solicitar el QR dinámico (hash + transactionId)
-    final result = await showYappyQR(
-      subTotal: double.parse(subTotal.toStringAsFixed(2)),
-      totalTax: double.parse(totalTax.toStringAsFixed(2)),
-      total: double.parse(total.toStringAsFixed(2)),
-      docNoSequence: docNoSequenceNumber!,
-      context: context,
-    );
-
-    if (result['success'] != true) {
-      ToastMessage.show(
-        context: context,
-        message: result['message'] ?? 'No se pudo generar el QR',
-        type: ToastType.failure,
-      );
-      setState(() {
-        isYappyLoading = false;
-      });
-      return;
-    }
-
-    final String hash = result['hash'] as String;
-    yappyTransactionId = result['transactionId'] as String;
-
-    int secondsLeft = 300;
-    Timer? ticker;
-    bool closed = false;
-
-    setState(() {
-      isYappyLoading = false;
-    });
-
-    await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            // Iniciar el ticker una sola vez
-            ticker ??= Timer.periodic(const Duration(seconds: 1), (t) async {
-              if (closed) return;
-
-              // Reducir contador
-              if (secondsLeft > 0) {
-                setModalState(() {
-                  secondsLeft -= 1;
-                });
-              }
-
-              // Polling de estado
-              try {
-                final paid = await checkYappyStatus(yappyTransactionId!);
-                if (paid) {
-                  if (mounted) {
-                    setState(() {
-                      _lockedPayments.add(methodId); // bloquear campo de pago
-                    });
-                  }
-                  closed = true;
-                  t.cancel();
-                  ToastMessage.show(
-                    context: context,
-                    message: 'Pago recibido correctamente',
-                    type: ToastType.success,
-                  );
-                  if (Navigator.of(dialogContext).canPop()) {
-                    Navigator.of(dialogContext).pop(true);
-                  }
-                  return;
-                }
-              } catch (_) {
-                // Ignorar errores de polling por ahora
-              }
-
-              // Tiempo agotado => cancelar
-              if (secondsLeft == 0) {
-                closed = true;
-                t.cancel();
-                await cancelYappyTransaction(
-                    transactionId: yappyTransactionId!);
-                setState(() {
-                  yappyTransactionId = null;
-                });
-
-                ToastMessage.show(
-                  context: context,
-                  message: 'Pago cancelado o tiempo agotado',
-                  type: ToastType.failure,
-                );
-                if (Navigator.of(dialogContext).canPop()) {
-                  Navigator.of(dialogContext).pop(false);
-                }
-              }
-            });
-
-            final mm = (secondsLeft ~/ 60).toString().padLeft(2, '0');
-            final ss = (secondsLeft % 60).toString().padLeft(2, '0');
-
-            return WillPopScope(
-              onWillPop: () async => false,
-              child: AlertDialog(
-                backgroundColor: Color(0xFF1996E6),
-                contentPadding: const EdgeInsets.all(0),
-                content: SizedBox(
-                  width: 640,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            topRight: Radius.circular(24),
-                          ),
-                          color: Colors.white,
-                        ),
-                        child: Center(
-                          child: Image.asset(
-                            'assets/img/yappyLogo.png',
-                            width: 240,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: CustomSpacer.xlarge),
-
-                      // QR grande centrado
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        width: 280,
-                        // height: 280,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.white,
-                        ),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              QrImageView(
-                                data: hash,
-                                version: QrVersions.auto,
-                                size: 260,
-                              ),
-                              // Contador
-                              Text(
-                                'Tiempo restante: $mm:$ss',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 6),
-                              // Id de transacción (pequeño)
-                              Text(
-                                'Transacción: $yappyTransactionId',
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
-                              const SizedBox(height: CustomSpacer.medium),
-                              TextButton(
-                                style: TextButton.styleFrom(
-                                  backgroundColor:
-                                      ColorTheme.error.withOpacity(0.2),
-                                ),
-                                onPressed: () {
-                                  closed = true;
-                                  ticker?.cancel();
-                                  cancelYappyTransaction(
-                                      transactionId: yappyTransactionId!);
-                                  setState(() {
-                                    yappyTransactionId = null;
-                                  });
-
-                                  ToastMessage.show(
-                                    context: context,
-                                    message: 'Pago cancelado o tiempo agotado',
-                                    type: ToastType.failure,
-                                  );
-                                  Navigator.of(dialogContext).pop(false);
-                                },
-                                child: Text(
-                                  AppLocale.cancel.getString(context),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                          color: Colors.red,
-                                          fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: CustomSpacer.xlarge),
-                      Text(
-                          'Escanéalo desde Yappy App o desde Yappy en el App de tu banco',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineLarge
-                              ?.copyWith(
-                                color: Colors.white,
-                              ),
-                          textAlign: TextAlign.center),
-                      const SizedBox(height: CustomSpacer.xlarge),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    ticker?.cancel();
-  }
-
   void _deleteLine(int index) {
     setState(() {
       invoiceLines.removeAt(index);
@@ -901,24 +650,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final txt = entry.value.text.trim();
       final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
 
-      final method = paymentMethods.firstWhere(
-        (m) => m['id'] == entry.key,
-        orElse: () => const <String, dynamic>{},
-      );
-      final bool isYappy =
-          (method['name']?.toString().toLowerCase().contains('yappy') == true);
-
       final Map<String, dynamic> data = {
         'PayAmt': double.parse(amt.toStringAsFixed(2)),
         'C_POSTenderType_ID': entry.key,
       };
-
-      // Si es Yappy y hay transacción, incluirla como RoutingNo
-      if (isYappy &&
-          yappyTransactionId != null &&
-          yappyTransactionId!.isNotEmpty) {
-        data['RoutingNo'] = yappyTransactionId;
-      }
 
       return data;
     }).toList();
@@ -1049,8 +784,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        //TODO manejar lo de cancelar el yappy si me salgo
-        // await _cancelPendingYappy(silent: false);
+        //TODO manejo de salir si hay datos en la orden
         return true;
       },
       child: Scaffold(
@@ -1613,145 +1347,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                               _validateForm();
                                             },
                                           ),
-                                          if (method['name']
-                                                  .toString()
-                                                  .toLowerCase()
-                                                  .contains('yappy') &&
-                                              isYappyConfigAvailable &&
-                                              paymentControllers[method['id']]
-                                                      ?.text !=
-                                                  null &&
-                                              (double.tryParse(
-                                                          paymentControllers[
-                                                                      method[
-                                                                          'id']]
-                                                                  ?.text ??
-                                                              '0') ??
-                                                      0) >
-                                                  0 &&
-                                              yappyTransactionId == null)
-                                            isYappyLoading
-                                                ? SizedBox(
-                                                    width: 24,
-                                                    height: 24,
-                                                    child:
-                                                        CircularProgressIndicator())
-                                                : IconButton(
-                                                    icon: const Icon(
-                                                        Icons.qr_code),
-                                                    tooltip:
-                                                        'Mostrar código QR',
-                                                    onPressed: () {
-                                                      _showYappyQRDialog(
-                                                        subTotal: double.parse(
-                                                            paymentControllers[
-                                                                        method[
-                                                                            'id']]
-                                                                    ?.text
-                                                                    .toString() ??
-                                                                '0'),
-                                                        totalTax: 0,
-                                                        total: double.parse(
-                                                            paymentControllers[
-                                                                        method[
-                                                                            'id']]
-                                                                    ?.text
-                                                                    .toString() ??
-                                                                '0'),
-                                                        methodId: method['id'],
-                                                      );
-                                                    },
-                                                  ),
-                                          if (yappyTransactionId != null &&
-                                              method['name']
-                                                  .toString()
-                                                  .toLowerCase()
-                                                  .contains('yappy') &&
-                                              paymentControllers[method['id']]
-                                                      ?.text !=
-                                                  null &&
-                                              (paymentControllers[method['id']]
-                                                          ?.text ??
-                                                      '0.0') !=
-                                                  '0.0')
-                                            if (yappyTransactionId != null)
-                                              IconButton(
-                                                  icon: Icon(Icons.cancel),
-                                                  color: ColorTheme.error,
-                                                  tooltip:
-                                                      'Anular transacción Yappy',
-                                                  onPressed: () async {
-                                                    final confirm =
-                                                        await showDialog(
-                                                      context: context,
-                                                      builder: (context) {
-                                                        return AlertDialog(
-                                                          backgroundColor:
-                                                              Theme.of(context)
-                                                                  .cardColor,
-                                                          title: Text(AppLocale
-                                                              .cancelYappyTransaction
-                                                              .getString(
-                                                                  context)),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                      context,
-                                                                      false),
-                                                              child: Text(AppLocale
-                                                                  .cancel
-                                                                  .getString(
-                                                                      context)),
-                                                            ),
-                                                            ElevatedButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                      context,
-                                                                      true),
-                                                              child: Text(
-                                                                AppLocale
-                                                                    .confirm
-                                                                    .getString(
-                                                                        context),
-                                                                style: Theme.of(
-                                                                        context)
-                                                                    .textTheme
-                                                                    .bodySmall
-                                                                    ?.copyWith(
-                                                                        color: Theme.of(context)
-                                                                            .colorScheme
-                                                                            .surface),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        );
-                                                      },
-                                                    );
-
-                                                    if (confirm != true) return;
-
-                                                    final paid =
-                                                        await cancelYappyTransaction(
-                                                            transactionId:
-                                                                yappyTransactionId!);
-                                                    if (paid) {
-                                                      if (mounted) {
-                                                        paymentControllers[
-                                                                method['id']]
-                                                            ?.text = '0.0';
-                                                        yappyTransactionId =
-                                                            null;
-                                                        _validateForm();
-                                                        ToastMessage.show(
-                                                          context: context,
-                                                          message:
-                                                              'Pago anulado correctamente',
-                                                          type: ToastType.help,
-                                                        );
-                                                      }
-                                                    }
-                                                  }),
                                         ],
                                       ),
                                       if (calculatedChange > 0 &&

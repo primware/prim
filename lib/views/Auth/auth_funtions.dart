@@ -324,18 +324,6 @@ Future<void> _loadPOSData(BuildContext context) async {
       final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.isPOS = docSubType == 'WR' || POS.cPosID != null;
 
-      //? Tomamos la informacion del Yappy si existe, si no se mantiene en null
-      Yappy.yappyConfigID = posData?['CDS_YappyConf_ID']?['id'];
-      Yappy.groupId = posData?['CDS_YappyGroup_ID']?['identifier'];
-      Yappy.deviceId = posData?['CDS_YappyReceiptUnit_ID']?['identifier'];
-
-      if (Yappy.yappyConfigID != null &&
-          Yappy.groupId != null &&
-          Yappy.deviceId != null) {
-        await _getYappyEndPoint();
-        await _getYappyKeys();
-      }
-
       await _getCDocTypeComplete();
     } else {
       print(
@@ -365,59 +353,6 @@ Future<bool> _posTenderExists() async {
     print(
         'Error al verificar existencia de PosTenderExists: ${response.statusCode}, ${response.body}');
     return false;
-  }
-}
-
-Future<void> _getYappyKeys() async {
-  try {
-    final response = await get(
-      Uri.parse(
-          '${EndPoints.cdsYappyGroup}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,Value,CDS_API_Key,CDS_Secret_Key'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': Token.auth!,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      final record = responseData['records'][0];
-
-      Yappy.apiKey = record['CDS_API_Key'];
-      Yappy.secretKey = record['CDS_Secret_Key'];
-    } else {
-      print(
-          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
-    }
-  } catch (e) {
-    print('Error en _getMPriceListID: $e');
-  }
-}
-
-Future<void> _getYappyEndPoint() async {
-  try {
-    final response = await get(
-      Uri.parse(
-          '${EndPoints.cdsYappyConf}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,CDS_YappyEndPoint,CDS_IsYappyTest'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': Token.auth!,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      final record = responseData['records'][0];
-
-      Base.yappyURL = record['CDS_YappyEndPoint'];
-
-      Yappy.isTest = record['CDS_IsYappyTest'] ?? false;
-    } else {
-      print(
-          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
-    }
-  } catch (e) {
-    print('Error en _getMPriceListID: $e');
   }
 }
 
