@@ -146,7 +146,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (searchText.length < 4 && searchText.isNotEmpty) {
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 3000), () {
+    _debounce = Timer(const Duration(milliseconds: 5000), () {
       _loadBPartner(showLoadingIndicator: true);
     });
   }
