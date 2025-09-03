@@ -208,6 +208,7 @@ Future<Map<String, dynamic>> postInvoice({
       "SalesRep_ID": {"id": UserData.id},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",
+      "DateOrdered": DateTime.now().toIso8601String(),
       "InvoiceRule": "I",
       "PriorityRule": "5",
       "FreightCostRule": "I",
@@ -694,8 +695,6 @@ Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
   // Helpers
   String str(dynamic v) => v?.toString() ?? '';
   String money(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
-  String truncate(String s, int max) =>
-      s.length <= max ? s : s.substring(0, max);
 
   // Order fields (safe access)
   final docNo = str(order['DocumentNo']);
