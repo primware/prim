@@ -19,7 +19,6 @@ import '../bpartner/bpartner_new.dart';
 import '../product/product_new.dart';
 import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'my_order.dart';
 import 'package:printing/printing.dart';
 
@@ -93,7 +92,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      //TODO agregar un campo para colocar la cedula en el cliente y pasar eso directo al campo de busqueda
       _loadBPartner();
       _loadDocumentActions();
       initialLoadProduct();
@@ -148,7 +146,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (searchText.length < 4 && searchText.isNotEmpty) {
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 3000), () {
+    _debounce = Timer(const Duration(milliseconds: 5000), () {
       _loadBPartner(showLoadingIndicator: true);
     });
   }
@@ -278,7 +276,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
 
     setState(() {
-      bPartnerOptions = partner;
+      final existingIds =
+          bPartnerOptions.map((e) => e['id']).where((id) => id != null).toSet();
+
+      for (final p in partner) {
+        final pid = p['id'];
+        if (pid != null && !existingIds.contains(pid)) {
+          bPartnerOptions.add(p);
+          existingIds.add(pid);
+        }
+      }
+
       isCustomerSearchLoading = false;
     });
   }
