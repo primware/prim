@@ -107,6 +107,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     productController.clear();
     taxController.clear();
     yappyTransactionId = null;
+    selectedBPartnerID = null;
     _lockedPayments.clear();
   }
 
@@ -169,6 +170,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   void debouncedLoadCustomer() {
+    if (clienteController.text.trim().isEmpty) {
+      setState(() {
+        selectedBPartnerID = null;
+        _validateForm();
+      });
+      return;
+    }
+
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     final searchText = clienteController.text.trim();
     if (searchText.length < 4 && searchText.isNotEmpty) {
@@ -211,26 +220,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
           docNoSequenceNumber = value;
         });
       });
-    }
-
-    setState(() {
-      isPaymentMethodsLoading = true;
-    });
-    try {
-      final result = await fetchPaymentMethods();
-      setState(() {
-        paymentMethods = result;
-        for (var method in result) {
-          paymentControllers.putIfAbsent(
-              method['id'], () => TextEditingController());
-        }
-        isPaymentMethodsLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isPaymentMethodsLoading = false;
-      });
-      print('Error al cargar métodos de pago: $e');
     }
   }
 
@@ -882,35 +871,50 @@ class _OrderNewPageState extends State<OrderNewPage> {
       };
     }).toList();
 
-    final paymentData = paymentControllers.entries.where((entry) {
-      final txt = entry.value.text.trim();
-      final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
-      return amt > 0;
-    }).map((entry) {
-      final txt = entry.value.text.trim();
-      final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
+    final paymentData = paymentControllers.entries
+        // Considerar entradas con algún monto numérico
+        .where((entry) {
+          final txt = entry.value.text.trim();
+          final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
+          return amt > 0;
+        })
+        .map((entry) {
+          final txt = entry.value.text.trim();
+          final originalAmt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
 
-      final method = paymentMethods.firstWhere(
-        (m) => m['id'] == entry.key,
-        orElse: () => const <String, dynamic>{},
-      );
-      final bool isYappy =
-          (method['name']?.toString().toLowerCase().contains('yappy') == true);
+          final method = paymentMethods.firstWhere(
+            (m) => m['id'] == entry.key,
+            orElse: () => const <String, dynamic>{},
+          );
 
-      final Map<String, dynamic> data = {
-        'PayAmt': double.parse(amt.toStringAsFixed(2)),
-        'C_POSTenderType_ID': entry.key,
-      };
+          final bool isYappy =
+              (method['name']?.toString().toLowerCase().contains('yappy') ==
+                  true);
+          final bool isCash = (method['isCash'] == true);
 
-      // Si es Yappy y hay transacción, incluirla como RoutingNo
-      if (isYappy &&
-          yappyTransactionId != null &&
-          yappyTransactionId!.isNotEmpty) {
-        data['RoutingNo'] = yappyTransactionId;
-      }
+          // Si es efectivo, restar el vuelto disponible (sin quedar negativo)
+          double adjustedAmt = originalAmt;
+          if (isCash && calculatedChange > 0) {
+            adjustedAmt = adjustedAmt - calculatedChange;
+          }
 
-      return data;
-    }).toList();
+          final Map<String, dynamic> data = {
+            'PayAmt': double.parse(adjustedAmt.toStringAsFixed(2)),
+            'C_POSTenderType_ID': entry.key,
+          };
+
+          // Si es Yappy y hay transacción, incluirla como RoutingNo
+          if (isYappy &&
+              yappyTransactionId != null &&
+              yappyTransactionId!.isNotEmpty) {
+            data['RoutingNo'] = yappyTransactionId;
+          }
+
+          return data;
+        })
+        // Excluir pagos que quedaron en 0 luego del ajuste
+        .where((p) => (p['PayAmt'] ?? 0) > 0)
+        .toList();
 
     final result = await postInvoice(
       cBPartnerID: bPartner,
@@ -1129,6 +1133,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             onItemSelected: (item) {
                               setState(() {
                                 selectedBPartnerID = item['id'];
+                                _validateForm();
                               });
                             },
                             itemBuilder: (item) => Text(
@@ -1137,6 +1142,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (selectedBPartnerID == null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                AppLocale.clientMustBeSelected
+                                    .getString(context),
+                                style: TextStyle(
+                                    color: ColorTheme.error, fontSize: 13),
+                              ),
+                            ),
                           const SizedBox(height: CustomSpacer.medium),
                           isProductLoading
                               ? _buildShimmerField()

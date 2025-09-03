@@ -163,7 +163,6 @@ Future<List<Map<String, dynamic>>> fetchTax() async {
 }
 
 Future<Map<String, dynamic>> postInvoice({
-  //TODO agregar el dateordered con la fecha y hora de hoy
   required int cBPartnerID,
   required List<Map<String, dynamic>> invoiceLines,
   required List<Map<String, dynamic>> payments,
@@ -208,7 +207,6 @@ Future<Map<String, dynamic>> postInvoice({
       "SalesRep_ID": {"id": UserData.id},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",
-      "DateOrdered": DateTime.now().toIso8601String(),
       "InvoiceRule": "I",
       "PriorityRule": "5",
       "FreightCostRule": "I",
