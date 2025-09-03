@@ -107,6 +107,7 @@ class AppLocale {
   static const String product = 'product';
   static const String paymentMethods = 'paymentMethods';
   static const String paymentSumMustEqualTotal = 'paymentSumMustEqualTotal';
+  static const String clientMustBeSelected = 'clientMustBeSelected';
   static const String summary = 'summary';
   static const String taxes = 'taxes';
   static const String totalTaxes = 'totalTaxes';
@@ -256,6 +257,7 @@ class AppLocale {
     noTaxCategoryAvailable: 'No tax categories available',
     productType: 'Product Type',
     cancelYappyTransaction: 'Cancel Yappy Transaction?',
+    clientMustBeSelected: 'A client must be selected',
   };
 
   static const Map<String, dynamic> es = {
@@ -385,5 +387,6 @@ class AppLocale {
     noTaxCategoryAvailable: 'No hay categorías de impuestos disponibles',
     productType: 'Tipo de Producto',
     cancelYappyTransaction: '¿Cancelar Transacción Yappy?',
+    clientMustBeSelected: 'Debe seleccionar un cliente'
   };
 }

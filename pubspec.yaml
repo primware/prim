@@ -1,7 +1,7 @@
 name: primware
 description: "A primware app for managing and sharing your primware collection."
 publish_to: "none"
-version: 0.1.26+26
+version: 0.1.27+27
 
 environment:
   sdk: ^3.6.2

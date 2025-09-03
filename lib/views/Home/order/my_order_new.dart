@@ -82,31 +82,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
   double _r2(num v) => (v * 100).round() / 100.0; // redondea a 2 decimales
   // ==== Helpers for monetary rounding and comparisons ====
 
-  Future<void> _cancelPendingYappy({bool silent = false}) async {
-    if (yappyTransactionId != null) {
-      try {
-        await cancelYappyTransaction(transactionId: yappyTransactionId!);
-      } catch (_) {
-        // Ignorar cualquier error de cancelación
-      } finally {
-        yappyTransactionId = null;
-        if (!silent && mounted) {
-          ToastMessage.show(
-            context: context,
-            message: 'Transacción Yappy cancelada',
-            type: ToastType.help,
-          );
-        }
-      }
-    }
-  }
-
   void clearInvoiceFields() {
     clienteController.clear();
     qtyProductController.clear();
     productController.clear();
     taxController.clear();
     yappyTransactionId = null;
+    selectedBPartnerID = null;
     _lockedPayments.clear();
   }
 
@@ -115,7 +97,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      //TODO agregar un campo para colocar la cedula en el cliente y pasar eso directo al campo de busqueda
       _loadBPartner();
       _loadDocumentActions();
       initialLoadProduct();
@@ -163,18 +144,26 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (searchText.length < 4 && searchText.isNotEmpty) {
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 1000), () {
+    _debounce = Timer(const Duration(milliseconds: 3000), () {
       _loadProduct(showLoadingIndicator: true);
     });
   }
 
   void debouncedLoadCustomer() {
+    if (clienteController.text.trim().isEmpty) {
+      setState(() {
+        selectedBPartnerID = null;
+        _validateForm();
+      });
+      return;
+    }
+
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     final searchText = clienteController.text.trim();
     if (searchText.length < 4 && searchText.isNotEmpty) {
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 3000), () {
+    _debounce = Timer(const Duration(milliseconds: 5000), () {
       _loadBPartner(showLoadingIndicator: true);
     });
   }
@@ -211,26 +200,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
           docNoSequenceNumber = value;
         });
       });
-    }
-
-    setState(() {
-      isPaymentMethodsLoading = true;
-    });
-    try {
-      final result = await fetchPaymentMethods();
-      setState(() {
-        paymentMethods = result;
-        for (var method in result) {
-          paymentControllers.putIfAbsent(
-              method['id'], () => TextEditingController());
-        }
-        isPaymentMethodsLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isPaymentMethodsLoading = false;
-      });
-      print('Error al cargar métodos de pago: $e');
     }
   }
 
@@ -565,17 +534,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
   }
 
-  // void _onProductCreated(Map<String, dynamic> newProduct) async {
-  //   await _loadProduct();
-  //   final createdProduct = productOptions.firstWhere(
-  //     (p) => p['id'] == newProduct['id'],
-  //     orElse: () => {},
-  //   );
-  //   if (createdProduct.isNotEmpty) {
-  //     _showQuantityDialog(createdProduct);
-  //   }
-  // }
-
   //? para mostrar el dialogo de Yappy
   Future<void> _showYappyQRDialog({
     required double subTotal,
@@ -893,35 +851,50 @@ class _OrderNewPageState extends State<OrderNewPage> {
       };
     }).toList();
 
-    final paymentData = paymentControllers.entries.where((entry) {
-      final txt = entry.value.text.trim();
-      final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
-      return amt > 0;
-    }).map((entry) {
-      final txt = entry.value.text.trim();
-      final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
+    final paymentData = paymentControllers.entries
+        // Considerar entradas con algún monto numérico
+        .where((entry) {
+          final txt = entry.value.text.trim();
+          final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
+          return amt > 0;
+        })
+        .map((entry) {
+          final txt = entry.value.text.trim();
+          final originalAmt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
 
-      final method = paymentMethods.firstWhere(
-        (m) => m['id'] == entry.key,
-        orElse: () => const <String, dynamic>{},
-      );
-      final bool isYappy =
-          (method['name']?.toString().toLowerCase().contains('yappy') == true);
+          final method = paymentMethods.firstWhere(
+            (m) => m['id'] == entry.key,
+            orElse: () => const <String, dynamic>{},
+          );
 
-      final Map<String, dynamic> data = {
-        'PayAmt': double.parse(amt.toStringAsFixed(2)),
-        'C_POSTenderType_ID': entry.key,
-      };
+          final bool isYappy =
+              (method['name']?.toString().toLowerCase().contains('yappy') ==
+                  true);
+          final bool isCash = (method['isCash'] == true);
 
-      // Si es Yappy y hay transacción, incluirla como RoutingNo
-      if (isYappy &&
-          yappyTransactionId != null &&
-          yappyTransactionId!.isNotEmpty) {
-        data['RoutingNo'] = yappyTransactionId;
-      }
+          // Si es efectivo, restar el vuelto disponible (sin quedar negativo)
+          double adjustedAmt = originalAmt;
+          if (isCash && calculatedChange > 0) {
+            adjustedAmt = adjustedAmt - calculatedChange;
+          }
 
-      return data;
-    }).toList();
+          final Map<String, dynamic> data = {
+            'PayAmt': double.parse(adjustedAmt.toStringAsFixed(2)),
+            'C_POSTenderType_ID': entry.key,
+          };
+
+          // Si es Yappy y hay transacción, incluirla como RoutingNo
+          if (isYappy &&
+              yappyTransactionId != null &&
+              yappyTransactionId!.isNotEmpty) {
+            data['RoutingNo'] = yappyTransactionId;
+          }
+
+          return data;
+        })
+        // Excluir pagos que quedaron en 0 luego del ajuste
+        .where((p) => (p['PayAmt'] ?? 0) > 0)
+        .toList();
 
     final result = await postInvoice(
       cBPartnerID: bPartner,
@@ -1102,7 +1075,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
               children: [
                 CustomContainer(
                   maxWidthContainer: 320,
-                  margin: EdgeInsets.only(top: 12),
+                  margin: EdgeInsets.only(top: 24),
                   child: Column(
                     children: [
                       Column(
@@ -1140,6 +1113,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             onItemSelected: (item) {
                               setState(() {
                                 selectedBPartnerID = item['id'];
+                                _validateForm();
                               });
                             },
                             itemBuilder: (item) => Text(
@@ -1148,6 +1122,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (selectedBPartnerID == null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                AppLocale.clientMustBeSelected
+                                    .getString(context),
+                                style: TextStyle(
+                                    color: ColorTheme.error, fontSize: 13),
+                              ),
+                            ),
                           const SizedBox(height: CustomSpacer.medium),
                           isProductLoading
                               ? _buildShimmerField()
@@ -1548,7 +1532,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 if (POSTenderType.isMultiPayment)
                   CustomContainer(
                     maxWidthContainer: 320,
-                    margin: EdgeInsets.only(top: 12),
+                    margin: EdgeInsets.only(top: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -1797,7 +1781,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 //? Resumen de la factura
                 CustomContainer(
                   maxWidthContainer: 320,
-                  margin: EdgeInsets.only(top: 12),
+                  margin: EdgeInsets.only(top: 24),
                   child: Column(
                     children: [
                       Center(
