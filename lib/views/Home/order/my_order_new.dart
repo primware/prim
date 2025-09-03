@@ -144,7 +144,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (searchText.length < 4 && searchText.isNotEmpty) {
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 1000), () {
+    _debounce = Timer(const Duration(milliseconds: 3000), () {
       _loadProduct(showLoadingIndicator: true);
     });
   }
@@ -1075,7 +1075,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
               children: [
                 CustomContainer(
                   maxWidthContainer: 320,
-                  margin: EdgeInsets.only(top: 12),
+                  margin: EdgeInsets.only(top: 24),
                   child: Column(
                     children: [
                       Column(
@@ -1532,7 +1532,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 if (POSTenderType.isMultiPayment)
                   CustomContainer(
                     maxWidthContainer: 320,
-                    margin: EdgeInsets.only(top: 12),
+                    margin: EdgeInsets.only(top: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -1781,7 +1781,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 //? Resumen de la factura
                 CustomContainer(
                   maxWidthContainer: 320,
-                  margin: EdgeInsets.only(top: 12),
+                  margin: EdgeInsets.only(top: 24),
                   child: Column(
                     children: [
                       Center(

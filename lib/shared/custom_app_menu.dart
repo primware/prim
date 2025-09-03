@@ -332,6 +332,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                           builder: (context) => OrderNewPage(
                             doctypeID: docTypeId,
                             orderName: doc['name'],
+                            isRefund: doc['DocSubTypeSO'] == 'WR',
                           ),
                         ),
                       );
