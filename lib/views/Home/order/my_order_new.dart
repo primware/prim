@@ -108,6 +108,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     taxController.clear();
     yappyTransactionId = null;
     _lockedPayments.clear();
+    selectedBPartnerID = null;
   }
 
   @override
@@ -893,8 +894,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
       };
     }).toList();
 
-    // Construir paymentData ajustando el efectivo por el vuelto (change)
-    // Regla: si hay cambio, se descuenta del (los) método(s) en efectivo (isCash)
     final entriesWithAmt = paymentControllers.entries
         .map((e) {
           final raw = e.value.text.trim();
@@ -904,7 +903,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         .where((e) => e.value > 0)
         .toList();
 
-    double remainingChange = calculatedChange > 0 ? _r2(calculatedChange) : 0.0;
+    // double remainingChange = calculatedChange > 0 ? _r2(calculatedChange) : 0.0;
 
     final List<Map<String, dynamic>> paymentData = [];
     for (final entry in entriesWithAmt) {
@@ -913,21 +912,22 @@ class _OrderNewPageState extends State<OrderNewPage> {
         orElse: () => const <String, dynamic>{},
       );
       final bool isCash = method['isCash'] == true;
+      final double amt = entry.value;
       final bool isYappy =
           (method['name']?.toString().toLowerCase().contains('yappy') == true);
 
-      double adjusted = _r2(entry.value);
-      if (isCash && remainingChange > 0) {
-        final deduction =
-            (adjusted >= remainingChange) ? remainingChange : adjusted;
-        adjusted = _r2(adjusted - deduction);
-        remainingChange = _r2(remainingChange - deduction);
-      }
+      // double adjusted = _r2(entry.value);
+      // if (isCash && remainingChange > 0) {
+      //   final deduction =
+      //       (adjusted >= remainingChange) ? remainingChange : adjusted;
+      //   adjusted = _r2(adjusted - deduction);
+      //   remainingChange = _r2(remainingChange - deduction);
+      // }
 
-      if (adjusted <= 0) continue;
+      // if (adjusted <= 0) continue;
 
       final Map<String, dynamic> data = {
-        'PayAmt': double.parse(adjusted.toStringAsFixed(2)),
+        'PayAmt': double.parse(amt.toStringAsFixed(2)),
         'C_POSTenderType_ID': entry.key,
       };
 
