@@ -82,25 +82,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
   double _r2(num v) => (v * 100).round() / 100.0; // redondea a 2 decimales
   // ==== Helpers for monetary rounding and comparisons ====
 
-  Future<void> _cancelPendingYappy({bool silent = false}) async {
-    if (yappyTransactionId != null) {
-      try {
-        await cancelYappyTransaction(transactionId: yappyTransactionId!);
-      } catch (_) {
-        // Ignorar cualquier error de cancelación
-      } finally {
-        yappyTransactionId = null;
-        if (!silent && mounted) {
-          ToastMessage.show(
-            context: context,
-            message: 'Transacción Yappy cancelada',
-            type: ToastType.help,
-          );
-        }
-      }
-    }
-  }
-
   void clearInvoiceFields() {
     clienteController.clear();
     qtyProductController.clear();
@@ -116,7 +97,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      //TODO agregar un campo para colocar la cedula en el cliente y pasar eso directo al campo de busqueda
       _loadBPartner();
       _loadDocumentActions();
       initialLoadProduct();
