@@ -27,9 +27,15 @@ class OrderNewPage extends StatefulWidget {
   final bool isRefund;
   final int? doctypeID;
   final String? orderName;
+  final int? sourceOrderId;
 
-  const OrderNewPage(
-      {super.key, this.isRefund = false, this.doctypeID, this.orderName});
+  const OrderNewPage({
+    super.key,
+    this.isRefund = false,
+    this.doctypeID,
+    this.orderName,
+    this.sourceOrderId,
+  });
 
   @override
   State<OrderNewPage> createState() => _OrderNewPageState();
@@ -112,6 +118,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
 
     _loadSequence();
+    if (widget.sourceOrderId != null) {
+      _prefillFromExistingOrder();
+    }
   }
 
   Future<void> _loadDocumentActions() async {
@@ -187,6 +196,112 @@ class _OrderNewPageState extends State<OrderNewPage> {
         isPaymentMethodsLoading = false;
       });
       print('Error al cargar métodos de pago: $e');
+    }
+  }
+
+  Future<void> _prefillFromExistingOrder() async {
+    if (widget.sourceOrderId == null) return;
+
+    try {
+      // Asegurar que impuestos y métodos de pago estén cargados
+      if (isTaxLoading) {
+        // esperar a que termine _loadTax que se llama en initState
+        while (isTaxLoading) {
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+      }
+      if (POSTenderType.isMultiPayment && isPaymentMethodsLoading) {
+        while (isPaymentMethodsLoading) {
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+      }
+
+      final src = await fetchOrderById(orderId: widget.sourceOrderId!);
+      if (src == null) return;
+
+      // Prefill cliente
+      final bpId = src['bpartner']?['id'] ?? src['C_BPartner_ID']?['id'];
+      final bpName =
+          src['bpartner']?['name'] ?? src['C_BPartner_ID']?['identifier'] ?? '';
+
+      setState(() {
+        if (bpId != null) selectedBPartnerID = bpId;
+        clienteController.text = bpName.toString();
+      });
+
+      // Prefill productos/lineas
+      final List<dynamic> lines = (src['lines'] ??
+          src['C_OrderLine'] ??
+          src['orderLines'] ??
+          []) as List<dynamic>;
+
+      final List<Map<String, dynamic>> mapped = [];
+      for (final raw in lines) {
+        final Map<String, dynamic> line = Map<String, dynamic>.from(raw as Map);
+        final name = line['Name'] ??
+            (line['M_Product_ID']?['identifier']
+                    ?.toString()
+                    .split('_')
+                    .skip(1)
+                    .join(' ') ??
+                'Producto');
+        final price =
+            (line['PriceActual'] ?? line['Price'] ?? line['price'] ?? 0) as num;
+        final qty = (line['QtyOrdered'] ??
+            line['QtyEntered'] ??
+            line['quantity'] ??
+            1) as num;
+        final dynamic taxField = line['C_Tax_ID'];
+        final taxId = (taxField is Map)
+            ? taxField['id']
+            : (taxField ?? selectedTax?['id']);
+        final dynamic productField = line['M_Product_ID'];
+        final dynamic categoryField = line['M_Product_Category_ID'];
+        final dynamic categoryValue = line['Category'] ??
+            (categoryField is Map ? categoryField['identifier'] : null);
+        mapped.add({
+          'id': (productField is Map)
+              ? productField['id']
+              : (productField ?? line['id']),
+          'sku': line['SKU'] ?? line['Value'] ?? '',
+          'upc': line['upc'] ?? '',
+          'category': categoryValue,
+          'name': name,
+          'price': (price as num).toDouble(),
+          'quantity': (qty as num).toInt(),
+          'C_Tax_ID': taxId,
+          'Description': line['Description'] ?? '',
+        });
+      }
+
+      if (mapped.isNotEmpty) {
+        setState(() {
+          invoiceLines = mapped;
+          _recalculateSummary();
+        });
+      }
+
+      // Prefill pagos
+      final List<dynamic> pays =
+          (src['payments'] ?? src['C_POSPayment'] ?? []) as List<dynamic>;
+      if (pays.isNotEmpty && POSTenderType.isMultiPayment) {
+        for (final raw in pays) {
+          final Map<String, dynamic> p = Map<String, dynamic>.from(raw as Map);
+          final dynamic tenderField = p['C_POSTenderType_ID'];
+          final tenderId =
+              (tenderField is Map) ? tenderField['id'] : tenderField;
+          final amt = (p['PayAmt'] ?? p['Amount'] ?? 0).toString();
+          if (tenderId != null && paymentControllers.containsKey(tenderId)) {
+            paymentControllers[tenderId]!.text = amt;
+          }
+        }
+      }
+
+      _validateForm();
+    } catch (e) {
+      // Silencioso, solo log
+      // ignore: avoid_print
+      print('Prefill error: $e');
     }
   }
 

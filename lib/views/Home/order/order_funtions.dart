@@ -306,7 +306,7 @@ Future<List<Map<String, dynamic>>> fetchOrders(
 
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment'),
+          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -335,7 +335,8 @@ Future<List<Map<String, dynamic>>> fetchOrders(
           },
           'doctypetarget': {
             'id': record['C_DocTypeTarget_ID']?['id'],
-            'name': record['C_DocTypeTarget_ID']?['identifier'],
+            'name': record['C_DocTypeTarget_ID']?['Name'],
+            'subtype': record['C_DocTypeTarget_ID']?['DocSubTypeSO'],
           },
           'SalesRep_ID': {
             'id': record['SalesRep_ID']?['id'],
@@ -694,6 +695,8 @@ Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
   String str(dynamic v) => v?.toString() ?? '';
   String money(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
 
+  String docTypename = order['doctypetarget']?['name'] ?? '';
+
   // Order fields (safe access)
   final docNo = str(order['DocumentNo']);
   final date = str(order['DateOrdered']);
@@ -742,8 +745,14 @@ Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
                 textAlign: pw.TextAlign.center),
             pw.Text(POSPrinter.headerEmail ?? '',
                 textAlign: pw.TextAlign.center),
-
             pw.SizedBox(height: 12),
+            pw.Text(docTypename,
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                )),
+
+            pw.SizedBox(height: 18),
 
             // Detalles (alineados a la izquierda)
             pw.Text('Recibo: $docNo'),

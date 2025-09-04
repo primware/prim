@@ -39,8 +39,19 @@ class OrderDetailPage extends StatelessWidget {
     final lines = (order['C_OrderLine'] as List?) ?? [];
     final taxSummary = _calculateTaxSummary([order]);
 
+    // Detectar si es devolución (RM)
+    final dynamic subField = order['doctypetarget']?['subtype'];
+    final String? subId = (subField is Map) ? subField['id'] : subField;
+    final bool isReturn = subId == 'RM';
+
+    // Obtener métodos de pago
+    final List<dynamic> payments =
+        (order['C_POSPayment'] ?? order['payments'] ?? []) as List<dynamic>;
+
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: (isReturn) ? Colors.red : null,
+        foregroundColor: (isReturn) ? Colors.white : null,
         title: Text(
           //'${AppLocale.orderHash.getString(context)}${order['DocumentNo']}',
           '${order['doctypetarget']['name']} #${order['DocumentNo']}',
@@ -166,6 +177,59 @@ class OrderDetailPage extends StatelessWidget {
                   },
                 ),
               ),
+              const SizedBox(height: CustomSpacer.large),
+              Text(AppLocale.paymentMethods.getString(context),
+                  style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: CustomSpacer.small),
+              if (payments.isEmpty)
+                Text(AppLocale.noData.getString(context),
+                    style: Theme.of(context).textTheme.bodySmall)
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: payments.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 6),
+                  itemBuilder: (context, index) {
+                    final p = payments[index] as Map<String, dynamic>;
+                    final dynamic tenderField = p['C_POSTenderType_ID'];
+                    final String tenderName = (tenderField is Map)
+                        ? (tenderField['identifier'] ??
+                                tenderField['name'] ??
+                                '---')
+                            .toString()
+                        : tenderField?.toString() ?? '---';
+                    final double payAmt =
+                        ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .scaffoldBackgroundColor
+                            .withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              tenderName,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            "\$${payAmt.toStringAsFixed(2)}",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               const Divider(),
               _buildFinalSummary(
                   taxSummary: taxSummary,

@@ -237,6 +237,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     POS.priceListVersionID = null;
     POS.docTypeID = null;
     POS.docTypeName = null;
+    POS.docTypeRefundName = null;
     POS.templatePartnerID = null;
     POS.docTypeRefundID = null;
     POS.isPOS = false;
@@ -332,7 +333,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                           builder: (context) => OrderNewPage(
                             doctypeID: docTypeId,
                             orderName: doc['name'],
-                            isRefund: doc['DocSubTypeSO'] == 'WR',
+                            isRefund: doc['DocSubTypeSO'] == 'RM',
                           ),
                         ),
                       );

@@ -48,6 +48,60 @@ class _OrderListPageState extends State<OrderListPage> {
         .toList();
   }
 
+  void _onOrderAction(String action, Map<String, dynamic> order) {
+    switch (action) {
+      case 'refund':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderNewPage(
+              isRefund: true,
+              doctypeID: POS.docTypeRefundID,
+              orderName: POS.docTypeRefundName,
+              sourceOrderId:
+                  order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
+            ),
+          ),
+        );
+        break;
+      default:
+        break;
+    }
+  }
+
+  Widget _buildSubtypePill(Map<String, dynamic> order) {
+    final sub = order['doctypetarget']?['subtype']?['id'];
+    final bool isReturn = sub == 'RM';
+
+    final Color baseColor = isReturn ? Colors.red : Colors.green;
+    final Color bgColor = baseColor.withOpacity(0.12);
+    final String label = isReturn
+        ? AppLocale.refund.getString(context)
+        : AppLocale.order.getString(context);
+    final IconData icon = isReturn ? Icons.undo : Icons.shopping_cart;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: baseColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: baseColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+                fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrderList(List<Map<String, dynamic>> orders) {
     if (orders.isEmpty) {
       return Center(
@@ -56,6 +110,8 @@ class _OrderListPageState extends State<OrderListPage> {
     }
     return Column(
       children: orders.map((order) {
+        final bool _isReturn =
+            order['doctypetarget']?['subtype']?['id'] == 'RM';
         return GestureDetector(
           onTap: () async {
             final refreshed = await Navigator.push(
@@ -118,8 +174,28 @@ class _OrderListPageState extends State<OrderListPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 6),
+                  _buildSubtypePill(order),
                 ],
               ),
+              trailing: _isReturn
+                  ? null
+                  : PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
+                      onSelected: (value) => _onOrderAction(value, order),
+                      itemBuilder: (context) => [
+                        PopupMenuItem<String>(
+                          value: 'refund',
+                          child: Row(
+                            children: [
+                              Icon(Icons.undo, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text(AppLocale.refund.getString(context)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         );
@@ -154,6 +230,7 @@ class _OrderListPageState extends State<OrderListPage> {
                       builder: (context) => OrderNewPage(
                         doctypeID: POS.docTypeID,
                         orderName: POS.docTypeName,
+                        isRefund: POS.docSubType == 'RM',
                       ),
                     ),
                   );
