@@ -6,6 +6,7 @@ class POS {
   static int? priceListVersionID;
   static int? docTypeID;
   static String? docTypeName;
+  static String? docSubType;
   static int? docTypeRefundID;
   static int? templatePartnerID;
   static String? templatePartnerName;
