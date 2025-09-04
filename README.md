@@ -2,21 +2,17 @@
 
 ## Initial Client Setup App
 
-App en Flutter para crear un grupo empresarial en IDempiere
+Sales app complete integrated IDempiere
 
 ## Author
 
+- Eduardo Gil
 - Josian Ascanio
 
 ## Setup
 
-- Crear un rol en System
+- Import posintegration plugin
 
-- Asignar a este rol el proceso
+- Asign pos master rol in user rol
 
-```bash
-initialclientsetup
-```
 
-- Crear el token para este rol desde System
-- Agregar este token a la variable tokenRegister en lib/API/token.api.dart
