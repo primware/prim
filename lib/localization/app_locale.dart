@@ -22,6 +22,7 @@ class AppLocale {
   static const String organization = 'organization';
   static const String selectCompanyRoleOrganization =
       'selectCompanyRoleOrganization';
+  static const String clientMustBeSelected = 'clientMustBeSelected';
   static const String continueKey = 'continueKey';
   static const String back = 'back';
   static const String invalidCredentials = 'invalidCredentials';
@@ -256,6 +257,7 @@ class AppLocale {
     noTaxCategoryAvailable: 'No tax categories available',
     productType: 'Product Type',
     cancelYappyTransaction: 'Cancel Yappy Transaction?',
+    clientMustBeSelected: 'A client must be selected',
   };
 
   static const Map<String, dynamic> es = {
@@ -385,5 +387,6 @@ class AppLocale {
     noTaxCategoryAvailable: 'No hay categorías de impuestos disponibles',
     productType: 'Tipo de Producto',
     cancelYappyTransaction: '¿Cancelar Transacción Yappy?',
+    clientMustBeSelected: 'Debe seleccionar un cliente'
   };
 }

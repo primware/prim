@@ -208,7 +208,6 @@ Future<Map<String, dynamic>> postInvoice({
       "SalesRep_ID": {"id": UserData.id},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",
-      "DateOrdered": DateTime.now().toIso8601String(),
       "InvoiceRule": "I",
       "PriorityRule": "5",
       "FreightCostRule": "I",
@@ -252,7 +251,7 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID'),
+          '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -288,6 +287,7 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
           'name': record['SalesRep_ID']?['identifier'],
         },
         'C_OrderLine': record['C_OrderLine'] ?? [],
+        'payments': record['C_POSPayment'] ?? [],
       };
     } else {
       debugPrint('Error al obtener la orden: ${response.body}');
@@ -691,7 +691,6 @@ Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
                     pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
             pw.SizedBox(height: 10),
 
-//TODO agregar la cantidad por formas de pago
             // Formas de pago
             pw.Text('Formas de Pago:',
                 style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),

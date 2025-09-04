@@ -321,8 +321,8 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       await fetchTaxs();
 
-      final docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
-      POS.isPOS = docSubType == 'WR' || POS.cPosID != null;
+      POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
+      POS.isPOS = POS.docSubType == 'WR' || POS.cPosID != null;
 
       await _getCDocTypeComplete();
     } else {
@@ -415,7 +415,7 @@ Future<int?> _getCDocTypeComplete() async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name'),
+          '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name,DocSubTypeSO'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
@@ -426,7 +426,11 @@ Future<int?> _getCDocTypeComplete() async {
       final responseData = json.decode(response.body);
       final records = responseData['records'] as List;
       POS.docTypesComplete = records
-          .map((r) => {'id': r['id'].toString(), 'name': r['Name'] ?? ''})
+          .map((r) => {
+                'id': r['id'].toString(),
+                'name': r['Name'] ?? '',
+                'DocSubTypeSO': r['DocSubTypeSO']['id'] ?? ''
+              })
           .toList();
     } else {
       print(
