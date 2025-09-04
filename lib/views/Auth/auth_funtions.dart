@@ -285,7 +285,8 @@ Future<void> _loadPOSData(BuildContext context) async {
         : 'SalesRep_ID eq ${UserData.id}';
 
     final response = await get(
-      Uri.parse('${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID'),
+      Uri.parse(
+          '${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID,C_DocTypeRefund_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -313,6 +314,7 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.priceListID = posData['M_PriceList_ID']?['id'];
       POS.docTypeID = posData['C_DocType_ID']?['id'];
       POS.docTypeName = posData['C_DocType_ID']?['PrintName'];
+      POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['PrintName'];
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
       POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
@@ -323,8 +325,9 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.isPOS = POS.docSubType == 'WR' || POS.cPosID != null;
+      //? WR = Orden Punto de Venta
 
-      //? Tomamos la informacion del Yappy si existe, si no se mantiene en null
+      // Tomamos la informacion del Yappy si existe, si no se mantiene en null
       Yappy.yappyConfigID = posData?['CDS_YappyConf_ID']?['id'];
       Yappy.groupId = posData?['CDS_YappyGroup_ID']?['identifier'];
       Yappy.deviceId = posData?['CDS_YappyReceiptUnit_ID']?['identifier'];
