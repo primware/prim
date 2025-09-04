@@ -306,7 +306,7 @@ Future<List<Map<String, dynamic>>> fetchOrders(
 
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id}&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID'),
+          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id} and (DocStatus eq \'CO\' or DocStatus eq \'CL\')&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,

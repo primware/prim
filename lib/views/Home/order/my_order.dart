@@ -110,8 +110,7 @@ class _OrderListPageState extends State<OrderListPage> {
     }
     return Column(
       children: orders.map((order) {
-        final bool _isReturn =
-            order['doctypetarget']?['subtype']?['id'] == 'RM';
+        final bool isReturn = order['doctypetarget']?['subtype']?['id'] == 'RM';
         return GestureDetector(
           onTap: () async {
             final refreshed = await Navigator.push(
@@ -178,7 +177,7 @@ class _OrderListPageState extends State<OrderListPage> {
                   _buildSubtypePill(order),
                 ],
               ),
-              trailing: _isReturn
+              trailing: isReturn
                   ? null
                   : PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert),
