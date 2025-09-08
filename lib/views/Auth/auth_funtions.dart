@@ -317,6 +317,8 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['PrintName'];
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
+      POS.docSubTypeRefund =
+          posData['C_DocTypeRefund_ID']?['DocSubTypeSO']?['id'];
       POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
@@ -339,7 +341,20 @@ Future<void> _loadPOSData(BuildContext context) async {
         await _getYappyKeys();
       }
 
-      await _getCDocTypeComplete();
+      // Cargamos los tipos de documentos disponibles para el POS
+      POS.docTypesComplete = [
+        {
+          'id': POS.docTypeID.toString(),
+          'name': POS.docTypeName ?? '',
+          'DocSubTypeSO': POS.docSubType ?? ''
+        },
+        if (POS.docTypeRefundID != null)
+          {
+            'id': POS.docTypeRefundID.toString(),
+            'name': POS.docTypeRefundName ?? '',
+            'DocSubTypeSO': POS.docSubTypeRefund ?? ''
+          }
+      ];
     } else {
       print(
           'Error al cargar loadPOSData, código: ${response.statusCode}, detalle: ${response.body}');
@@ -483,7 +498,7 @@ Future<int?> _getCDocTypeComplete() async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name,DocSubTypeSO'),
+          '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=PrintName,DocSubTypeSO'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
@@ -496,7 +511,7 @@ Future<int?> _getCDocTypeComplete() async {
       POS.docTypesComplete = records
           .map((r) => {
                 'id': r['id'].toString(),
-                'name': r['Name'] ?? '',
+                'name': r['PrintName'] ?? '',
                 'DocSubTypeSO': r['DocSubTypeSO']['id'] ?? ''
               })
           .toList();

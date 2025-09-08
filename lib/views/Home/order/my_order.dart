@@ -8,6 +8,7 @@ import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
 import 'package:primware/views/Home/order/my_order_detail.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
+import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
@@ -23,6 +24,53 @@ class _OrderListPageState extends State<OrderListPage> {
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true;
   String _searchQuery = '';
+
+  // Confirmación para imprimir ticket
+  Future<bool?> _printTicketConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocale.confirmPrintTicket.getString(context)),
+        content: Text(AppLocale.printTicketMessage.getString(context)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Imprimir ticket directamente desde la lista
+  Future<void> _printTicket(Map<String, dynamic> order) async {
+    final bool? confirm = await _printTicketConfirmation(context);
+    if (confirm == true) {
+      final pdfBytes = await generateTicketPdf(order);
+      try {
+        final printers = await Printing.listPrinters();
+        final defaultPrinter = printers.firstWhere(
+          (p) => p.isDefault,
+          orElse: () => printers.isNotEmpty
+              ? printers.first
+              : throw Exception('No hay impresoras disponibles'),
+        );
+
+        await Printing.directPrintPdf(
+          printer: defaultPrinter,
+          onLayout: (_) => pdfBytes,
+        );
+      } catch (e) {
+        await Printing.layoutPdf(
+          onLayout: (_) => pdfBytes,
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -63,6 +111,9 @@ class _OrderListPageState extends State<OrderListPage> {
             ),
           ),
         );
+        break;
+      case 'printTicket':
+        _printTicket(order);
         break;
       default:
         break;
@@ -177,24 +228,40 @@ class _OrderListPageState extends State<OrderListPage> {
                   _buildSubtypePill(order),
                 ],
               ),
-              trailing: isReturn
-                  ? null
-                  : PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert),
-                      onSelected: (value) => _onOrderAction(value, order),
-                      itemBuilder: (context) => [
-                        PopupMenuItem<String>(
-                          value: 'refund',
-                          child: Row(
-                            children: [
-                              Icon(Icons.undo, color: Colors.red),
-                              SizedBox(width: 8),
-                              Text(AppLocale.refund.getString(context)),
-                            ],
-                          ),
-                        ),
-                      ],
+              trailing: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) => _onOrderAction(value, order),
+                itemBuilder: (context) {
+                  final items = <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'printTicket',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.receipt_long_rounded,
+                              color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Text(AppLocale.printTicket.getString(context)),
+                        ],
+                      ),
                     ),
+                  ];
+                  if (!isReturn) {
+                    items.add(
+                      PopupMenuItem<String>(
+                        value: 'refund',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.undo, color: Colors.red),
+                            const SizedBox(width: 8),
+                            Text(AppLocale.refund.getString(context)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  return items;
+                },
+              ),
             ),
           ),
         );

@@ -1,7 +1,6 @@
 class Base {
   static bool prod = false;
-  static bool local = false;
-  static String title = prod ? 'Prim App' : 'Demo Prim App';
+  static String title = prod ? 'Prim' : 'Demo Prim';
 
   static String? baseURL;
   static String? yappyURL;
@@ -54,6 +53,8 @@ class EndPoints {
   static String cOrderLine = '${Base.baseURL}/api/v1/models/C_OrderLine';
 
   static String cTax = '${Base.baseURL}/api/v1/models/C_Tax';
+
+  static String cInvoice = '${Base.baseURL}/api/v1/models/C_Invoice';
 
   static String adSequence = '${Base.baseURL}/api/v1/models/AD_Sequence';
 

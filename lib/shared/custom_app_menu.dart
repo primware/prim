@@ -324,7 +324,12 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   final String title =
                       (doc['name'] ?? doc['Name'] ?? '').toString();
                   return ListTile(
-                    leading: const Icon(Icons.add),
+                    leading: Icon(
+                      title != POS.docTypeRefundName
+                          ? Icons.add
+                          : Icons.sd_card_alert_outlined,
+                      color: title == POS.docTypeRefundName ? Colors.red : null,
+                    ),
                     title: Text(title.isEmpty ? 'Documento' : title),
                     onTap: () {
                       Navigator.push(
@@ -363,25 +368,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
               );
             },
           ),
-          if (POS.docTypeRefundID != null)
-            ListTile(
-              leading: Icon(
-                Icons.sd_card_alert_outlined,
-              ),
-              title: Text(
-                AppLocale.creditNote.getString(context),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OrderNewPage(
-                      isRefund: true,
-                    ),
-                  ),
-                );
-              },
-            ),
           ListTile(
             leading: Icon(
               Icons.inventory_2_outlined,
