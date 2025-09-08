@@ -5,7 +5,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import '../../../localization/app_locale.dart';
-import 'dashboard_funtions.dart';
 
 enum ChartType { line, bar, pie }
 

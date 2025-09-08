@@ -9,7 +9,6 @@ import 'package:primware/views/Home/order/order_funtions.dart';
 import 'package:primware/views/Home/order/my_order_detail.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:printing/printing.dart';
-import 'package:primware/views/Home/order/my_order_detail_pdf_generator.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';

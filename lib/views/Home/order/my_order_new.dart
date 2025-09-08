@@ -267,8 +267,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
           'upc': line['upc'] ?? '',
           'category': categoryValue,
           'name': name,
-          'price': (price as num).toDouble(),
-          'quantity': (qty as num).toInt(),
+          'price': (price).toDouble(),
+          'quantity': (qty).toInt(),
           'C_Tax_ID': taxId,
           'Description': line['Description'] ?? '',
         });
