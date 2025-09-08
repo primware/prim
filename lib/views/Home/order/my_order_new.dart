@@ -75,8 +75,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
   bool isFormValid = false;
   bool _isInvoiceValid = false;
 
-  int? selectedBPartnerID, docNoSequenceID, docNoSequenceNumber;
-  String? selectedDocActionCode, yappyTransactionId;
+  int? selectedBPartnerID, docNoSequenceID; 
+  String? selectedDocActionCode, yappyTransactionId, docNoSequenceNumber;
   Map<String, dynamic>? selectedTax;
 
   double subtotal = 0.0;
@@ -665,7 +665,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       subTotal: double.parse(subTotal.toStringAsFixed(2)),
       totalTax: double.parse(totalTax.toStringAsFixed(2)),
       total: double.parse(total.toStringAsFixed(2)),
-      docNoSequence: docNoSequenceNumber!,
+      docNoSequence: docNoSequenceNumber,
       context: context,
     );
 

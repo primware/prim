@@ -477,7 +477,7 @@ Future<Map<String, dynamic>> showYappyQR({
   required double subTotal,
   required double totalTax,
   required double total,
-  required int docNoSequence,
+  String? docNoSequence,
   required BuildContext context,
 }) async {
   try {
@@ -501,7 +501,8 @@ Future<Map<String, dynamic>> showYappyQR({
           "discount": 0,
           "total": total
         },
-        "order_id": "$docNoSequence",
+        if(docNoSequence!=null && docNoSequence.isNotEmpty)
+          "order_id": docNoSequence,
       }
     };
 
@@ -653,7 +654,7 @@ Future<int?> getDocNoSequenceID({required int recordID}) async {
   return null;
 }
 
-Future<int?> getDocNoSequence({required int docNoSequenceID}) async {
+Future<String?> getDocNoSequence({required int docNoSequenceID}) async {
   try {
     final response = await get(
       Uri.parse(
@@ -668,7 +669,7 @@ Future<int?> getDocNoSequence({required int docNoSequenceID}) async {
       final responseData = json.decode(response.body);
       final record = responseData['records'][0];
 
-      return record['CurrentNext'];
+      return record['CurrentNext'].toString();
     } else {
       print(
           'Error en _getDocNoSequence: ${response.statusCode}, ${response.body}');
