@@ -6,11 +6,14 @@ class POS {
   static int? priceListVersionID;
   static int? docTypeID;
   static String? docTypeName;
-  static String? docTypeRefundName;
   static String? docSubType;
   static int? docTypeRefundID;
+  static String? docTypeRefundName;
+  static String? docSubTypeRefund;
+
   static int? templatePartnerID;
   static String? templatePartnerName;
+
   static bool isPOS = false;
 
   static List<Map<String, dynamic>> docTypesComplete = [];

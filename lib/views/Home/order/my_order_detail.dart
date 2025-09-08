@@ -68,7 +68,7 @@ class OrderDetailPage extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.receipt),
+            icon: const Icon(Icons.receipt_long_rounded),
             tooltip: AppLocale.printTicket.getString(context),
             onPressed: () async {
               final bool? confirmPrintTicket =

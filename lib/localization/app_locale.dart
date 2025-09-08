@@ -1,4 +1,16 @@
 class AppLocale {
+  static const String jan = 'jan';
+  static const String feb = 'feb';
+  static const String mar = 'mar';
+  static const String apr = 'apr';
+  static const String may = 'may';
+  static const String jun = 'jun';
+  static const String jul = 'jul';
+  static const String aug = 'aug';
+  static const String sep = 'sep';
+  static const String oct = 'oct';
+  static const String nov = 'nov';
+  static const String dec = 'dec';
   static const String login = 'login';
   static const String products = 'products';
   static const String searchProducts = 'searchProducts';
@@ -133,6 +145,18 @@ class AppLocale {
   static const String noData = 'noData';
 
   static const Map<String, dynamic> en = {
+    jan: 'Jan',
+    feb: 'Feb',
+    mar: 'Mar',
+    apr: 'Apr',
+    may: 'May',
+    jun: 'Jun',
+    jul: 'Jul',
+    aug: 'Aug',
+    sep: 'Sep',
+    oct: 'Oct',
+    nov: 'Nov',
+    dec: 'Dec',
     products: 'Products',
     searchProducts: 'Search products',
     productCode: 'Code',
@@ -396,6 +420,18 @@ class AppLocale {
     clientMustBeSelected: 'Debe seleccionar un cliente',
     refund: 'Devolución',
     order: 'Orden',
-    noData: 'No hay datos disponibles'
+    noData: 'No hay datos disponibles',
+    jan: 'Ene',
+    feb: 'Feb',
+    mar: 'Mar',
+    apr: 'Abr',
+    may: 'May',
+    jun: 'Jun',
+    jul: 'Jul',
+    aug: 'Ago',
+    sep: 'Sep',
+    oct: 'Oct',
+    nov: 'Nov',
+    dec: 'Dic',
   };
 }

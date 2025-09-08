@@ -679,17 +679,73 @@ Future<int?> getDocNoSequence({required int docNoSequenceID}) async {
   return null;
 }
 
+Future<Map<String, String>?> fetchElectronicInvoiceInfo(
+    {required int orderId}) async {
+  try {
+    final uri = Uri.parse(
+        '${EndPoints.cInvoice}?\$filter=C_Order_ID eq $orderId&\$expand=FE_InvoiceResponseLog');
+    final response = await get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      // Si la tabla/expand no existe o hay otro problema, devolver null silenciosamente
+      debugPrint('FE query non-200: ${response.statusCode}');
+      return null;
+    }
+
+    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+    final List records = (jsonResponse['records'] as List?) ?? const [];
+    if (records.isEmpty) return null;
+
+    final invoice = records.first;
+    final List logs = (invoice['FE_InvoiceResponseLog'] as List?) ?? const [];
+    if (logs.isEmpty) return null;
+
+    // Buscar el primer log con FE_ResponseCode == 200 (num o string)
+    final match = logs.firstWhere(
+      (e) {
+        final code = e['FE_ResponseCode'];
+        if (code == null) return false;
+        if (code is num) return code == 200;
+        if (code is String) return code.trim() == '200';
+        return false;
+      },
+      orElse: () => null,
+    );
+
+    if (match == null) return null;
+
+    final cufe = match['FE_ResponseCUFE']?.toString();
+    final protocolo = match['FE_NroProtocoloAutorizacion']?.toString();
+    final url = match['FE_ResponseQR']?.toString();
+
+    if (cufe == null || protocolo == null || url == null) return null;
+
+    return {
+      'cufe': cufe,
+      'protocolo': protocolo,
+      'url': url,
+    };
+  } catch (e) {
+    debugPrint('Error consultando FE_InvoiceResponseLog: $e');
+    return null;
+  }
+}
+
 Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
+  // Consultar datos de Factura Electrónica (FE)
+  final int? orderId = (order['id'] as int?);
+  final feInfo = orderId != null
+      ? await fetchElectronicInvoiceInfo(orderId: orderId)
+      : null;
+
   final pdf = pw.Document();
-
-  // Page format: 80mm roll (use PdfPageFormat.roll57 for 58mm if needed)
   final pageFormat = PdfPageFormat.roll80;
-
-  // final theme = pw.ThemeData.withFont(
-  //   base: pw.Font.courier(),
-  //   bold: pw.Font.courierBold(),
-
-  // );
 
   // Helpers
   String str(dynamic v) => v?.toString() ?? '';
@@ -869,6 +925,31 @@ Future<Uint8List> generateTicketPdf(Map<String, dynamic> order) async {
                 style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
             pw.Text('ITBMS: ${money(taxTotal)}'),
             pw.SizedBox(height: 12),
+
+            // Datos de Factura Electrónica (si existen)
+            if (feInfo != null) ...[
+              pw.Divider(),
+              pw.SizedBox(height: 8),
+              pw.Text('FACTURA ELECTRÓNICA',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 6),
+              pw.Text('Protocolo de Autorización: ${feInfo['protocolo']}'),
+              pw.Text('Consulte por la clave de acceso en:'),
+              pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 11)),
+              pw.SizedBox(height: 6),
+              pw.Text('o escaneando el código QR:'),
+              pw.SizedBox(height: 6),
+              pw.Center(
+                child: pw.BarcodeWidget(
+                  data: feInfo['url'] ?? '',
+                  barcode: pw.Barcode.qrCode(),
+                  width: 120,
+                  height: 120,
+                ),
+              ),
+              pw.SizedBox(height: 10),
+            ],
 
             // Footer
             pw.Text('Gracias por mantener sus pagos al día',
