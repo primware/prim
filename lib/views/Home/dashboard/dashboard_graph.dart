@@ -207,6 +207,21 @@ class _MetricCardState extends State<MetricCard> {
       case ChartType.bar:
         return BarChart(
           BarChartData(
+            barTouchData: BarTouchData(
+              touchTooltipData: BarTouchTooltipData(
+                getTooltipColor: (group) =>
+                    Theme.of(context).colorScheme.primaryContainer,
+                getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                  return BarTooltipItem(
+                    rod.toY.toStringAsFixed(2),
+                    Theme.of(context).textTheme.titleMedium!.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  );
+                },
+              ),
+            ),
             gridData: FlGridData(show: true, drawVerticalLine: false),
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(

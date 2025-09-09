@@ -114,21 +114,6 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
                   );
                 },
               ),
-              const SizedBox(
-                width: CustomSpacer.medium,
-              ),
-              Tooltip(
-                message: _isDarkMode ? 'Modo Oscuro' : 'Modo Claro',
-                child: IconButton(
-                    icon: Icon(
-                      _isDarkMode ? Icons.nightlight : Icons.sunny,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                    onPressed: () {
-                      ThemeManager.themeNotifier.toggleTheme();
-                      _loadTheme();
-                    }),
-              ),
             ],
           ),
         ),
@@ -325,10 +310,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       (doc['name'] ?? doc['Name'] ?? '').toString();
                   return ListTile(
                     leading: Icon(
-                      title != POS.docTypeRefundName
+                      doc['DocSubTypeSO'] != 'RM'
                           ? Icons.add
                           : Icons.sd_card_alert_outlined,
-                      color: title == POS.docTypeRefundName ? Colors.red : null,
+                      color: doc['DocSubTypeSO'] == 'RM' ? Colors.red : null,
                     ),
                     title: Text(title.isEmpty ? 'Documento' : title),
                     onTap: () {

@@ -51,7 +51,8 @@ Future<List<Map<String, dynamic>>> fetchBPartner({
       throw Exception('Error al cargar los terceros: ${response.statusCode}');
     }
   } catch (e) {
-    print('Excepción al obtener terceros: $e');
+    CurrentLogMessage.add('Excepción al obtener terceros: $e',
+        level: 'ERROR', tag: 'fetchBPartner');
     return [];
   }
 }
@@ -125,7 +126,8 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
       throw Exception('Error al cargar los productos: ${response.statusCode}');
     }
   } catch (e) {
-    print('Excepción al obtener productos: $e');
+    CurrentLogMessage.add('Excepción al obtener productos: $e',
+        level: 'ERROR', tag: 'fetchProductInPriceList');
     return [];
   }
 }
@@ -157,7 +159,8 @@ Future<List<Map<String, dynamic>>> fetchTax() async {
       throw Exception('Error al cargar los impuestos: ${response.statusCode}');
     }
   } catch (e) {
-    print('Excepción al obtener impuesto: $e');
+    CurrentLogMessage.add('Excepción al obtener impuesto: $e',
+        level: 'ERROR', tag: 'fetchTax');
     return [];
   }
 }
@@ -227,9 +230,14 @@ Future<Map<String, dynamic>> postInvoice({
       body: jsonEncode(orderData),
     );
 
+    CurrentLogMessage.add('postInvoice orderData: ' + jsonEncode(orderData),
+        level: 'INFO', tag: 'postInvoice');
     if (orderResponse.statusCode != 201) {
-      print('Error al crear y completar la orden: ${orderResponse.statusCode}');
-      print(orderResponse.body);
+      CurrentLogMessage.add(
+          'Error al crear y completar la orden: ${orderResponse.body}',
+          level: 'ERROR',
+          tag: 'postInvoice');
+
       return {
         'success': false,
         'message': 'Error al crear y completar la orden.',
@@ -240,7 +248,8 @@ Future<Map<String, dynamic>> postInvoice({
 
     return {'success': true, 'Record_ID': jsonData['id']};
   } catch (e) {
-    print('Excepción general: $e');
+    CurrentLogMessage.add('Excepción general: $e',
+        level: 'ERROR', tag: 'postInvoice');
     return {'success': false, 'message': 'Excepción inesperada: $e'};
   }
 }
@@ -384,7 +393,8 @@ Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
           'Error al cargar métodos de pago: ${response.statusCode}');
     }
   } catch (e) {
-    print('Excepción al obtener métodos de pago: $e');
+    CurrentLogMessage.add('Excepción al obtener métodos de pago: $e',
+        level: 'ERROR', tag: 'fetchPaymentMethods');
     return [];
   }
 }
@@ -413,7 +423,10 @@ Future<List<Map<String, dynamic>>> fetchProductCategory() async {
           'Error al cargar las categorias de los productos: ${response.statusCode}');
     }
   } catch (e) {
-    print('Excepción al obtener las categorias de los productos: $e');
+    CurrentLogMessage.add(
+        'Excepción al obtener las categorias de los productos: $e',
+        level: 'ERROR',
+        tag: 'fetchProductCategory');
     return [];
   }
 }
@@ -469,7 +482,10 @@ Future<void> fetchDocumentActions({required int docTypeID}) async {
 
     POS.documentActions = result;
   } else {
-    print('Error al obtener acciones de documento: ${response.statusCode}');
+    CurrentLogMessage.add(
+        'Error al obtener acciones de documento: ${response.statusCode}',
+        level: 'ERROR',
+        tag: 'fetchDocumentActions');
   }
 }
 
@@ -501,7 +517,7 @@ Future<Map<String, dynamic>> showYappyQR({
           "discount": 0,
           "total": total
         },
-        if(docNoSequence!=null && docNoSequence.isNotEmpty)
+        if (docNoSequence != null && docNoSequence.isNotEmpty)
           "order_id": docNoSequence,
       }
     };
@@ -517,8 +533,14 @@ Future<Map<String, dynamic>> showYappyQR({
     );
 
     if (deviceResponse.statusCode != 200) {
-      print('Error al abrir la caja de yappi: ${deviceResponse.statusCode}');
-      print(deviceResponse.body);
+      CurrentLogMessage.add(
+          'Error al abrir la caja de yappi: ${deviceResponse.statusCode}',
+          level: 'ERROR',
+          tag: 'showYappyQR');
+      CurrentLogMessage.add(
+          'Respuesta de yappy (open device): ' + deviceResponse.body,
+          level: 'INFO',
+          tag: 'showYappyQR');
       return {
         'success': false,
         'message': 'Error al abrir la caja de yappi.',
@@ -539,8 +561,14 @@ Future<Map<String, dynamic>> showYappyQR({
     );
 
     if (qrResponse.statusCode != 200) {
-      print('Error al generar el QR de yappy: ${qrResponse.statusCode}');
-      print(qrResponse.body);
+      CurrentLogMessage.add(
+          'Error al generar el QR de yappy: ${qrResponse.statusCode}',
+          level: 'ERROR',
+          tag: 'showYappyQR');
+      CurrentLogMessage.add(
+          'Respuesta de yappy (QR generator): ' + qrResponse.body,
+          level: 'INFO',
+          tag: 'showYappyQR');
 
       return {
         'success': false,
@@ -554,7 +582,6 @@ Future<Map<String, dynamic>> showYappyQR({
       'transactionId': json.decode(qrResponse.body)['body']['transactionId'],
     };
   } catch (e) {
-    print('Excepción general: $e');
     return {'success': false, 'message': 'Excepción inesperada: $e'};
   }
 }
@@ -609,9 +636,9 @@ Future<bool> cancelYappyTransaction({required String transactionId}) async {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
 
       final status = jsonResponse['status']['code'];
-      print('Status de la cancelación: $status');
+      CurrentLogMessage.add('Status de la cancelación: ' + status,
+          level: 'INFO', tag: 'cancelYappyTransaction');
       if (status == 'YP-0000' || status == 'YP-0016') {
-        print('Transacción cancelada exitosamente: $transactionId');
         return true;
       } else {
         debugPrint(
@@ -645,11 +672,14 @@ Future<int?> getDocNoSequenceID({required int recordID}) async {
 
       return record['DocNoSequence_ID']?['id'];
     } else {
-      print(
-          'Error en getDocNoSequenceID: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'Error en getDocNoSequenceID: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: 'getDocNoSequenceID');
     }
   } catch (e) {
-    print('Error en getDocNoSequenceID: $e');
+    CurrentLogMessage.add('Error en getDocNoSequenceID: $e',
+        level: 'ERROR', tag: 'getDocNoSequenceID');
   }
   return null;
 }
@@ -671,12 +701,12 @@ Future<String?> getDocNoSequence({required int docNoSequenceID}) async {
 
       return record['CurrentNext'].toString();
     } else {
-      print(
-          'Error en _getDocNoSequence: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'Error en _getDocNoSequence: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: '_getDocNoSequence');
     }
-  } catch (e) {
-    print('Error en _getDocNoSequence: $e');
-  }
+  } catch (e) {}
   return null;
 }
 
