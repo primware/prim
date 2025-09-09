@@ -8,12 +8,10 @@ import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:primware/views/Home/product/product_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../API/endpoint.api.dart';
 import '../API/pos.api.dart';
 import '../API/user.api.dart';
 import '../localization/app_locale.dart';
-import '../main.dart';
 import '../theme/colors.dart';
 import '../views/Home/bpartner/bpartner_view.dart';
 import '../views/Home/order/my_order.dart';
@@ -42,21 +40,6 @@ class _TableDesktopMenu extends StatefulWidget {
 }
 
 class _TableDesktopMenuState extends State<_TableDesktopMenu> {
-  bool _isDarkMode = false;
-  @override
-  void initState() {
-    super.initState();
-    _loadTheme();
-  }
-
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
