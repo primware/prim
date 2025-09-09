@@ -75,7 +75,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   bool isFormValid = false;
   bool _isInvoiceValid = false;
 
-  int? selectedBPartnerID, docNoSequenceID; 
+  int? selectedBPartnerID, docNoSequenceID;
   String? selectedDocActionCode, yappyTransactionId, docNoSequenceNumber;
   Map<String, dynamic>? selectedTax;
 
@@ -1138,7 +1138,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     return WillPopScope(
       onWillPop: () async {
         //TODO manejar lo de cancelar el yappy si me salgo
-        // await _cancelPendingYappy(silent: false);
+
         return true;
       },
       child: Scaffold(
@@ -1150,10 +1150,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
               const SizedBox(width: 4),
               Text(
                 widget.orderName != null
-                    ? '${widget.orderName!} : ${docNoSequenceNumber ?? ""}'
+                    ? '${widget.orderName!}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}'
                     : widget.isRefund
-                        ? '${AppLocale.creditNote.getString(context)} : ${docNoSequenceNumber ?? ""}'
-                        : '${AppLocale.newOrder.getString(context)} : ${docNoSequenceNumber ?? ""}',
+                        ? '${AppLocale.creditNote.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}'
+                        : '${AppLocale.newOrder.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}',
               ),
             ],
           ),
