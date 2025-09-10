@@ -116,24 +116,26 @@ class _ProductListPageState extends State<ProductListPage> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: ListTile(
-              title: Text('${record['name']} ${record['sku'] != null ? '(${record['sku']})' : ''}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary)),
+              title: Text(
+                  '${record['name']} ${record['sku'] != null ? '(${record['sku']})' : ''}',
+                  style: Theme.of(context).textTheme.bodyLarge),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.attach_money_rounded,
-                          color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: CustomSpacer.small),
+                      Icon(
+                        Icons.attach_money_rounded,
+                        color: Theme.of(context).colorScheme.secondary,
+                        size: 18,
+                      ),
                       Text(record['price'].toString(),
                           style: Theme.of(context)
                               .textTheme
-                              .bodyLarge
+                              .bodySmall
                               ?.copyWith(
                                   color:
-                                      Theme.of(context).colorScheme.primary)),
+                                      Theme.of(context).colorScheme.secondary)),
                     ],
                   ),
                 ],

@@ -234,7 +234,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           options: categories,
                           showSearchBox: true,
                           labelText:
-                              '${AppLocale.category.getString(context)} *',
+                              '${AppLocale.productCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedCategoryID = newValue;
@@ -251,7 +251,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           value: selectedTaxID,
                           options: taxies,
                           showSearchBox: true,
-                          labelText: '${AppLocale.price.getString(context)} *',
+                          labelText:
+                              '${AppLocale.taxCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxID = newValue;

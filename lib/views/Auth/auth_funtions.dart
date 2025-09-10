@@ -339,18 +339,19 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.priceListID = posData['M_PriceList_ID']?['id'];
       POS.docTypeID = posData['C_DocType_ID']?['id'];
       POS.docTypeName = posData['C_DocType_ID']?['PrintName'];
+      POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
+      POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
       POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['PrintName'];
-      POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
-      POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
       POS.docSubTypeRefund =
           posData['C_DocTypeRefund_ID']?['DocSubTypeSO']?['id'];
-      POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
+      POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
+      POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
+
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
 
       await fetchTaxs();
 
-      POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.isPOS = POS.docSubType == 'WR' || POS.cPosID != null;
       //? WR = Orden Punto de Venta
 

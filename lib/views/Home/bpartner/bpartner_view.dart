@@ -91,7 +91,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
               ),
             );
             if (refreshed == true) {
-              debouncedLoadBPartner();
+              _fetchBPartners();
             }
           },
           child: Container(
@@ -102,8 +102,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
             ),
             child: ListTile(
               title: Text(record['name'],
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary)),
+                  style: Theme.of(context).textTheme.bodyLarge),
               subtitle: Text(
                   '${record['LCO_TaxIdTypeName'] ?? ''}  ${record['TaxID'] ?? ''}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -130,13 +129,17 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
         drawer: MenuDrawer(),
         floatingActionButton: FloatingActionButton(
           tooltip: AppLocale.add.getString(context),
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            bool refresh = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const BPartnerNewPage(),
               ),
             );
+
+            if (refresh) {
+              _fetchBPartners();
+            }
           },
           child: const Icon(Icons.add),
         ),
