@@ -12,6 +12,8 @@ Future<Map<String, dynamic>> postBPartner({
   required int cTaxTypeID,
   required int cBPartnerGroupID,
   String? taxID,
+  String? dv,
+  required String customerType,
   required BuildContext context,
 }) async {
   try {
@@ -32,9 +34,11 @@ Future<Map<String, dynamic>> postBPartner({
     final Map<String, dynamic> partnerData = {
       "Name": name,
       if (taxID != null) "TaxID": taxID,
+      if (dv != null) "dv": dv,
       "IsCustomer": true,
       "LCO_TaxIdType_ID": cTaxTypeID,
       "C_BP_Group_ID": cBPartnerGroupID,
+      "TipoClienteFE": customerType,
     };
 
     final bPartnerResponse = await post(
@@ -254,9 +258,11 @@ Future<Map<String, dynamic>> putBPartner({
   required String name,
   required String location,
   String? taxID,
+  String? dv,
   required int cBPartnerGroupID,
   String? email,
   required int cTaxTypeID,
+  required String customerType,
   required BuildContext context,
   required int? userID,
   required int? locationID,
@@ -310,8 +316,10 @@ Future<Map<String, dynamic>> putBPartner({
     final Map<String, dynamic> bpartnerData = {
       "Name": name,
       if (taxID != null) "TaxID": taxID,
+      if (dv != null) "dv": dv,
       "C_BP_Group_ID": {"id": cBPartnerGroupID},
       "LCO_TaxIdType_ID": {"id": cTaxTypeID},
+      "TipoClienteFE": customerType,
     };
     final responseBPartner = await put(
       Uri.parse("${EndPoints.cBPartner}/$id"),

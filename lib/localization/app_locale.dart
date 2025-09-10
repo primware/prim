@@ -46,7 +46,9 @@ class AppLocale {
   static const String nameReq = 'nameReq';
   static const String personTypeReq = 'personTypeReq';
   static const String groupReq = 'groupReq';
+  static const String customerType = 'customerType';
   static const String taxId = 'taxId';
+  static const String dv = 'dv';
   static const String email = 'email';
   static const String addressReq = 'addressReq';
   static const String createCustomer = 'createCustomer';
@@ -73,6 +75,7 @@ class AppLocale {
   static const String productSummary = 'productSummary';
   static const String quantity = 'quantity';
   static const String price = 'price';
+  static const String taxCategory = 'taxCategory';
   static const String subtotal = 'subtotal';
   static const String total = 'total';
   static const String noName = 'noName';
@@ -88,6 +91,7 @@ class AppLocale {
   static const String priceKey = 'priceKey';
   static const String stockKey = 'stockKey';
   static const String category = 'category';
+  static const String productCategory = 'productCategory';
   static const String addToCart = 'addToCart';
   static const String updateProduct = 'updateProduct';
   static const String deleteProduct = 'deleteProduct';
@@ -287,7 +291,11 @@ class AppLocale {
     clientMustBeSelected: 'A client must be selected',
     refund: 'Refund',
     order: 'Order',
-    noData: 'No data available'
+    noData: 'No data available',
+    taxCategory: 'Tax Category',
+    productCategory: 'Product Category',
+    dv: 'DV',
+    customerType: 'Customer Type'
   };
 
   static const Map<String, dynamic> es = {
@@ -433,5 +441,9 @@ class AppLocale {
     oct: 'Oct',
     nov: 'Nov',
     dec: 'Dic',
+    taxCategory: 'Categoría de impuesto',
+    productCategory: 'Categoría de producto',
+    dv: 'DV',
+    customerType: 'Tipo de Persona'
   };
 }

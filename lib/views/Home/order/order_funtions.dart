@@ -39,10 +39,13 @@ Future<List<Map<String, dynamic>>> fetchBPartner({
           'id': record['id'],
           'name': record['Name'],
           'TaxID': record['TaxID'],
+          'dv': record['dv'],
+          'TipoClienteFE': record['TipoClienteFE']?['id'],
           'LCO_TaxIdType_ID': record['LCO_TaxIdType_ID']?['id'],
           'LCO_TaxIdTypeName': record['LCO_TaxIdType_ID']?['identifier'],
           'C_BP_Group_ID': record['C_BP_Group_ID']?['id'],
           'AD_User_ID': record['AD_User']?[0]?['id'],
+          'email': record['AD_User']?[0]?['EMail'],
           'C_BPartner_Location_ID': record['C_BPartner_Location']?[0]?['id'],
           'locationName': record['C_BPartner_Location']?[0]?['Name'],
         };
