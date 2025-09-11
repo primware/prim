@@ -70,23 +70,27 @@ class _DashboardPageState extends State<DashboardPage> {
                   children: [
                     Center(child: Logo(width: 169)),
                     SizedBox(height: CustomSpacer.xlarge),
-                    DashboardCharts(
-                      children: [
-                        MetricCard(
-                          titleBuilder: (ctx) => 'Ventas por período (Línea)',
-                          dataLoader: ({required context, required groupBy}) =>
-                              fetchSalesChartData(
-                                  context: context, groupBy: groupBy),
-                          chartType: ChartType.line,
-                        ),
-                        MetricCard(
-                          titleBuilder: (ctx) => 'Ventas por período (Barra)',
-                          dataLoader: ({required context, required groupBy}) =>
-                              fetchSalesChartData(
-                                  context: context, groupBy: groupBy),
-                          chartType: ChartType.bar,
-                        ),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: DashboardCharts(
+                        children: [
+                          MetricCard(
+                            titleBuilder: (ctx) => 'Ventas por período (Línea)',
+                            dataLoader: (
+                                    {required context, required groupBy}) =>
+                                fetchSalesChartData(
+                                    context: context, groupBy: groupBy),
+                            chartType: ChartType.line,
+                          ),
+                          // MetricCard(
+                          //   titleBuilder: (ctx) => 'Ventas por período (Barra)',
+                          //   dataLoader: ({required context, required groupBy}) =>
+                          //       fetchSalesChartData(
+                          //           context: context, groupBy: groupBy),
+                          //   chartType: ChartType.bar,
+                          // ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

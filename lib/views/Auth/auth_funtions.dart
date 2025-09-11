@@ -303,9 +303,7 @@ Future<bool> _loadPOSPrinterData() async {
 
 Future<void> _loadPOSData(BuildContext context) async {
   try {
-    final String filter = POS.cPosID != null
-        ? 'C_POS_ID eq ${POS.cPosID}'
-        : 'SalesRep_ID eq ${UserData.id}';
+    final String filter = 'C_POS_ID eq ${POS.cPosID}';
 
     final response = await get(
       Uri.parse(

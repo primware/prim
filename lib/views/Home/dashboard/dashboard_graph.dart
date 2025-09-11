@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import '../../../localization/app_locale.dart';
+import '../../../shared/custom_spacer.dart';
 
 enum ChartType { line, bar, pie }
 
@@ -285,7 +286,7 @@ class _MetricCardState extends State<MetricCard> {
             lineTouchData: LineTouchData(
               touchTooltipData: LineTouchTooltipData(
                 getTooltipColor: (touchedSpot) =>
-                    Theme.of(context).colorScheme.primaryContainer,
+                    Theme.of(context).colorScheme.secondary,
                 fitInsideHorizontally: true,
                 fitInsideVertically: true,
                 getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
@@ -301,7 +302,7 @@ class _MetricCardState extends State<MetricCard> {
             ),
             gridData: FlGridData(
               show: true,
-              drawVerticalLine: false,
+              drawVerticalLine: true,
               horizontalInterval: _gridInterval(),
               getDrawingHorizontalLine: (value) => FlLine(
                 color: Theme.of(context)
@@ -356,6 +357,7 @@ class _MetricCardState extends State<MetricCard> {
                       )
                     : null,
                 sideTitles: SideTitles(
+                  reservedSize: 50,
                   showTitles: true,
                   interval: _gridInterval(),
                   getTitlesWidget: (value, meta) => Text(
@@ -376,20 +378,17 @@ class _MetricCardState extends State<MetricCard> {
             lineBarsData: [
               LineChartBarData(
                 spots: points,
-                isCurved: true,
-                color: Theme.of(context).colorScheme.primary,
+                isCurved: false,
+                color: Theme.of(context).colorScheme.secondary,
                 barWidth: 3,
                 isStrokeCapRound: true,
-                dotData: const FlDotData(show: false),
+                dotData: const FlDotData(show: true),
                 belowBarData: BarAreaData(
                   show: true,
                   gradient: LinearGradient(
                     colors: [
-                      Theme.of(context)
-                          .colorScheme
-                          .surfaceTint
-                          .withOpacity(0.5),
-                      Theme.of(context).colorScheme.surfaceTint.withOpacity(0),
+                      Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                      Theme.of(context).colorScheme.secondary.withOpacity(0),
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -411,7 +410,7 @@ class _MetricCardState extends State<MetricCard> {
           children: [
             Text(widget.titleBuilder(context),
                 style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(width: 16),
+            const SizedBox(width: CustomSpacer.medium),
             DropdownButton<String>(
               value: groupBy,
               items: widget.groupByOptions.map((opt) {
@@ -429,6 +428,7 @@ class _MetricCardState extends State<MetricCard> {
             ),
           ],
         ),
+        const SizedBox(height: CustomSpacer.small),
         SizedBox(
           height: widget.chartType == ChartType.pie ? 220 : 200,
           child: isLoading
