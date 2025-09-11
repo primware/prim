@@ -122,7 +122,7 @@ class _OrderListPageState extends State<OrderListPage> {
 
   Widget _buildSubtypePill(Map<String, dynamic> order) {
     final sub = order['doctypetarget']?['subtype']?['id'];
-    final bool isReturn = sub == 'RM';
+    final bool isReturn = sub == 'RM' && POS.docTypeRefundID != null;
 
     final Color baseColor = isReturn ? Colors.red : Colors.green;
     final Color bgColor = baseColor.withOpacity(0.12);
