@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
@@ -22,8 +24,10 @@ class OrderListPage extends StatefulWidget {
 
 class _OrderListPageState extends State<OrderListPage> {
   List<Map<String, dynamic>> _orders = [];
-  bool _isLoading = true;
+  bool _isLoading = true, isSearchLoading = false;
   String _searchQuery = '';
+  Timer? _debounce;
+  TextEditingController searchController = TextEditingController();
 
   // Confirmación para imprimir ticket
   Future<bool?> _printTicketConfirmation(BuildContext context) {
@@ -78,12 +82,32 @@ class _OrderListPageState extends State<OrderListPage> {
     _fetchOrders();
   }
 
-  Future<void> _fetchOrders() async {
-    setState(() => _isLoading = true);
-    final result = await fetchOrders(context: context);
+  Future<void> _fetchOrders({bool showLoadingIndicator = false}) async {
+    setState(() {
+      if (showLoadingIndicator) {
+        isSearchLoading = true;
+      }
+
+      _isLoading = true;
+    });
+
+    final result =
+        await fetchOrders(context: context, filter: searchController.text);
     setState(() {
       _orders = result;
       _isLoading = false;
+      isSearchLoading = false;
+    });
+  }
+
+  void debouncedOrders() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    final searchText = searchController.text.trim();
+    if (searchText.length < 3 && searchText.isNotEmpty) {
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 3000), () {
+      _fetchOrders(showLoadingIndicator: true);
     });
   }
 
@@ -309,14 +333,23 @@ class _OrderListPageState extends State<OrderListPage> {
             child: CustomContainer(
               child: Column(
                 children: [
+                  if (isSearchLoading) ...[
+                    const SizedBox(height: 4),
+                    const LinearProgressIndicator(),
+                    const SizedBox(height: 8),
+                  ],
                   Row(
                     children: [
                       Expanded(
                         child: TextfieldTheme(
+                          controlador: searchController,
                           texto: AppLocale.searchOrder.getString(context),
                           icono: Icons.search,
                           onChanged: (value) {
-                            setState(() => _searchQuery = value);
+                            setState(() {
+                              _searchQuery = value;
+                              debouncedOrders();
+                            });
                           },
                         ),
                       ),

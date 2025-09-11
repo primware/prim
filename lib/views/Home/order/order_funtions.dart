@@ -233,8 +233,6 @@ Future<Map<String, dynamic>> postInvoice({
       body: jsonEncode(orderData),
     );
 
-    CurrentLogMessage.add('postInvoice orderData: ' + jsonEncode(orderData),
-        level: 'INFO', tag: 'postInvoice');
     if (orderResponse.statusCode != 201) {
       CurrentLogMessage.add(
           'Error al crear y completar la orden: ${orderResponse.body}',
@@ -310,15 +308,19 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
 }
 
 Future<List<Map<String, dynamic>>> fetchOrders(
-    {required BuildContext context}) async {
+    {required BuildContext context, String? filter}) async {
   try {
     await usuarioAuth(
       context: context,
     );
 
+    filter = (filter != null && filter.isNotEmpty)
+        ? ' and contains(DocumentNo, $filter)'
+        : '';
+
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id} and (DocStatus eq \'CO\' or DocStatus eq \'CL\')&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID'),
+          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id} and (DocStatus eq \'CO\' or DocStatus eq \'CL\')$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -537,13 +539,10 @@ Future<Map<String, dynamic>> showYappyQR({
 
     if (deviceResponse.statusCode != 200) {
       CurrentLogMessage.add(
-          'Error al abrir la caja de yappi: ${deviceResponse.statusCode}',
+          'Error al abrir la caja de yappi: ${deviceResponse.body}',
           level: 'ERROR',
           tag: 'showYappyQR');
-      CurrentLogMessage.add(
-          'Respuesta de yappy (open device): ' + deviceResponse.body,
-          level: 'INFO',
-          tag: 'showYappyQR');
+
       return {
         'success': false,
         'message': 'Error al abrir la caja de yappi.',
@@ -565,12 +564,8 @@ Future<Map<String, dynamic>> showYappyQR({
 
     if (qrResponse.statusCode != 200) {
       CurrentLogMessage.add(
-          'Error al generar el QR de yappy: ${qrResponse.statusCode}',
+          'Error al generar el QR de yappy: ${qrResponse.body}',
           level: 'ERROR',
-          tag: 'showYappyQR');
-      CurrentLogMessage.add(
-          'Respuesta de yappy (QR generator): ' + qrResponse.body,
-          level: 'INFO',
           tag: 'showYappyQR');
 
       return {
@@ -639,7 +634,7 @@ Future<bool> cancelYappyTransaction({required String transactionId}) async {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
 
       final status = jsonResponse['status']['code'];
-      CurrentLogMessage.add('Status de la cancelación: ' + status,
+      CurrentLogMessage.add('Status de la cancelación: $status',
           level: 'INFO', tag: 'cancelYappyTransaction');
       if (status == 'YP-0000' || status == 'YP-0016') {
         return true;
