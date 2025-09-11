@@ -2007,19 +2007,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     : null,
                               ),
                       ),
-                      const SizedBox(height: CustomSpacer.medium),
-                      if (!isSending)
-                        ButtonSecondary(
-                          fullWidth: true,
-                          texto: AppLocale.cancel.getString(context),
-                          onPressed: () {
-                            clearInvoiceFields();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => OrderListPage()));
-                          },
-                        ),
+                      // const SizedBox(height: CustomSpacer.medium),
+                      // if (!isSending)
+                      //   ButtonSecondary(
+                      //     fullWidth: true,
+                      //     texto: AppLocale.cancel.getString(context),
+                      //     onPressed: () {
+                      //       clearInvoiceFields();
+                      //       Navigator.push(
+                      //           context,
+                      //           MaterialPageRoute(
+                      //               builder: (context) => OrderListPage()));
+                      //     },
+                      //   ),
                     ],
                   ),
                 ),
