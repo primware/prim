@@ -19,6 +19,7 @@ Future<Map<String, double>> fetchSalesChartData({
     final response = await get(
       Uri.parse(
           '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id} and DocStatus eq \'CO\' and DateOrdered gt \'$oneYearAgo\'&\$orderby=DateOrdered'),
+      // '${EndPoints.cOrder}?\$filter=DocStatus eq \'CO\' and DateOrdered gt \'$oneYearAgo\'&\$orderby=DateOrdered'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,

@@ -293,9 +293,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       (doc['name'] ?? doc['Name'] ?? '').toString();
                   return ListTile(
                     leading: Icon(
-                      doc['DocSubTypeSO'] != 'RM'
-                          ? Icons.add
-                          : Icons.sd_card_alert_outlined,
+                      doc['DocSubTypeSO'] != 'RM' ? Icons.add : Icons.undo,
                       color: doc['DocSubTypeSO'] == 'RM' ? Colors.red : null,
                     ),
                     title: Text(title.isEmpty ? 'Documento' : title),
