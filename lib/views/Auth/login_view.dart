@@ -91,8 +91,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _loadConfig() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? baseURL =
-        prefs.getString('baseURL') ?? 'https://test.idempiere.org';
+    String? baseURL = prefs.getString('baseURL') ?? 'https://fe.primware.net';
 
     String? cPosID = prefs.getString('cPosID');
 
