@@ -53,20 +53,19 @@ class OrderDetailPage extends StatelessWidget {
         backgroundColor: (isReturn) ? Colors.red : null,
         foregroundColor: (isReturn) ? Colors.white : null,
         title: Text(
-          //'${AppLocale.orderHash.getString(context)}${order['DocumentNo']}',
           '${order['doctypetarget']['name']} #${order['DocumentNo']}',
         ),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.share),
-          //   tooltip: AppLocale.exportPdf.getString(context),
-          //   onPressed: () async {
-          //     final pdf = await generateOrderSummaryPdf(order);
-          //     await Printing.sharePdf(
-          //         bytes: await pdf.save(),
-          //         filename: 'Order_${order['DocumentNo']}.pdf');
-          //   },
-          // ),
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: AppLocale.exportPdf.getString(context),
+            onPressed: () async {
+              final pdf = await generateOrderSummaryPdf(order);
+              await Printing.sharePdf(
+                  bytes: await pdf.save(),
+                  filename: 'Order_${order['DocumentNo']}.pdf');
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.receipt_long_rounded),
             tooltip: AppLocale.printTicket.getString(context),

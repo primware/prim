@@ -135,6 +135,35 @@ class _MetricCardState extends State<MetricCard> {
     return _niceInterval(maxY);
   }
 
+  double _maxYWithPadding() {
+    if (points.isEmpty) return 0;
+    final double maxVal =
+        points.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+    final double step = _niceInterval(maxVal);
+    // Round up to next tick and add a small headroom so the top label isn’t clipped
+    final double rounded = ((maxVal) / step).ceil() * step;
+    return rounded + step * 0.5; // 20% of a step as headroom
+  }
+
+  // --- Horizontal scroll helpers ---
+  double _tickMinWidth() {
+    if (widget.chartType == ChartType.pie) return 0; // not used
+    // More space for day labels like "25 Sep"
+    return groupBy == 'day' ? 68.0 : 64.0;
+  }
+
+  double _computeChartWidth(BuildContext context) {
+    if (widget.chartType == ChartType.pie) {
+      return MediaQuery.of(context).size.width; // no scroll for pie
+    }
+    final screen = MediaQuery.of(context).size.width * 0.8;
+    if (dataKeys.isEmpty) return screen;
+    // Reserve a bit of padding and ensure each tick has legible width
+    final desired = (dataKeys.length * _tickMinWidth()) + 24.0;
+    final width = desired > screen ? desired : screen;
+    return width > 760 ? 760 : width;
+  }
+
   Future<void> _load() async {
     setState(() => isLoading = true);
     final rawData = await widget.dataLoader(context: context, groupBy: groupBy);
@@ -269,6 +298,7 @@ class _MetricCardState extends State<MetricCard> {
                   const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             borderData: FlBorderData(show: false),
+            maxY: _maxYWithPadding(),
             barGroups: barGroups,
           ),
         );
@@ -375,6 +405,7 @@ class _MetricCardState extends State<MetricCard> {
             minX: 0,
             maxX: points.isNotEmpty ? points.length.toDouble() - 1 : 0,
             minY: 0,
+            maxY: _maxYWithPadding(),
             lineBarsData: [
               LineChartBarData(
                 spots: points,
@@ -429,6 +460,7 @@ class _MetricCardState extends State<MetricCard> {
           ],
         ),
         const SizedBox(height: CustomSpacer.small),
+        // Chart area with optional horizontal scroll for narrow screens
         SizedBox(
           height: widget.chartType == ChartType.pie ? 220 : 200,
           child: isLoading
@@ -445,7 +477,16 @@ class _MetricCardState extends State<MetricCard> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     )
-                  : _buildChart(),
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: _computeChartWidth(context),
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 8, right: 24),
+                          child: _buildChart(),
+                        ),
+                      ),
+                    ),
         ),
       ],
     );

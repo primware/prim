@@ -20,7 +20,6 @@ import '../product/product_new.dart';
 import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'my_order.dart';
 import 'package:printing/printing.dart';
 
 class OrderNewPage extends StatefulWidget {
@@ -1135,6 +1134,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile =
+        MediaQuery.of(context).size.width < 700 ? true : false;
+
     return WillPopScope(
       onWillPop: () async {
         //TODO manejar lo de cancelar el yappy si me salgo
@@ -1146,8 +1148,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${AppLocale.user.getString(context)}: ${UserData.name} -'),
-              const SizedBox(width: 4),
+              if (isMobile == false) ...[
+                Text(
+                    '${AppLocale.user.getString(context)}: ${UserData.name} -'),
+                const SizedBox(width: 4),
+              ],
               Text(
                 widget.orderName != null
                     ? '${widget.orderName!}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}'
@@ -1160,19 +1165,22 @@ class _OrderNewPageState extends State<OrderNewPage> {
           backgroundColor:
               widget.isRefund ? Theme.of(context).colorScheme.error : null,
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: CustomSpacer.medium),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(CustomSpacer.medium),
-                  color: Colors.white,
-                ),
-                padding: EdgeInsets.all(CustomSpacer.small),
-                child: Logo(
-                  width: 60,
-                ),
-              ),
-            )
+            !isMobile
+                ? Padding(
+                    padding: const EdgeInsets.only(right: CustomSpacer.medium),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            BorderRadius.circular(CustomSpacer.medium),
+                        color: Colors.white,
+                      ),
+                      padding: EdgeInsets.all(CustomSpacer.small),
+                      child: Logo(
+                        width: 60,
+                      ),
+                    ),
+                  )
+                : SizedBox.shrink()
           ],
         ),
         drawer: MenuDrawer(),
@@ -1896,7 +1904,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 //? Resumen de la factura
                 CustomContainer(
                   maxWidthContainer: 320,
-                  margin: EdgeInsets.only(top: 24),
+                  margin: EdgeInsets.only(top: 24, bottom: 36),
                   child: Column(
                     children: [
                       Center(

@@ -1,7 +1,7 @@
 name: primware
 description: "Sales app fully integrated with iDempiere ERP."
 publish_to: "none"
-version: 0.1.32+32
+version: 0.1.35+35
 
 environment:
   sdk: ^3.6.2
