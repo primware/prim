@@ -222,6 +222,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     POSPrinter.isLogoSet = false;
   }
 
+//TODO al hacer clic en la imagen que abra para cambiar el logo
   @override
   Widget build(BuildContext context) {
     return Drawer(

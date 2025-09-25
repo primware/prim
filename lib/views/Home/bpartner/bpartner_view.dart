@@ -105,7 +105,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
               title: Text(record['name'],
                   style: Theme.of(context).textTheme.bodyLarge),
               subtitle: Text(
-                  '${record['LCO_TaxIdTypeName'] ?? ''}  ${record['TaxID'] ?? ''}',
+                  '${record['LCO_TaxIdTypeName'] ?? ''}  ${record['TaxID'] ?? ''}  ${record['dv'] != null ? 'DV: ${record['dv']}' : ''}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.secondary)),
             ),
@@ -115,6 +115,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
     );
   }
 
+//TODO reemplazar el icono de resfrescar por el de lupa y que sea ese el que se usa para buscar en vez del bounce
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -159,10 +160,11 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                   Row(
                     children: [
                       Expanded(
+                        //TODO agregar el locate y el placeholder sea mas gris
                         child: TextfieldTheme(
                           texto: AppLocale.searchCustomer.getString(context),
                           controlador: searchController,
-                          icono: Icons.search,
+                          pista: "Nro. Identificación o nombre...",
                           onChanged: (_) => debouncedLoadBPartner(),
                         ),
                       ),

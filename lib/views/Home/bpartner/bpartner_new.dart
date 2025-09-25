@@ -171,7 +171,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     );
 
     setState(() => isLoading = false);
-
+//TODO devolver true desde cliente nuevo que viene desde el panel de clientes y no desde orden
     if (result['success'] == true) {
       clearPartnerFields();
       Navigator.pop(context, {
@@ -313,7 +313,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                       texto: AppLocale.cancel.getString(context),
                       onPressed: () {
                         clearPartnerFields();
-                        Navigator.pop(context);
+                        Navigator.pop(context, false);
                       },
                     ),
                     const SizedBox(height: CustomSpacer.medium)

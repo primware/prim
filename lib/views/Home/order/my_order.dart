@@ -181,6 +181,7 @@ class _OrderListPageState extends State<OrderListPage> {
     );
   }
 
+//TODO quitar el boton de devolucion si no vienen por el CPOSID
   Widget _buildOrderList(List<Map<String, dynamic>> orders) {
     if (orders.isEmpty) {
       return Center(

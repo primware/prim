@@ -34,7 +34,7 @@ Future<Map<String, dynamic>> postBPartner({
     final Map<String, dynamic> partnerData = {
       "Name": name,
       if (taxID != null && taxID.isNotEmpty) "TaxID": taxID,
-      if (dv != null && dv.isNotEmpty) "DV": dv,
+      if (dv != null && dv.isNotEmpty) "dv": dv,
       "IsCustomer": true,
       "LCO_TaxIdType_ID": cTaxTypeID,
       "C_BP_Group_ID": cBPartnerGroupID,
