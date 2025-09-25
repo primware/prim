@@ -17,6 +17,7 @@ import '../../../shared/toast_message.dart';
 import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new.dart';
 import '../product/product_new.dart';
+import 'my_order_print_generator.dart';
 import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -1054,7 +1055,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
         final confirmPrintTicket = await _printTicketConfirmation(context);
 
         if (confirmPrintTicket == true) {
-          final pdfBytes = await generateTicketPdf(order);
+          final pdfBytes = POS.cPosID != null
+              ? await generatePOSTicket(order)
+              : await generateOrderTicket(order);
 
           try {
             final printers = await Printing.listPrinters();
@@ -1070,9 +1073,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
               onLayout: (_) => pdfBytes,
             );
           } catch (e) {
-            await Printing.layoutPdf(
-              onLayout: (_) => pdfBytes,
+            await Printing.sharePdf(
+              bytes: pdfBytes,
+              filename: 'Order_${order['DocumentNo']}.pdf',
             );
+
+            // await Printing.layoutPdf(
+            //   onLayout: (_) => pdfBytes,
+            // );
           }
         }
       }

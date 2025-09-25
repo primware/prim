@@ -26,6 +26,7 @@ dependencies:
   fl_chart: ^1.0.0
   qr_flutter: ^4.1.0
   toastification: ^3.0.3
+  image_picker: ^1.2.0
 
 
 flutter_launcher_icons:

@@ -23,6 +23,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile =
+        MediaQuery.of(context).size.width < 700 ? true : false;
+
     return WillPopScope(
       onWillPop: () async {
         final now = DateTime.now();
@@ -59,6 +62,24 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(AppLocale.dashboard.getString(context)),
+          actions: [
+            !isMobile
+                ? Padding(
+                    padding: const EdgeInsets.only(right: CustomSpacer.medium),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            BorderRadius.circular(CustomSpacer.medium),
+                        color: Colors.white,
+                      ),
+                      padding: EdgeInsets.all(CustomSpacer.small),
+                      child: Logo(
+                        width: 60,
+                      ),
+                    ),
+                  )
+                : SizedBox.shrink()
+          ],
         ),
         drawer: MenuDrawer(),
         body: SafeArea(
@@ -68,27 +89,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: Logo(width: 169)),
-                    SizedBox(height: CustomSpacer.xlarge),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: DashboardCharts(
                         children: [
                           MetricCard(
-                            titleBuilder: (ctx) => 'Ventas por período (Línea)',
+                            titleBuilder: (ctx) => 'Ventas por período',
                             dataLoader: (
                                     {required context, required groupBy}) =>
                                 fetchSalesChartData(
                                     context: context, groupBy: groupBy),
                             chartType: ChartType.line,
                           ),
-                          // MetricCard(
-                          //   titleBuilder: (ctx) => 'Ventas por período (Barra)',
-                          //   dataLoader: ({required context, required groupBy}) =>
-                          //       fetchSalesChartData(
-                          //           context: context, groupBy: groupBy),
-                          //   chartType: ChartType.bar,
-                          // ),
                         ],
                       ),
                     ),

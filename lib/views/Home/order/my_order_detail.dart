@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
-import 'package:primware/views/Home/order/my_order_detail_pdf_generator.dart';
+import 'package:primware/views/Home/order/my_order_print_generator.dart';
 import 'package:printing/printing.dart';
+import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
-
-import 'order_funtions.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -60,9 +59,9 @@ class OrderDetailPage extends StatelessWidget {
             icon: const Icon(Icons.share),
             tooltip: AppLocale.exportPdf.getString(context),
             onPressed: () async {
-              final pdf = await generateOrderSummaryPdf(order);
+              final pdfBytes = await generateOrderTicket(order);
               await Printing.sharePdf(
-                  bytes: await pdf.save(),
+                  bytes: pdfBytes,
                   filename: 'Order_${order['DocumentNo']}.pdf');
             },
           ),
@@ -73,7 +72,9 @@ class OrderDetailPage extends StatelessWidget {
               final bool? confirmPrintTicket =
                   await _printTicketConfirmation(context);
               if (confirmPrintTicket == true) {
-                final pdfBytes = await generateTicketPdf(order);
+                final pdfBytes = POS.cPosID != null
+                    ? await generatePOSTicket(order)
+                    : await generateOrderTicket(order);
 
                 try {
                   final printers = await Printing.listPrinters();
@@ -89,8 +90,9 @@ class OrderDetailPage extends StatelessWidget {
                     onLayout: (_) => pdfBytes,
                   );
                 } catch (e) {
-                  await Printing.layoutPdf(
-                    onLayout: (_) => pdfBytes,
+                  await Printing.sharePdf(
+                    bytes: pdfBytes,
+                    filename: 'Order_${order['DocumentNo']}.pdf',
                   );
                 }
               }

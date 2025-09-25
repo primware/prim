@@ -138,7 +138,9 @@ class _LoginPageState extends State<LoginPage> {
               iconSize: 32,
             ),
             IconButton(
-              onPressed: () {
+              onPressed: () async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
                 _saveConfig();
                 Navigator.of(context).pop();
                 _resetDialog();

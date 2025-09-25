@@ -62,6 +62,7 @@ class AppLocale {
   static const String update = 'update';
   static const String errorUpdateCustomer = 'errorUpdateCustomer';
   static const String dashboard = 'dashboard';
+  static const String yourLogo = 'yourLogo';
   static const String totalSoldBy = 'totalSoldBy';
   static const String days = 'days';
   static const String months = 'months';
@@ -102,13 +103,11 @@ class AppLocale {
   static const String saveChanges = 'saveChanges';
   static const String productUpdatedSuccessfully = 'productUpdatedSuccessfully';
   static const String errorUpdatingProduct = 'errorUpdatingProduct';
-
   static const String newProduct = 'newProduct';
   static const String save = 'save';
   static const String productCreatedSuccessfully = 'productCreatedSuccessfully';
   static const String errorCreatingProduct = 'errorCreatingProduct';
   static const String requiredField = 'requiredField';
-  static const String home = 'home';
   static const String orders = 'orders';
   static const String settings = 'settings';
   static const String logout = 'logout';
@@ -232,6 +231,7 @@ class AppLocale {
     finalTotal: 'Final total:',
     productDetail: 'Product Detail',
     code: 'Code',
+    yourLogo: 'Set Logo',
     name: 'Name',
     description: 'Description',
     priceKey: 'Price',
@@ -252,7 +252,6 @@ class AppLocale {
     productCreatedSuccessfully: 'Product created successfully.',
     errorCreatingProduct: 'Error creating product.',
     requiredField: 'Required field',
-    home: 'Home',
     orders: 'Orders',
     settings: 'Settings',
     logout: 'Logout',
@@ -369,6 +368,7 @@ class AppLocale {
     finalTotal: 'Total final:',
     productDetail: 'Detalle de producto',
     code: 'Código',
+    yourLogo: 'Definir Logo',
     name: 'Nombre',
     description: 'Descripción',
     priceKey: 'Precio',
@@ -389,7 +389,6 @@ class AppLocale {
     productCreatedSuccessfully: 'Producto creado con éxito.',
     errorCreatingProduct: 'Error al crear el producto.',
     requiredField: 'Campo requerido',
-    home: 'Inicio',
     orders: 'Órdenes',
     settings: 'Configuración',
     logout: 'Cerrar sesión',

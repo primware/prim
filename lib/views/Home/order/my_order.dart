@@ -14,6 +14,7 @@ import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
+import 'my_order_print_generator.dart';
 
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
@@ -54,7 +55,9 @@ class _OrderListPageState extends State<OrderListPage> {
   Future<void> _printTicket(Map<String, dynamic> order) async {
     final bool? confirm = await _printTicketConfirmation(context);
     if (confirm == true) {
-      final pdfBytes = await generateTicketPdf(order);
+      final pdfBytes = POS.cPosID != null
+          ? await generatePOSTicket(order)
+          : await generateOrderTicket(order);
       try {
         final printers = await Printing.listPrinters();
         final defaultPrinter = printers.firstWhere(
@@ -69,8 +72,9 @@ class _OrderListPageState extends State<OrderListPage> {
           onLayout: (_) => pdfBytes,
         );
       } catch (e) {
-        await Printing.layoutPdf(
-          onLayout: (_) => pdfBytes,
+        await Printing.sharePdf(
+          bytes: pdfBytes,
+          filename: 'Order_${order['DocumentNo']}.pdf',
         );
       }
     }

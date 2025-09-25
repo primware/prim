@@ -35,6 +35,7 @@ class POSPrinter {
   static String? headerPhone;
   static String? headerEmail;
   static Uint8List? logo;
+  static bool isLogoSet = false;
 }
 
 class Yappy {

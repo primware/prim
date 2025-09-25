@@ -1,4 +1,6 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/API/token.api.dart';
@@ -8,12 +10,15 @@ import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:primware/views/Home/product/product_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
+import '../shared/toast_message.dart';
+import '../shared/file_picker_helper.dart';
 import '../API/endpoint.api.dart';
 import '../API/pos.api.dart';
 import '../API/user.api.dart';
 import '../localization/app_locale.dart';
 import '../theme/colors.dart';
 import '../views/Home/bpartner/bpartner_view.dart';
+import '../views/Home/dashboard/dashboard_funtions.dart';
 import '../views/Home/order/my_order.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
@@ -169,7 +174,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(AppLocale.no.getString(context)),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: Text(AppLocale.yes.getString(context)),
           ),
@@ -212,6 +217,9 @@ class _MenuDrawerState extends State<MenuDrawer> {
     POS.documentActions.clear();
     POS.principalTaxs.clear();
     POS.docTypesComplete.clear();
+
+    POSPrinter.logo = null;
+    POSPrinter.isLogoSet = false;
   }
 
   @override
@@ -219,16 +227,60 @@ class _MenuDrawerState extends State<MenuDrawer> {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.only(
-          top: CustomSpacer.xlarge + CustomSpacer.xlarge + CustomSpacer.medium,
+          top: CustomSpacer.xlarge,
           bottom: CustomSpacer.medium,
         ),
         children: [
-          Center(
-            child: Text(UserData.name ?? 'Usuario',
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (POSPrinter.logo != null)
+                Image.memory(
+                  POSPrinter.logo!,
+                  width: 160,
+                  fit: BoxFit.contain,
+                ),
+              if (POSPrinter.isLogoSet == false)
+                TextButton(
+                  child: Text(
+                    AppLocale.yourLogo.getString(context),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () async {
+                    final picked =
+                        await pickValidFile(context: context, maxUploadMB: 4);
+                    if (picked == null) return;
+                    final bytes = picked['fileBytes'] as Uint8List;
+                    setState(() {
+                      POSPrinter.logo = bytes;
+                      POSPrinter.isLogoSet = true;
+                    });
+                    final ok = await updateOrgLogo(bytes, context);
+                    if (ok) {
+                      ToastMessage.show(
+                        context: context,
+                        message: 'Logo actualizado correctamente',
+                        type: ToastType.success,
+                      );
+                    } else {
+                      ToastMessage.show(
+                        context: context,
+                        message: 'No se pudo actualizar el logo',
+                        type: ToastType.failure,
+                      );
+                    }
+                  },
+                ),
+              Text(
+                UserData.name ?? 'Usuario',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
-                    )),
+                    ),
+              ),
+            ],
           ),
           const Divider(
             height: 24,
@@ -238,7 +290,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
               Icons.dashboard_outlined,
             ),
             title: Text(
-              AppLocale.home.getString(context),
+              AppLocale.dashboard.getString(context),
               style: TextStyle(),
             ),
             onTap: () {
