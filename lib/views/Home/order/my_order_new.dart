@@ -117,7 +117,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isYappyConfigAvailable = true;
     }
 
-    _loadSequence();
+    if (widget.doctypeID != null) {
+      _loadSequence();
+    }
     if (widget.sourceOrderId != null) {
       _prefillFromExistingOrder();
     }
