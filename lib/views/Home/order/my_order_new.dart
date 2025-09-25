@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:primware/API/token.api.dart';
 import 'package:primware/API/user.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'dart:async';

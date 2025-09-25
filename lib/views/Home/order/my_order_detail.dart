@@ -5,7 +5,6 @@ import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Home/order/my_order_print_generator.dart';
 import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
-import '../../../API/token.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/footer.dart';
 
