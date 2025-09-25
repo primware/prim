@@ -28,7 +28,7 @@ class SearchableDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic>? _selected = (value == null)
+    final Map<String, dynamic>? selected = (value == null)
         ? null
         : (() {
             final idx = options.indexWhere((item) => item[idKey] == value);
@@ -37,7 +37,7 @@ class SearchableDropdown<T> extends StatelessWidget {
           })();
     return DropdownSearch<Map<String, dynamic>>(
       enabled: isEnabled,
-      selectedItem: _selected,
+      selectedItem: selected,
       items: (String filter, LoadProps? props) async {
         if (filter.isEmpty) {
           return options;
@@ -52,7 +52,7 @@ class SearchableDropdown<T> extends StatelessWidget {
       },
       itemAsString: (item) =>
           displayItem != null ? displayItem!(item) : item[nameKey],
-      compareFn: (item, selectedItem) => item[idKey] == selectedItem?[idKey],
+      compareFn: (item, selectedItem) => item[idKey] == selectedItem[idKey],
       dropdownBuilder: (context, selectedItem) {
         return Text(
           displayItem != null
