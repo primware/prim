@@ -1,15 +1,11 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:pdf/pdf.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/API/user.api.dart';
 import '../../../API/endpoint.api.dart';
 import 'dart:convert';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
-import 'package:pdf/widgets.dart' as pw;
 
 Future<List<Map<String, dynamic>>> fetchBPartner({
   required BuildContext context,
