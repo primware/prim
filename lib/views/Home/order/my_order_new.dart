@@ -12,6 +12,7 @@ import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/custom_textfield.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/toast_message.dart';
 import '../../../theme/colors.dart';
@@ -48,7 +49,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
   TextEditingController qtyProductController = TextEditingController();
   TextEditingController productController = TextEditingController();
   TextEditingController taxController = TextEditingController();
-  TextEditingController docActionController = TextEditingController();
   bool isSending = false,
       isTaxLoading = true,
       isProductCategoryLoading = true,
@@ -129,7 +129,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (POS.documentActions.isNotEmpty) {
       setState(() {
         selectedDocActionCode = POS.documentActions.first['code'];
-        docActionController.text = POS.documentActions.first['name'] ?? '';
       });
     }
   }
@@ -1192,11 +1191,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
           ],
         ),
         drawer: MenuDrawer(),
-        bottomNavigationBar: Text(
-          'www.primware.net',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+        bottomNavigationBar: CustomFooter(),
         body: SingleChildScrollView(
           child: Center(
             child: Wrap(
@@ -1991,21 +1986,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       ),
                       const Divider(),
                       const SizedBox(height: CustomSpacer.xlarge),
-                      CustomSearchField(
+                      SearchableDropdown<String>(
                         options: POS.documentActions,
+                        idKey: 'code',
+                        nameKey: 'name',
                         labelText: AppLocale.documentAction.getString(context),
-                        searchBy: "name",
-                        showCreateButtonIfNotFound: false,
-                        controller: docActionController,
-                        onItemSelected: (item) {
+                        value: selectedDocActionCode,
+                        showSearchBox: false,
+                        onChanged: (value) {
                           setState(() {
-                            selectedDocActionCode = item['code'];
+                            selectedDocActionCode = value;
                           });
                         },
-                        itemBuilder: (item) => Text(
-                          '${item['name']}',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
                       ),
                       const SizedBox(height: CustomSpacer.small),
                       Container(
@@ -2023,19 +2015,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     : null,
                               ),
                       ),
-                      // const SizedBox(height: CustomSpacer.medium),
-                      // if (!isSending)
-                      //   ButtonSecondary(
-                      //     fullWidth: true,
-                      //     texto: AppLocale.cancel.getString(context),
-                      //     onPressed: () {
-                      //       clearInvoiceFields();
-                      //       Navigator.push(
-                      //           context,
-                      //           MaterialPageRoute(
-                      //               builder: (context) => OrderListPage()));
-                      //     },
-                      //   ),
                     ],
                   ),
                 ),

@@ -5,6 +5,7 @@ import 'package:primware/shared/custom_container.dart';
 import 'package:primware/localization/app_locale.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../dashboard/dashboard_view.dart';
@@ -163,6 +164,7 @@ class _ProductListPageState extends State<ProductListPage> {
           appBar: AppBar(
             title: Text(AppLocale.products.getString(context)),
           ),
+          bottomNavigationBar: CustomFooter(),
           drawer: MenuDrawer(),
           floatingActionButton: FloatingActionButton(
             onPressed: () {

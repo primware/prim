@@ -6,6 +6,7 @@ import 'package:primware/views/Home/order/my_order_print_generator.dart';
 import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
+import '../../../shared/footer.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -100,6 +101,7 @@ class OrderDetailPage extends StatelessWidget {
           ),
         ],
       ),
+      bottomNavigationBar: CustomFooter(),
       body: Center(
         child: CustomContainer(
           child: Column(

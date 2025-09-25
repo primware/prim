@@ -11,6 +11,7 @@ import '../../main.dart';
 import '../../shared/toast_message.dart';
 import 'login_view.dart';
 import '../../API/user.api.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 Future<void> handle401(BuildContext context) async {
   Token.auth = null;
@@ -30,6 +31,11 @@ Future<void> handle401(BuildContext context) async {
     message: "Por su seguridad la sesión a expirado",
     type: ToastType.warning,
   );
+}
+
+Future<void> _loadAppVersion() async {
+  final info = await PackageInfo.fromPlatform();
+  AppInfo.appVersion = '${info.version}+${info.buildNumber}';
 }
 
 Future<Map<String, dynamic>?> preAuth(
@@ -215,6 +221,7 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
       await _loadPOSData(context);
       await _loadPOSPrinterData();
       POSTenderType.isMultiPayment = await _posTenderExists();
+      await _loadAppVersion();
       return success;
     } else {
       CurrentLogMessage.add(

@@ -1,5 +1,5 @@
 // ignore_for_file: deprecated_member_use
-import 'dart:math' as Math;
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
@@ -114,7 +114,7 @@ class _MetricCardState extends State<MetricCard> {
     if (maxY <= 0) return 1;
     // choose rough 5 steps
     final double rough = maxY / 5.0;
-    final num pow10 = Math.pow(10, (Math.log(rough) / Math.ln10).floor());
+    final num pow10 = pow(10, (log(rough) / ln10).floor());
     final double normalized = rough / pow10;
     double step;
     if (normalized < 1.5) {

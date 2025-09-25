@@ -5,6 +5,7 @@ import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
@@ -196,7 +197,11 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
           title: Text(
             AppLocale.newCustomer.getString(context),
           ),
+          leading: IconButton(
+              onPressed: () => Navigator.pop(context, false),
+              icon: Icon(Icons.arrow_back)),
         ),
+        bottomNavigationBar: CustomFooter(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
