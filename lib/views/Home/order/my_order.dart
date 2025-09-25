@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
@@ -14,6 +13,7 @@ import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
+import '../../../shared/footer.dart';
 import 'my_order_print_generator.dart';
 
 class OrderListPage extends StatefulWidget {
@@ -332,6 +332,7 @@ class _OrderListPageState extends State<OrderListPage> {
                 child: const Icon(Icons.add),
               )
             : null,
+        bottomNavigationBar: CustomFooter(),
         body: SingleChildScrollView(
           child: Center(
             child: CustomContainer(

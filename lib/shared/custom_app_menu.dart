@@ -227,7 +227,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.only(
-          top: CustomSpacer.xlarge,
+          top: CustomSpacer.xlarge + CustomSpacer.xlarge,
           bottom: CustomSpacer.medium,
         ),
         children: [

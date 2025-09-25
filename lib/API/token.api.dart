@@ -27,3 +27,7 @@ class CurrentLogMessage {
     }
   }
 }
+
+class AppInfo {
+  static String? appVersion;
+}

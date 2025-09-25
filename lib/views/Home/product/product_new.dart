@@ -7,6 +7,7 @@ import 'package:primware/views/Home/product/product_funtions.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
@@ -180,6 +181,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: Text(AppLocale.newProduct.getString(context))),
+        bottomNavigationBar: CustomFooter(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(

@@ -6,6 +6,7 @@ import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../shared/footer.dart';
 import '../../Auth/login_view.dart';
 import 'dashboard_graph.dart';
 import 'dashboard_funtions.dart';
@@ -81,6 +82,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 : SizedBox.shrink()
           ],
         ),
+        bottomNavigationBar: CustomFooter(),
         drawer: MenuDrawer(),
         body: SafeArea(
           child: SingleChildScrollView(

@@ -6,6 +6,7 @@ import 'package:primware/API/user.api.dart';
 
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../shared/footer.dart';
 
 class DebugPage extends StatefulWidget {
   const DebugPage({super.key});
@@ -21,6 +22,7 @@ class _DebugPageState extends State<DebugPage> {
       appBar: AppBar(
         title: Text('Settings'),
       ),
+      bottomNavigationBar: CustomFooter(),
       body: SingleChildScrollView(
         child: Center(
           child: Padding(

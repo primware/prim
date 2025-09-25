@@ -4,6 +4,7 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../localization/app_locale.dart';
@@ -126,6 +127,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
       },
       child: Scaffold(
         appBar: AppBar(title: Text(AppLocale.customers.getString(context))),
+        bottomNavigationBar: CustomFooter(),
         drawer: MenuDrawer(),
         floatingActionButton: FloatingActionButton(
           tooltip: AppLocale.add.getString(context),

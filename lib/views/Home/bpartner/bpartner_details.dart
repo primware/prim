@@ -5,6 +5,7 @@ import 'package:primware/shared/custom_spacer.dart';
 import '../../../API/lpa_config.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
@@ -186,6 +187,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
           title: Text(AppLocale.customerDetail.getString(context)),
           centerTitle: true,
         ),
+        bottomNavigationBar: CustomFooter(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
