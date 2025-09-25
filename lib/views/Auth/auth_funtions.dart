@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import '../../API/endpoint.api.dart';
 import '../../API/pos.api.dart';
@@ -285,6 +286,10 @@ Future<bool> _loadPOSPrinterData() async {
 
       if (record['Logo_ID'] != null) {
         POSPrinter.logo = base64Decode(record['Logo_ID']['data']);
+        POSPrinter.isLogoSet = true;
+      } else {
+        final bytes = await rootBundle.load('assets/img/logo.png');
+        POSPrinter.logo = bytes.buffer.asUint8List();
       }
       return true;
     } else {

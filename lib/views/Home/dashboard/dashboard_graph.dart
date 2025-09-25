@@ -437,28 +437,9 @@ class _MetricCardState extends State<MetricCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(widget.titleBuilder(context),
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(width: CustomSpacer.medium),
-            DropdownButton<String>(
-              value: groupBy,
-              items: widget.groupByOptions.map((opt) {
-                final label = opt == 'day'
-                    ? AppLocale.days.getString(context)
-                    : AppLocale.months.getString(context);
-                return DropdownMenuItem(value: opt, child: Text(label));
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => groupBy = value);
-                  _load();
-                }
-              },
-            ),
-          ],
-        ),
+        Text(widget.titleBuilder(context),
+            style: Theme.of(context).textTheme.titleMedium),
+
         const SizedBox(height: CustomSpacer.small),
         // Chart area with optional horizontal scroll for narrow screens
         SizedBox(
@@ -487,6 +468,23 @@ class _MetricCardState extends State<MetricCard> {
                         ),
                       ),
                     ),
+        ),
+        Center(
+          child: DropdownButton<String>(
+            value: groupBy,
+            items: widget.groupByOptions.map((opt) {
+              final label = opt == 'day'
+                  ? AppLocale.days.getString(context)
+                  : AppLocale.months.getString(context);
+              return DropdownMenuItem(value: opt, child: Text(label));
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => groupBy = value);
+                _load();
+              }
+            },
+          ),
         ),
       ],
     );
