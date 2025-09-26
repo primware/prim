@@ -192,6 +192,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   child: Column(
                 children: [
                   TextfieldTheme(
+                    controlador: skuController,
+                    texto: AppLocale.code.getString(context),
+                    inputType: TextInputType.text,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  TextfieldTheme(
                     controlador: nameController,
                     texto: '${AppLocale.name.getString(context)}*',
                     colorEmpty: nameController.text.isEmpty,
@@ -199,14 +205,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
-                    controlador: skuController,
-                    texto: AppLocale.code.getString(context),
-                    inputType: TextInputType.text,
-                  ),
-                  const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
                     controlador: upcController,
-                    texto: AppLocale.description.getString(context),
+                    texto: AppLocale.upc.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -261,18 +261,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             });
                           },
                         ),
-                  // Mensaje de error si taxTypes está vacío
-                  /*if (_taxError && !_isTaxiesLoading)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                            child: Text(
-                              AppLocale.noTaxCategoryAvailable.getString(context),
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,
@@ -298,8 +286,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto:
-                                    AppLocale.updateProduct.getString(context),
+                                texto: AppLocale.save.getString(context),
                                 onPressed: _updateProduct,
                               )
                         : null,

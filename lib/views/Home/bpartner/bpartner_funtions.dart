@@ -315,8 +315,8 @@ Future<Map<String, dynamic>> putBPartner({
     // Actualizar C_BPartner primero
     final Map<String, dynamic> bpartnerData = {
       "Name": name,
-      if (taxID != null) "TaxID": taxID,
-      if (dv != null) "dv": dv,
+      if (taxID != null && taxID.isNotEmpty) "TaxID": taxID,
+      if (dv != null && dv.isNotEmpty) "dv": dv,
       "C_BP_Group_ID": {"id": cBPartnerGroupID},
       "LCO_TaxIdType_ID": {"id": cTaxTypeID},
       "TipoClienteFE": customerType,

@@ -190,6 +190,12 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   child: Column(
                 children: [
                   TextfieldTheme(
+                    controlador: skuController,
+                    texto: AppLocale.code.getString(context),
+                    inputType: TextInputType.text,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  TextfieldTheme(
                     controlador: nameController,
                     texto: '${AppLocale.name.getString(context)}*',
                     colorEmpty: nameController.text.isEmpty,
@@ -197,14 +203,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
-                    controlador: skuController,
-                    texto: AppLocale.code.getString(context),
-                    inputType: TextInputType.text,
-                  ),
-                  const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
                     controlador: upcController,
-                    texto: AppLocale.description.getString(context),
+                    texto: AppLocale.upc.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -263,18 +263,6 @@ class _ProductNewPageState extends State<ProductNewPage> {
                             });
                           },
                         ),
-                  // Mensaje de error si taxTypes está vacío
-                  /*if (_taxError && !_isTaxiesLoading)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                            child: Text(
-                              AppLocale.noTaxCategoryAvailable.getString(context),
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,

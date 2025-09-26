@@ -222,7 +222,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
     POSPrinter.isLogoSet = false;
   }
 
-//TODO al hacer clic en la imagen que abra para cambiar el logo
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -236,10 +235,37 @@ class _MenuDrawerState extends State<MenuDrawer> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (POSPrinter.logo != null)
-                Image.memory(
-                  POSPrinter.logo!,
-                  width: 160,
-                  fit: BoxFit.contain,
+                GestureDetector(
+                  onTap: () async {
+                    final picked =
+                        await pickValidFile(context: context, maxUploadMB: 4);
+                    if (picked == null) return;
+                    final bytes = picked['fileBytes'] as Uint8List;
+                    setState(() {
+                      POSPrinter.logo = bytes;
+                      POSPrinter.isLogoSet = true;
+                    });
+                    final ok = await updateOrgLogo(bytes, context);
+                    if (!mounted) return;
+                    if (ok) {
+                      ToastMessage.show(
+                        context: context,
+                        message: 'Logo actualizado correctamente',
+                        type: ToastType.success,
+                      );
+                    } else {
+                      ToastMessage.show(
+                        context: context,
+                        message: 'No se pudo actualizar el logo',
+                        type: ToastType.failure,
+                      );
+                    }
+                  },
+                  child: Image.memory(
+                    POSPrinter.logo!,
+                    width: 160,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               if (POSPrinter.isLogoSet == false)
                 TextButton(
@@ -259,6 +285,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       POSPrinter.isLogoSet = true;
                     });
                     final ok = await updateOrgLogo(bytes, context);
+                    if (!mounted) return;
                     if (ok) {
                       ToastMessage.show(
                         context: context,
@@ -346,8 +373,14 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       (doc['name'] ?? doc['Name'] ?? '').toString();
                   return ListTile(
                     leading: Icon(
-                      doc['DocSubTypeSO'] != 'RM' ? Icons.add : Icons.undo,
-                      color: doc['DocSubTypeSO'] == 'RM' ? Colors.red : null,
+                      (doc['DocSubTypeSO'] == 'RM' ||
+                              docTypeId == POS.docTypeRefundID)
+                          ? Icons.undo
+                          : Icons.add,
+                      color: (doc['DocSubTypeSO'] == 'RM' ||
+                              docTypeId == POS.docTypeRefundID)
+                          ? Colors.red
+                          : null,
                     ),
                     title: Text(title.isEmpty ? 'Documento' : title),
                     onTap: () {

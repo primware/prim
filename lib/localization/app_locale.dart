@@ -31,6 +31,7 @@ class AppLocale {
   static const String selectRole = 'selectRole';
   static const String company = 'company';
   static const String role = 'role';
+  static const String taxIDOrName = 'taxIDOrName';
   static const String organization = 'organization';
   static const String selectCompanyRoleOrganization =
       'selectCompanyRoleOrganization';
@@ -89,6 +90,7 @@ class AppLocale {
   static const String code = 'code';
   static const String name = 'name';
   static const String description = 'description';
+  static const String upc = 'upc';
   static const String priceKey = 'priceKey';
   static const String stockKey = 'stockKey';
   static const String category = 'category';
@@ -173,6 +175,7 @@ class AppLocale {
     rememberMe: 'Remember Me',
     server: 'Server',
     lang: 'Language',
+    upc: 'UPC',
     newOrder: 'New Order',
     customer: 'Customer',
     process: 'Process',
@@ -185,8 +188,9 @@ class AppLocale {
         'Please select a company, role, and organization',
     continueKey: 'Continue',
     back: 'Back',
+    taxIDOrName: 'ID or Name...',
     invalidCredentials: 'Invalid credentials',
-    serverSaved: 'Server address saved.',
+    serverSaved: 'Server address saved. Please restart the app',
     customers: 'Customers',
     searchCustomer: 'Search customer',
     add: 'Add',
@@ -318,12 +322,15 @@ class AppLocale {
     selectRole: 'Seleccionar Rol',
     company: 'Empresa',
     role: 'Rol',
+    upc: 'UPC',
     organization: 'Organización',
     selectCompanyRoleOrganization: 'Seleccione una empresa, rol y organización',
     continueKey: 'Continuar',
     back: 'Volver',
+    taxIDOrName: 'Identificación o Nombre...',
     invalidCredentials: 'Credenciales incorrectas',
-    serverSaved: 'Se guardó la dirección del servidor.',
+    serverSaved:
+        'Se guardó la dirección del servidor. Por favor reiniciar el app',
     customers: 'Clientes',
     searchCustomer: 'Buscar cliente',
     add: 'Agregar',

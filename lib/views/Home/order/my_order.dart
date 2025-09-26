@@ -150,7 +150,8 @@ class _OrderListPageState extends State<OrderListPage> {
 
   Widget _buildSubtypePill(Map<String, dynamic> order) {
     final sub = order['doctypetarget']?['subtype']?['id'];
-    final bool isReturn = sub == 'RM' && POS.docTypeRefundID != null;
+    final bool isReturn =
+        (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
 
     final Color baseColor = isReturn ? Colors.red : Colors.green;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -181,7 +182,6 @@ class _OrderListPageState extends State<OrderListPage> {
     );
   }
 
-//TODO quitar el boton de devolucion si no vienen por el CPOSID
   Widget _buildOrderList(List<Map<String, dynamic>> orders) {
     if (orders.isEmpty) {
       return Center(
@@ -190,7 +190,8 @@ class _OrderListPageState extends State<OrderListPage> {
     }
     return Column(
       children: orders.map((order) {
-        final bool isReturn = order['doctypetarget']?['subtype']?['id'] == 'RM';
+        final bool isReturn =
+            (order['doctypetarget']?['id'] == POS.docTypeRefundID);
         return GestureDetector(
           onTap: () async {
             final refreshed = await Navigator.push(
@@ -274,7 +275,7 @@ class _OrderListPageState extends State<OrderListPage> {
                       ),
                     ),
                   ];
-                  if (!isReturn) {
+                  if (isReturn == false && POS.isPOS == true) {
                     items.add(
                       PopupMenuItem<String>(
                         value: 'refund',

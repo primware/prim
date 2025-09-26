@@ -3,12 +3,12 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/API/lpa_config.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
+import 'package:primware/shared/toast_message.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
-import '../../../theme/colors.dart';
 import '../../../localization/app_locale.dart';
 import 'bpartner_funtions.dart';
 
@@ -58,12 +58,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
 
   Future<void> _loadTaxType() async {
     final fetchedTaxTypes = await getCTaxTypeID(context) ?? [];
-    /*if (fetchedTaxTypes != null) {
-      setState(() {
-        taxTypes = fetchedTaxTypes;
-        _isTaxTypeLoading = false;
-      });
-    }*/
+
     setState(() {
       taxTypes = fetchedTaxTypes;
       _isTaxTypeLoading = false;
@@ -73,12 +68,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
 
   Future<void> _loadBPartnerGroups() async {
     final fetchedGroups = await getCBPGroup(context) ?? [];
-    /*if (fetchedGroups != null) {
-      setState(() {
-        bPartnerGroups = fetchedGroups;
-        _isGroupLoading = false;
-      });
-    }*/
+
     setState(() {
       bPartnerGroups = fetchedGroups;
       _isGroupLoading = false;
@@ -143,10 +133,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 AppLocale.confirm.getString(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
               ),
             ),
           ],
@@ -171,7 +157,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     );
 
     setState(() => isLoading = false);
-//TODO devolver true desde cliente nuevo que viene desde el panel de clientes y no desde orden
     if (result['success'] == true) {
       clearPartnerFields();
       Navigator.pop(context, {
@@ -179,13 +164,11 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
         'bpartner': result['bpartner'],
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(
-              child: Text(result['message'] ??
-                  AppLocale.errorCreateCustomer.getString(context))),
-          backgroundColor: ColorTheme.error,
-        ),
+      ToastMessage.show(
+        context: context,
+        message: result['message'] ??
+            AppLocale.errorCreateCustomer.getString(context),
+        type: ToastType.failure,
       );
     }
   }
@@ -198,7 +181,9 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
             AppLocale.newCustomer.getString(context),
           ),
           leading: IconButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(context, {
+                    'created': false,
+                  }),
               icon: Icon(Icons.arrow_back)),
         ),
         bottomNavigationBar: CustomFooter(),
@@ -227,7 +212,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
-
                   const SizedBox(height: CustomSpacer.medium),
                   _isGroupLoading
                       ? ShimmerList(
@@ -265,18 +249,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                               },
                             )
                           : const SizedBox(),
-                  // Mensaje de error si taxTypes está vacío
-                  /*if (_taxTypeError && !_isTaxTypeLoading)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                              child: Text(
-                                AppLocale.noTaxTypesAvailable.getString(context),
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: taxController,
