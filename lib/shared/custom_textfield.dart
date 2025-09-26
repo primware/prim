@@ -68,7 +68,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
       decoration: InputDecoration(
         counterText: '',
         hintText: widget.pista,
-        hintStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
+        hintStyle: TextStyle(color: Colors.grey),
         filled: true, // Habilita el relleno del fondo
         fillColor: Theme.of(context).cardColor,
         hoverColor: Theme.of(context).primaryColor.withAlpha(40),

@@ -162,11 +162,11 @@ class _LoginPageState extends State<LoginPage> {
         return AlertDialog(
           title: Text(
             AppLocale.server.getString(context),
-            style: Theme.of(context).textTheme.bodyLarge,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           content: Text(
             AppLocale.serverSaved.getString(context),
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
           actions: [
             IconButton(

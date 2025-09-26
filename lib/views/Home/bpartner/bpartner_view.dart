@@ -24,8 +24,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
   List<Map<String, dynamic>> _bpartners = [];
   bool _isLoading = true;
   bool isSearchLoading = false;
-  // ignore: prefer_final_fields
-  String _searchQuery = '';
+  String searchQuery = '';
   TextEditingController searchController = TextEditingController();
   Timer? _debounce;
 
@@ -76,7 +75,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
         .where((bp) => bp['name']
             .toString()
             .toLowerCase()
-            .contains(_searchQuery.toLowerCase()))
+            .contains(searchQuery.toLowerCase()))
         .toList();
   }
 
@@ -85,14 +84,15 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
       children: records.map((record) {
         return GestureDetector(
           onTap: () async {
-            final refreshed = await Navigator.push(
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => BPartnerDetailPage(bpartner: record),
               ),
             );
-            if (refreshed == true) {
-              _fetchBPartners();
+            if (result['created'] == true) {
+              searchController.text = result['bpartner'];
+              _loadBPartner(showLoadingIndicator: true);
             }
           },
           child: Container(
@@ -115,7 +115,6 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
     );
   }
 
-//TODO reemplazar el icono de resfrescar por el de lupa y que sea ese el que se usa para buscar en vez del bounce
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -133,15 +132,16 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
         floatingActionButton: FloatingActionButton(
           tooltip: AppLocale.add.getString(context),
           onPressed: () async {
-            bool refresh = await Navigator.push(
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const BPartnerNewPage(),
               ),
             );
 
-            if (refresh) {
-              _fetchBPartners();
+            if (result['created'] == true) {
+              searchController.text = result['bpartner']?['Name'];
+              _loadBPartner(showLoadingIndicator: true);
             }
           },
           child: const Icon(Icons.add),
@@ -160,19 +160,20 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                   Row(
                     children: [
                       Expanded(
-                        //TODO agregar el locate y el placeholder sea mas gris
                         child: TextfieldTheme(
                           texto: AppLocale.searchCustomer.getString(context),
                           controlador: searchController,
-                          pista: "Nro. Identificación o nombre...",
-                          onChanged: (_) => debouncedLoadBPartner(),
+                          pista: AppLocale.taxIDOrName.getString(context),
+                          onSubmitted: (_) =>
+                              _loadBPartner(showLoadingIndicator: true),
                         ),
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       IconButton(
                         tooltip: AppLocale.refresh.getString(context),
-                        icon: const Icon(Icons.refresh),
-                        onPressed: _fetchBPartners,
+                        icon: const Icon(Icons.search),
+                        onPressed: () =>
+                            _loadBPartner(showLoadingIndicator: true),
                       ),
                     ],
                   ),

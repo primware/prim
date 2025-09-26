@@ -8,7 +8,7 @@ import '../../../shared/custom_dropdown.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
-import '../../../theme/colors.dart';
+import '../../../shared/toast_message.dart';
 import 'bpartner_funtions.dart';
 import '../../../localization/app_locale.dart';
 
@@ -134,10 +134,6 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 AppLocale.confirm.getString(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
               ),
             ),
           ],
@@ -167,15 +163,16 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
     setState(() => isLoading = false);
 
     if (result['success'] == true) {
-      Navigator.pop(context, true);
+      Navigator.pop(context, {
+        'created': true,
+        'bpartner': nameController.text,
+      });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(
-              child: Text(result['message'] ??
-                  AppLocale.errorUpdateCustomer.getString(context))),
-          backgroundColor: ColorTheme.error,
-        ),
+      ToastMessage.show(
+        context: context,
+        message: result['message'] ??
+            AppLocale.errorUpdateCustomer.getString(context),
+        type: ToastType.failure,
       );
     }
   }
@@ -186,6 +183,11 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
         appBar: AppBar(
           title: Text(AppLocale.customerDetail.getString(context)),
           centerTitle: true,
+          leading: IconButton(
+              onPressed: () => Navigator.pop(context, {
+                    'created': false,
+                  }),
+              icon: Icon(Icons.arrow_back)),
         ),
         bottomNavigationBar: CustomFooter(),
         body: SafeArea(
