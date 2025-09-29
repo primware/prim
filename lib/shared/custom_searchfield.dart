@@ -14,8 +14,8 @@ class CustomSearchField extends StatefulWidget {
   final bool enabled;
   final TextEditingController? controller;
   final bool showCreateButtonIfNotFound;
-  final void Function(String)? onCreate;
-  final void Function(String)? onChanged;
+
+  final void Function(String)? onCreate, onSubmit, onChanged;
 
   const CustomSearchField({
     super.key,
@@ -31,6 +31,7 @@ class CustomSearchField extends StatefulWidget {
     this.showCreateButtonIfNotFound = false,
     this.onCreate,
     this.onChanged,
+    this.onSubmit,
   });
 
   @override
@@ -153,6 +154,7 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
   Widget build(BuildContext context) {
     return SearchField<Map<String, dynamic>>(
       controller: _controller,
+      onSubmit: widget.onSubmit,
       enabled: widget.enabled,
       onSuggestionTap: (SearchFieldListItem<Map<String, dynamic>> item) {
         if (widget.onItemSelected != null && item.item!.isNotEmpty) {

@@ -159,24 +159,24 @@ class _OrderNewPageState extends State<OrderNewPage> {
     });
   }
 
-  void debouncedLoadCustomer() {
-    if (clienteController.text.trim().isEmpty) {
-      setState(() {
-        selectedBPartnerID = null;
-        _validateForm();
-      });
-      return;
-    }
+  // void debouncedLoadCustomer() {
+  //   if (clienteController.text.trim().isEmpty) {
+  //     setState(() {
+  //       selectedBPartnerID = null;
+  //       _validateForm();
+  //     });
+  //     return;
+  //   }
 
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    final searchText = clienteController.text.trim();
-    if (searchText.length < 4 && searchText.isNotEmpty) {
-      return;
-    }
-    _debounce = Timer(const Duration(milliseconds: 5000), () {
-      _loadBPartner(showLoadingIndicator: true);
-    });
-  }
+  //   if (_debounce?.isActive ?? false) _debounce?.cancel();
+  //   final searchText = clienteController.text.trim();
+  //   if (searchText.length < 4 && searchText.isNotEmpty) {
+  //     return;
+  //   }
+  //   _debounce = Timer(const Duration(milliseconds: 5000), () {
+  //     _loadBPartner(showLoadingIndicator: true);
+  //   });
+  // }
 
   Future<void> _loadPayment() async {
     setState(() {
@@ -382,6 +382,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
         isCustomerSearchLoading = true;
       });
     }
+    setState(() {
+      selectedBPartnerID = null;
+      _validateForm();
+    });
 
     final partner = await fetchBPartner(
       context: context,
@@ -1215,40 +1219,62 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             const LinearProgressIndicator(),
                             const SizedBox(height: 8),
                           ],
-                          CustomSearchField(
-                            key: ValueKey('customer_${bPartnerOptions.length}'),
-                            options: bPartnerOptions,
-                            labelText: AppLocale.customer.getString(context),
-                            searchBy: "TaxID",
-                            controller: clienteController,
-                            showCreateButtonIfNotFound: true,
-                            onChanged: (_) => debouncedLoadCustomer(),
-                            onCreate: (value) async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      BPartnerNewPage(bpartnerName: value),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CustomSearchField(
+                                  key: ValueKey(
+                                      'customer_${bPartnerOptions.length}'),
+                                  options: bPartnerOptions,
+                                  labelText:
+                                      AppLocale.customer.getString(context),
+                                  searchBy: "TaxID",
+                                  controller: clienteController,
+                                  showCreateButtonIfNotFound: true,
+                                  onSubmit: (_) =>
+                                      _loadBPartner(showLoadingIndicator: true),
+                                  onCreate: (value) async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BPartnerNewPage(
+                                            bpartnerName: value),
+                                      ),
+                                    );
+                                    if (result != null &&
+                                        result['created'] == true) {
+                                      setState(() {
+                                        clienteController.text =
+                                            result['bpartner']['Name'];
+                                        selectedBPartnerID =
+                                            result['bpartner']['id'];
+                                      });
+
+                                      _loadBPartner(showLoadingIndicator: true);
+                                    }
+                                  },
+                                  onItemSelected: (item) {
+                                    setState(() {
+                                      selectedBPartnerID = item['id'];
+                                      _validateForm();
+                                    });
+                                  },
+                                  itemBuilder: (item) => Text(
+                                    '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              );
-                              if (result != null && result['created'] == true) {
-                                await _loadBPartner();
-                                setState(() {
-                                  selectedBPartnerID = result['bpartner']['id'];
-                                });
-                              }
-                            },
-                            onItemSelected: (item) {
-                              setState(() {
-                                selectedBPartnerID = item['id'];
-                                _validateForm();
-                              });
-                            },
-                            itemBuilder: (item) => Text(
-                              '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              ),
+                              const SizedBox(width: CustomSpacer.small),
+                              IconButton(
+                                tooltip: AppLocale.refresh.getString(context),
+                                icon: const Icon(Icons.search),
+                                onPressed: () =>
+                                    _loadBPartner(showLoadingIndicator: true),
+                              ),
+                            ],
                           ),
                           if (selectedBPartnerID == null)
                             Padding(
