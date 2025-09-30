@@ -42,6 +42,9 @@ flutter_launcher_icons:
   ios_icon_name: AppIcon
   remove_alpha_ios: true
   image_path: "assets/img/icono.png"
+  macos:
+    generate: true
+    image_path: "assets/img/icono.png"
   windows:
     generate: true
     image_path: "assets/img/icono.png"
