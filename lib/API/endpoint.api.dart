@@ -1,7 +1,7 @@
 class Base {
   static bool prod = false;
   static String title = prod ? 'Prim' : 'Demo Prim';
-
+  static bool allowCreateAccount = true;
   static String? baseURL;
   static String? yappyURL;
 }

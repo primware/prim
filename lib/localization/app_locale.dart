@@ -53,6 +53,9 @@ class AppLocale {
   static const String email = 'email';
   static const String addressReq = 'addressReq';
   static const String createCustomer = 'createCustomer';
+  static const String register = 'register';
+  static const String noAccount = 'noAccount';
+
   static const String confirmCreateCustomer = 'confirmCreateCustomer';
   static const String confirm = 'confirm';
   static const String errorCreateCustomer = 'errorCreateCustomer';
@@ -195,6 +198,8 @@ class AppLocale {
     searchCustomer: 'Search customer',
     add: 'Add',
     refresh: 'Refresh',
+    noAccount: 'No account?',
+    register: 'Register',
     newCustomer: 'New Customer',
     nameReq: 'Name *',
     personTypeReq: 'ID Type *',
@@ -334,6 +339,8 @@ class AppLocale {
     customers: 'Clientes',
     searchCustomer: 'Buscar cliente',
     add: 'Agregar',
+    noAccount: '¿No tienes una cuenta?',
+    register: 'Registrarte',
     refresh: 'Actualizar',
     newCustomer: 'Cliente nuevo',
     nameReq: 'Nombre *',
