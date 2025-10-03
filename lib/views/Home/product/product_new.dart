@@ -177,7 +177,6 @@ class _ProductNewPageState extends State<ProductNewPage> {
     }
   }
 
-//TODO codigo, nombre es el orden , quitar descripcion, y el boton que diga guardar en lugar de actualizar producto
   @override
   Widget build(BuildContext context) {
     return Scaffold(

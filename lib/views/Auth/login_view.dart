@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -223,6 +224,31 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
+  Future<void> _openExternal(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      final ok = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!ok && mounted) {
+        ToastMessage.show(
+          context: context,
+          message: 'No se pudo abrir el navegador.',
+          type: ToastType.failure,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastMessage.show(
+          context: context,
+          message: 'No se pudo abrir el navegador.',
+          type: ToastType.failure,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile =
@@ -302,7 +328,7 @@ class _LoginPageState extends State<LoginPage> {
                           });
                         },
                       ),
-                      const SizedBox(height: CustomSpacer.xlarge),
+                      const SizedBox(height: CustomSpacer.medium),
                       Container(
                         child: isLoading
                             ? ButtonLoading(
@@ -317,6 +343,35 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
                       ),
+                      if (Base.allowCreateAccount) ...[
+                        const SizedBox(height: CustomSpacer.medium),
+                        Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                AppLocale.noAccount.getString(context),
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(width: CustomSpacer.small),
+                              InkWell(
+                                onTap: () => _openExternal(
+                                    'https://primware.net/my-account/'),
+                                child: Text(
+                                  AppLocale.register.getString(context),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                ),
+                              )
+                            ],
+                          ),
+                        )
+                      ]
                     ],
                   ),
                 ),
