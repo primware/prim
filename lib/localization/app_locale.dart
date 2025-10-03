@@ -22,6 +22,7 @@ class AppLocale {
   static const String user = 'user';
   static const String pass = 'pass';
   static const String rememberMe = 'remenberLogin';
+  static const String onlyMyOrders = 'onlyMyOrders';
   static const String server = 'server';
   static const String lang = 'lang';
   static const String newOrder = 'newOrder';
@@ -180,6 +181,7 @@ class AppLocale {
     lang: 'Language',
     upc: 'UPC',
     newOrder: 'New Order',
+    onlyMyOrders: 'Only My Orders',
     customer: 'Customer',
     process: 'Process',
     cancel: 'Cancel',
@@ -332,6 +334,7 @@ class AppLocale {
     selectCompanyRoleOrganization: 'Seleccione una empresa, rol y organización',
     continueKey: 'Continuar',
     back: 'Volver',
+    onlyMyOrders: 'Solo mis órdenes',
     taxIDOrName: 'Identificación o Nombre...',
     invalidCredentials: 'Credenciales incorrectas',
     serverSaved:

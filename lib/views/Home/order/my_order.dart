@@ -13,6 +13,7 @@ import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
+import '../../../shared/custom_checkbox.dart';
 import '../../../shared/footer.dart';
 import 'my_order_print_generator.dart';
 
@@ -25,7 +26,7 @@ class OrderListPage extends StatefulWidget {
 
 class _OrderListPageState extends State<OrderListPage> {
   List<Map<String, dynamic>> _orders = [];
-  bool _isLoading = true, isSearchLoading = false;
+  bool _isLoading = true, isSearchLoading = false, onlyMyOrders = true;
   String _searchQuery = '';
   Timer? _debounce;
   TextEditingController searchController = TextEditingController();
@@ -95,8 +96,10 @@ class _OrderListPageState extends State<OrderListPage> {
       _isLoading = true;
     });
 
-    final result =
-        await fetchOrders(context: context, filter: searchController.text);
+    final result = await fetchOrders(
+        context: context,
+        filter: searchController.text,
+        onlyMyOrders: onlyMyOrders);
     setState(() {
       _orders = result;
       _isLoading = false;
@@ -339,7 +342,18 @@ class _OrderListPageState extends State<OrderListPage> {
           child: Center(
             child: CustomContainer(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  CustomCheckbox(
+                    value: onlyMyOrders,
+                    text: AppLocale.onlyMyOrders.getString(context),
+                    onChanged: (newValue) {
+                      setState(() {
+                        onlyMyOrders = newValue;
+                        _fetchOrders(showLoadingIndicator: true);
+                      });
+                    },
+                  ),
                   if (isSearchLoading) ...[
                     const SizedBox(height: 4),
                     const LinearProgressIndicator(),

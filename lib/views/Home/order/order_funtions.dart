@@ -304,7 +304,9 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
 }
 
 Future<List<Map<String, dynamic>>> fetchOrders(
-    {required BuildContext context, String? filter}) async {
+    {required BuildContext context,
+    String? filter,
+    bool onlyMyOrders = true}) async {
   try {
     await usuarioAuth(
       context: context,
@@ -314,9 +316,14 @@ Future<List<Map<String, dynamic>>> fetchOrders(
         ? ' and contains(DocumentNo, $filter)'
         : '';
 
+    onlyMyOrders == true
+        ? filter =
+            'SalesRep_ID eq ${UserData.id} and (DocStatus eq \'CO\' or DocStatus eq \'CL\')$filter'
+        : filter = '(DocStatus eq \'CO\' or DocStatus eq \'CL\')$filter';
+
     final response = await get(
       Uri.parse(
-          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id} and (DocStatus eq \'CO\' or DocStatus eq \'CL\')$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID'),
+          '${EndPoints.cOrder}?\$filter=$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
