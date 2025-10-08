@@ -346,14 +346,14 @@ class _LoginPageState extends State<LoginPage> {
                       if (Base.allowCreateAccount) ...[
                         const SizedBox(height: CustomSpacer.medium),
                         Center(
-                          child: Row(
+                          child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 AppLocale.noAccount.getString(context),
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
-                              const SizedBox(width: CustomSpacer.small),
+                              const SizedBox(height: CustomSpacer.small),
                               InkWell(
                                 onTap: () => _openExternal(
                                     'https://primware.net/my-account/'),

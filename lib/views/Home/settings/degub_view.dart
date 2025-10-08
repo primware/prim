@@ -81,12 +81,7 @@ class _DebugPageState extends State<DebugPage> {
                       'Console Log (memoria)',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    const Spacer(),
-                    OutlinedButton(
-                      onPressed: () => setState(() {}),
-                      child: const Text('Actualizar'),
-                    ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: CustomSpacer.small),
                     OutlinedButton(
                       onPressed: () {
                         setState(() {
