@@ -5,7 +5,6 @@ import 'package:primware/shared/logo.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/custom_app_menu.dart';
-import '../../../shared/custom_checkbox.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/footer.dart';
 import '../../Auth/login_view.dart';
