@@ -348,10 +348,10 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       POS.priceListID = posData['M_PriceList_ID']?['id'];
       POS.docTypeID = posData['C_DocType_ID']?['id'];
-      POS.docTypeName = posData['C_DocType_ID']?['PrintName'];
+      POS.docTypeName = posData['C_DocType_ID']?['Name'];
       POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
-      POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['PrintName'];
+      POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['Name'];
       POS.docSubTypeRefund =
           posData['C_DocTypeRefund_ID']?['DocSubTypeSO']?['id'];
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
@@ -551,7 +551,7 @@ Future<int?> _getCDocTypeComplete() async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=PrintName,DocSubTypeSO'),
+          '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name,DocSubTypeSO'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
@@ -564,7 +564,7 @@ Future<int?> _getCDocTypeComplete() async {
       POS.docTypesComplete = records
           .map((r) => {
                 'id': r['id'].toString(),
-                'name': r['PrintName'] ?? '',
+                'name': r['Name'] ?? '',
                 'DocSubTypeSO': r['DocSubTypeSO']['id'] ?? ''
               })
           .toList();

@@ -6,12 +6,14 @@ import 'package:shimmer/shimmer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../shared/custom_checkbox.dart';
 
 enum ChartType { line, bar, pie }
 
 typedef ChartDataLoader = Future<Map<String, double>> Function({
   required BuildContext context,
   required String groupBy,
+  required bool onlyMyOrders,
 });
 
 /// Reusable metric card that supports multiple chart types (line, bar, pie).
@@ -23,6 +25,7 @@ class MetricCard extends StatefulWidget {
   final ChartType chartType;
   final String? xAxisLabel; // eje X label
   final String? yAxisLabel; // eje Y label
+  final bool initialOnlyMyOrders;
 
   const MetricCard({
     super.key,
@@ -33,6 +36,7 @@ class MetricCard extends StatefulWidget {
     this.chartType = ChartType.line,
     this.xAxisLabel,
     this.yAxisLabel,
+    this.initialOnlyMyOrders = true,
   });
 
   @override
@@ -46,6 +50,7 @@ class _MetricCardState extends State<MetricCard> {
   List<PieChartSectionData> pieSections = [];
   bool isLoading = true;
   String groupBy = 'month';
+  bool onlyMyOrders = true;
 
   List<String> _localizedMonths(BuildContext context) {
     return [
@@ -166,7 +171,11 @@ class _MetricCardState extends State<MetricCard> {
 
   Future<void> _load() async {
     setState(() => isLoading = true);
-    final rawData = await widget.dataLoader(context: context, groupBy: groupBy);
+    final rawData = await widget.dataLoader(
+      context: context,
+      groupBy: groupBy,
+      onlyMyOrders: onlyMyOrders,
+    );
     final groupedData = _normalizeByGroup(rawData);
 
     // Common ordering for X values
@@ -229,6 +238,7 @@ class _MetricCardState extends State<MetricCard> {
   void initState() {
     super.initState();
     groupBy = widget.initialGroupBy;
+    onlyMyOrders = widget.initialOnlyMyOrders;
     _load();
   }
 
@@ -469,21 +479,38 @@ class _MetricCardState extends State<MetricCard> {
                       ),
                     ),
         ),
-        Center(
-          child: DropdownButton<String>(
-            value: groupBy,
-            items: widget.groupByOptions.map((opt) {
-              final label = opt == 'day'
-                  ? AppLocale.days.getString(context)
-                  : AppLocale.months.getString(context);
-              return DropdownMenuItem(value: opt, child: Text(label));
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => groupBy = value);
-                _load();
-              }
-            },
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              DropdownButton<String>(
+                value: groupBy,
+                items: widget.groupByOptions.map((opt) {
+                  final label = opt == 'day'
+                      ? AppLocale.days.getString(context)
+                      : AppLocale.months.getString(context);
+                  return DropdownMenuItem(value: opt, child: Text(label));
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => groupBy = value);
+                    _load();
+                  }
+                },
+              ),
+              const SizedBox(width: CustomSpacer.large),
+              CustomCheckbox(
+                value: onlyMyOrders,
+                text: AppLocale.onlyMyOrders.getString(context),
+                onChanged: (newValue) {
+                  setState(() {
+                    onlyMyOrders = newValue;
+                  });
+                  _load();
+                },
+              ),
+            ],
           ),
         ),
       ],

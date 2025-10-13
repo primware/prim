@@ -12,7 +12,7 @@ import '../../../API/token.api.dart';
 
 Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   final pdf = pw.Document();
-  final lines = order['C_OrderLine'] as List<dynamic>;
+  final List lines = (order['C_OrderLine'] as List?) ?? const [];
 
   pdf.addPage(pw.MultiPage(
     build: (context) => [
@@ -45,41 +45,47 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
       pw.Text("Cliente: ${order['bpartner']['name']}"),
       pw.Text("Fecha: ${order['DateOrdered']}"),
       pw.SizedBox(height: 10),
-      pw.Text("Productos:"),
-      pw.Table.fromTextArray(
-        headers: [
-          'Producto',
-          'Cantidad',
-          'Precio',
-          'Impuesto',
-          'Subtotal',
-          'Total'
-        ],
-        data: lines.map((line) {
-          final name = line['M_Product_ID']['identifier']
-              .toString()
-              .split('_')
-              .skip(1)
-              .join(' ');
-          final qty = line['QtyOrdered'];
-          final price = line['PriceActual'];
-          final rate = line['C_Tax_ID']['Rate'];
-          final taxName = line['C_Tax_ID']['Name'];
-          final net = line['LineNetAmt'];
-          final tax = (net * rate / 100);
-          final total = net + tax;
+      if (lines.isNotEmpty) ...[
+        pw.Text("Productos:"),
+        pw.Table.fromTextArray(
+          headers: [
+            'Producto',
+            'Descripción',
+            'Cantidad',
+            'Precio',
+            'Impuesto',
+            'Subtotal',
+            'Total'
+          ],
+          data: lines.map((line) {
+            final name = (line['M_Product_ID']?['identifier'] ??
+                    '_${line['Description']}')
+                .toString()
+                .split('_')
+                .skip(1)
+                .join(' ');
+            final qty = line['QtyOrdered'];
+            final price = line['PriceActual'];
+            final rate = line['C_Tax_ID']['Rate'];
+            final taxName = line['C_Tax_ID']['Name'];
+            final net = line['LineNetAmt'];
+            final tax = (net * rate / 100);
+            final total = net + tax;
+            final description = line['Description']?.toString() ?? '';
 
-          return [
-            name,
-            qty.toString(),
-            "\$${price.toStringAsFixed(2)}",
-            "$taxName ($rate%)",
-            "\$${net.toStringAsFixed(2)}",
-            "\$${total.toStringAsFixed(2)}",
-          ];
-        }).toList(),
-      ),
-      pw.SizedBox(height: 20),
+            return [
+              name,
+              description,
+              qty.toString(),
+              "\$${price.toStringAsFixed(2)}",
+              "$taxName ($rate%)",
+              "\$${net.toStringAsFixed(2)}",
+              "\$${total.toStringAsFixed(2)}",
+            ];
+          }).toList(),
+        ),
+        pw.SizedBox(height: 20),
+      ],
       pw.Text("Total bruto: \$${order['TotalLines']}"),
       pw.Text("Total final: \$${order['GrandTotal']}"),
     ],
@@ -230,89 +236,101 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
             pw.Text('Teléfono: $phone'),
             pw.SizedBox(height: 12),
 
-            // Tabla de ítems (alineada en 4 columnas)
-            pw.Row(
-              children: [
-                pw.Expanded(
-                    flex: 20,
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text('Ítem', maxLines: 1),
-                        pw.Text('Precio x Cant',
-                            maxLines: 1, style: pw.TextStyle(fontSize: 12)),
-                      ],
-                    )),
-                pw.Expanded(
-                  flex: 15,
-                  child: pw.Align(
-                    alignment: pw.Alignment.centerRight,
-                    child: pw.Text('Subtotal', maxLines: 1),
-                  ),
-                ),
-              ],
-            ),
-            pw.Divider(),
-            pw.SizedBox(height: 6),
-            ...lines.map((line) {
-              final name = (line['M_Product_ID']?['identifier'] ?? 'Ítem')
-                  .toString()
-                  .split('_')
-                  .skip(1)
-                  .join(' ');
-              final qty = (line['QtyOrdered'] as num?)?.toDouble() ?? 0.0;
-              final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
-              final net = (line['LineNetAmt'] as num?)?.toDouble() ?? 0.0;
-              final rate =
-                  (line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0;
-              final tax = double.parse((net * (rate / 100)).toStringAsFixed(2));
-              final value = net + tax;
-
-              return pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
+            if (lines.isNotEmpty) ...[
+              // Tabla de ítems (alineada en 4 columnas)
+              pw.Row(
                 children: [
-                  pw.Row(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Expanded(
-                          flex: 20,
-                          child: pw.Column(
-                            crossAxisAlignment: pw.CrossAxisAlignment.start,
-                            children: [
-                              pw.Text(
-                                name,
-                                // maxLines: 1,
-                                overflow: pw.TextOverflow.span,
-                              ),
-                              pw.Text(
-                                '${money(price)} x ${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)}',
-                                maxLines: 1,
-                                style: pw.TextStyle(fontSize: 12),
-                              ),
-                            ],
-                          )),
-                      pw.Expanded(
-                        flex: 15,
-                        child: pw.Align(
-                          alignment: pw.Alignment.centerRight,
-                          child: pw.Text(
-                            money(value),
-                            maxLines: 1,
-                          ),
-                        ),
-                      )
-                    ],
+                  pw.Expanded(
+                      flex: 20,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('Ítem', maxLines: 1),
+                          pw.Text('Precio x Cant',
+                              maxLines: 1, style: pw.TextStyle(fontSize: 12)),
+                        ],
+                      )),
+                  pw.Expanded(
+                    flex: 15,
+                    child: pw.Align(
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text('Subtotal', maxLines: 1),
+                    ),
                   ),
                 ],
-              );
-            }),
+              ),
+              pw.Divider(),
+              pw.SizedBox(height: 6),
+              ...lines.map((line) {
+                final name = (line['M_Product_ID']?['identifier'] ??
+                        '_${line['Description']}')
+                    .toString()
+                    .split('_')
+                    .skip(1)
+                    .join(' ');
+                final qty = (line['QtyOrdered'] as num?)?.toDouble() ?? 0.0;
+                final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
+                final net = (line['LineNetAmt'] as num?)?.toDouble() ?? 0.0;
+                final rate =
+                    (line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0;
+                final tax =
+                    double.parse((net * (rate / 100)).toStringAsFixed(2));
+                final value = net + tax;
+                final description = line['Description']?.toString() ?? '';
 
-            pw.SizedBox(height: 6),
-
-            pw.Divider(),
-            // Totales
-            pw.Text('Cant. Items: ${lines.length}'),
-            pw.SizedBox(height: 12),
+                return pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Expanded(
+                            flex: 20,
+                            child: pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text(
+                                  name,
+                                  overflow: pw.TextOverflow.span,
+                                ),
+                                pw.Text(
+                                  '${money(price)} x ${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)}',
+                                  maxLines: 1,
+                                  style: pw.TextStyle(fontSize: 12),
+                                ),
+                                if (description.isNotEmpty &&
+                                    description != name)
+                                  pw.Text(
+                                    description,
+                                    maxLines: 1,
+                                    style: pw.TextStyle(
+                                      fontSize: 10,
+                                      fontStyle: pw.FontStyle.italic,
+                                    ),
+                                  ),
+                              ],
+                            )),
+                        pw.Expanded(
+                          flex: 15,
+                          child: pw.Align(
+                            alignment: pw.Alignment.centerRight,
+                            child: pw.Text(
+                              money(value),
+                              maxLines: 1,
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
+                );
+              }),
+              pw.SizedBox(height: 6),
+              pw.Divider(),
+              // Totales por items
+              pw.Text('Cant. Items: ${lines.length}'),
+              pw.SizedBox(height: 12),
+            ],
             pw.Text('Total: ${money(grandTotal)}',
                 style:
                     pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),

@@ -5,6 +5,7 @@ import 'package:primware/shared/logo.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/custom_app_menu.dart';
+import '../../../shared/custom_checkbox.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/footer.dart';
 import '../../Auth/login_view.dart';
@@ -21,7 +22,6 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   DateTime? lastBackPressed;
-
   @override
   Widget build(BuildContext context) {
     final bool isMobile =
@@ -97,10 +97,16 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           MetricCard(
                             titleBuilder: (ctx) => 'Ventas por período',
+                            initialOnlyMyOrders: true,
                             dataLoader: (
-                                    {required context, required groupBy}) =>
+                                    {required context,
+                                    required groupBy,
+                                    required onlyMyOrders}) =>
                                 fetchSalesChartData(
-                                    context: context, groupBy: groupBy),
+                              context: context,
+                              groupBy: groupBy,
+                              onlyMyOrders: onlyMyOrders,
+                            ),
                             chartType: ChartType.line,
                           ),
                         ],

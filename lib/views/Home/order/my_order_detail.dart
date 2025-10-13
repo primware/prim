@@ -118,12 +118,11 @@ class OrderDetailPage extends StatelessWidget {
                   itemCount: lines.length,
                   itemBuilder: (context, index) {
                     final line = lines[index];
-                    final String name =
-                        (line['M_Product_ID']?['identifier']?.toString() ??
-                                AppLocale.noName.getString(context))
-                            .split('_')
-                            .skip(1)
-                            .join(' ');
+                    final String name = (line['M_Product_ID']?['identifier'] ??
+                            '_${line['Description']}')
+                        .split('_')
+                        .skip(1)
+                        .join(' ');
                     final double qty = (line['QtyOrdered'] as num).toDouble();
                     final double price =
                         (line['PriceActual'] as num).toDouble();
