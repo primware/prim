@@ -3,7 +3,6 @@ name: Build Windows (Flutter)
 on:
   workflow_dispatch:
 
-# Permisos mínimos (no borraremos artifacts)
 permissions:
   contents: read
 

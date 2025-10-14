@@ -356,7 +356,7 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(height: CustomSpacer.small),
                               InkWell(
                                 onTap: () => _openExternal(
-                                    'https://primware.net/my-account/'),
+                                    'https://primware.net/register/'),
                                 child: Text(
                                   AppLocale.register.getString(context),
                                   style: Theme.of(context)
