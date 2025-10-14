@@ -17,7 +17,6 @@ import '../../../shared/formater.dart';
 import '../../../shared/toast_message.dart';
 import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new.dart';
-import '../product/product_new.dart';
 import 'my_order_print_generator.dart';
 import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
