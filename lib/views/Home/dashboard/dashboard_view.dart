@@ -95,16 +95,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: DashboardCharts(
                         children: [
                           MetricCard(
-                            titleBuilder: (ctx) => 'Ventas por período',
-                            initialOnlyMyOrders: true,
-                            dataLoader: (
-                                    {required context,
-                                    required groupBy,
-                                    required onlyMyOrders}) =>
+                            titleBuilder: (ctx) =>
+                                AppLocale.salesYTDMonthly.getString(context),
+                            dataLoader: ({required context}) =>
                                 fetchSalesChartData(
                               context: context,
-                              groupBy: groupBy,
-                              onlyMyOrders: onlyMyOrders,
                             ),
                             chartType: ChartType.line,
                           ),

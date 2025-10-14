@@ -5,96 +5,82 @@ import 'package:http/http.dart';
 import '../../../API/endpoint.api.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
-import '../../../API/user.api.dart';
 import '../../Auth/auth_funtions.dart';
 
 Future<Map<String, double>> fetchSalesChartData({
   required BuildContext context,
-  String groupBy = 'month',
-  bool onlyMyOrders = true,
 }) async {
   try {
-    List<Map<String, dynamic>> allRecords = [];
-    int skip = 0;
-    int totalCount = 0;
-
-    const int pageSize = 100;
-
-    // Fechas de filtro
-    final DateTime now = DateTime.now();
-    final DateTime oneYearAgo = now.subtract(const Duration(days: 365));
-
     await usuarioAuth(context: context);
 
-    do {
-      final uri = Uri.parse(
-        '${EndPoints.cOrder}?'
-        // Filtra por vendedor, documentos completados/cerrados y último año
-        '\$filter=${onlyMyOrders ? 'SalesRep_ID eq ${UserData.id} and ' : ''}(DocStatus eq \'CO\' or DocStatus eq \'CL\') and DateOrdered gt \'$oneYearAgo\''
-        // Ordenar por fecha para consistencia
-        '&\$orderby=DateOrdered'
-        // Traer solo los campos necesarios para agrupar y sumar
-        '&\$select=DateOrdered,GrandTotal'
-        // Paginación
-        '&\$skip=$skip',
-      );
+    final response = await get(
+      Uri.parse(EndPoints.salesYTDMonthly),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
 
-      final response = await get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': Token.auth!,
-        },
-      );
+    if (response.statusCode != 200) {
+      debugPrint(
+          'Error al obtener datos del gráfico mensual (status ${response.statusCode}): ${response.body}');
+      return {};
+    }
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-        final List records = (jsonResponse['records'] as List?) ?? [];
-        totalCount = jsonResponse['row-count'] ?? 0;
+    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+    final List data = (jsonResponse['data'] as List?) ?? [];
 
-        // Normaliza/asegura el shape de cada registro que usaremos luego
-        for (final r in records) {
-          allRecords.add({
-            'DateOrdered': r['DateOrdered'],
-            'GrandTotal': (r['GrandTotal'] ?? 0),
-          });
-        }
+    // Abreviaturas de meses "como hasta ahora" (ajusta si usabas otro idioma/formato)
+    const monthNames = <String>[
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic'
+    ];
 
-        skip += pageSize;
-        print('Fetched ${allRecords.length}/$totalCount sales records...');
-      } else {
-        debugPrint(
-            'Error al obtener datos de ventas (status ${response.statusCode}): ${response.body}');
-        return {};
-      }
-    } while (skip < totalCount);
-
-    // Agrupar totales según `groupBy`
     final Map<String, double> groupedTotals = {};
-    for (final record in allRecords) {
-      final date = DateTime.parse(record['DateOrdered']);
 
-      // Filtro adicional por periodo visible (mes/año actual si aplica)
-      if (groupBy == 'month') {
-        if (date.year != now.year) continue;
-      } else if (groupBy == 'day') {
-        if (date.year != now.year || date.month != now.month) continue;
+    for (final item in data) {
+      final String? x = item['x']?.toString();
+      final num? yNum = item['y'] is num
+          ? item['y'] as num
+          : num.tryParse(item['y']?.toString() ?? '');
+      if (x == null || yNum == null) continue;
+
+      DateTime? date;
+      try {
+        // Permite "YYYY-MM-DD HH:mm:ss"
+        date = DateTime.parse(x.replaceFirst(' ', 'T'));
+      } catch (_) {
+        // Intento alterno: solo fecha
+        try {
+          date = DateTime.parse(x.split(' ').first);
+        } catch (e) {
+          debugPrint('No se pudo parsear fecha x="$x": $e');
+          continue;
+        }
       }
 
-      final key = groupBy == 'day'
-          ? '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'
-          : '${date.year}-${date.month.toString().padLeft(2, '0')}';
+      final monthIndex = date.month - 1;
+      final String key = monthIndex >= 0 && monthIndex < 12
+          ? monthNames[monthIndex]
+          : '${date.month}';
 
-      final double amount = (record['GrandTotal'] is num)
-          ? (record['GrandTotal'] as num).toDouble()
-          : 0.0;
-
-      groupedTotals[key] = (groupedTotals[key] ?? 0) + amount;
+      final double val = yNum.toDouble();
+      groupedTotals[key] = (groupedTotals[key] ?? 0) + val;
     }
 
     return groupedTotals;
   } catch (e) {
-    debugPrint('Error de red en fetchSalesChartData: $e');
+    debugPrint('Error en fetchSalesChartData (mensual): $e');
     return {};
   }
 }

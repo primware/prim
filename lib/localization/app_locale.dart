@@ -68,7 +68,7 @@ class AppLocale {
   static const String errorUpdateCustomer = 'errorUpdateCustomer';
   static const String dashboard = 'dashboard';
   static const String yourLogo = 'yourLogo';
-  static const String totalSoldBy = 'totalSoldBy';
+  static const String salesYTDMonthly = 'totalSoldBy';
   static const String days = 'days';
   static const String months = 'months';
   static const String noDataForFilter = 'noDataForFilter';
@@ -220,7 +220,7 @@ class AppLocale {
     update: 'Update',
     errorUpdateCustomer: 'Error updating customer',
     dashboard: 'Dashboard',
-    totalSoldBy: 'Total sold by',
+    salesYTDMonthly: 'Total sold by month',
     days: 'Days',
     months: 'Months',
     noDataForFilter: 'No data available for the selected filter.',
@@ -363,7 +363,7 @@ class AppLocale {
     update: 'Actualizar',
     errorUpdateCustomer: 'Error al actualizar cliente',
     dashboard: 'Panel',
-    totalSoldBy: 'Total vendido por',
+    salesYTDMonthly: 'Total vendido por mes',
     days: 'Días',
     months: 'Meses',
     noDataForFilter: 'No hay datos disponibles para el filtro seleccionado.',

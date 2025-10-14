@@ -13,7 +13,7 @@ class POS {
 
   static int? templatePartnerID;
   static String? templatePartnerName;
-
+  static String? currencySymbol = '\$';
   static bool isPOS = false;
 
   static List<Map<String, dynamic>> docTypesComplete = [];

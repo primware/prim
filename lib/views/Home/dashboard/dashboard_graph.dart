@@ -4,39 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:intl/intl.dart';
+import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_spacer.dart';
-import '../../../shared/custom_checkbox.dart';
 
 enum ChartType { line, bar, pie }
 
 typedef ChartDataLoader = Future<Map<String, double>> Function({
   required BuildContext context,
-  required String groupBy,
-  required bool onlyMyOrders,
 });
 
 /// Reusable metric card that supports multiple chart types (line, bar, pie).
 class MetricCard extends StatefulWidget {
-  final String initialGroupBy;
-  final List<String> groupByOptions; // e.g., ['day','month']
   final String Function(BuildContext) titleBuilder;
   final ChartDataLoader dataLoader; // returns Map<X, Y>
   final ChartType chartType;
   final String? xAxisLabel; // eje X label
   final String? yAxisLabel; // eje Y label
-  final bool initialOnlyMyOrders;
 
   const MetricCard({
     super.key,
     required this.titleBuilder,
     required this.dataLoader,
-    this.initialGroupBy = 'month',
-    this.groupByOptions = const ['day', 'month'],
     this.chartType = ChartType.line,
     this.xAxisLabel,
     this.yAxisLabel,
-    this.initialOnlyMyOrders = true,
   });
 
   @override
@@ -49,70 +42,25 @@ class _MetricCardState extends State<MetricCard> {
   List<BarChartGroupData> barGroups = [];
   List<PieChartSectionData> pieSections = [];
   bool isLoading = true;
-  String groupBy = 'month';
-  bool onlyMyOrders = true;
 
-  List<String> _localizedMonths(BuildContext context) {
-    return [
-      AppLocale.jan.getString(context),
-      AppLocale.feb.getString(context),
-      AppLocale.mar.getString(context),
-      AppLocale.apr.getString(context),
-      AppLocale.may.getString(context),
-      AppLocale.jun.getString(context),
-      AppLocale.jul.getString(context),
-      AppLocale.aug.getString(context),
-      AppLocale.sep.getString(context),
-      AppLocale.oct.getString(context),
-      AppLocale.nov.getString(context),
-      AppLocale.dec.getString(context),
-    ];
-  }
+  final NumberFormat _moneyFmt = NumberFormat('#,##0.00', 'en_US');
 
-  String _formatLabel(String key) {
-    final parts = key.split('-');
-    if (parts.length >= 2) {
-      final year = int.tryParse(parts[0]) ?? 0;
-      final monthIndex = int.tryParse(parts[1]) ?? 1; // 1-12
-      final months = _localizedMonths(context);
-      final idx = (monthIndex.clamp(1, 12)) - 1;
-
-      if (groupBy == 'month') {
-        // e.g., "Sep 25"
-        return '${months[idx]} ${year % 100}';
-      } else {
-        // groupBy == 'day' -> expect YYYY-MM-DD
-        if (parts.length >= 3) {
-          final day = int.tryParse(parts[2]) ?? 1;
-          // e.g., "25 Sep" (día primero para diferenciar de month)
-          return '${day.toString()} ${months[idx]}';
-        } else {
-          // Fallback if only YYYY-MM provided
-          return '${months[idx]} ${year % 100}';
-        }
-      }
-    }
-    return key;
-  }
-
-  Map<String, double> _normalizeByGroup(Map<String, double> raw) {
-    if (groupBy == 'month') {
-      final Map<String, double> agg = {};
-      raw.forEach((k, v) {
-        // Expect keys like YYYY-MM or YYYY-MM-DD
-        final key = (k.length >= 7) ? k.substring(0, 7) : k; // YYYY-MM
-        agg.update(key, (prev) => prev + v, ifAbsent: () => v);
-      });
-      return agg;
-    }
-    return raw; // for 'day' assume viene ya por día
+  String _formatMoneyFull(double value) {
+    final formatted = _moneyFmt.format(value);
+    return '${POS.currencySymbol} $formatted';
   }
 
   String _formatY(double value) {
     final abs = value.abs();
-    if (abs >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
-    if (abs >= 1000) return '${(value / 1000).toStringAsFixed(0)}k';
-    return value.toStringAsFixed(0);
+    String formatted;
+    if (abs >= 1000000) {
+      formatted = '${(value / 1000000).toStringAsFixed(1)}M';
+    } else if (abs >= 1000) {
+      formatted = '${(value / 1000).toStringAsFixed(0)}k';
+    } else {
+      formatted = value.toStringAsFixed(0);
+    }
+    return '${POS.currencySymbol} $formatted';
   }
 
   double _niceInterval(double maxY) {
@@ -153,8 +101,7 @@ class _MetricCardState extends State<MetricCard> {
   // --- Horizontal scroll helpers ---
   double _tickMinWidth() {
     if (widget.chartType == ChartType.pie) return 0; // not used
-    // More space for day labels like "25 Sep"
-    return groupBy == 'day' ? 68.0 : 64.0;
+    return 64.0;
   }
 
   double _computeChartWidth(BuildContext context) {
@@ -173,10 +120,8 @@ class _MetricCardState extends State<MetricCard> {
     setState(() => isLoading = true);
     final rawData = await widget.dataLoader(
       context: context,
-      groupBy: groupBy,
-      onlyMyOrders: onlyMyOrders,
     );
-    final groupedData = _normalizeByGroup(rawData);
+    final groupedData = rawData;
 
     // Common ordering for X values
     final keys = groupedData.keys.toList()..sort();
@@ -237,8 +182,6 @@ class _MetricCardState extends State<MetricCard> {
   @override
   void initState() {
     super.initState();
-    groupBy = widget.initialGroupBy;
-    onlyMyOrders = widget.initialOnlyMyOrders;
     _load();
   }
 
@@ -253,7 +196,7 @@ class _MetricCardState extends State<MetricCard> {
                     Theme.of(context).colorScheme.primaryContainer,
                 getTooltipItem: (group, groupIndex, rod, rodIndex) {
                   return BarTooltipItem(
-                    rod.toY.toStringAsFixed(2),
+                    _formatMoneyFull(rod.toY),
                     Theme.of(context).textTheme.titleMedium!.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -280,7 +223,7 @@ class _MetricCardState extends State<MetricCard> {
                     if (step > 1 && i % step != 0 && i != dataKeys.length - 1) {
                       return const SizedBox();
                     }
-                    return Text(_formatLabel(dataKeys[i]));
+                    return Text(dataKeys[i]);
                   },
                   reservedSize: 28,
                 ),
@@ -331,7 +274,7 @@ class _MetricCardState extends State<MetricCard> {
                 fitInsideVertically: true,
                 getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
                   return LineTooltipItem(
-                    spot.y.toStringAsFixed(2),
+                    _formatMoneyFull(spot.y),
                     Theme.of(context).textTheme.titleMedium!.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -382,7 +325,7 @@ class _MetricCardState extends State<MetricCard> {
                       return const SizedBox();
                     }
                     return Text(
-                      _formatLabel(dataKeys[index]),
+                      dataKeys[index],
                       style: Theme.of(context).textTheme.titleSmall,
                     );
                   },
@@ -478,40 +421,6 @@ class _MetricCardState extends State<MetricCard> {
                         ),
                       ),
                     ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              DropdownButton<String>(
-                value: groupBy,
-                items: widget.groupByOptions.map((opt) {
-                  final label = opt == 'day'
-                      ? AppLocale.days.getString(context)
-                      : AppLocale.months.getString(context);
-                  return DropdownMenuItem(value: opt, child: Text(label));
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => groupBy = value);
-                    _load();
-                  }
-                },
-              ),
-              const SizedBox(width: CustomSpacer.large),
-              CustomCheckbox(
-                value: onlyMyOrders,
-                text: AppLocale.onlyMyOrders.getString(context),
-                onChanged: (newValue) {
-                  setState(() {
-                    onlyMyOrders = newValue;
-                  });
-                  _load();
-                },
-              ),
-            ],
-          ),
         ),
       ],
     );
