@@ -43,6 +43,10 @@ class OrderNewPage extends StatefulWidget {
 }
 
 class _OrderNewPageState extends State<OrderNewPage> {
+  final CustomSearchFieldController customerFieldController =
+      CustomSearchFieldController();
+  // Anchor term for create customer button
+  String? createAnchorCustomerTerm;
   Timer? _debounce;
   double calculatedChange = 0.0;
   TextEditingController clienteController = TextEditingController();
@@ -56,7 +60,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isProductSearchLoading = false,
       isProductLoading = true,
       isYappyLoading = false,
-      isYappyConfigAvailable = false;
+      isYappyConfigAvailable = false,
+      canShowCreateCustomerButton = false;
 
   final Set<int> _lockedPayments = {};
   List<Map<String, dynamic>> bPartnerOptions = [];
@@ -380,6 +385,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (showLoadingIndicator) {
       setState(() {
         isCustomerSearchLoading = true;
+        canShowCreateCustomerButton = false;
+        createAnchorCustomerTerm = null;
       });
     }
     setState(() {
@@ -395,7 +402,21 @@ class _OrderNewPageState extends State<OrderNewPage> {
     setState(() {
       bPartnerOptions = partner;
       isCustomerSearchLoading = false;
+      if (bPartnerOptions.isNotEmpty) {
+        canShowCreateCustomerButton = false;
+        createAnchorCustomerTerm = null;
+      } else {
+        canShowCreateCustomerButton = clienteController.text.trim().isNotEmpty;
+        createAnchorCustomerTerm =
+            canShowCreateCustomerButton ? clienteController.text.trim() : null;
+      }
     });
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        customerFieldController.requestFocus();
+      });
+    }
   }
 
   Future<void> _loadProduct({bool showLoadingIndicator = false}) async {
@@ -1223,14 +1244,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             children: [
                               Expanded(
                                 child: CustomSearchField(
-                                  key: ValueKey(
-                                      'customer_${bPartnerOptions.length}'),
                                   options: bPartnerOptions,
                                   labelText:
                                       AppLocale.customer.getString(context),
                                   searchBy: "TaxID",
                                   controller: clienteController,
-                                  showCreateButtonIfNotFound: true,
+                                  showCreateButtonIfNotFound:
+                                      canShowCreateCustomerButton,
+                                  createAnchorTerm: createAnchorCustomerTerm,
+                                  fieldController: customerFieldController,
                                   onSubmit: (_) =>
                                       _loadBPartner(showLoadingIndicator: true),
                                   onCreate: (value) async {
@@ -1242,7 +1264,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       ),
                                     );
                                     if (result != null &&
-                                        result['created'] == true) {
+                                        result?['created'] == true) {
                                       setState(() {
                                         clienteController.text =
                                             result['bpartner']['Name'];

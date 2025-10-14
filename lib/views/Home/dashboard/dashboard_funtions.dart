@@ -108,7 +108,7 @@ Future<bool> updateOrgLogo(Uint8List fileBytes, BuildContext context) async {
           level: 'ERROR', tag: 'updateOrgLogo');
       return false;
     }
-    final int orgInfoId = getJson['records'][0]['id'];
+    final int orgInfoId = getJson['records'][0]['id'] ?? Token.organitation;
 
     // 2) Hacer PUT con el Logo_ID en base64 (mismo formato que recibimos)
     final String b64 = base64Encode(fileBytes);
