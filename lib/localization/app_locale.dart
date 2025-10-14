@@ -68,7 +68,7 @@ class AppLocale {
   static const String errorUpdateCustomer = 'errorUpdateCustomer';
   static const String dashboard = 'dashboard';
   static const String yourLogo = 'yourLogo';
-  static const String totalSoldBy = 'totalSoldBy';
+  static const String salesYTDMonthly = 'totalSoldBy';
   static const String days = 'days';
   static const String months = 'months';
   static const String noDataForFilter = 'noDataForFilter';
@@ -220,7 +220,7 @@ class AppLocale {
     update: 'Update',
     errorUpdateCustomer: 'Error updating customer',
     dashboard: 'Dashboard',
-    totalSoldBy: 'Total sold by',
+    salesYTDMonthly: 'Total sold by month',
     days: 'Days',
     months: 'Months',
     noDataForFilter: 'No data available for the selected filter.',
@@ -291,9 +291,9 @@ class AppLocale {
     noTax: 'No tax',
     fillWithRemaining: 'Fill with the remaining amount',
     errorCompleteOrder: 'Error completing order',
-    printTicket: 'Print Ticket',
-    confirmPrintTicket: 'Confirm LoPrint Ticketgout',
-    printTicketMessage: 'Are you want to print ticket?',
+    printTicket: 'Print',
+    confirmPrintTicket: 'Confirm LoPrint',
+    printTicketMessage: 'Are you want to print?',
     noTaxTypesAvailable: 'No tax ID types available',
     noTaxCategoryAvailable: 'No tax categories available',
     productType: 'Product Type',
@@ -363,7 +363,7 @@ class AppLocale {
     update: 'Actualizar',
     errorUpdateCustomer: 'Error al actualizar cliente',
     dashboard: 'Panel',
-    totalSoldBy: 'Total vendido por',
+    salesYTDMonthly: 'Total vendido por mes',
     days: 'Días',
     months: 'Meses',
     noDataForFilter: 'No hay datos disponibles para el filtro seleccionado.',
@@ -434,9 +434,9 @@ class AppLocale {
     noTax: 'Sin impuesto',
     fillWithRemaining: 'Llenar con el monto restante',
     errorCompleteOrder: 'Error al completar la orden',
-    printTicket: 'Imprimir ticket',
-    confirmPrintTicket: 'Confirmar imprimir ticket',
-    printTicketMessage: '¿Desea imprimir ticket?',
+    printTicket: 'Imprimir',
+    confirmPrintTicket: 'Confirmar imprimir',
+    printTicketMessage: '¿Desea imprimir?',
     noTaxTypesAvailable: 'No hay tipos de identificación fiscal disponibles',
     noTaxCategoryAvailable: 'No hay categorías de impuestos disponibles',
     productType: 'Tipo de Producto',

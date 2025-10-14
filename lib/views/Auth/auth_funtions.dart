@@ -351,7 +351,7 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.docTypeName = posData['C_DocType_ID']?['Name'];
       POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
-      POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['PrintName'];
+      POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['Name'];
       POS.docSubTypeRefund =
           posData['C_DocTypeRefund_ID']?['DocSubTypeSO']?['id'];
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];

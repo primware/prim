@@ -80,6 +80,9 @@ class EndPoints {
   static String yappyQRGeneratorDYN = '${Base.yappyURL}/qr/generate/DYN';
 
   static String yappyTransaction = '${Base.yappyURL}/transaction';
+
+  //? Charts
+  static String salesYTDMonthly = '${Base.baseURL}/api/v1/charts/50002/data';
 }
 
 class GetCustomerData {

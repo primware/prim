@@ -21,7 +21,6 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   DateTime? lastBackPressed;
-
   @override
   Widget build(BuildContext context) {
     final bool isMobile =
@@ -96,11 +95,12 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: DashboardCharts(
                         children: [
                           MetricCard(
-                            titleBuilder: (ctx) => 'Ventas por período',
-                            dataLoader: (
-                                    {required context, required groupBy}) =>
+                            titleBuilder: (ctx) =>
+                                AppLocale.salesYTDMonthly.getString(context),
+                            dataLoader: ({required context}) =>
                                 fetchSalesChartData(
-                                    context: context, groupBy: groupBy),
+                              context: context,
+                            ),
                             chartType: ChartType.line,
                           ),
                         ],

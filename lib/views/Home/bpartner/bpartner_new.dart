@@ -285,7 +285,9 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                       texto: AppLocale.cancel.getString(context),
                       onPressed: () {
                         clearPartnerFields();
-                        Navigator.pop(context, false);
+                        Navigator.pop(context, {
+                          'created': false,
+                        });
                       },
                     ),
                     const SizedBox(height: CustomSpacer.medium)

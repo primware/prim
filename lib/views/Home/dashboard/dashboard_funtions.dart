@@ -5,62 +5,82 @@ import 'package:http/http.dart';
 import '../../../API/endpoint.api.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
-import '../../../API/user.api.dart';
 import '../../Auth/auth_funtions.dart';
 
 Future<Map<String, double>> fetchSalesChartData({
   required BuildContext context,
-  String groupBy = 'month',
 }) async {
   try {
-    // Get the current date and time
-    DateTime now = DateTime.now();
-    // Calculate the date one year ago
-    DateTime oneYearAgo = now.subtract(const Duration(days: 365));
     await usuarioAuth(context: context);
+
     final response = await get(
-      Uri.parse(
-          '${EndPoints.cOrder}?\$filter=SalesRep_ID eq ${UserData.id} and DocStatus eq \'CO\' and DateOrdered gt \'$oneYearAgo\'&\$orderby=DateOrdered'),
+      Uri.parse(EndPoints.salesYTDMonthly),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
       },
     );
 
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-      final List records = jsonResponse['records'];
-
-      final now = DateTime.now();
-
-      final Map<String, double> groupedTotals = {};
-      for (var record in records) {
-        final date = DateTime.parse(record['DateOrdered']);
-        // Filter based on groupBy selection
-        if (groupBy == 'month') {
-          if (date.year != now.year) {
-            continue;
-          }
-        } else if (groupBy == 'day') {
-          if (date.year != now.year || date.month != now.month) {
-            continue;
-          }
-        }
-
-        final key = groupBy == 'day'
-            ? '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'
-            : '${date.year}-${date.month.toString().padLeft(2, '0')}';
-
-        groupedTotals[key] =
-            (groupedTotals[key] ?? 0) + (record['GrandTotal'] ?? 0);
-      }
-      return groupedTotals;
-    } else {
-      debugPrint('Error al obtener datos de ventas: ${response.body}');
+    if (response.statusCode != 200) {
+      debugPrint(
+          'Error al obtener datos del gráfico mensual (status ${response.statusCode}): ${response.body}');
       return {};
     }
+
+    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+    final List data = (jsonResponse['data'] as List?) ?? [];
+
+    // Abreviaturas de meses "como hasta ahora" (ajusta si usabas otro idioma/formato)
+    const monthNames = <String>[
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic'
+    ];
+
+    final Map<String, double> groupedTotals = {};
+
+    for (final item in data) {
+      final String? x = item['x']?.toString();
+      final num? yNum = item['y'] is num
+          ? item['y'] as num
+          : num.tryParse(item['y']?.toString() ?? '');
+      if (x == null || yNum == null) continue;
+
+      DateTime? date;
+      try {
+        // Permite "YYYY-MM-DD HH:mm:ss"
+        date = DateTime.parse(x.replaceFirst(' ', 'T'));
+      } catch (_) {
+        // Intento alterno: solo fecha
+        try {
+          date = DateTime.parse(x.split(' ').first);
+        } catch (e) {
+          debugPrint('No se pudo parsear fecha x="$x": $e');
+          continue;
+        }
+      }
+
+      final monthIndex = date.month - 1;
+      final String key = monthIndex >= 0 && monthIndex < 12
+          ? monthNames[monthIndex]
+          : '${date.month}';
+
+      final double val = yNum.toDouble();
+      groupedTotals[key] = (groupedTotals[key] ?? 0) + val;
+    }
+
+    return groupedTotals;
   } catch (e) {
-    debugPrint('Error de red en fetchSalesChartData: $e');
+    debugPrint('Error en fetchSalesChartData (mensual): $e');
     return {};
   }
 }
@@ -88,7 +108,7 @@ Future<bool> updateOrgLogo(Uint8List fileBytes, BuildContext context) async {
           level: 'ERROR', tag: 'updateOrgLogo');
       return false;
     }
-    final int orgInfoId = getJson['records'][0]['id'];
+    final int orgInfoId = getJson['records'][0]['id'] ?? Token.organitation;
 
     // 2) Hacer PUT con el Logo_ID en base64 (mismo formato que recibimos)
     final String b64 = base64Encode(fileBytes);

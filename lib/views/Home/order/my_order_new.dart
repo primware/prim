@@ -17,7 +17,6 @@ import '../../../shared/formater.dart';
 import '../../../shared/toast_message.dart';
 import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new.dart';
-import '../product/product_new.dart';
 import 'my_order_print_generator.dart';
 import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
@@ -43,7 +42,14 @@ class OrderNewPage extends StatefulWidget {
 }
 
 class _OrderNewPageState extends State<OrderNewPage> {
-  Timer? _debounce;
+  final CustomSearchFieldController customerFieldController =
+          CustomSearchFieldController(),
+      productFieldController = CustomSearchFieldController();
+
+  // Anchor term for create customer button
+  String? createAnchorCustomerTerm;
+
+  // Timer? _debounce;
   double calculatedChange = 0.0;
   TextEditingController clienteController = TextEditingController();
   TextEditingController qtyProductController = TextEditingController();
@@ -56,7 +62,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isProductSearchLoading = false,
       isProductLoading = true,
       isYappyLoading = false,
-      isYappyConfigAvailable = false;
+      isYappyConfigAvailable = false,
+      canShowCreateCustomerButton = false,
+      firtsLoad = false;
 
   final Set<int> _lockedPayments = {};
   List<Map<String, dynamic>> bPartnerOptions = [];
@@ -105,7 +113,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBPartner();
       _loadDocumentActions();
-      initialLoadProduct();
+      _loadProduct();
       _loadTax();
       _loadProductCategory();
       if (POSTenderType.isMultiPayment) {
@@ -135,46 +143,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
   }
 
-  Future<void> initialLoadProduct() async {
-    setState(() {
-      isProductLoading = true;
-    });
-    final product = await fetchProductInPriceList(
-      context: context,
-    );
-    setState(() {
-      productOptions = product;
-      isProductLoading = false;
-    });
-  }
-
-  void debouncedLoadProduct() {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    final searchText = productController.text.trim();
-    if (searchText.length < 4 && searchText.isNotEmpty) {
-      return;
-    }
-    _debounce = Timer(const Duration(milliseconds: 3000), () {
-      _loadProduct(showLoadingIndicator: true);
-    });
-  }
-
-  // void debouncedLoadCustomer() {
-  //   if (clienteController.text.trim().isEmpty) {
-  //     setState(() {
-  //       selectedBPartnerID = null;
-  //       _validateForm();
-  //     });
-  //     return;
-  //   }
-
-  //   if (_debounce?.isActive ?? false) _debounce?.cancel();
-  //   final searchText = clienteController.text.trim();
-  //   if (searchText.length < 4 && searchText.isNotEmpty) {
-  //     return;
-  //   }
-  //   _debounce = Timer(const Duration(milliseconds: 5000), () {
-  //     _loadBPartner(showLoadingIndicator: true);
+  // Future<void> initialLoadProduct() async {
+  //   setState(() {
+  //     isProductLoading = true;
+  //   });
+  //   final product = await fetchProductInPriceList(
+  //     context: context,
+  //   );
+  //   setState(() {
+  //     productOptions = product;
+  //     isProductLoading = false;
+  //     if (productOptions.isNotEmpty && bPartnerOptions.isNotEmpty) {
+  //       firtsLoad = true;
+  //     }
   //   });
   // }
 
@@ -300,9 +281,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
       _validateForm();
     } catch (e) {
-      // Silencioso, solo log
-      // ignore: avoid_print
-      print('Prefill error: $e');
+      debugPrint('Prefill error: $e');
     }
   }
 
@@ -380,6 +359,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (showLoadingIndicator) {
       setState(() {
         isCustomerSearchLoading = true;
+        canShowCreateCustomerButton = false;
+        createAnchorCustomerTerm = null;
       });
     }
     setState(() {
@@ -395,7 +376,24 @@ class _OrderNewPageState extends State<OrderNewPage> {
     setState(() {
       bPartnerOptions = partner;
       isCustomerSearchLoading = false;
+      if (bPartnerOptions.isNotEmpty) {
+        canShowCreateCustomerButton = false;
+        createAnchorCustomerTerm = null;
+      } else {
+        canShowCreateCustomerButton = clienteController.text.trim().isNotEmpty;
+        createAnchorCustomerTerm =
+            canShowCreateCustomerButton ? clienteController.text.trim() : null;
+      }
     });
+    if (mounted && firtsLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        customerFieldController.requestFocus();
+      });
+    }
+    if (productOptions.isNotEmpty && bPartnerOptions.isNotEmpty) {
+      firtsLoad = true;
+    }
   }
 
   Future<void> _loadProduct({bool showLoadingIndicator = false}) async {
@@ -412,8 +410,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
     setState(() {
       productOptions = product;
+      isProductLoading = false;
       isProductSearchLoading = false;
     });
+    if (mounted && firtsLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        productFieldController.requestFocus();
+      });
+    }
+    if (productOptions.isNotEmpty && bPartnerOptions.isNotEmpty) {
+      firtsLoad = true;
+    }
   }
 
   Future<void> _loadProductCategory() async {
@@ -1223,14 +1231,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             children: [
                               Expanded(
                                 child: CustomSearchField(
-                                  key: ValueKey(
-                                      'customer_${bPartnerOptions.length}'),
                                   options: bPartnerOptions,
                                   labelText:
                                       AppLocale.customer.getString(context),
                                   searchBy: "TaxID",
                                   controller: clienteController,
-                                  showCreateButtonIfNotFound: true,
+                                  showCreateButtonIfNotFound:
+                                      canShowCreateCustomerButton,
+                                  createAnchorTerm: createAnchorCustomerTerm,
+                                  fieldController: customerFieldController,
                                   onSubmit: (_) =>
                                       _loadBPartner(showLoadingIndicator: true),
                                   onCreate: (value) async {
@@ -1242,7 +1251,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       ),
                                     );
                                     if (result != null &&
-                                        result['created'] == true) {
+                                        result?['created'] == true) {
                                       setState(() {
                                         clienteController.text =
                                             result['bpartner']['Name'];
@@ -1466,7 +1475,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                     selectedCategories =
                                                         Set<int>.from(result);
                                                   });
-                                                  debouncedLoadProduct();
+                                                  _loadProduct(
+                                                      showLoadingIndicator:
+                                                          true);
                                                 }
                                               });
                                             },
@@ -1497,7 +1508,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                         selectedCategories
                                                             .remove(catId);
                                                       });
-                                                      debouncedLoadProduct();
+                                                      _loadProduct(
+                                                          showLoadingIndicator:
+                                                              true);
                                                     },
                                                   );
                                                 }).toList(),
@@ -1513,100 +1526,83 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       const LinearProgressIndicator(),
                                       const SizedBox(height: 8),
                                     ],
-                                    CustomSearchField(
-                                      options: productOptions,
-                                      controller: productController,
-                                      labelText:
-                                          AppLocale.product.getString(context),
-                                      searchBy: 'UPC',
-                                      showCreateButtonIfNotFound: true,
-                                      onItemSelected: (item) {
-                                        _showQuantityDialog(item);
-                                      },
-                                      onChanged: (_) => debouncedLoadProduct(),
-                                      onCreate: (value) async {
-                                        final result = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ProductNewPage(
-                                                productName: value),
-                                          ),
-                                        );
-                                        if (result != null &&
-                                            result['created'] == true) {
-                                          debouncedLoadProduct();
-                                        }
-                                      },
-                                      itemBuilder: (item) => Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: CustomSearchField(
+                                            options: productOptions,
+                                            controller: productController,
+                                            labelText: AppLocale.product
+                                                .getString(context),
+                                            searchBy: 'UPC',
+                                            fieldController:
+                                                productFieldController,
+                                            showCreateButtonIfNotFound: true,
+                                            onItemSelected: (item) {
+                                              _showQuantityDialog(item);
+                                            },
+                                            onSubmit: (_) => _loadProduct(
+                                                showLoadingIndicator: true),
+                                            itemBuilder: (item) => Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        '${item['name'] ?? ''}',
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodySmall,
+                                                      ),
+                                                      if (item['value'] != null)
+                                                        Text(
+                                                          'Cod: ${item['value'] ?? ''}',
+                                                          maxLines: 2,
+                                                          style:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .bodySmall,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
                                                 Text(
-                                                  '${item['name'] ?? ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                                  '\$${item['price'] ?? '0.00'}',
                                                   style: Theme.of(context)
                                                       .textTheme
-                                                      .bodySmall,
+                                                      .bodyMedium
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
                                                 ),
-                                                if (item['value'] != null)
-                                                  Text(
-                                                    'Cod: ${item['value'] ?? ''}',
-                                                    maxLines: 2,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodySmall,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
                                               ],
                                             ),
                                           ),
-                                          Text(
-                                            '\$${item['price'] ?? '0.00'}',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                        const SizedBox(
+                                            width: CustomSpacer.small),
+                                        IconButton(
+                                          tooltip: AppLocale.refresh
+                                              .getString(context),
+                                          icon: const Icon(Icons.search),
+                                          onPressed: () => _loadProduct(
+                                              showLoadingIndicator: true),
+                                        ),
+                                      ],
                                     ),
-                                    // //? crear producto si no existe
-                                    /*if (productOptions.isEmpty &&
-                                        productController.text
-                                            .trim()
-                                            .isNotEmpty) ...[
-                                      const SizedBox(height: 8),
-                                      ElevatedButton.icon(
-                                        icon: const Icon(Icons.add),
-                                        label: Text(
-                                            'Crear "${productController.text.trim()}"'),
-                                        onPressed: () async {
-                                          final result = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => ProductNewPage(
-                                                  productName: productController
-                                                      .text
-                                                      .trim()),
-                                            ),
-                                          );
-                                          if (result != null &&
-                                              result['created'] == true) {
-                                            debouncedLoadProduct();
-                                          }
-                                        },
-                                      ),
-                                    ],*/
                                   ],
                                 ),
                           if (invoiceLines.isNotEmpty) ...[
