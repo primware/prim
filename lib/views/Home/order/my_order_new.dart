@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/API/user.api.dart';
 import 'package:primware/localization/app_locale.dart';
@@ -241,6 +242,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
         final dynamic categoryField = line['M_Product_Category_ID'];
         final dynamic categoryValue = line['Category'] ??
             (categoryField is Map ? categoryField['identifier'] : null);
+        // Compute PriceList and Discount
+        final priceList = (line['PriceList'] ??
+            line['priceList'] ??
+            line['Price'] ??
+            line['price'] ??
+            0);
+        final discount = (line['Discount'] ?? 0);
         mapped.add({
           'id': (productField is Map)
               ? productField['id']
@@ -253,6 +261,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
           'quantity': (qty).toInt(),
           'C_Tax_ID': taxId,
           'Description': line['Description'] ?? '',
+          'PriceList': (priceList is num
+              ? priceList.toDouble()
+              : double.tryParse(priceList.toString()) ?? 0.0),
+          'Discount': (discount is num
+              ? discount.toDouble()
+              : double.tryParse(discount.toString()) ?? 0.0),
         });
       }
 
@@ -503,18 +517,84 @@ class _OrderNewPageState extends State<OrderNewPage> {
           : "1",
     );
 
+    // --- Discount/PriceList helpers ---
+    double _r2local(num v) => (v * 100).round() / 100.0;
+    double _calcDiscount(double priceList, double priceActual) => priceList <= 0
+        ? 0
+        : (100 * (1 - (priceActual / priceList))).clamp(0, 100);
+    double _calcPrice(double priceList, double discount) =>
+        priceList * (1 - (discount.clamp(0, 100) / 100));
+    // --- end helpers ---
+
+    // Determine priceList for the product
+    final double priceList = (index != null
+            ? (product['PriceList'] ??
+                product['priceList'] ??
+                product['price'] ??
+                0)
+            : (product['PriceList'] ??
+                product['priceList'] ??
+                product['price'] ??
+                0))
+        .toDouble();
+
+    // Controllers for price, priceList, discount
     final priceController = TextEditingController(
-        text: product['price'] == 0 ? '' : product['price'].toString());
+        text: index != null
+            ? (product['price'] ?? product['PriceActual'] ?? 0).toString()
+            : (product['price'] == 0 ? '' : product['price'].toString()));
+    final discountController = TextEditingController(text: (() {
+      if (index != null) {
+        final disc = product['Discount'];
+        if (disc != null)
+          return _r2local(
+                  disc is num ? disc : double.tryParse(disc.toString()) ?? 0.0)
+              .toString();
+        final p = double.tryParse(priceController.text.replaceAll(',', '.')) ??
+            (product['price'] ?? 0).toDouble();
+        return _r2local(_calcDiscount(priceList, p)).toString();
+      } else {
+        final p = double.tryParse(priceController.text.replaceAll(',', '.')) ??
+            (product['price'] ?? 0).toDouble();
+        return _r2local(_calcDiscount(priceList, p)).toString();
+      }
+    })());
+
     final descriptionController = TextEditingController(
       text: index != null && product['Description'] != null
           ? product['Description'].toString()
           : '',
     );
 
+    // Keep price and discount in sync
+    bool _updating = false;
+    priceController.addListener(() {
+      if (_updating) return;
+      _updating = true;
+      final p =
+          double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
+      final d = _r2local(_calcDiscount(priceList, p));
+      discountController.text = d.toString();
+      _updating = false;
+    });
+    discountController.addListener(() {
+      if (_updating) return;
+      _updating = true;
+      final d =
+          double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0;
+      final newPrice = _r2local(_calcPrice(priceList, d));
+      priceController.text = newPrice.toString();
+      _updating = false;
+    });
+
     void onSubmitted(BuildContext dialogContext) {
       final qty = int.tryParse(quantityController.text) ?? 1;
-      final price =
-          double.tryParse(priceController.text) ?? (product['price'] ?? 0);
+      final effectivePrice =
+          double.tryParse(priceController.text.replaceAll(',', '.')) ??
+              (product['price'] ?? 0.0);
+      final effectiveDiscount =
+          double.tryParse(discountController.text.replaceAll(',', '.')) ??
+              _calcDiscount(priceList, effectivePrice);
       final description = descriptionController.text;
 
       if (index != null) {
@@ -525,9 +605,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
         invoiceLines.add({
           ...product,
           'quantity': qty,
-          'price': price,
+          'price': _r2local(effectivePrice),
           'C_Tax_ID': selectedTaxID ?? selectedTax?['id'],
           'Description': description,
+          'PriceList': _r2local(priceList),
+          'Discount': _r2local(effectiveDiscount),
         });
       });
 
@@ -602,13 +684,45 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       ],
                     ),
                     const SizedBox(height: CustomSpacer.medium),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          AppLocale.priceList.getString(context),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        Text(
+                          _r2local(priceList).toString(),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.right,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: CustomSpacer.medium),
+                    // Actual price field
                     TextfieldTheme(
                       controlador: priceController,
                       pista: product['price'] == 0
                           ? product['price'].toString()
                           : null,
                       texto: AppLocale.price.getString(context),
-                      inputType: TextInputType.number,
+                      inputType: const TextInputType.numberWithOptions(
+                          decimal: true, signed: false),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))
+                      ],
+                      onSubmitted: (_) => onSubmitted,
+                    ),
+                    // Discount field (editable)
+                    const SizedBox(height: CustomSpacer.medium),
+                    TextfieldTheme(
+                      controlador: discountController,
+                      texto: '% Descuento',
+                      inputType: const TextInputType.numberWithOptions(
+                          decimal: true, signed: false),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))
+                      ],
                       onSubmitted: (_) => onSubmitted,
                     ),
                     const SizedBox(height: CustomSpacer.medium),
@@ -931,16 +1045,40 @@ class _OrderNewPageState extends State<OrderNewPage> {
     required List<Map<String, dynamic>> product,
     required int bPartner,
   }) async {
+    final String actionLabel = (() {
+      try {
+        final match = POS.documentActions.firstWhere(
+          (a) => a['code'] == (selectedDocActionCode ?? ''),
+          orElse: () => POS.documentActions.isNotEmpty
+              ? POS.documentActions.first
+              : const {'name': ''},
+        );
+        return (match['name'] ?? '').toString();
+      } catch (_) {
+        return AppLocale.process.getString(context);
+      }
+    })();
+
     final confirm = await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
-          title: Text(AppLocale.complete.getString(context)),
+          title: Text(AppLocale.process.getString(context)),
           content: Text(
             widget.isRefund
-                ? AppLocale.confirmCompleteCreditNote.getString(context)
-                : AppLocale.confirmCompleteOrder.getString(context),
+                ? AppLocale.confirmCompleteCreditNote
+                    .getString(context)
+                    .replaceAll(
+                        '{action}',
+                        actionLabel.isEmpty
+                            ? AppLocale.process.getString(context)
+                            : actionLabel)
+                : AppLocale.confirmCompleteOrder.getString(context).replaceAll(
+                    '{action}',
+                    actionLabel.isEmpty
+                        ? AppLocale.process.getString(context)
+                        : actionLabel),
           ),
           actions: [
             TextButton(
@@ -966,13 +1104,22 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     setState(() => isSending = true);
     final List<Map<String, dynamic>> invoiceLine = product.map((item) {
+      final double price = (item['price'] ?? 0).toDouble();
+      final double priceList =
+          (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0)
+              .toDouble();
+      final double discount = (item['Discount'] ??
+              (priceList > 0 ? (100 * (1 - (price / priceList))) : 0))
+          .toDouble();
       return {
         'M_Product_ID': item['id'],
         'SKU': item['sku'],
         'upc': item['upc'],
         'Category': item['category'],
         'Name': item['name'],
-        'Price': item['price'],
+        'Price': price, // Precio actual editable
+        'PriceList': priceList, // Precio de lista (original)
+        'Discount': double.parse(discount.toStringAsFixed(2)),
         'Quantity': item['quantity'],
         'C_Tax_ID': item['C_Tax_ID'],
         'Description': item['Description'] ?? '',

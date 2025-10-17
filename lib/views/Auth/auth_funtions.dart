@@ -276,7 +276,7 @@ Future<bool> _loadPOSPrinterData() async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}'),
+          '${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}&\$expand=C_Location_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -287,8 +287,11 @@ Future<bool> _loadPOSPrinterData() async {
       final record = json.decode(utf8.decode(response.bodyBytes))['records'][0];
 
       POSPrinter.headerName = record['AD_Client_ID']?['identifier'];
-      POSPrinter.headerAddress = record['Address1'];
+      POSPrinter.headerAddress =
+          '${record['C_Location_ID']['Address1'] ?? ''}${record['C_Location_ID']['Address2'] != null ? ', ${record['C_Location_ID']['Address2']}' : ''}${record['C_Location_ID']['Address3'] != null ? ', ${record['C_Location_ID']['Address3']}' : ''}${record['C_Location_ID']['Address4'] != null ? ', ${record['C_Location_ID']['Address4']}' : ''}';
       POSPrinter.headerPhone = record['Phone'];
+      POSPrinter.headerTaxID = record['TaxID'];
+      POSPrinter.headerDV = record['dv'];
       POSPrinter.headerEmail = record['EMail'];
 
       if (record['Logo_ID'] != null) {

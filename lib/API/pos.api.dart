@@ -32,6 +32,8 @@ class POSTenderType {
 class POSPrinter {
   static String? headerName;
   static String? headerAddress;
+  static String? headerTaxID;
+  static String? headerDV;
   static String? headerPhone;
   static String? headerEmail;
   static Uint8List? logo;
