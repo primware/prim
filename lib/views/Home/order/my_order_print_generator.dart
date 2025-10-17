@@ -51,7 +51,6 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
           headers: [
             'Producto',
             'Descripción',
-            'Cantidad',
             'Precio',
             'Impuesto',
             'Subtotal',
@@ -64,11 +63,11 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
                 .split('_')
                 .skip(1)
                 .join(' ');
-            final qty = line['QtyOrdered'];
-            final price = line['PriceActual'];
+            final qty = (line['QtyOrdered'] ?? 0).toString();
+            final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
             final rate = line['C_Tax_ID']['Rate'];
             final taxName = line['C_Tax_ID']['Name'];
-            final net = line['LineNetAmt'];
+            final net = line['LineNetAmt'] ?? 0;
             final tax = (net * rate / 100);
             final total = net + tax;
             final description = line['Description']?.toString() ?? '';
@@ -76,13 +75,35 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
             return [
               name,
               description,
-              qty.toString(),
-              "\$${price.toStringAsFixed(2)}",
+              "$qty x \$${price.toStringAsFixed(2)}",
               "$taxName ($rate%)",
               "\$${net.toStringAsFixed(2)}",
               "\$${total.toStringAsFixed(2)}",
             ];
           }).toList(),
+          headerStyle: pw.TextStyle(
+            fontWeight: pw.FontWeight.bold,
+            fontSize: 12,
+          ),
+          cellStyle: pw.TextStyle(
+            fontSize: 10,
+          ),
+          columnWidths: {
+            0: pw.FixedColumnWidth(95), // Producto
+            1: pw.FlexColumnWidth(3), // Descripción
+            2: pw.FixedColumnWidth(90), // Cant. x Precio
+            3: pw.FixedColumnWidth(80), // Impuesto
+            4: pw.FixedColumnWidth(65), // Subtotal
+            5: pw.FixedColumnWidth(65), // Total
+          },
+          cellAlignments: {
+            0: pw.Alignment.centerLeft,
+            1: pw.Alignment.centerLeft,
+            2: pw.Alignment.centerRight,
+            3: pw.Alignment.centerRight,
+            4: pw.Alignment.centerRight,
+            5: pw.Alignment.centerRight,
+          },
         ),
         pw.SizedBox(height: 20),
       ],
@@ -201,7 +222,6 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
         return pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
-            // Encabezado centrado
             POSPrinter.logo != null
                 ? pw.Center(
                     child: pw.Image(pw.MemoryImage(POSPrinter.logo!),
@@ -212,8 +232,15 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
                 textAlign: pw.TextAlign.center),
             pw.Text(POSPrinter.headerAddress ?? '',
                 textAlign: pw.TextAlign.center),
-            pw.Text(POSPrinter.headerPhone ?? '',
-                textAlign: pw.TextAlign.center),
+            if (POSPrinter.headerTaxID != null)
+              pw.Text('RUC: ${POSPrinter.headerTaxID ?? ''}',
+                  textAlign: pw.TextAlign.center),
+            if (POSPrinter.headerDV != null)
+              pw.Text('DV: ${POSPrinter.headerDV ?? ''}',
+                  textAlign: pw.TextAlign.center),
+            if (POSPrinter.headerPhone != null)
+              pw.Text('Tel: ${POSPrinter.headerPhone ?? ''}',
+                  textAlign: pw.TextAlign.center),
             pw.Text(POSPrinter.headerEmail ?? '',
                 textAlign: pw.TextAlign.center),
             pw.SizedBox(height: 12),

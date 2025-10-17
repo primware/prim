@@ -81,6 +81,7 @@ class AppLocale {
   static const String productSummary = 'productSummary';
   static const String quantity = 'quantity';
   static const String price = 'price';
+  static const String priceList = 'priceList';
   static const String taxCategory = 'taxCategory';
   static const String subtotal = 'subtotal';
   static const String total = 'total';
@@ -204,6 +205,7 @@ class AppLocale {
     register: 'Register',
     newCustomer: 'New Customer',
     nameReq: 'Name *',
+    priceList: 'Price List',
     personTypeReq: 'ID Type *',
     groupReq: 'Group *',
     taxId: 'Tax ID',
@@ -285,9 +287,9 @@ class AppLocale {
     descriptionOptional: 'Description (optional)',
     change: 'Change',
     close: 'Close',
-    confirmCompleteOrder: 'Are you sure you want to complete the order?',
+    confirmCompleteOrder: 'Are you sure you want to {action} the order?',
     confirmCompleteCreditNote:
-        'Are you sure you want to complete the credit note?',
+        'Are you sure you want to {action} the credit note?',
     noTax: 'No tax',
     fillWithRemaining: 'Fill with the remaining amount',
     errorCompleteOrder: 'Error completing order',
@@ -343,7 +345,7 @@ class AppLocale {
     searchCustomer: 'Buscar cliente',
     add: 'Agregar',
     noAccount: '¿No tienes una cuenta?',
-    register: 'Registrarte',
+    register: 'Regístrate',
     refresh: 'Actualizar',
     newCustomer: 'Cliente nuevo',
     nameReq: 'Nombre *',
@@ -378,6 +380,7 @@ class AppLocale {
     price: 'Precio',
     subtotal: 'Subtotal',
     total: 'Total',
+    priceList: 'Precio de lista',
     noName: 'Sin nombre',
     finalSummary: 'Resumen final:',
     grossTotal: 'Total bruto:',
@@ -428,9 +431,9 @@ class AppLocale {
     descriptionOptional: 'Descripción (opcional)',
     change: 'Vuelto',
     close: 'Cerrar',
-    confirmCompleteOrder: '¿Está seguro de que desea completar la orden?',
+    confirmCompleteOrder: '¿Está seguro de que desea {action} la orden?',
     confirmCompleteCreditNote:
-        '¿Está seguro de que desea completar la nota de crédito?',
+        '¿Está seguro de que desea {action} la nota de crédito?',
     noTax: 'Sin impuesto',
     fillWithRemaining: 'Llenar con el monto restante',
     errorCompleteOrder: 'Error al completar la orden',

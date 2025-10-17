@@ -76,7 +76,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
         '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), ${searchTerm.toLowerCase()}) or contains(tolower(SKU), ${searchTerm.toLowerCase()}) or contains(tolower(Value), ${searchTerm.toLowerCase()}))' : ''}'
         '$categoryFilter';
     final url =
-        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
+        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,PriceList,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
     final response = await get(
       Uri.parse(url),
       headers: {
@@ -113,6 +113,10 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
           'price': record['M_ProductPrice'] != null &&
                   record['M_ProductPrice'].isNotEmpty
               ? record['M_ProductPrice'][0]['PriceStd']
+              : null,
+          'priceList': record['M_ProductPrice'] != null &&
+                  record['M_ProductPrice'].isNotEmpty
+              ? record['M_ProductPrice'][0]['PriceList']
               : null,
           'C_TaxCategory_ID': taxCategoryID,
           'tax': assignedTax,
@@ -184,9 +188,11 @@ Future<Map<String, dynamic>> postInvoice({
         "QtyEntered": line['Quantity'],
         "QtyOrdered": line['Quantity'],
         "PriceActual": line['Price'],
+        "PriceList": line['PriceList'] ?? line['Price'],
         "PriceEntered": line['Price'],
         "C_Tax_ID": {"id": line['C_Tax_ID']},
         "Description": line['Description'] ?? '',
+        if (line['Discount'] != null) "Discount": line['Discount'],
       };
     }).toList();
 
