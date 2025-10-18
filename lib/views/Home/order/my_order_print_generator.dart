@@ -258,9 +258,8 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
             if (servedBy.isNotEmpty) pw.Text('Atendido por: $servedBy'),
             pw.Text('Cédula: $taxID'),
             pw.Text('Cliente: $customerName'),
-
             pw.Text('Dirección: $customeLocation'),
-            pw.Text('Teléfono: $phone'),
+            if (phone.isNotEmpty) pw.Text('Teléfono: $phone'),
             pw.SizedBox(height: 12),
 
             if (lines.isNotEmpty) ...[
@@ -396,13 +395,17 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
               pw.SizedBox(height: 8),
               pw.Text('FACTURA ELECTRÓNICA',
                   textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 8)),
               pw.SizedBox(height: 6),
-              pw.Text('Protocolo de Autorización: ${feInfo['protocolo']}'),
-              pw.Text('Consulte por la clave de acceso en:'),
-              pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 8)),
+              pw.Text('Protocolo de Autorización: ${feInfo['protocolo']}',
+                  style: pw.TextStyle(fontSize: 8)),
+              pw.Text('Consulte por la clave de acceso en:',
+                  style: pw.TextStyle(fontSize: 8)),
+              pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 6)),
               pw.SizedBox(height: 6),
-              pw.Text('o escaneando el código QR:'),
+              pw.Text('o escaneando el código QR:',
+                  style: pw.TextStyle(fontSize: 8)),
               pw.SizedBox(height: 6),
               pw.Center(
                 child: pw.BarcodeWidget(
@@ -419,7 +422,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
             pw.Text('Gracias por mantener sus pagos al día',
                 textAlign: pw.TextAlign.center),
 
-            pw.SizedBox(height: 48),
+            pw.SizedBox(height: 56),
           ],
         );
       },
