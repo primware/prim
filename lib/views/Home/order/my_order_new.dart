@@ -120,6 +120,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       if (POSTenderType.isMultiPayment) {
         _loadPayment();
       }
+      _initialPartner();
     });
 
     if (Yappy.apiKey != null && Yappy.secretKey != null) {
@@ -144,21 +145,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
   }
 
-  // Future<void> initialLoadProduct() async {
-  //   setState(() {
-  //     isProductLoading = true;
-  //   });
-  //   final product = await fetchProductInPriceList(
-  //     context: context,
-  //   );
-  //   setState(() {
-  //     productOptions = product;
-  //     isProductLoading = false;
-  //     if (productOptions.isNotEmpty && bPartnerOptions.isNotEmpty) {
-  //       firtsLoad = true;
-  //     }
-  //   });
-  // }
+  Future<void> _initialPartner() async {
+    if (POS.templatePartnerID != null) {
+      setState(() {
+        selectedBPartnerID = POS.templatePartnerID;
+        clienteController.text = POS.templatePartnerName ?? '';
+      });
+      _validateForm();
+    }
+  }
 
   Future<void> _loadPayment() async {
     setState(() {
@@ -1237,10 +1232,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
               bytes: pdfBytes,
               filename: 'Order_${order['DocumentNo']}.pdf',
             );
-
-            // await Printing.layoutPdf(
-            //   onLayout: (_) => pdfBytes,
-            // );
           }
         }
       }
@@ -1254,6 +1245,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
       clearInvoiceFields();
       _loadSequence();
+      _initialPartner();
       setState(() {
         invoiceLines.clear();
         subtotal = 0.0;

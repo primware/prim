@@ -304,6 +304,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
                     double.parse((net * (rate / 100)).toStringAsFixed(2));
                 final value = net + tax;
                 final description = line['Description']?.toString() ?? '';
+                final discount = (line['Discount'] as num?)?.toDouble() ?? 0.0;
 
                 return pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -325,6 +326,15 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
                                   maxLines: 1,
                                   style: pw.TextStyle(fontSize: 12),
                                 ),
+                                if (discount > 0)
+                                  pw.Text(
+                                    'Desc: ${discount.toStringAsFixed(2)}%',
+                                    maxLines: 1,
+                                    style: pw.TextStyle(
+                                      fontSize: 10,
+                                      fontStyle: pw.FontStyle.italic,
+                                    ),
+                                  ),
                                 if (description.isNotEmpty &&
                                     description != name)
                                   pw.Text(
@@ -390,7 +400,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
               pw.SizedBox(height: 6),
               pw.Text('Protocolo de Autorización: ${feInfo['protocolo']}'),
               pw.Text('Consulte por la clave de acceso en:'),
-              pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 11)),
+              pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 8)),
               pw.SizedBox(height: 6),
               pw.Text('o escaneando el código QR:'),
               pw.SizedBox(height: 6),
@@ -408,6 +418,8 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
             // Footer
             pw.Text('Gracias por mantener sus pagos al día',
                 textAlign: pw.TextAlign.center),
+
+            pw.SizedBox(height: 48),
           ],
         );
       },
