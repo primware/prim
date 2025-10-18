@@ -132,6 +132,15 @@ class OrderDetailPage extends StatelessWidget {
                     final double tax = net * (rate / 100);
                     final double total = net + tax;
 
+                    // Precio original (PriceList) y descuento
+                    final double priceList =
+                        (line['PriceList'] as num?)?.toDouble() ?? price;
+                    final double discountPct =
+                        (line['Discount'] as num?)?.toDouble() ??
+                            ((priceList > 0)
+                                ? (1 - (price / priceList)) * 100
+                                : 0.0);
+
                     return Container(
                       margin: EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
@@ -144,9 +153,24 @@ class OrderDetailPage extends StatelessWidget {
                         tileColor: Colors.transparent,
                         title: Text(name,
                             style: Theme.of(context).textTheme.bodyMedium),
-                        subtitle: Text(
-                            "${AppLocale.quantity.getString(context)}: $qty | ${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
-                            style: Theme.of(context).textTheme.bodySmall),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${AppLocale.quantity.getString(context)}: $qty",
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            Text(
+                              [
+                                "${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}",
+                                if (discountPct > 0.0)
+                                  "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%",
+                                "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
+                              ].join(" | "),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,

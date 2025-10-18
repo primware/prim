@@ -83,6 +83,7 @@ class AppLocale {
   static const String price = 'price';
   static const String priceList = 'priceList';
   static const String taxCategory = 'taxCategory';
+  static const String discount = 'discount';
   static const String subtotal = 'subtotal';
   static const String total = 'total';
   static const String noName = 'noName';
@@ -189,6 +190,7 @@ class AppLocale {
     selectRole: 'Select Role',
     company: 'Company',
     role: 'Role',
+    discount: 'Discount',
     organization: 'Organization',
     selectCompanyRoleOrganization:
         'Please select a company, role, and organization',
@@ -430,6 +432,7 @@ class AppLocale {
     taxType: 'Tipo de impuesto',
     descriptionOptional: 'Descripción (opcional)',
     change: 'Vuelto',
+    discount: 'Descuento',
     close: 'Cerrar',
     confirmCompleteOrder: '¿Está seguro de que desea {action} la orden?',
     confirmCompleteCreditNote:
