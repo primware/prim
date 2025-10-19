@@ -73,7 +73,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
           ' and (${categoryID.map((id) => 'M_Product_Category_ID eq $id').join(' or ')})';
     }
     final filterQuery = 'IsSold eq true'
-        '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), ${searchTerm.toLowerCase()}) or contains(tolower(SKU), ${searchTerm.toLowerCase()}) or contains(tolower(Value), ${searchTerm.toLowerCase()}))' : ''}'
+        '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), \'${searchTerm.toLowerCase()}\') or contains(tolower(SKU), \'${searchTerm.toLowerCase()}\') or contains(tolower(Value), \'${searchTerm.toLowerCase()}\'))' : ''}'
         '$categoryFilter';
     final url =
         '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,PriceList,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
@@ -192,7 +192,7 @@ Future<Map<String, dynamic>> postInvoice({
         "PriceEntered": line['Price'],
         "C_Tax_ID": {"id": line['C_Tax_ID']},
         "Description": line['Description'] ?? '',
-        if (line['Discount'] != null) "Discount": line['Discount'],
+        // if (line['Discount'] != null) "Discount": line['Discount'],
       };
     }).toList();
 

@@ -94,7 +94,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   // ==== Helpers for monetary rounding and comparisons ====
   static const double eps = 0.01; // tolerancia de 1 centavo
-  double _r2(num v) => (v * 100).round() / 100.0; // redondea a 2 decimales
+  // Redondeo HALF-UP estable a 2 decimales (evita 8.414999 => 8.41)
+  double _r2(num v) {
+    final x = v * 100.0;
+    final adj = v >= 0 ? 1e-9 : -1e-9; // empuja .4999999 a .5
+    return ((x + adj).round()) / 100.0;
+  }
   // ==== Helpers for monetary rounding and comparisons ====
 
   void clearInvoiceFields() {
@@ -463,19 +468,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
     double newIVA = 0.0;
 
     for (var line in invoiceLines) {
-      final price = (line['price'] ?? 0) as num;
-      final quantity = (line['quantity'] ?? 1) as num;
+      final price = _r2(line['price'] ?? 0);
+      final quantity = _r2(line['quantity'] ?? 1);
       final taxID = line['C_Tax_ID'];
 
-      newSubtotal += (price * quantity);
+      newSubtotal += _r2(price * quantity);
 
       final tax = taxOptions.firstWhere(
         (t) => t['id'] == taxID,
         orElse: () => {},
       );
-      final taxPercent = double.tryParse('${tax['rate'] ?? '0'}') ?? 0.0;
+      final taxPercent = _r2(double.tryParse('${tax['rate'] ?? '0'}') ?? 0.0);
 
-      newIVA += (price * quantity) * (taxPercent / 100);
+      newIVA += _r2((price * quantity) * (taxPercent / 100));
     }
 
     setState(() {
@@ -513,11 +518,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
 
     // --- Discount/PriceList helpers ---
-    double _r2local(num v) => (v * 100).round() / 100.0;
-    double _calcDiscount(double priceList, double priceActual) => priceList <= 0
+    double r2local(num v) {
+      final x = v * 100.0;
+      final adj = v >= 0 ? 1e-9 : -1e-9;
+      return ((x + adj).round()) / 100.0;
+    }
+
+    double calcDiscount(double priceList, double priceActual) => priceList <= 0
         ? 0
         : (100 * (1 - (priceActual / priceList))).clamp(0, 100);
-    double _calcPrice(double priceList, double discount) =>
+    double calcPrice(double priceList, double discount) =>
         priceList * (1 - (discount.clamp(0, 100) / 100));
     // --- end helpers ---
 
@@ -541,17 +551,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final discountController = TextEditingController(text: (() {
       if (index != null) {
         final disc = product['Discount'];
-        if (disc != null)
-          return _r2local(
+        if (disc != null) {
+          return r2local(
                   disc is num ? disc : double.tryParse(disc.toString()) ?? 0.0)
               .toString();
+        }
         final p = double.tryParse(priceController.text.replaceAll(',', '.')) ??
             (product['price'] ?? 0).toDouble();
-        return _r2local(_calcDiscount(priceList, p)).toString();
+        return r2local(calcDiscount(priceList, p)).toString();
       } else {
         final p = double.tryParse(priceController.text.replaceAll(',', '.')) ??
             (product['price'] ?? 0).toDouble();
-        return _r2local(_calcDiscount(priceList, p)).toString();
+        return r2local(calcDiscount(priceList, p)).toString();
       }
     })());
 
@@ -561,25 +572,43 @@ class _OrderNewPageState extends State<OrderNewPage> {
           : '',
     );
 
+    // === Normalize initial price/discount (force HALF-UP result shown) ===
+    {
+      final String discTxt = discountController.text.trim();
+      final double parsedPrice =
+          double.tryParse(priceController.text.replaceAll(',', '.')) ??
+              (product['price'] ?? 0.0);
+      if (discTxt.isNotEmpty) {
+        final double d = double.tryParse(discTxt.replaceAll(',', '.')) ?? 0.0;
+        final double p = r2local(calcPrice(priceList, d));
+        priceController.text = p.toStringAsFixed(2);
+      } else {
+        final double d = r2local(calcDiscount(priceList, parsedPrice));
+        discountController.text = d.toStringAsFixed(2);
+        final double p = r2local(calcPrice(priceList, d));
+        priceController.text = p.toStringAsFixed(2);
+      }
+    }
+
     // Keep price and discount in sync
-    bool _updating = false;
+    bool updating = false;
     priceController.addListener(() {
-      if (_updating) return;
-      _updating = true;
+      if (updating) return;
+      updating = true;
       final p =
           double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
-      final d = _r2local(_calcDiscount(priceList, p));
-      discountController.text = d.toString();
-      _updating = false;
+      final d = r2local(calcDiscount(priceList, p));
+      discountController.text = d.toStringAsFixed(2);
+      updating = false;
     });
     discountController.addListener(() {
-      if (_updating) return;
-      _updating = true;
+      if (updating) return;
+      updating = true;
       final d =
           double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0;
-      final newPrice = _r2local(_calcPrice(priceList, d));
-      priceController.text = newPrice.toString();
-      _updating = false;
+      final newPrice = r2local(calcPrice(priceList, d));
+      priceController.text = newPrice.toStringAsFixed(2);
+      updating = false;
     });
 
     void onSubmitted(BuildContext dialogContext) {
@@ -589,7 +618,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
               (product['price'] ?? 0.0);
       final effectiveDiscount =
           double.tryParse(discountController.text.replaceAll(',', '.')) ??
-              _calcDiscount(priceList, effectivePrice);
+              calcDiscount(priceList, effectivePrice);
       final description = descriptionController.text;
 
       if (index != null) {
@@ -600,11 +629,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
         invoiceLines.add({
           ...product,
           'quantity': qty,
-          'price': _r2local(effectivePrice),
+          'price': r2local(effectivePrice),
           'C_Tax_ID': selectedTaxID ?? selectedTax?['id'],
           'Description': description,
-          'PriceList': _r2local(priceList),
-          'Discount': _r2local(effectiveDiscount),
+          'PriceList': r2local(priceList),
+          'Discount': r2local(effectiveDiscount),
         });
       });
 
@@ -687,7 +716,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         Text(
-                          _r2local(priceList).toString(),
+                          r2local(priceList).toStringAsFixed(2),
                           style: Theme.of(context).textTheme.bodyMedium,
                           textAlign: TextAlign.right,
                         ),
@@ -756,9 +785,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 onPressed: () => onSubmitted(dialogContext),
                 child: Text(
                   AppLocale.add.getString(context),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
                 ),
               ),
             ],
@@ -1084,10 +1110,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 AppLocale.confirm.getString(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
               ),
             ),
           ],
@@ -1099,22 +1121,20 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     setState(() => isSending = true);
     final List<Map<String, dynamic>> invoiceLine = product.map((item) {
-      final double price = (item['price'] ?? 0).toDouble();
+      final double price = _r2(item['price'] ?? 0);
       final double priceList =
-          (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0)
-              .toDouble();
-      final double discount = (item['Discount'] ??
-              (priceList > 0 ? (100 * (1 - (price / priceList))) : 0))
-          .toDouble();
+          _r2(item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0);
+      final double discount = _r2(item['Discount'] ??
+          (priceList > 0 ? (100 * (1 - (price / priceList))) : 0));
       return {
         'M_Product_ID': item['id'],
         'SKU': item['sku'],
         'upc': item['upc'],
         'Category': item['category'],
         'Name': item['name'],
-        'Price': price, // Precio actual editable
-        'PriceList': priceList, // Precio de lista (original)
-        'Discount': double.parse(discount.toStringAsFixed(2)),
+        'Price': price,
+        'PriceList': priceList,
+        'Discount': discount,
         'Quantity': item['quantity'],
         'C_Tax_ID': item['C_Tax_ID'],
         'Description': item['Description'] ?? '',
@@ -1122,7 +1142,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }).toList();
 
     final paymentData = paymentControllers.entries
-        // Considerar entradas con algún monto numérico
         .where((entry) {
           final txt = entry.value.text.trim();
           final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
@@ -1143,13 +1162,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
           final bool isCash = (method['isCash'] == true);
 
           // Si es efectivo, restar el vuelto disponible (sin quedar negativo)
-          double adjustedAmt = originalAmt;
+          double adjustedAmt = _r2(originalAmt);
           if (isCash && calculatedChange > 0) {
-            adjustedAmt = adjustedAmt - calculatedChange;
+            adjustedAmt = _r2(adjustedAmt - calculatedChange);
           }
 
           final Map<String, dynamic> data = {
-            'PayAmt': double.parse(adjustedAmt.toStringAsFixed(2)),
+            'PayAmt': adjustedAmt,
             'C_POSTenderType_ID': entry.key,
           };
 
