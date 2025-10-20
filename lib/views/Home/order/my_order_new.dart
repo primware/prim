@@ -466,13 +466,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
   void _recalculateSummary() {
     double newSubtotal = 0.0;
     double newIVA = 0.0;
+    double newTotal = 0.0;
 
     for (var line in invoiceLines) {
       final price = _r2(line['price'] ?? 0);
       final quantity = _r2(line['quantity'] ?? 1);
       final taxID = line['C_Tax_ID'];
 
-      newSubtotal += _r2(price * quantity);
+      final lineNet = _r2(price * quantity);
+      newSubtotal += lineNet;
 
       final tax = taxOptions.firstWhere(
         (t) => t['id'] == taxID,
@@ -480,13 +482,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
       );
       final taxPercent = _r2(double.tryParse('${tax['rate'] ?? '0'}') ?? 0.0);
 
-      newIVA += _r2((price * quantity) * (taxPercent / 100));
+      final lineTax = _r2(lineNet * (taxPercent / 100));
+      newIVA += lineTax;
+
+      final lineTotal = _r2(lineNet + lineTax);
+      newTotal += lineTotal;
     }
 
     setState(() {
       subtotal = _r2(newSubtotal);
       iva = _r2(newIVA);
-      total = _r2(subtotal + iva);
+      total = _r2(subtotal + getTotalTaxAmount());
     });
   }
 
@@ -2162,7 +2168,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         children: [
                           Text(AppLocale.total.getString(context),
                               style: Theme.of(context).textTheme.titleLarge),
-                          Text('\$${total.toStringAsFixed(2)}',
+                          Text('\$${total}',
                               style: Theme.of(context).textTheme.titleLarge),
                         ],
                       ),
