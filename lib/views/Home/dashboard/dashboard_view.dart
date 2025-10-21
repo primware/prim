@@ -98,10 +98,26 @@ class _DashboardPageState extends State<DashboardPage> {
                             titleBuilder: (ctx) =>
                                 AppLocale.salesYTDMonthly.getString(context),
                             dataLoader: ({required context}) =>
-                                fetchSalesChartData(
+                                fetchSalesYTDData(
                               context: context,
                             ),
                             chartType: ChartType.line,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: DashboardCharts(
+                        children: [
+                          MetricCard(
+                            titleBuilder: (ctx) =>
+                                AppLocale.salesPerDay.getString(context),
+                            dataLoader: ({required context}) =>
+                                fetchSalesPerDay(
+                              context: context,
+                            ),
+                            chartType: ChartType.bar,
                           ),
                         ],
                       ),

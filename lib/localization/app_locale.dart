@@ -44,6 +44,8 @@ class AppLocale {
   static const String searchCustomer = 'searchCustomer';
   static const String add = 'add';
   static const String refresh = 'refresh';
+  static const String available = 'available';
+  static const String exist = 'exist';
   static const String newCustomer = 'newCustomer';
   static const String nameReq = 'nameReq';
   static const String personTypeReq = 'personTypeReq';
@@ -69,6 +71,7 @@ class AppLocale {
   static const String dashboard = 'dashboard';
   static const String yourLogo = 'yourLogo';
   static const String salesYTDMonthly = 'totalSoldBy';
+  static const String salesPerDay = 'salesPerDay';
   static const String days = 'days';
   static const String months = 'months';
   static const String noDataForFilter = 'noDataForFilter';
@@ -182,6 +185,7 @@ class AppLocale {
     server: 'Server',
     lang: 'Language',
     upc: 'UPC',
+    available: 'Available',
     newOrder: 'New Order',
     onlyMyOrders: 'Only My Orders',
     customer: 'Customer',
@@ -207,6 +211,7 @@ class AppLocale {
     register: 'Register',
     newCustomer: 'New Customer',
     nameReq: 'Name *',
+    exist: 'Exist',
     priceList: 'Price List',
     personTypeReq: 'ID Type *',
     groupReq: 'Group *',
@@ -214,6 +219,7 @@ class AppLocale {
     email: 'Email',
     addressReq: 'Address *',
     createCustomer: 'Create customer',
+    salesPerDay: 'Sales Per Day',
     confirmCreateCustomer: 'Are you sure you want to create the customer?',
     confirm: 'Confirm',
     errorCreateCustomer: 'Error creating customer',
@@ -369,10 +375,13 @@ class AppLocale {
     dashboard: 'Panel',
     salesYTDMonthly: 'Total vendido por mes',
     days: 'Días',
+    exist: 'Existencia',
+    available: 'Disponible',
     months: 'Meses',
     noDataForFilter: 'No hay datos disponibles para el filtro seleccionado.',
     pressAgainToLogout: 'Presione nuevamente para cerrar sesión',
     myOrders: 'Mis órdenes',
+    salesPerDay: 'Ventas por día',
     searchOrder: 'Buscar orden',
     errorNoOrders: 'No se encontraron órdenes.',
     orderHash: 'Orden #',

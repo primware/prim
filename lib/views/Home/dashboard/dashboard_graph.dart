@@ -146,7 +146,15 @@ class _MetricCardState extends State<MetricCard> {
               toY: y,
               width: 14,
               borderRadius: BorderRadius.circular(4),
-              color: Theme.of(context).colorScheme.primary,
+              // Forzar color sólido igual al de la línea (algunas versiones ignoran `color`)
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.secondary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+              ),
             ),
           ],
         ),
@@ -190,10 +198,14 @@ class _MetricCardState extends State<MetricCard> {
       case ChartType.bar:
         return BarChart(
           BarChartData(
+            alignment: BarChartAlignment.spaceBetween,
+            groupsSpace: 8,
             barTouchData: BarTouchData(
               touchTooltipData: BarTouchTooltipData(
                 getTooltipColor: (group) =>
-                    Theme.of(context).colorScheme.primaryContainer,
+                    Theme.of(context).colorScheme.secondary,
+                fitInsideHorizontally: true,
+                fitInsideVertically: true,
                 getTooltipItem: (group, groupIndex, rod, rodIndex) {
                   return BarTooltipItem(
                     _formatMoneyFull(rod.toY),
@@ -205,7 +217,18 @@ class _MetricCardState extends State<MetricCard> {
                 },
               ),
             ),
-            gridData: FlGridData(show: true, drawVerticalLine: false),
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: false,
+              horizontalInterval: _gridInterval(),
+              getDrawingHorizontalLine: (value) => FlLine(
+                color: Theme.of(context)
+                    .colorScheme
+                    .secondaryContainer
+                    .withOpacity(0.6),
+                strokeWidth: 1,
+              ),
+            ),
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
                 axisNameWidget: widget.xAxisLabel != null
@@ -238,6 +261,7 @@ class _MetricCardState extends State<MetricCard> {
                     : null,
                 sideTitles: SideTitles(
                   showTitles: true,
+                  reservedSize: 50,
                   interval: _gridInterval(),
                   getTitlesWidget: (value, meta) => Text(
                     _formatY(value),

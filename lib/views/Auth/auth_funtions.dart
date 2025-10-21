@@ -359,7 +359,7 @@ Future<void> _loadPOSData(BuildContext context) async {
           posData['C_DocTypeRefund_ID']?['DocSubTypeSO']?['id'];
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
-
+      POS.warehouseID = posData['M_Warehouse_ID']?['id'];
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
 
