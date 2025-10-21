@@ -7,7 +7,7 @@ import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 
-Future<Map<String, double>> fetchSalesChartData({
+Future<Map<String, double>> fetchSalesYTDData({
   required BuildContext context,
 }) async {
   try {
@@ -81,6 +81,102 @@ Future<Map<String, double>> fetchSalesChartData({
     return groupedTotals;
   } catch (e) {
     debugPrint('Error en fetchSalesChartData (mensual): $e');
+    return {};
+  }
+}
+
+Future<Map<String, double>> fetchSalesPerDay({
+  required BuildContext context,
+}) async {
+  try {
+    await usuarioAuth(context: context);
+
+    final response = await get(
+      Uri.parse(EndPoints.salesPerDay),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      debugPrint(
+          'Error al obtener datos del gráfico por día (status ${response.statusCode}): ${response.body}');
+      return {};
+    }
+
+    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+    final List data = (jsonResponse['data'] as List?) ?? [];
+
+    // yyyy-MM-dd -> total
+    final Map<String, double> totalsByDate = {};
+
+    for (final item in data) {
+      final String? xStr = item['x']?.toString();
+      final num? yNum = item['y'] is num
+          ? item['y'] as num
+          : num.tryParse(item['y']?.toString() ?? '');
+      if (xStr == null || yNum == null) continue;
+
+      DateTime? dt;
+      try {
+        dt = DateTime.parse(
+            xStr.replaceFirst(' ', 'T')); // "YYYY-MM-DD HH:mm:ss"
+      } catch (_) {
+        try {
+          dt = DateTime.parse(xStr.split(' ').first); // fallback: "YYYY-MM-DD"
+        } catch (e) {
+          debugPrint('No se pudo parsear fecha x="$xStr": $e');
+          continue;
+        }
+      }
+
+      final dOnly = DateTime(dt.year, dt.month, dt.day);
+      final key = '${dOnly.year.toString().padLeft(4, '0')}-'
+          '${dOnly.month.toString().padLeft(2, '0')}-'
+          '${dOnly.day.toString().padLeft(2, '0')}';
+
+      totalsByDate[key] = (totalsByDate[key] ?? 0) + yNum.toDouble();
+    }
+
+    // Últimos 7 días (incluye hoy), orden: más antiguo → más reciente
+    const monthNames = <String>[
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic'
+    ];
+
+    final now = DateTime.now();
+    final List<DateTime> window = List.generate(
+      7,
+      (i) {
+        final d = now.subtract(Duration(days: 6 - i));
+        return DateTime(d.year, d.month, d.day);
+      },
+    );
+
+    final Map<String, double> ordered = {};
+    for (final d in window) {
+      final storageKey = '${d.year.toString().padLeft(4, '0')}-'
+          '${d.month.toString().padLeft(2, '0')}-'
+          '${d.day.toString().padLeft(2, '0')}';
+      final label =
+          '${d.day.toString().padLeft(2, '0')} ${monthNames[d.month - 1]}';
+      ordered[label] = totalsByDate[storageKey] ?? 0.0;
+    }
+
+    return ordered;
+  } catch (e) {
+    debugPrint('Error en fetchSalesPerDay: $e');
     return {};
   }
 }

@@ -83,6 +83,8 @@ class EndPoints {
 
   //? Charts
   static String salesYTDMonthly = '${Base.baseURL}/api/v1/charts/50002/data';
+
+  static String salesPerDay = '${Base.baseURL}/api/v1/charts/1000005/data';
 }
 
 class GetCustomerData {

@@ -66,7 +66,6 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
       return [];
     }
 
-    // Construir filtro de categorías usando 'or' si hay varias categorías, para compatibilidad con iDempiere.
     String categoryFilter = '';
     if (categoryID != null && categoryID.isNotEmpty) {
       categoryFilter =
@@ -76,7 +75,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
         '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), \'${searchTerm.toLowerCase()}\') or contains(tolower(SKU), \'${searchTerm.toLowerCase()}\') or contains(tolower(Value), \'${searchTerm.toLowerCase()}\'))' : ''}'
         '$categoryFilter';
     final url =
-        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,PriceList,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})';
+        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,PriceList,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq ${POS.priceListVersionID})${POS.isPOS ? ',M_Storage(\$select=QtyOnHand,QtyReserved,M_Locator_ID;\$expand=M_Locator_ID(\$select=M_Warehouse_ID))' : ''}';
     final response = await get(
       Uri.parse(url),
       headers: {
@@ -101,6 +100,27 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
           assignedTax = POS.principalTaxs[taxCategoryID];
         }
 
+        double? qtyAvailable;
+        if (POS.isPOS && record['M_Storage'] != null) {
+          double sum = 0;
+          final storages = record['M_Storage'] as List;
+          for (final storage in storages) {
+            final locator = storage['M_Locator_ID'];
+            final wh = locator != null ? locator['M_Warehouse_ID'] : null;
+            final whId = wh != null ? wh['id'] : null;
+            if (whId != null &&
+                POS.warehouseID != null &&
+                whId == POS.warehouseID) {
+              final onHand = (storage['QtyOnHand'] ?? 0).toDouble();
+
+              sum += onHand;
+            }
+          }
+          qtyAvailable = sum;
+        } else {
+          qtyAvailable = null;
+        }
+
         productList.add({
           'id': record['id'],
           'name': record['Name'],
@@ -121,6 +141,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
           'C_TaxCategory_ID': taxCategoryID,
           'tax': assignedTax,
           'ProductType': record['ProductType']['id'],
+          'QtyAvailable': qtyAvailable,
         });
       }
 

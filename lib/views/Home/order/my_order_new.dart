@@ -1739,6 +1739,21 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                         ),
+                                                      if (POS.isPOS)
+                                                        Text(
+                                                            item['QtyAvailable'] !=
+                                                                    null
+                                                                ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}'
+                                                                : '${AppLocale.exist.getString(context)}: 0',
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .bodySmall
+                                                                ?.copyWith(
+                                                                  fontStyle:
+                                                                      FontStyle
+                                                                          .italic,
+                                                                )),
                                                     ],
                                                   ),
                                                 ),
