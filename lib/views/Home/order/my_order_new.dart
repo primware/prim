@@ -466,7 +466,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
   void _recalculateSummary() {
     double newSubtotal = 0.0;
     double newIVA = 0.0;
-    double newTotal = 0.0;
 
     for (var line in invoiceLines) {
       final price = _r2(line['price'] ?? 0);
@@ -484,9 +483,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
       final lineTax = _r2(lineNet * (taxPercent / 100));
       newIVA += lineTax;
-
-      final lineTotal = _r2(lineNet + lineTax);
-      newTotal += lineTotal;
     }
 
     setState(() {
