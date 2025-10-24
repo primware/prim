@@ -78,7 +78,14 @@ Future<Map<String, double>> fetchSalesYTDData({
       groupedTotals[key] = (groupedTotals[key] ?? 0) + val;
     }
 
-    return groupedTotals;
+    // Ordenar cronológicamente: Ene→Dic, manteniendo solo los meses presentes
+    final Map<String, double> orderedTotals = {};
+    for (final m in monthNames) {
+      if (groupedTotals.containsKey(m)) {
+        orderedTotals[m] = groupedTotals[m]!;
+      }
+    }
+    return orderedTotals;
   } catch (e) {
     debugPrint('Error en fetchSalesChartData (mensual): $e');
     return {};

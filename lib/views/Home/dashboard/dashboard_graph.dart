@@ -123,8 +123,8 @@ class _MetricCardState extends State<MetricCard> {
     );
     final groupedData = rawData;
 
-    // Common ordering for X values
-    final keys = groupedData.keys.toList()..sort();
+    // Respetar el orden provisto por el dataLoader (ya viene cronológico)
+    final keys = groupedData.keys.toList();
 
     // Build line points
     final linePoints = <FlSpot>[];
