@@ -4,7 +4,7 @@ publish_to: "none"
 version: 1.0.4+42
 
 environment:
-  sdk: ^3.6.2
+  sdk: ^3.8.2
 
 dependencies:
   flutter:
@@ -29,6 +29,7 @@ dependencies:
   image_picker: ^1.2.0
   package_info_plus: ^9.0.0
   flutter_native_splash: ^2.4.6
+  printing_ffi: ^0.0.11
 
 
 flutter_launcher_icons:

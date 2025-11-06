@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:pdf/pdf.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/custom_textfield.dart';
@@ -69,8 +70,10 @@ class _OrderListPageState extends State<OrderListPage> {
               : throw Exception('No hay impresoras disponibles'),
         );
 
-        await Printing.directPrintPdf(
-          printer: defaultPrinter,
+        await Printing.layoutPdf(
+          // printer: defaultPrinter,
+          usePrinterSettings: true,
+          dynamicLayout: true,
           onLayout: (_) => pdfBytes,
         );
       } catch (e) {
@@ -98,9 +101,10 @@ class _OrderListPageState extends State<OrderListPage> {
     });
 
     final result = await fetchOrders(
-        context: context,
-        filter: searchController.text,
-        onlyMyOrders: onlyMyOrders);
+      context: context,
+      filter: searchController.text,
+      onlyMyOrders: onlyMyOrders,
+    );
     setState(() {
       _orders = result;
       _isLoading = false;
@@ -121,10 +125,11 @@ class _OrderListPageState extends State<OrderListPage> {
 
   List<Map<String, dynamic>> _getFilteredOrders() {
     return _orders
-        .where((order) => order['DocumentNo']
-            .toString()
-            .toLowerCase()
-            .contains(_searchQuery.toLowerCase()))
+        .where(
+          (order) => order['DocumentNo'].toString().toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
+        )
         .toList();
   }
 
@@ -179,7 +184,10 @@ class _OrderListPageState extends State<OrderListPage> {
           Text(
             label,
             style: TextStyle(
-                fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
+              fontSize: 12,
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -188,9 +196,7 @@ class _OrderListPageState extends State<OrderListPage> {
 
   Widget _buildOrderList(List<Map<String, dynamic>> orders) {
     if (orders.isEmpty) {
-      return Center(
-        child: Text(AppLocale.errorNoOrders.getString(context)),
-      );
+      return Center(child: Text(AppLocale.errorNoOrders.getString(context)));
     }
     return Column(
       children: orders.map((order) {
@@ -200,9 +206,7 @@ class _OrderListPageState extends State<OrderListPage> {
           onTap: () async {
             final refreshed = await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => OrderDetailPage(order: order),
-              ),
+              MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)),
             );
 
             if (refreshed == true) {
@@ -218,13 +222,16 @@ class _OrderListPageState extends State<OrderListPage> {
             child: ListTile(
               title: Row(
                 children: [
-                  Icon(Icons.person_outline,
-                      color: Theme.of(context).colorScheme.primary),
+                  Icon(
+                    Icons.person_outline,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   const SizedBox(width: CustomSpacer.small),
                   Expanded(
                     child: Text(
-                        '${order['bpartner']['name']} - ${order['doctypetarget']['name']} #${order['DocumentNo']}',
-                        style: Theme.of(context).textTheme.bodyMedium),
+                      '${order['bpartner']['name']} - ${order['doctypetarget']['name']} #${order['DocumentNo']}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
                 ],
               ),
@@ -233,28 +240,34 @@ class _OrderListPageState extends State<OrderListPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.attach_money_rounded,
-                          color: Theme.of(context).colorScheme.primary),
+                      Icon(
+                        Icons.attach_money_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(width: CustomSpacer.small),
                       Expanded(
-                        child: Text(order['GrandTotal'].toString(),
-                            style: Theme.of(context).textTheme.bodyLarge),
+                        child: Text(
+                          order['GrandTotal'].toString(),
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
                       ),
                     ],
                   ),
                   Row(
                     children: [
-                      Icon(Icons.calendar_month_outlined,
-                          color: Theme.of(context).colorScheme.primary),
+                      Icon(
+                        Icons.calendar_month_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(width: CustomSpacer.small),
                       Expanded(
-                        child: Text(order['DateOrdered'],
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary)),
+                        child: Text(
+                          order['DateOrdered'],
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                        ),
                       ),
                     ],
                   ),
@@ -271,8 +284,10 @@ class _OrderListPageState extends State<OrderListPage> {
                       value: 'printTicket',
                       child: Row(
                         children: [
-                          const Icon(Icons.receipt_long_rounded,
-                              color: Colors.blue),
+                          const Icon(
+                            Icons.receipt_long_rounded,
+                            color: Colors.blue,
+                          ),
                           const SizedBox(width: 8),
                           Text(AppLocale.printTicket.getString(context)),
                         ],
@@ -309,17 +324,12 @@ class _OrderListPageState extends State<OrderListPage> {
       onWillPop: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const DashboardPage(),
-          ),
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
         );
         return Future.value(false);
       },
       child: Scaffold(
-        appBar: AppBar(
-            title: Text(
-          AppLocale.myOrders.getString(context),
-        )),
+        appBar: AppBar(title: Text(AppLocale.myOrders.getString(context))),
         drawer: MenuDrawer(),
         floatingActionButton: POS.docTypeID != null
             ? FloatingActionButton(
@@ -384,9 +394,7 @@ class _OrderListPageState extends State<OrderListPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isLoading
-                      ? ShimmerList(
-                          separation: CustomSpacer.medium,
-                        )
+                      ? ShimmerList(separation: CustomSpacer.medium)
                       : _buildOrderList(_getFilteredOrders()),
                 ],
               ),

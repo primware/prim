@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:image/image.dart' as img;
+import 'package:printing_ffi/printing_ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:pdf/pdf.dart';
@@ -15,112 +14,113 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   final pdf = pw.Document();
   final List lines = (order['C_OrderLine'] as List?) ?? const [];
 
-  pdf.addPage(pw.MultiPage(
-    build: (context) => [
-      pw.Header(
-        level: 0,
-        child: pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
-          children: [
-            (POSPrinter.logo != null)
-                ? pw.Container(
-                    width: 48,
-                    height: 48,
-                    child: pw.Image(
-                      pw.MemoryImage(POSPrinter.logo!),
-                      fit: pw.BoxFit.contain,
-                    ),
-                  )
-                : pw.SizedBox(width: 48, height: 48),
-            pw.Expanded(
-              child: pw.Center(
-                child: pw.Text(
-                  'Resumen de la Orden #${order['DocumentNo']}',
+  pdf.addPage(
+    pw.MultiPage(
+      build: (context) => [
+        pw.Header(
+          level: 0,
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              (POSPrinter.logo != null)
+                  ? pw.Container(
+                      width: 48,
+                      height: 48,
+                      child: pw.Image(
+                        pw.MemoryImage(POSPrinter.logo!),
+                        fit: pw.BoxFit.contain,
+                      ),
+                    )
+                  : pw.SizedBox(width: 48, height: 48),
+              pw.Expanded(
+                child: pw.Center(
+                  child: pw.Text('Resumen de la Orden #${order['DocumentNo']}'),
                 ),
               ),
-            ),
-            pw.SizedBox(width: 48, height: 48),
-          ],
+              pw.SizedBox(width: 48, height: 48),
+            ],
+          ),
         ),
-      ),
-      pw.Text("Cliente: ${order['bpartner']['name']}"),
-      pw.Text("Fecha: ${order['DateOrdered']}"),
-      pw.SizedBox(height: 10),
-      if (lines.isNotEmpty) ...[
-        pw.Text("Productos:"),
-        pw.Table.fromTextArray(
-          headers: [
-            'Producto',
-            'Descripción',
-            'Precio',
-            'Impuesto',
-            'Subtotal',
-            'Total'
-          ],
-          data: lines.map((line) {
-            final name = (line['M_Product_ID']?['identifier'] ??
-                    '_${line['Description']}')
-                .toString()
-                .split('_')
-                .skip(1)
-                .join(' ');
-            final qty = (line['QtyOrdered'] ?? 0).toString();
-            final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
-            final rate = line['C_Tax_ID']['Rate'];
-            final taxName = line['C_Tax_ID']['Name'];
-            final net = line['LineNetAmt'] ?? 0;
-            final tax = (net * rate / 100);
-            final total = net + tax;
-            final description = line['Description']?.toString() ?? '';
+        pw.Text("Cliente: ${order['bpartner']['name']}"),
+        pw.Text("Fecha: ${order['DateOrdered']}"),
+        pw.SizedBox(height: 10),
+        if (lines.isNotEmpty) ...[
+          pw.Text("Productos:"),
+          pw.Table.fromTextArray(
+            headers: [
+              'Producto',
+              'Descripción',
+              'Precio',
+              'Impuesto',
+              'Subtotal',
+              'Total',
+            ],
+            data: lines.map((line) {
+              final name =
+                  (line['M_Product_ID']?['identifier'] ??
+                          '_${line['Description']}')
+                      .toString()
+                      .split('_')
+                      .skip(1)
+                      .join(' ');
+              final qty = (line['QtyOrdered'] ?? 0).toString();
+              final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
+              final rate = line['C_Tax_ID']['Rate'];
+              final taxName = line['C_Tax_ID']['Name'];
+              final net = line['LineNetAmt'] ?? 0;
+              final tax = (net * rate / 100);
+              final total = net + tax;
+              final description = line['Description']?.toString() ?? '';
 
-            return [
-              name,
-              description,
-              "$qty x \$${price.toStringAsFixed(2)}",
-              "$taxName ($rate%)",
-              "\$${net.toStringAsFixed(2)}",
-              "\$${total.toStringAsFixed(2)}",
-            ];
-          }).toList(),
-          headerStyle: pw.TextStyle(
-            fontWeight: pw.FontWeight.bold,
-            fontSize: 12,
+              return [
+                name,
+                description,
+                "$qty x \$${price.toStringAsFixed(2)}",
+                "$taxName ($rate%)",
+                "\$${net.toStringAsFixed(2)}",
+                "\$${total.toStringAsFixed(2)}",
+              ];
+            }).toList(),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 12,
+            ),
+            cellStyle: pw.TextStyle(fontSize: 10),
+            columnWidths: {
+              0: pw.FixedColumnWidth(95), // Producto
+              1: pw.FlexColumnWidth(3), // Descripción
+              2: pw.FixedColumnWidth(90), // Cant. x Precio
+              3: pw.FixedColumnWidth(80), // Impuesto
+              4: pw.FixedColumnWidth(65), // Subtotal
+              5: pw.FixedColumnWidth(65), // Total
+            },
+            cellAlignments: {
+              0: pw.Alignment.centerLeft,
+              1: pw.Alignment.centerLeft,
+              2: pw.Alignment.centerRight,
+              3: pw.Alignment.centerRight,
+              4: pw.Alignment.centerRight,
+              5: pw.Alignment.centerRight,
+            },
           ),
-          cellStyle: pw.TextStyle(
-            fontSize: 10,
-          ),
-          columnWidths: {
-            0: pw.FixedColumnWidth(95), // Producto
-            1: pw.FlexColumnWidth(3), // Descripción
-            2: pw.FixedColumnWidth(90), // Cant. x Precio
-            3: pw.FixedColumnWidth(80), // Impuesto
-            4: pw.FixedColumnWidth(65), // Subtotal
-            5: pw.FixedColumnWidth(65), // Total
-          },
-          cellAlignments: {
-            0: pw.Alignment.centerLeft,
-            1: pw.Alignment.centerLeft,
-            2: pw.Alignment.centerRight,
-            3: pw.Alignment.centerRight,
-            4: pw.Alignment.centerRight,
-            5: pw.Alignment.centerRight,
-          },
-        ),
-        pw.SizedBox(height: 20),
+          pw.SizedBox(height: 20),
+        ],
+        pw.Text("Total bruto: \$${order['TotalLines']}"),
+        pw.Text("Total final: \$${order['GrandTotal']}"),
       ],
-      pw.Text("Total bruto: \$${order['TotalLines']}"),
-      pw.Text("Total final: \$${order['GrandTotal']}"),
-    ],
-  ));
+    ),
+  );
 
   return pdf.save();
 }
 
-Future<Map<String, String>?> fetchElectronicInvoiceInfo(
-    {required int orderId}) async {
+Future<Map<String, String>?> fetchElectronicInvoiceInfo({
+  required int orderId,
+}) async {
   try {
     final uri = Uri.parse(
-        '${EndPoints.cInvoice}?\$filter=C_Order_ID eq $orderId&\$expand=FE_InvoiceResponseLog');
+      '${EndPoints.cInvoice}?\$filter=C_Order_ID eq $orderId&\$expand=FE_InvoiceResponseLog',
+    );
     final response = await get(
       uri,
       headers: {
@@ -144,16 +144,13 @@ Future<Map<String, String>?> fetchElectronicInvoiceInfo(
     if (logs.isEmpty) return null;
 
     // Buscar el primer log con FE_ResponseCode == 200 (num o string)
-    final match = logs.firstWhere(
-      (e) {
-        final code = e['FE_ResponseCode'];
-        if (code == null) return false;
-        if (code is num) return code == 200;
-        if (code is String) return code.trim() == '200';
-        return false;
-      },
-      orElse: () => null,
-    );
+    final match = logs.firstWhere((e) {
+      final code = e['FE_ResponseCode'];
+      if (code == null) return false;
+      if (code is num) return code == 200;
+      if (code is String) return code.trim() == '200';
+      return false;
+    }, orElse: () => null);
 
     if (match == null) return null;
 
@@ -163,11 +160,7 @@ Future<Map<String, String>?> fetchElectronicInvoiceInfo(
 
     if (cufe == null || protocolo == null || url == null) return null;
 
-    return {
-      'cufe': cufe,
-      'protocolo': protocolo,
-      'url': url,
-    };
+    return {'cufe': cufe, 'protocolo': protocolo, 'url': url};
   } catch (e) {
     debugPrint('Error consultando FE_InvoiceResponseLog: $e');
     return null;
@@ -182,7 +175,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
       : null;
 
   final pdf = pw.Document();
-  final pageFormat = PdfPageFormat(204, 1800);
+  final pageFormat = PdfPageFormat.roll80;
 
   // Helpers
   String str(dynamic v) => v?.toString() ?? '';
@@ -219,15 +212,16 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
   final theme = pw.ThemeData.withFont(
     base: pw.Font.helvetica(),
     bold: pw.Font.helveticaBold(),
-  ).copyWith(
-    defaultTextStyle: baseTextStyle,
-  );
+  ).copyWith(defaultTextStyle: baseTextStyle);
 
   // Render PDF
   pdf.addPage(
     pw.Page(
       pageFormat: pageFormat.copyWith(
-          marginTop: 8, marginBottom: 8, width: 75 * PdfPageFormat.mm),
+        marginTop: 8,
+        marginBottom: 8,
+        width: 75 * PdfPageFormat.mm,
+      ),
       theme: theme,
       build: (context) {
         return pw.Column(
@@ -235,31 +229,48 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
           children: [
             POSPrinter.logo != null
                 ? pw.Center(
-                    child: pw.Image(pw.MemoryImage(POSPrinter.logo!),
-                        width: 60, height: 60, fit: pw.BoxFit.contain))
+                    child: pw.Image(
+                      pw.MemoryImage(POSPrinter.logo!),
+                      width: 60,
+                      height: 60,
+                      fit: pw.BoxFit.contain,
+                    ),
+                  )
                 : pw.SizedBox(),
             pw.SizedBox(height: 4),
-            pw.Text(POSPrinter.headerName ?? '',
-                textAlign: pw.TextAlign.center),
-            pw.Text(POSPrinter.headerAddress ?? '',
-                textAlign: pw.TextAlign.center),
+            pw.Text(
+              POSPrinter.headerName ?? '',
+              textAlign: pw.TextAlign.center,
+            ),
+            pw.Text(
+              POSPrinter.headerAddress ?? '',
+              textAlign: pw.TextAlign.center,
+            ),
             if (POSPrinter.headerTaxID != null)
-              pw.Text('RUC: ${POSPrinter.headerTaxID ?? ''}',
-                  textAlign: pw.TextAlign.center),
-            if (POSPrinter.headerDV != null)
-              pw.Text('DV: ${POSPrinter.headerDV ?? ''}',
-                  textAlign: pw.TextAlign.center),
-            if (POSPrinter.headerPhone != null)
-              pw.Text('Tel: ${POSPrinter.headerPhone ?? ''}',
-                  textAlign: pw.TextAlign.center),
-            pw.Text(POSPrinter.headerEmail ?? '',
-                textAlign: pw.TextAlign.center),
-            pw.SizedBox(height: 12),
-            pw.Text(docTypename,
+              pw.Text(
+                'RUC: ${POSPrinter.headerTaxID ?? ''}',
                 textAlign: pw.TextAlign.center,
-                style: pw.TextStyle(
-                  fontWeight: pw.FontWeight.bold,
-                )),
+              ),
+            if (POSPrinter.headerDV != null)
+              pw.Text(
+                'DV: ${POSPrinter.headerDV ?? ''}',
+                textAlign: pw.TextAlign.center,
+              ),
+            if (POSPrinter.headerPhone != null)
+              pw.Text(
+                'Tel: ${POSPrinter.headerPhone ?? ''}',
+                textAlign: pw.TextAlign.center,
+              ),
+            pw.Text(
+              POSPrinter.headerEmail ?? '',
+              textAlign: pw.TextAlign.center,
+            ),
+            pw.SizedBox(height: 12),
+            pw.Text(
+              docTypename,
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
 
             pw.SizedBox(height: 18),
 
@@ -278,15 +289,19 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
               pw.Row(
                 children: [
                   pw.Expanded(
-                      flex: 20,
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text('Ítem', maxLines: 1),
-                          pw.Text('Precio x Cant',
-                              maxLines: 1, style: smallTextStyle),
-                        ],
-                      )),
+                    flex: 20,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Ítem', maxLines: 1),
+                        pw.Text(
+                          'Precio x Cant',
+                          maxLines: 1,
+                          style: smallTextStyle,
+                        ),
+                      ],
+                    ),
+                  ),
                   pw.Expanded(
                     flex: 15,
                     child: pw.Align(
@@ -299,19 +314,21 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
               pw.Divider(),
               pw.SizedBox(height: 6),
               ...lines.map((line) {
-                final name = (line['M_Product_ID']?['identifier'] ??
-                        '_${line['Description']}')
-                    .toString()
-                    .split('_')
-                    .skip(1)
-                    .join(' ');
+                final name =
+                    (line['M_Product_ID']?['identifier'] ??
+                            '_${line['Description']}')
+                        .toString()
+                        .split('_')
+                        .skip(1)
+                        .join(' ');
                 final qty = (line['QtyOrdered'] as num?)?.toDouble() ?? 0.0;
                 final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
                 final net = (line['LineNetAmt'] as num?)?.toDouble() ?? 0.0;
                 final rate =
                     (line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0;
-                final tax =
-                    double.parse((net * (rate / 100)).toStringAsFixed(2));
+                final tax = double.parse(
+                  (net * (rate / 100)).toStringAsFixed(2),
+                );
                 final value = net + tax;
                 final description = line['Description']?.toString() ?? '';
                 final discount = (line['Discount'] as num?)?.toDouble() ?? 0.0;
@@ -323,48 +340,42 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Expanded(
-                            flex: 20,
-                            child: pw.Column(
-                              crossAxisAlignment: pw.CrossAxisAlignment.start,
-                              children: [
+                          flex: 20,
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(name, overflow: pw.TextOverflow.span),
+                              pw.Text(
+                                '${money(price)} x ${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)}',
+                                maxLines: 1,
+                                style: smallTextStyle,
+                              ),
+                              if (discount > 0)
                                 pw.Text(
-                                  name,
-                                  overflow: pw.TextOverflow.span,
-                                ),
-                                pw.Text(
-                                  '${money(price)} x ${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)}',
+                                  'Desc: ${discount.toStringAsFixed(2)}%',
                                   maxLines: 1,
-                                  style: smallTextStyle,
+                                  style: smallTextStyle.copyWith(
+                                    fontStyle: pw.FontStyle.italic,
+                                  ),
                                 ),
-                                if (discount > 0)
-                                  pw.Text(
-                                    'Desc: ${discount.toStringAsFixed(2)}%',
-                                    maxLines: 1,
-                                    style: smallTextStyle.copyWith(
-                                      fontStyle: pw.FontStyle.italic,
-                                    ),
+                              if (description.isNotEmpty && description != name)
+                                pw.Text(
+                                  description,
+                                  maxLines: 1,
+                                  style: smallTextStyle.copyWith(
+                                    fontStyle: pw.FontStyle.italic,
                                   ),
-                                if (description.isNotEmpty &&
-                                    description != name)
-                                  pw.Text(
-                                    description,
-                                    maxLines: 1,
-                                    style: smallTextStyle.copyWith(
-                                      fontStyle: pw.FontStyle.italic,
-                                    ),
-                                  ),
-                              ],
-                            )),
+                                ),
+                            ],
+                          ),
+                        ),
                         pw.Expanded(
                           flex: 15,
                           child: pw.Align(
                             alignment: pw.Alignment.centerRight,
-                            child: pw.Text(
-                              money(value),
-                              maxLines: 1,
-                            ),
+                            child: pw.Text(money(value), maxLines: 1),
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ],
@@ -376,14 +387,17 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
               pw.Text('Cant. Items: ${lines.length}'),
               pw.SizedBox(height: 12),
             ],
-            pw.Text('Total: ${money(grandTotal)}',
-                style:
-                    pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+            pw.Text(
+              'Total: ${money(grandTotal)}',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+            ),
             pw.SizedBox(height: 10),
 
             // Formas de pago
-            pw.Text('Formas de Pago:',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+              'Formas de Pago:',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
             ...?order['payments']?.map<pw.Widget>((payment) {
               final payType =
                   payment['C_POSTenderType_ID']['identifier'] ?? 'Otro';
@@ -393,8 +407,10 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
             pw.SizedBox(height: 10),
 
             // Impuestos
-            pw.Text('Neto sin ITBMS: ${money(netSum)}',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+              'Neto sin ITBMS: ${money(netSum)}',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
             pw.Text('ITBMS: ${money(taxTotal)}'),
             pw.SizedBox(height: 12),
 
@@ -402,19 +418,29 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
             if (feInfo != null) ...[
               pw.Divider(),
               pw.SizedBox(height: 8),
-              pw.Text('FACTURA ELECTRÓNICA',
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold, fontSize: 8)),
+              pw.Text(
+                'FACTURA ELECTRÓNICA',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 8,
+                ),
+              ),
               pw.SizedBox(height: 6),
-              pw.Text('Protocolo de Autorización: ${feInfo['protocolo']}',
-                  style: pw.TextStyle(fontSize: 6)),
-              pw.Text('Consulte por la clave de acceso en:',
-                  style: pw.TextStyle(fontSize: 6)),
+              pw.Text(
+                'Protocolo de Autorización: ${feInfo['protocolo']}',
+                style: pw.TextStyle(fontSize: 6),
+              ),
+              pw.Text(
+                'Consulte por la clave de acceso en:',
+                style: pw.TextStyle(fontSize: 6),
+              ),
               pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 6)),
               pw.SizedBox(height: 6),
-              pw.Text('o escaneando el código QR:',
-                  style: pw.TextStyle(fontSize: 8)),
+              pw.Text(
+                'o escaneando el código QR:',
+                style: pw.TextStyle(fontSize: 8),
+              ),
               pw.SizedBox(height: 6),
               pw.Center(
                 child: pw.BarcodeWidget(
@@ -428,8 +454,10 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
             ],
 
             // Footer
-            pw.Text('Gracias por mantener sus pagos al día',
-                textAlign: pw.TextAlign.center),
+            pw.Text(
+              'Gracias por mantener sus pagos al día',
+              textAlign: pw.TextAlign.center,
+            ),
 
             pw.SizedBox(height: 56),
           ],
@@ -455,15 +483,13 @@ Map<String, Map<String, double>> _calculateTaxSummary(List<dynamic> records) {
         final taxKey = "$taxName (${taxRate.toStringAsFixed(0)}%)";
 
         taxSummary.putIfAbsent(
-            taxKey,
-            () => {
-                  "net": 0.0,
-                  "tax": 0.0,
-                  "total": 0.0,
-                });
+          taxKey,
+          () => {"net": 0.0, "tax": 0.0, "total": 0.0},
+        );
 
-        final double taxAmount =
-            double.parse((lineNetAmt * (taxRate / 100)).toStringAsFixed(2));
+        final double taxAmount = double.parse(
+          (lineNetAmt * (taxRate / 100)).toStringAsFixed(2),
+        );
         taxSummary[taxKey]!["net"] = taxSummary[taxKey]!["net"]! + lineNetAmt;
         taxSummary[taxKey]!["tax"] = taxSummary[taxKey]!["tax"]! + taxAmount;
         taxSummary[taxKey]!["total"] =
