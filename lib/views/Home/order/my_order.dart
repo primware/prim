@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:pdf/pdf.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/custom_textfield.dart';
@@ -99,8 +98,8 @@ class _OrderListPageState extends State<OrderListPage> {
                 : throw Exception('No hay impresoras disponibles'),
           );
 
-          await Printing.layoutPdf(
-            // printer: defaultPrinter,
+          await Printing.directPrintPdf(
+            printer: defaultPrinter,
             usePrinterSettings: true,
             dynamicLayout: true,
             onLayout: (_) => pdfBytes,
@@ -148,17 +147,6 @@ class _OrderListPageState extends State<OrderListPage> {
       _orders = result;
       _isLoading = false;
       isSearchLoading = false;
-    });
-  }
-
-  void debouncedOrders() {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    final searchText = searchController.text.trim();
-    if (searchText.length < 3 && searchText.isNotEmpty) {
-      return;
-    }
-    _debounce = Timer(const Duration(milliseconds: 3000), () {
-      _fetchOrders(showLoadingIndicator: true);
     });
   }
 
@@ -415,19 +403,21 @@ class _OrderListPageState extends State<OrderListPage> {
                         child: TextfieldTheme(
                           controlador: searchController,
                           texto: AppLocale.searchOrder.getString(context),
-                          icono: Icons.search,
+                          icono: Icons.receipt_long_rounded,
+                          onSubmitted: (p0) =>
+                              _fetchOrders(showLoadingIndicator: true),
                           onChanged: (value) {
                             setState(() {
                               _searchQuery = value;
-                              debouncedOrders();
                             });
                           },
                         ),
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: _fetchOrders,
+                        icon: const Icon(Icons.search),
+                        onPressed: () =>
+                            _fetchOrders(showLoadingIndicator: true),
                       ),
                     ],
                   ),
