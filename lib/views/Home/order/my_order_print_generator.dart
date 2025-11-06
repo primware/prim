@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:printing_ffi/printing_ffi.dart';
+// import 'package:printing_ffi/printing_ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:pdf/pdf.dart';
