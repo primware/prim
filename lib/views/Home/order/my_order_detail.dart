@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter_localization/flutter_localization.dart';
+
+import 'package:qr_flutter/qr_flutter.dart';
+
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Home/order/my_order_print_generator.dart';
@@ -38,6 +42,10 @@ class OrderDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final lines = (order['C_OrderLine'] as List?) ?? [];
     final taxSummary = _calculateTaxSummary([order]);
+    final int? orderId = (order['id'] as int?);
+    final Future<Map<String, String>?> feFuture = orderId != null
+        ? fetchElectronicInvoiceInfo(orderId: orderId)
+        : Future.value(null);
 
     // Detectar si es devolución (RM)
     final dynamic subField = order['doctypetarget']?['subtype'];
@@ -73,8 +81,18 @@ class OrderDetailPage extends StatelessWidget {
               final bool? confirmPrintTicket =
                   await _printTicketConfirmation(context);
               if (confirmPrintTicket == true) {
+                if (POS.cPosID != null) {
+                  try {
+                    await printPOSTicketEscPosDefault(order);
+                    return; // éxito con ESC/POS
+                  } catch (e) {
+                    debugPrint('Fallo ESC/POS, usando PDF de respaldo: $e');
+                  }
+                }
+
+                // === Respaldo PDF ===
                 final pdfBytes = POS.cPosID != null
-                    ? await generatePOSTicket(order)
+                    ? await generatePOSTicketBackup(order)
                     : await generateOrderTicket(order);
 
                 try {
@@ -108,7 +126,7 @@ class OrderDetailPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildHeader(order: order, context: context),
+              _buildHeader(order: order, context: context, feFuture: feFuture),
               const SizedBox(height: CustomSpacer.large),
               Text(AppLocale.productSummary.getString(context),
                   style: Theme.of(context).textTheme.bodyMedium),
@@ -303,28 +321,75 @@ class OrderDetailPage extends StatelessWidget {
   }
 
   Widget _buildHeader(
-      {required Map<String, dynamic> order, required BuildContext context}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+      {required Map<String, dynamic> order,
+      required BuildContext context,
+      required Future<Map<String, String>?> feFuture}) {
+    return FutureBuilder<Map<String, String>?>(
+      future: feFuture,
+      builder: (context, snapshot) {
+        final fe = snapshot.data;
+
+        final left = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.person_outline,
-                color: Theme.of(context).colorScheme.onSecondary),
-            const SizedBox(width: CustomSpacer.small),
-            Text(order['bpartner']['name'],
-                style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  size: 32,
+                ),
+                const SizedBox(width: CustomSpacer.small),
+                Text(order['bpartner']['name'],
+                    style: Theme.of(context).textTheme.headlineLarge),
+              ],
+            ),
+            Row(
+              children: [
+                const Icon(
+                  Icons.calendar_month_outlined,
+                  size: 32,
+                ),
+                const SizedBox(width: CustomSpacer.small),
+                Text(order['DateOrdered'],
+                    style: Theme.of(context).textTheme.headlineSmall),
+              ],
+            ),
           ],
-        ),
-        Row(
+        );
+
+        Widget? right;
+        if (fe != null && (fe['url']?.isNotEmpty ?? false)) {
+          final qrUrlData = fe['url']!;
+          right = Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('Factura electrónica',
+                  style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  width: 120,
+                  height: 120,
+                  child: QrImageView(
+                    data: qrUrlData,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Icon(Icons.calendar_month_outlined),
-            const SizedBox(width: CustomSpacer.small),
-            Text(order['DateOrdered'],
-                style: Theme.of(context).textTheme.bodyMedium),
+            Expanded(child: left),
+            if (right != null) const SizedBox(width: 12),
+            if (right != null) right,
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
