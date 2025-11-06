@@ -182,7 +182,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
       : null;
 
   final pdf = pw.Document();
-  final pageFormat = PdfPageFormat(204, 842);
+  final pageFormat = PdfPageFormat(204, 1800);
 
   // Helpers
   String str(dynamic v) => v?.toString() ?? '';
