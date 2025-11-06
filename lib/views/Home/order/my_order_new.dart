@@ -1231,18 +1231,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
         final confirmPrintTicket = await _printTicketConfirmation(context);
 
         if (confirmPrintTicket == true) {
-          if (POS.cPosID != null) {
-            try {
-              await printPOSTicketEscPosDefault(order);
-              return; // éxito con ESC/POS
-            } catch (e) {
-              debugPrint('Fallo ESC/POS, usando PDF de respaldo: $e');
-            }
-          }
-
-          // === Respaldo PDF ===
           final pdfBytes = POS.cPosID != null
-              ? await generatePOSTicketBackup(order)
+              ? await generatePOSTicket(order)
               : await generateOrderTicket(order);
 
           try {
