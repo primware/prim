@@ -11,18 +11,16 @@ jobs:
     runs-on: windows-2022
 
     env:
-      FLUTTER_VERSION: '3.32.1'
       ARTIFACT_NAME: windows-release-${{ github.run_number }}
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Configurar Flutter ${{ env.FLUTTER_VERSION }} (stable)
+      - name: Configurar Flutter (stable - latest)
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Verificar versiones
