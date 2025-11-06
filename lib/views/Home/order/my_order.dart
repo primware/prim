@@ -53,12 +53,24 @@ class _OrderListPageState extends State<OrderListPage> {
   }
 
   // Imprimir ticket directamente desde la lista
+  // Imprimir ticket directamente desde la lista
   Future<void> _printTicket(Map<String, dynamic> order) async {
     final bool? confirm = await _printTicketConfirmation(context);
     if (confirm == true) {
+      if (POS.cPosID != null) {
+        try {
+          await printPOSTicketEscPosDefault(order);
+          return; // éxito con ESC/POS
+        } catch (e) {
+          debugPrint('Fallo ESC/POS, usando PDF de respaldo: $e');
+        }
+      }
+
+      // === Respaldo PDF ===
       final pdfBytes = POS.cPosID != null
-          ? await generatePOSTicket(order)
+          ? await generatePOSTicketBackup(order)
           : await generateOrderTicket(order);
+
       try {
         final printers = await Printing.listPrinters();
         final defaultPrinter = printers.firstWhere(

@@ -193,91 +193,150 @@ class _MetricCardState extends State<MetricCard> {
     _load();
   }
 
+  Widget _withAlwaysOnLabels({
+    required Widget chart,
+    required bool forBars,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double _edgePad =
+            14.0; // espacio extra para que no se corten los extremos
+        final innerLeft = 50.0 +
+            _edgePad; // debe corresponder al reservedSize de los leftTitles
+        final innerRight = _edgePad;
+        final innerTop = 8.0;
+        final innerBottom =
+            forBars ? 28.0 : 24.0; // match bottomTitles reserved
+        final innerWidth = constraints.maxWidth - innerLeft - innerRight;
+        final innerHeight = constraints.maxHeight - innerTop - innerBottom;
+        final maxX =
+            (dataKeys.isNotEmpty) ? (dataKeys.length - 1).toDouble() : 0.0;
+        final maxY = _maxYWithPadding();
+        final List<Widget> labels = [];
+        for (int i = 0; i < dataKeys.length; i++) {
+          final double xRel = (maxX == 0) ? 0.0 : (i / maxX);
+          final double x = innerLeft + xRel * innerWidth;
+          final double yVal =
+              forBars ? (barGroups[i].barRods.first.toY) : points[i].y;
+          final double yRel = (maxY == 0) ? 0.0 : (yVal / maxY);
+          final double y = innerTop + (1.0 - yRel) * innerHeight;
+          labels.add(Positioned(
+            left: (x - 36).clamp(0.0, constraints.maxWidth - 72),
+            top: (y - 22).clamp(0.0, constraints.maxHeight - 22),
+            width: 72,
+            child: IgnorePointer(
+              child: Text(
+                _formatMoneyFull(yVal),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ));
+        }
+        return Stack(
+          children: [
+            Positioned.fill(child: chart),
+            ...labels,
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildChart() {
     switch (widget.chartType) {
       case ChartType.bar:
-        return BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceBetween,
-            groupsSpace: 8,
-            barTouchData: BarTouchData(
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipColor: (group) =>
-                    Theme.of(context).colorScheme.secondary,
-                fitInsideHorizontally: true,
-                fitInsideVertically: true,
-                getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  return BarTooltipItem(
-                    _formatMoneyFull(rod.toY),
-                    Theme.of(context).textTheme.titleMedium!.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  );
-                },
-              ),
-            ),
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: _gridInterval(),
-              getDrawingHorizontalLine: (value) => FlLine(
-                color: Theme.of(context)
-                    .colorScheme
-                    .secondaryContainer
-                    .withOpacity(0.6),
-                strokeWidth: 1,
-              ),
-            ),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                axisNameWidget: widget.xAxisLabel != null
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(widget.xAxisLabel!),
-                      )
-                    : null,
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    final i = value.toInt();
-                    if (i < 0 || i >= dataKeys.length) return const SizedBox();
-                    final step = (dataKeys.length / 8).ceil();
-                    if (step > 1 && i % step != 0 && i != dataKeys.length - 1) {
-                      return const SizedBox();
-                    }
-                    return Text(dataKeys[i]);
+        return _withAlwaysOnLabels(
+          chart: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceBetween,
+              groupsSpace: 8,
+              barTouchData: BarTouchData(
+                enabled: false,
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (group) =>
+                      Theme.of(context).colorScheme.secondary,
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    return BarTooltipItem(
+                      _formatMoneyFull(rod.toY),
+                      Theme.of(context).textTheme.titleMedium!.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    );
                   },
-                  reservedSize: 28,
                 ),
               ),
-              leftTitles: AxisTitles(
-                axisNameWidget: widget.yAxisLabel != null
-                    ? Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: RotatedBox(
-                            quarterTurns: 3, child: Text(widget.yAxisLabel!)),
-                      )
-                    : null,
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 50,
-                  interval: _gridInterval(),
-                  getTitlesWidget: (value, meta) => Text(
-                    _formatY(value),
-                    style: Theme.of(context).textTheme.titleSmall,
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: _gridInterval(),
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondaryContainer
+                      .withOpacity(0.6),
+                  strokeWidth: 1,
+                ),
+              ),
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  axisNameWidget: widget.xAxisLabel != null
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(widget.xAxisLabel!),
+                        )
+                      : null,
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      final i = value.toInt();
+                      if (i < 0 || i >= dataKeys.length)
+                        return const SizedBox();
+                      final step = (dataKeys.length / 8).ceil();
+                      if (step > 1 &&
+                          i % step != 0 &&
+                          i != dataKeys.length - 1) {
+                        return const SizedBox();
+                      }
+                      return Text(dataKeys[i]);
+                    },
+                    reservedSize: 28,
                   ),
                 ),
+                leftTitles: AxisTitles(
+                  axisNameWidget: widget.yAxisLabel != null
+                      ? Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: RotatedBox(
+                              quarterTurns: 3, child: Text(widget.yAxisLabel!)),
+                        )
+                      : null,
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 50,
+                    interval: _gridInterval(),
+                    getTitlesWidget: (value, meta) => Text(
+                      _formatY(value),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                ),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
-              topTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              borderData: FlBorderData(show: false),
+              maxY: _maxYWithPadding(),
+              barGroups: barGroups,
             ),
-            borderData: FlBorderData(show: false),
-            maxY: _maxYWithPadding(),
-            barGroups: barGroups,
           ),
+          forBars: true,
         );
       case ChartType.pie:
         return PieChart(
@@ -288,123 +347,130 @@ class _MetricCardState extends State<MetricCard> {
           ),
         );
       case ChartType.line:
-        return LineChart(
-          LineChartData(
-            lineTouchData: LineTouchData(
-              touchTooltipData: LineTouchTooltipData(
-                getTooltipColor: (touchedSpot) =>
-                    Theme.of(context).colorScheme.secondary,
-                fitInsideHorizontally: true,
-                fitInsideVertically: true,
-                getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
-                  return LineTooltipItem(
-                    _formatMoneyFull(spot.y),
-                    Theme.of(context).textTheme.titleMedium!.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  );
-                }).toList(),
-              ),
-            ),
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: true,
-              horizontalInterval: _gridInterval(),
-              getDrawingHorizontalLine: (value) => FlLine(
-                color: Theme.of(context)
-                    .colorScheme
-                    .secondaryContainer
-                    .withOpacity(0.6),
-                strokeWidth: 1,
-              ),
-            ),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                axisNameWidget: widget.xAxisLabel != null
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(widget.xAxisLabel!),
-                      )
-                    : null,
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 24,
-                  getTitlesWidget: (value, meta) {
-                    // Show labels only on integer ticks to avoid repetition
-                    final nearest = value.roundToDouble();
-                    if ((value - nearest).abs() > 0.01) {
-                      return const SizedBox();
-                    }
-                    final index = nearest.toInt();
-                    if (index < 0 || index >= dataKeys.length) {
-                      return const SizedBox();
-                    }
-                    final total = dataKeys.length;
-                    final step = (total / 8).ceil();
-                    if (step > 1 &&
-                        index % step != 0 &&
-                        index != total - 1 &&
-                        index != 0) {
-                      return const SizedBox();
-                    }
-                    return Text(
-                      dataKeys[index],
-                      style: Theme.of(context).textTheme.titleSmall,
+        return _withAlwaysOnLabels(
+          chart: LineChart(
+            LineChartData(
+              lineTouchData: LineTouchData(
+                enabled: false,
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (touchedSpot) =>
+                      Theme.of(context).colorScheme.secondary,
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+                    return LineTooltipItem(
+                      _formatMoneyFull(spot.y),
+                      Theme.of(context).textTheme.titleMedium!.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                     );
-                  },
+                  }).toList(),
                 ),
               ),
-              leftTitles: AxisTitles(
-                axisNameWidget: widget.yAxisLabel != null
-                    ? Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: RotatedBox(
-                            quarterTurns: 3, child: Text(widget.yAxisLabel!)),
-                      )
-                    : null,
-                sideTitles: SideTitles(
-                  reservedSize: 50,
-                  showTitles: true,
-                  interval: _gridInterval(),
-                  getTitlesWidget: (value, meta) => Text(
-                    _formatY(value),
-                    style: Theme.of(context).textTheme.titleSmall,
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: true,
+                horizontalInterval: _gridInterval(),
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondaryContainer
+                      .withOpacity(0.6),
+                  strokeWidth: 1,
+                ),
+              ),
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  axisNameWidget: widget.xAxisLabel != null
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(widget.xAxisLabel!),
+                        )
+                      : null,
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 24,
+                    getTitlesWidget: (value, meta) {
+                      // Show labels only on integer ticks to avoid repetition
+                      final nearest = value.roundToDouble();
+                      if ((value - nearest).abs() > 0.01) {
+                        return const SizedBox();
+                      }
+                      final index = nearest.toInt();
+                      if (index < 0 || index >= dataKeys.length) {
+                        return const SizedBox();
+                      }
+                      final total = dataKeys.length;
+                      final step = (total / 8).ceil();
+                      if (step > 1 &&
+                          index % step != 0 &&
+                          index != total - 1 &&
+                          index != 0) {
+                        return const SizedBox();
+                      }
+                      return Text(
+                        dataKeys[index],
+                        style: Theme.of(context).textTheme.titleSmall,
+                      );
+                    },
                   ),
                 ),
+                leftTitles: AxisTitles(
+                  axisNameWidget: widget.yAxisLabel != null
+                      ? Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: RotatedBox(
+                              quarterTurns: 3, child: Text(widget.yAxisLabel!)),
+                        )
+                      : null,
+                  sideTitles: SideTitles(
+                    reservedSize: 50,
+                    showTitles: true,
+                    interval: _gridInterval(),
+                    getTitlesWidget: (value, meta) => Text(
+                      _formatY(value),
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                ),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
-              topTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              borderData: FlBorderData(show: false),
+              minX: 0,
+              maxX: points.isNotEmpty ? points.length.toDouble() - 1 : 0,
+              minY: 0,
+              maxY: _maxYWithPadding(),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: points,
+                  isCurved: false,
+                  color: Theme.of(context).colorScheme.secondary,
+                  barWidth: 3,
+                  isStrokeCapRound: true,
+                  dotData: const FlDotData(show: true),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context)
+                            .colorScheme
+                            .secondary
+                            .withOpacity(0.5),
+                        Theme.of(context).colorScheme.secondary.withOpacity(0),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            borderData: FlBorderData(show: false),
-            minX: 0,
-            maxX: points.isNotEmpty ? points.length.toDouble() - 1 : 0,
-            minY: 0,
-            maxY: _maxYWithPadding(),
-            lineBarsData: [
-              LineChartBarData(
-                spots: points,
-                isCurved: false,
-                color: Theme.of(context).colorScheme.secondary,
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: const FlDotData(show: true),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.5),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-            ],
           ),
+          forBars: false,
         );
     }
   }

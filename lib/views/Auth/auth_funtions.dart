@@ -365,7 +365,7 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       await fetchTaxs();
 
-      POS.isPOS = POS.docSubType == 'WR' || POS.cPosID != null;
+      POS.isPOS = POS.cPosID != null;
       //? WR = Orden Punto de Venta
 
       // Tomamos la informacion del Yappy si existe, si no se mantiene en null
