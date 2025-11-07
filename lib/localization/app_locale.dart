@@ -31,6 +31,7 @@ class AppLocale {
   static const String cancel = 'cancel';
   static const String selectRole = 'selectRole';
   static const String company = 'company';
+  static const String seller = 'seller';
   static const String role = 'role';
   static const String taxIDOrName = 'taxIDOrName';
   static const String organization = 'organization';
@@ -212,6 +213,7 @@ class AppLocale {
     newCustomer: 'New Customer',
     nameReq: 'Name *',
     exist: 'Exist',
+    seller: 'Seller',
     priceList: 'Price List',
     personTypeReq: 'ID Type *',
     groupReq: 'Group *',
@@ -315,7 +317,7 @@ class AppLocale {
     taxCategory: 'Tax Category',
     productCategory: 'Product Category',
     dv: 'DV',
-    customerType: 'Customer Type'
+    customerType: 'Customer Type',
   };
 
   static const Map<String, dynamic> es = {
@@ -359,6 +361,7 @@ class AppLocale {
     nameReq: 'Nombre *',
     personTypeReq: 'Tipo ID *',
     groupReq: 'Grupo *',
+    seller: 'Vendedor',
     taxId: 'Nro. de identificación',
     email: 'Correo electrónico',
     addressReq: 'Dirección *',
@@ -475,6 +478,6 @@ class AppLocale {
     taxCategory: 'Categoría de impuesto',
     productCategory: 'Categoría de producto',
     dv: 'DV',
-    customerType: 'Tipo de Persona'
+    customerType: 'Tipo de Persona',
   };
 }

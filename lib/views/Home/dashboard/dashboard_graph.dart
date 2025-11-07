@@ -11,9 +11,8 @@ import '../../../shared/custom_spacer.dart';
 
 enum ChartType { line, bar, pie }
 
-typedef ChartDataLoader = Future<Map<String, double>> Function({
-  required BuildContext context,
-});
+typedef ChartDataLoader =
+    Future<Map<String, double>> Function({required BuildContext context});
 
 /// Reusable metric card that supports multiple chart types (line, bar, pie).
 class MetricCard extends StatefulWidget {
@@ -90,8 +89,9 @@ class _MetricCardState extends State<MetricCard> {
 
   double _maxYWithPadding() {
     if (points.isEmpty) return 0;
-    final double maxVal =
-        points.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+    final double maxVal = points
+        .map((e) => e.y)
+        .reduce((a, b) => a > b ? a : b);
     final double step = _niceInterval(maxVal);
     // Round up to next tick and add a small headroom so the top label isn’t clipped
     final double rounded = ((maxVal) / step).ceil() * step;
@@ -118,9 +118,7 @@ class _MetricCardState extends State<MetricCard> {
 
   Future<void> _load() async {
     setState(() => isLoading = true);
-    final rawData = await widget.dataLoader(
-      context: context,
-    );
+    final rawData = await widget.dataLoader(context: context);
     final groupedData = rawData;
 
     // Respetar el orden provisto por el dataLoader (ya viene cronológico)
@@ -162,8 +160,10 @@ class _MetricCardState extends State<MetricCard> {
     }
 
     // Build pie sections
-    final total =
-        groupedData.values.fold<double>(0, (a, b) => a + (b.toDouble()));
+    final total = groupedData.values.fold<double>(
+      0,
+      (a, b) => a + (b.toDouble()),
+    );
     final sections = <PieChartSectionData>[];
     for (int i = 0; i < keys.length; i++) {
       final label = keys[i];
@@ -193,47 +193,50 @@ class _MetricCardState extends State<MetricCard> {
     _load();
   }
 
-  Widget _withAlwaysOnLabels({
-    required Widget chart,
-    required bool forBars,
-  }) {
+  Widget _withAlwaysOnLabels({required Widget chart, required bool forBars}) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const double _edgePad =
-            14.0; // espacio extra para que no se corten los extremos
-        final innerLeft = 50.0 +
-            _edgePad; // debe corresponder al reservedSize de los leftTitles
-        final innerRight = _edgePad;
-        final innerTop = 8.0;
-        final innerBottom =
-            forBars ? 28.0 : 24.0; // match bottomTitles reserved
+        const double edgePad =
+            20.0; // espacio extra para que no se corten los extremos
+        final innerLeft =
+            50.0 +
+            edgePad; // debe corresponder al reservedSize de los leftTitles
+        final innerRight = edgePad;
+        final innerTop = 0.0;
+        final innerBottom = forBars
+            ? 38.0
+            : 24.0; // match bottomTitles reserved
         final innerWidth = constraints.maxWidth - innerLeft - innerRight;
         final innerHeight = constraints.maxHeight - innerTop - innerBottom;
-        final maxX =
-            (dataKeys.isNotEmpty) ? (dataKeys.length - 1).toDouble() : 0.0;
+        final maxX = (dataKeys.isNotEmpty)
+            ? (dataKeys.length - 1).toDouble()
+            : 0.0;
         final maxY = _maxYWithPadding();
         final List<Widget> labels = [];
         for (int i = 0; i < dataKeys.length; i++) {
           final double xRel = (maxX == 0) ? 0.0 : (i / maxX);
           final double x = innerLeft + xRel * innerWidth;
-          final double yVal =
-              forBars ? (barGroups[i].barRods.first.toY) : points[i].y;
+          final double yVal = forBars
+              ? (barGroups[i].barRods.first.toY)
+              : points[i].y;
           final double yRel = (maxY == 0) ? 0.0 : (yVal / maxY);
           final double y = innerTop + (1.0 - yRel) * innerHeight;
-          labels.add(Positioned(
-            left: (x - 36).clamp(0.0, constraints.maxWidth - 72),
-            top: (y - 22).clamp(0.0, constraints.maxHeight - 22),
-            width: 72,
-            child: IgnorePointer(
-              child: Text(
-                _formatMoneyFull(yVal),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+          labels.add(
+            Positioned(
+              left: (x - 36).clamp(0.0, constraints.maxWidth - 72),
+              top: (y - 22).clamp(0.0, constraints.maxHeight - 22),
+              width: 72,
+              child: IgnorePointer(
+                child: Text(
+                  _formatMoneyFull(yVal),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
-          ));
+          );
         }
         return Stack(
           children: [
@@ -264,9 +267,9 @@ class _MetricCardState extends State<MetricCard> {
                     return BarTooltipItem(
                       _formatMoneyFull(rod.toY),
                       Theme.of(context).textTheme.titleMedium!.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     );
                   },
                 ),
@@ -276,10 +279,9 @@ class _MetricCardState extends State<MetricCard> {
                 drawVerticalLine: false,
                 horizontalInterval: _gridInterval(),
                 getDrawingHorizontalLine: (value) => FlLine(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondaryContainer
-                      .withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer.withOpacity(0.6),
                   strokeWidth: 1,
                 ),
               ),
@@ -295,8 +297,9 @@ class _MetricCardState extends State<MetricCard> {
                     showTitles: true,
                     getTitlesWidget: (value, meta) {
                       final i = value.toInt();
-                      if (i < 0 || i >= dataKeys.length)
+                      if (i < 0 || i >= dataKeys.length) {
                         return const SizedBox();
+                      }
                       final step = (dataKeys.length / 8).ceil();
                       if (step > 1 &&
                           i % step != 0 &&
@@ -313,12 +316,14 @@ class _MetricCardState extends State<MetricCard> {
                       ? Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: RotatedBox(
-                              quarterTurns: 3, child: Text(widget.yAxisLabel!)),
+                            quarterTurns: 3,
+                            child: Text(widget.yAxisLabel!),
+                          ),
                         )
                       : null,
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 50,
+                    reservedSize: 60,
                     interval: _gridInterval(),
                     getTitlesWidget: (value, meta) => Text(
                       _formatY(value),
@@ -326,10 +331,12 @@ class _MetricCardState extends State<MetricCard> {
                     ),
                   ),
                 ),
-                topTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
               ),
               borderData: FlBorderData(show: false),
               maxY: _maxYWithPadding(),
@@ -361,9 +368,9 @@ class _MetricCardState extends State<MetricCard> {
                     return LineTooltipItem(
                       _formatMoneyFull(spot.y),
                       Theme.of(context).textTheme.titleMedium!.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     );
                   }).toList(),
                 ),
@@ -373,10 +380,9 @@ class _MetricCardState extends State<MetricCard> {
                 drawVerticalLine: true,
                 horizontalInterval: _gridInterval(),
                 getDrawingHorizontalLine: (value) => FlLine(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondaryContainer
-                      .withOpacity(0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer.withOpacity(0.6),
                   strokeWidth: 1,
                 ),
               ),
@@ -421,11 +427,13 @@ class _MetricCardState extends State<MetricCard> {
                       ? Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: RotatedBox(
-                              quarterTurns: 3, child: Text(widget.yAxisLabel!)),
+                            quarterTurns: 3,
+                            child: Text(widget.yAxisLabel!),
+                          ),
                         )
                       : null,
                   sideTitles: SideTitles(
-                    reservedSize: 50,
+                    reservedSize: 60,
                     showTitles: true,
                     interval: _gridInterval(),
                     getTitlesWidget: (value, meta) => Text(
@@ -434,10 +442,12 @@ class _MetricCardState extends State<MetricCard> {
                     ),
                   ),
                 ),
-                topTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
               ),
               borderData: FlBorderData(show: false),
               minX: 0,
@@ -456,10 +466,9 @@ class _MetricCardState extends State<MetricCard> {
                     show: true,
                     gradient: LinearGradient(
                       colors: [
-                        Theme.of(context)
-                            .colorScheme
-                            .secondary
-                            .withOpacity(0.5),
+                        Theme.of(
+                          context,
+                        ).colorScheme.secondary.withOpacity(0.5),
                         Theme.of(context).colorScheme.secondary.withOpacity(0),
                       ],
                       begin: Alignment.topCenter,
@@ -480,8 +489,10 @@ class _MetricCardState extends State<MetricCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.titleBuilder(context),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          widget.titleBuilder(context),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
 
         const SizedBox(height: CustomSpacer.small),
         // Chart area with optional horizontal scroll for narrow screens
@@ -492,25 +503,28 @@ class _MetricCardState extends State<MetricCard> {
                   baseColor: Colors.grey[300]!,
                   highlightColor: Colors.grey[100]!,
                   child: Container(
-                      width: double.infinity, height: 200, color: Colors.white),
+                    width: double.infinity,
+                    height: 200,
+                    color: Colors.white,
+                  ),
                 )
               : (dataKeys.isEmpty)
-                  ? Center(
-                      child: Text(
-                        AppLocale.noDataForFilter.getString(context),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                        width: _computeChartWidth(context),
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 8, right: 24),
-                          child: _buildChart(),
-                        ),
-                      ),
+              ? Center(
+                  child: Text(
+                    AppLocale.noDataForFilter.getString(context),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                )
+              : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: _computeChartWidth(context),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, right: 24),
+                      child: _buildChart(),
                     ),
+                  ),
+                ),
         ),
       ],
     );

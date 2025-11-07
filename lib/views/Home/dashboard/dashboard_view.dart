@@ -23,8 +23,9 @@ class _DashboardPageState extends State<DashboardPage> {
   DateTime? lastBackPressed;
   @override
   Widget build(BuildContext context) {
-    final bool isMobile =
-        MediaQuery.of(context).size.width < 700 ? true : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 700
+        ? true
+        : false;
 
     return WillPopScope(
       onWillPop: () async {
@@ -52,9 +53,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const LoginPage(),
-          ),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
 
         return false;
@@ -68,17 +67,16 @@ class _DashboardPageState extends State<DashboardPage> {
                     padding: const EdgeInsets.only(right: CustomSpacer.medium),
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius:
-                            BorderRadius.circular(CustomSpacer.medium),
+                        borderRadius: BorderRadius.circular(
+                          CustomSpacer.medium,
+                        ),
                         color: Colors.white,
                       ),
                       padding: EdgeInsets.all(CustomSpacer.small),
-                      child: Logo(
-                        width: 60,
-                      ),
+                      child: Logo(width: 60),
                     ),
                   )
-                : SizedBox.shrink()
+                : SizedBox.shrink(),
           ],
         ),
         bottomNavigationBar: CustomFooter(),
@@ -98,9 +96,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             titleBuilder: (ctx) =>
                                 AppLocale.salesYTDMonthly.getString(context),
                             dataLoader: ({required context}) =>
-                                fetchSalesYTDData(
-                              context: context,
-                            ),
+                                fetchSalesYTDData(context: context),
                             chartType: ChartType.line,
                           ),
                         ],
@@ -114,9 +110,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             titleBuilder: (ctx) =>
                                 AppLocale.salesPerDay.getString(context),
                             dataLoader: ({required context}) =>
-                                fetchSalesPerDay(
-                              context: context,
-                            ),
+                                fetchSalesPerDay(context: context),
                             chartType: ChartType.bar,
                           ),
                         ],

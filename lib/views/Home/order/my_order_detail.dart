@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:flutter_localization/flutter_localization.dart';
-
 import 'package:qr_flutter/qr_flutter.dart';
-
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Home/order/my_order_print_generator.dart';
 import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
+import '../../../API/token.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/footer.dart';
 
@@ -70,49 +68,84 @@ class OrderDetailPage extends StatelessWidget {
             onPressed: () async {
               final pdfBytes = await generateOrderTicket(order);
               await Printing.sharePdf(
-                  bytes: pdfBytes,
-                  filename: 'Order_${order['DocumentNo']}.pdf');
+                bytes: pdfBytes,
+                filename: 'Order_${order['DocumentNo']}.pdf',
+              );
             },
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long_rounded),
             tooltip: AppLocale.printTicket.getString(context),
             onPressed: () async {
-              final bool? confirmPrintTicket =
-                  await _printTicketConfirmation(context);
+              final bool? confirmPrintTicket = await _printTicketConfirmation(
+                context,
+              );
               if (confirmPrintTicket == true) {
-                if (POS.cPosID != null) {
-                  try {
-                    await printPOSTicketEscPosDefault(order);
-                    return; // éxito con ESC/POS
-                  } catch (e) {
-                    debugPrint('Fallo ESC/POS, usando PDF de respaldo: $e');
-                  }
-                }
-
-                // === Respaldo PDF ===
-                final pdfBytes = POS.cPosID != null
-                    ? await generatePOSTicketBackup(order)
-                    : await generateOrderTicket(order);
-
                 try {
-                  final printers = await Printing.listPrinters();
-                  final defaultPrinter = printers.firstWhere(
-                    (p) => p.isDefault,
-                    orElse: () => printers.isNotEmpty
-                        ? printers.first
-                        : throw Exception('No hay impresoras disponibles'),
-                  );
+                  if (POS.cPosID != null) {
+                    CurrentLogMessage.add(
+                      'POS mode detected. Trying RAW print (ESC/POS)...',
+                      tag: 'PRINT',
+                    );
+                    try {
+                      await printPOSTicketRaw(order, autoCut: true);
+                      CurrentLogMessage.add(
+                        'RAW print sent successfully',
+                        tag: 'PRINT',
+                      );
+                      return; // listo, no seguimos al PDF
+                    } on UnsupportedError catch (e) {
+                      CurrentLogMessage.add(
+                        'RAW print unsupported on this platform: ${e.message}',
+                        level: 'WARN',
+                        tag: 'PRINT',
+                      );
+                      // Plataforma no soporta RAW -> seguimos al PDF de respaldo
+                    } catch (e) {
+                      CurrentLogMessage.add(
+                        'RAW print error: $e',
+                        level: 'ERROR',
+                        tag: 'PRINT',
+                      );
+                      // Cualquier otro error en RAW -> seguimos al PDF de respaldo
+                    }
+                  }
 
-                  await Printing.directPrintPdf(
-                    printer: defaultPrinter,
-                    onLayout: (_) => pdfBytes,
-                  );
+                  // Respaldo: PDF (POS -> ticket; no POS -> resumen de orden)
+                  final pdfBytes = POS.cPosID != null
+                      ? await generatePOSTicket(order)
+                      : await generateOrderTicket(order);
+
+                  try {
+                    final printers = await Printing.listPrinters();
+                    final defaultPrinter = printers.firstWhere(
+                      (p) => p.isDefault,
+                      orElse: () => printers.isNotEmpty
+                          ? printers.first
+                          : throw Exception('No hay impresoras disponibles'),
+                    );
+
+                    await Printing.directPrintPdf(
+                      printer: defaultPrinter,
+                      usePrinterSettings: true,
+                      dynamicLayout: true,
+                      onLayout: (_) => pdfBytes,
+                    );
+                  } catch (e) {
+                    await Printing.sharePdf(
+                      bytes: pdfBytes,
+                      filename: 'Order_${order['DocumentNo']}.pdf',
+                    );
+                  }
                 } catch (e) {
-                  await Printing.sharePdf(
-                    bytes: pdfBytes,
-                    filename: 'Order_${order['DocumentNo']}.pdf',
-                  );
+                  // Último fallback silencioso: intentar compartir PDF genérico
+                  try {
+                    final pdfBytes = await generateOrderTicket(order);
+                    await Printing.sharePdf(
+                      bytes: pdfBytes,
+                      filename: 'Order_${order['DocumentNo']}.pdf',
+                    );
+                  } catch (_) {}
                 }
               }
             },
@@ -128,25 +161,28 @@ class OrderDetailPage extends StatelessWidget {
             children: [
               _buildHeader(order: order, context: context, feFuture: feFuture),
               const SizedBox(height: CustomSpacer.large),
-              Text(AppLocale.productSummary.getString(context),
-                  style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                AppLocale.productSummary.getString(context),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: CustomSpacer.small),
               Expanded(
                 child: ListView.builder(
                   itemCount: lines.length,
                   itemBuilder: (context, index) {
                     final line = lines[index];
-                    final String name = (line['M_Product_ID']?['identifier'] ??
-                            '_${line['Description']}')
-                        .split('_')
-                        .skip(1)
-                        .join(' ');
+                    final String name =
+                        (line['M_Product_ID']?['identifier'] ??
+                                '_${line['Description']}')
+                            .split('_')
+                            .skip(1)
+                            .join(' ');
                     final double qty = (line['QtyOrdered'] as num).toDouble();
-                    final double price =
-                        (line['PriceActual'] as num).toDouble();
+                    final double price = (line['PriceActual'] as num)
+                        .toDouble();
                     final double net = (line['LineNetAmt'] as num).toDouble();
-                    final double rate =
-                        (line['C_Tax_ID']['Rate'] as num).toDouble();
+                    final double rate = (line['C_Tax_ID']['Rate'] as num)
+                        .toDouble();
                     final double tax = net * (rate / 100);
                     final double total = net + tax;
 
@@ -155,22 +191,24 @@ class OrderDetailPage extends StatelessWidget {
                         (line['PriceList'] as num?)?.toDouble() ?? price;
                     final double discountPct =
                         (line['Discount'] as num?)?.toDouble() ??
-                            ((priceList > 0)
-                                ? (1 - (price / priceList)) * 100
-                                : 0.0);
+                        ((priceList > 0)
+                            ? (1 - (price / priceList)) * 100
+                            : 0.0);
 
                     return Container(
                       margin: EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .scaffoldBackgroundColor
-                            .withOpacity(0.3),
+                        color: Theme.of(
+                          context,
+                        ).scaffoldBackgroundColor.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: ListTile(
                         tileColor: Colors.transparent,
-                        title: Text(name,
-                            style: Theme.of(context).textTheme.bodyMedium),
+                        title: Text(
+                          name,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -195,24 +233,21 @@ class OrderDetailPage extends StatelessWidget {
                           children: [
                             Text(
                               "${line['C_Tax_ID']['Name']} ($rate%)",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(fontSize: 12),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(fontSize: 12),
                             ),
                             Text(
                               "${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(fontSize: 12),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(fontSize: 12),
                             ),
                             Text(
                               "${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(fontSize: 12),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.copyWith(fontSize: 12),
                             ),
                           ],
                         ),
@@ -222,12 +257,16 @@ class OrderDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: CustomSpacer.large),
-              Text(AppLocale.paymentMethods.getString(context),
-                  style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                AppLocale.paymentMethods.getString(context),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: CustomSpacer.small),
               if (payments.isEmpty)
-                Text(AppLocale.noData.getString(context),
-                    style: Theme.of(context).textTheme.bodySmall)
+                Text(
+                  AppLocale.noData.getString(context),
+                  style: Theme.of(context).textTheme.bodySmall,
+                )
               else
                 ListView.separated(
                   shrinkWrap: true,
@@ -239,19 +278,21 @@ class OrderDetailPage extends StatelessWidget {
                     final dynamic tenderField = p['C_POSTenderType_ID'];
                     final String tenderName = (tenderField is Map)
                         ? (tenderField['identifier'] ??
-                                tenderField['name'] ??
-                                '---')
-                            .toString()
+                                  tenderField['name'] ??
+                                  '---')
+                              .toString()
                         : tenderField?.toString() ?? '---';
                     final double payAmt =
                         ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .scaffoldBackgroundColor
-                            .withOpacity(0.25),
+                        color: Theme.of(
+                          context,
+                        ).scaffoldBackgroundColor.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -276,9 +317,10 @@ class OrderDetailPage extends StatelessWidget {
                 ),
               const Divider(),
               _buildFinalSummary(
-                  taxSummary: taxSummary,
-                  grandTotal: (order['GrandTotal'] as num).toDouble(),
-                  context: context),
+                taxSummary: taxSummary,
+                grandTotal: (order['GrandTotal'] as num).toDouble(),
+                context: context,
+              ),
             ],
           ),
         ),
@@ -300,15 +342,13 @@ class OrderDetailPage extends StatelessWidget {
           final taxKey = "$taxName (${taxRate.toStringAsFixed(0)}%)";
 
           taxSummary.putIfAbsent(
-              taxKey,
-              () => {
-                    "net": 0.0,
-                    "tax": 0.0,
-                    "total": 0.0,
-                  });
+            taxKey,
+            () => {"net": 0.0, "tax": 0.0, "total": 0.0},
+          );
 
-          final double taxAmount =
-              double.parse((lineNetAmt * (taxRate / 100)).toStringAsFixed(2));
+          final double taxAmount = double.parse(
+            (lineNetAmt * (taxRate / 100)).toStringAsFixed(2),
+          );
           taxSummary[taxKey]!["net"] = taxSummary[taxKey]!["net"]! + lineNetAmt;
           taxSummary[taxKey]!["tax"] = taxSummary[taxKey]!["tax"]! + taxAmount;
           taxSummary[taxKey]!["total"] =
@@ -320,10 +360,11 @@ class OrderDetailPage extends StatelessWidget {
     return taxSummary;
   }
 
-  Widget _buildHeader(
-      {required Map<String, dynamic> order,
-      required BuildContext context,
-      required Future<Map<String, String>?> feFuture}) {
+  Widget _buildHeader({
+    required Map<String, dynamic> order,
+    required BuildContext context,
+    required Future<Map<String, String>?> feFuture,
+  }) {
     return FutureBuilder<Map<String, String>?>(
       future: feFuture,
       builder: (context, snapshot) {
@@ -334,24 +375,22 @@ class OrderDetailPage extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.person_outline,
-                  size: 32,
-                ),
+                Icon(Icons.person_outline, size: 32),
                 const SizedBox(width: CustomSpacer.small),
-                Text(order['bpartner']['name'],
-                    style: Theme.of(context).textTheme.headlineLarge),
+                Text(
+                  order['bpartner']['name'],
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
               ],
             ),
             Row(
               children: [
-                const Icon(
-                  Icons.calendar_month_outlined,
-                  size: 32,
-                ),
+                const Icon(Icons.calendar_month_outlined, size: 32),
                 const SizedBox(width: CustomSpacer.small),
-                Text(order['DateOrdered'],
-                    style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  order['DateOrdered'],
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
               ],
             ),
           ],
@@ -363,17 +402,17 @@ class OrderDetailPage extends StatelessWidget {
           right = Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('Factura electrónica',
-                  style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                'Factura electrónica',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const SizedBox(height: 6),
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: SizedBox(
                   width: 120,
                   height: 120,
-                  child: QrImageView(
-                    data: qrUrlData,
-                  ),
+                  child: QrImageView(data: qrUrlData),
                 ),
               ),
             ],
@@ -398,29 +437,39 @@ class OrderDetailPage extends StatelessWidget {
     required double grandTotal,
     required BuildContext context,
   }) {
-    final double totalNeto =
-        taxSummary.values.map((e) => e['net']!).reduce((a, b) => a + b);
-    final double totalImpuesto =
-        taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b);
+    final double totalNeto = taxSummary.values
+        .map((e) => e['net']!)
+        .reduce((a, b) => a + b);
+    final double totalImpuesto = taxSummary.values
+        .map((e) => e['tax']!)
+        .reduce((a, b) => a + b);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppLocale.finalSummary.getString(context),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          AppLocale.finalSummary.getString(context),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: CustomSpacer.small),
         Text(
-            "${AppLocale.grossTotal.getString(context)} \$${totalNeto.toStringAsFixed(2)}",
-            style: Theme.of(context).textTheme.bodyMedium),
-        ...taxSummary.entries.map((entry) => Text(
+          "${AppLocale.grossTotal.getString(context)} \$${totalNeto.toStringAsFixed(2)}",
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        ...taxSummary.entries.map(
+          (entry) => Text(
             "${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}",
-            style: Theme.of(context).textTheme.bodyMedium)),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
         Text(
-            "${AppLocale.taxTotal.getString(context)} \$${totalImpuesto.toStringAsFixed(2)}",
-            style: Theme.of(context).textTheme.titleMedium),
+          "${AppLocale.taxTotal.getString(context)} \$${totalImpuesto.toStringAsFixed(2)}",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         Text(
-            "${AppLocale.finalTotal.getString(context)} \$${grandTotal.toStringAsFixed(2)}",
-            style: Theme.of(context).textTheme.titleMedium),
+          "${AppLocale.finalTotal.getString(context)} \$${grandTotal.toStringAsFixed(2)}",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
       ],
     );
   }
