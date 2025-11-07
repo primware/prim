@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:flutter_localization/flutter_localization.dart';
-
 import 'package:qr_flutter/qr_flutter.dart';
-
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Home/order/my_order_print_generator.dart';

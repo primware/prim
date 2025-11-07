@@ -200,6 +200,49 @@ Future<List<Map<String, dynamic>>> fetchTax() async {
   }
 }
 
+Future<List<Map<String, dynamic>>> fetctSalesRep() async {
+  try {
+    final response = await get(
+      Uri.parse(EndPoints.salesRep),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      final records = (jsonResponse['records'] as List?) ?? const [];
+
+      final List<Map<String, dynamic>> reps = [];
+      for (final record in records) {
+        final adUsers = (record['AD_User'] as List?) ?? const [];
+        if (adUsers.isEmpty) {
+          continue;
+        }
+        final adUserId = adUsers.first['id'];
+        final name = record['Name'];
+        if (adUserId == null || name == null) {
+          continue;
+        }
+        reps.add({'id': adUserId, 'name': name});
+      }
+      return reps;
+    } else {
+      throw Exception(
+        'Error al cargar los representantes comerciales: ${response.statusCode}',
+      );
+    }
+  } catch (e) {
+    CurrentLogMessage.add(
+      'Excepción al obtener los representantes comerciales: $e',
+      level: 'ERROR',
+      tag: 'fetctSalesRep',
+    );
+    return [];
+  }
+}
+
 Future<Map<String, dynamic>> postInvoice({
   required int cBPartnerID,
   required List<Map<String, dynamic>> invoiceLines,
@@ -207,6 +250,7 @@ Future<Map<String, dynamic>> postInvoice({
   required BuildContext context,
   required String docAction,
   required bool isRefund,
+  required int salesRepID,
   int? doctypeID,
 }) async {
   try {
@@ -243,7 +287,7 @@ Future<Map<String, dynamic>> postInvoice({
           (isRefund
               ? POS.docTypeRefundID
               : POS.docTypeID ?? {"identifier": "POS Order"}),
-      "SalesRep_ID": {"id": UserData.id},
+      "SalesRep_ID": {"id": salesRepID},
       "DeliveryRule": "A",
       "DeliveryViaRule": "P",
       "InvoiceRule": "I",

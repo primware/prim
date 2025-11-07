@@ -64,6 +64,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isProductSearchLoading = false,
       isProductLoading = true,
       isYappyLoading = false,
+      isSalesRepLoading = true,
       isYappyConfigAvailable = false,
       canShowCreateCustomerButton = false,
       firtsLoad = false;
@@ -74,6 +75,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   List<Map<String, dynamic>> categpryOptions = [];
   List<Map<String, dynamic>> taxOptions = [];
   List<Map<String, dynamic>> invoiceLines = [];
+  List<Map<String, dynamic>> salesRep = [];
 
   // Estado para categorías seleccionadas
   Set<int> selectedCategories = {};
@@ -85,7 +87,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   bool isFormValid = false;
   bool _isInvoiceValid = false;
 
-  int? selectedBPartnerID, docNoSequenceID;
+  int? selectedBPartnerID, docNoSequenceID, selectedSalesRepID;
   String? selectedDocActionCode, yappyTransactionId, docNoSequenceNumber;
   Map<String, dynamic>? selectedTax;
 
@@ -119,6 +121,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBPartner();
+      _loadSalesRep();
       _loadDocumentActions();
       _loadProduct();
       _loadTax();
@@ -139,6 +142,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (widget.sourceOrderId != null) {
       _prefillFromExistingOrder();
     }
+  }
+
+  Future<void> _loadSalesRep() async {
+    final fetchedSalesRep = await fetctSalesRep();
+    if (fetchedSalesRep.isNotEmpty) {
+      setState(() {
+        salesRep = fetchedSalesRep;
+        selectedSalesRepID = UserData.id;
+      });
+    }
+
+    setState(() => isSalesRepLoading = false);
   }
 
   Future<void> _loadDocumentActions() async {
@@ -1216,6 +1231,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     final result = await postInvoice(
       cBPartnerID: bPartner,
+      salesRepID: selectedSalesRepID!,
       invoiceLines: invoiceLine,
       payments: paymentData,
       context: context,
@@ -1344,6 +1360,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         total = 0.0;
         paymentControllers.forEach((key, controller) => controller.clear());
         selectedDocActionCode = POS.documentActions.first['code'];
+        selectedSalesRepID = UserData.id;
         _validateForm();
       });
     } else {
@@ -1456,6 +1473,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const SizedBox(height: CustomSpacer.medium),
+                          SearchableDropdown<int>(
+                            value: selectedSalesRepID,
+                            options: salesRep,
+                            showSearchBox: false,
+                            labelText: AppLocale.seller.getString(context),
+                            onChanged: (value) {
+                              setState(() {
+                                selectedSalesRepID = value;
+                              });
+                            },
+                          ),
                           const SizedBox(height: CustomSpacer.medium),
                           if (isCustomerSearchLoading) ...[
                             const SizedBox(height: 4),
@@ -1803,7 +1832,66 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 productFieldController,
                                             showCreateButtonIfNotFound: true,
                                             onItemSelected: (item) {
-                                              _showQuantityDialog(item);
+                                              // Si estamos en modo POS (hay cPosID), agregar directo sin mostrar el diálogo.
+                                              if (POS.cPosID != null) {
+                                                final int? selectedTaxID =
+                                                    (item['C_Tax_ID'] ??
+                                                            item['tax']?['id'] ??
+                                                            selectedTax?['id'])
+                                                        as int?;
+
+                                                final double priceActual = _r2(
+                                                  (item['price'] ??
+                                                          item['Price'] ??
+                                                          0)
+                                                      .toDouble(),
+                                                );
+                                                final double priceList = _r2(
+                                                  (item['PriceList'] ??
+                                                          item['priceList'] ??
+                                                          item['price'] ??
+                                                          0)
+                                                      .toDouble(),
+                                                );
+
+                                                final double discount =
+                                                    priceList > 0
+                                                    ? _r2(
+                                                        100 *
+                                                            (1 -
+                                                                (priceActual /
+                                                                    priceList)),
+                                                      )
+                                                    : 0.0;
+
+                                                setState(() {
+                                                  invoiceLines.add({
+                                                    ...item,
+                                                    'quantity': 1,
+                                                    'price': priceActual,
+                                                    'C_Tax_ID': selectedTaxID,
+                                                    'Description':
+                                                        item['Description'] ??
+                                                        '',
+                                                    'PriceList': priceList,
+                                                    'Discount': discount,
+                                                  });
+                                                });
+
+                                                _recalculateSummary();
+                                                productController.clear();
+                                                _validateForm();
+
+                                                WidgetsBinding.instance
+                                                    .addPostFrameCallback((_) {
+                                                      if (mounted) {
+                                                        productFieldController
+                                                            .requestFocus();
+                                                      }
+                                                    });
+                                              } else {
+                                                _showQuantityDialog(item);
+                                              }
                                             },
                                             onSubmit: (_) => _loadProduct(
                                               showLoadingIndicator: true,

@@ -534,16 +534,21 @@ Future<Uint8List> buildPOSTicketRawData(
   // Encabezado
   esc.alignCenter();
   if ((POSPrinter.headerName ?? '').isNotEmpty) esc.txt(POSPrinter.headerName!);
-  if ((POSPrinter.headerAddress ?? '').isNotEmpty)
+  if ((POSPrinter.headerAddress ?? '').isNotEmpty) {
     esc.txt(POSPrinter.headerAddress!);
-  if ((POSPrinter.headerTaxID ?? '').isNotEmpty)
+  }
+  if ((POSPrinter.headerTaxID ?? '').isNotEmpty) {
     esc.txt('RUC: ${POSPrinter.headerTaxID}');
-  if ((POSPrinter.headerDV ?? '').isNotEmpty)
+  }
+  if ((POSPrinter.headerDV ?? '').isNotEmpty) {
     esc.txt('DV: ${POSPrinter.headerDV}');
-  if ((POSPrinter.headerPhone ?? '').isNotEmpty)
+  }
+  if ((POSPrinter.headerPhone ?? '').isNotEmpty) {
     esc.txt('Tel: ${POSPrinter.headerPhone}');
-  if ((POSPrinter.headerEmail ?? '').isNotEmpty)
+  }
+  if ((POSPrinter.headerEmail ?? '').isNotEmpty) {
     esc.txt(POSPrinter.headerEmail!);
+  }
   esc.feed(1);
 
   final docType = (order['doctypetarget']?['name'] ?? '').toString();

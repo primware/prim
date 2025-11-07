@@ -29,7 +29,6 @@ class _OrderListPageState extends State<OrderListPage> {
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true, isSearchLoading = false, onlyMyOrders = true;
   String _searchQuery = '';
-  Timer? _debounce;
   TextEditingController searchController = TextEditingController();
 
   // Confirmación para imprimir ticket
