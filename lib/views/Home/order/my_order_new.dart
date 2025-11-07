@@ -1428,10 +1428,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
               ],
               Text(
                 widget.orderName != null
-                    ? '${widget.orderName!}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}'
+                    ? '${isMobile ? '' : '${widget.orderName!}: '}${docNoSequenceNumber != null ? "$docNoSequenceNumber" : ""}'
                     : widget.isRefund
                     ? '${AppLocale.creditNote.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}'
                     : '${AppLocale.newOrder.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ],
           ),
