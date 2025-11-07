@@ -24,11 +24,13 @@ class AppLocale {
   static const String rememberMe = 'remenberLogin';
   static const String onlyMyOrders = 'onlyMyOrders';
   static const String server = 'server';
+  static const String seeReceipt = 'seeReceipt';
   static const String lang = 'lang';
   static const String newOrder = 'newOrder';
   static const String customer = 'customer';
   static const String process = 'process';
   static const String cancel = 'cancel';
+  static const String electronicBill = 'electronicBill';
   static const String selectRole = 'selectRole';
   static const String company = 'company';
   static const String seller = 'seller';
@@ -212,6 +214,7 @@ class AppLocale {
     register: 'Register',
     newCustomer: 'New Customer',
     nameReq: 'Name *',
+    electronicBill: 'Electronic Bill',
     exist: 'Exist',
     seller: 'Seller',
     priceList: 'Price List',
@@ -234,6 +237,7 @@ class AppLocale {
     dashboard: 'Dashboard',
     salesYTDMonthly: 'Total sold by month',
     days: 'Days',
+    seeReceipt: '>> See Receipt <<',
     months: 'Months',
     noDataForFilter: 'No data available for the selected filter.',
     pressAgainToLogout: 'Press again to log out',
@@ -357,6 +361,7 @@ class AppLocale {
     noAccount: '¿No tienes una cuenta?',
     register: 'Regístrate',
     refresh: 'Actualizar',
+    electronicBill: 'Factura Electrónica',
     newCustomer: 'Cliente nuevo',
     nameReq: 'Nombre *',
     personTypeReq: 'Tipo ID *',
@@ -404,6 +409,7 @@ class AppLocale {
     code: 'Código',
     yourLogo: 'Tu Logo aqui',
     name: 'Nombre',
+    seeReceipt: '>> Ver factura <<',
     description: 'Descripción',
     priceKey: 'Precio',
     stockKey: 'Stock',

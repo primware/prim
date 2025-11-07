@@ -7,53 +7,98 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
+import 'package:intl/intl.dart';
 
 import '../../../API/endpoint.api.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 
 Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
+  // Currency formatter
+  final NumberFormat nf = NumberFormat.currency(locale: 'es_PA', symbol: 'B/.');
+
+  // Fetch FE info if order['id'] exists
+  Map<String, String>? feInfo;
+  if (order['id'] != null) {
+    feInfo = await fetchElectronicInvoiceInfo(orderId: order['id']);
+  }
+
   final pdf = pw.Document();
   final List lines = (order['C_OrderLine'] as List?) ?? const [];
+
+  // Header fields (as in generatePOSTicket)
+  String str(dynamic v) => v?.toString() ?? '';
+  String docTypename = order['doctypetarget']?['name'] ?? '';
+  final docNo = str(order['DocumentNo']);
+  final date = str(order['DateOrdered']);
+  final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
+  final taxID = str(order['bpartner']?['taxID'] ?? '');
+  final phone = str(order['bpartner']?['phone'] ?? '');
+  final customerName = str(order['bpartner']?['name'] ?? 'CONTADO');
+  final customeLocation = str(order['bpartner']?['location'] ?? '');
 
   pdf.addPage(
     pw.MultiPage(
       build: (context) => [
-        pw.Header(
-          level: 0,
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              (POSPrinter.logo != null)
-                  ? pw.Container(
-                      width: 48,
-                      height: 48,
-                      child: pw.Image(
-                        pw.MemoryImage(POSPrinter.logo!),
-                        fit: pw.BoxFit.contain,
-                      ),
-                    )
-                  : pw.SizedBox(width: 48, height: 48),
-              pw.Expanded(
-                child: pw.Center(
-                  child: pw.Text('Resumen de la Orden #${order['DocumentNo']}'),
+        // Header (same as generatePOSTicket) - flattened: all widgets directly in the list
+        POSPrinter.logo != null
+            ? pw.Center(
+                child: pw.Image(
+                  pw.MemoryImage(POSPrinter.logo!),
+                  width: 60,
+                  height: 60,
+                  fit: pw.BoxFit.contain,
                 ),
-              ),
-              pw.SizedBox(width: 48, height: 48),
-            ],
+              )
+            : pw.SizedBox(),
+        pw.SizedBox(height: 4),
+        pw.Text(POSPrinter.headerName ?? '', textAlign: pw.TextAlign.center),
+        pw.Text(POSPrinter.headerAddress ?? '', textAlign: pw.TextAlign.center),
+        if (POSPrinter.headerTaxID != null)
+          pw.Text(
+            'RUC: ${POSPrinter.headerTaxID ?? ''}',
+            textAlign: pw.TextAlign.center,
           ),
+        if (POSPrinter.headerDV != null)
+          pw.Text(
+            'DV: ${POSPrinter.headerDV ?? ''}',
+            textAlign: pw.TextAlign.center,
+          ),
+        if (POSPrinter.headerPhone != null)
+          pw.Text(
+            'Tel: ${POSPrinter.headerPhone ?? ''}',
+            textAlign: pw.TextAlign.center,
+          ),
+        pw.Text(POSPrinter.headerEmail ?? '', textAlign: pw.TextAlign.center),
+        pw.SizedBox(height: 12),
+        pw.Text(
+          docTypename,
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
         ),
-        pw.Text("Cliente: ${order['bpartner']['name']}"),
-        pw.Text("Fecha: ${order['DateOrdered']}"),
-        pw.SizedBox(height: 10),
+        pw.SizedBox(height: 18),
+        // Order details
+        pw.Text('Recibo: $docNo'),
+        pw.Text('Fecha: $date'),
+        if (servedBy.isNotEmpty) pw.Text('Atendido por: $servedBy'),
+        if (taxID.isNotEmpty) pw.Text('Cédula: $taxID'),
+        pw.Text('Cliente: $customerName'),
+        if (customeLocation.isNotEmpty) pw.Text('Dirección: $customeLocation'),
+        if (phone.isNotEmpty) pw.Text('Teléfono: $phone'),
+        pw.SizedBox(height: 12),
+        // Products table
         if (lines.isNotEmpty) ...[
-          pw.Text("Productos:"),
+          pw.Text(
+            "Productos:",
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 4),
           pw.Table.fromTextArray(
             headers: [
               'Producto',
               'Descripción',
               'Precio',
-              'Impuesto',
+              'Imp',
               'Subtotal',
               'Total',
             ],
@@ -65,22 +110,21 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
                       .split('_')
                       .skip(1)
                       .join(' ');
-              final qty = (line['QtyOrdered'] ?? 0).toString();
+              final qty = (line['QtyOrdered'] ?? 0);
               final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
-              final rate = line['C_Tax_ID']['Rate'];
-              final taxName = line['C_Tax_ID']['Name'];
-              final net = line['LineNetAmt'] ?? 0;
+              final rate =
+                  (line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0;
+              final net = (line['LineNetAmt'] as num?) ?? 0;
               final tax = (net * rate / 100);
               final total = net + tax;
               final description = line['Description']?.toString() ?? '';
-
               return [
                 name,
                 description,
-                "$qty x \$${price.toStringAsFixed(2)}",
-                "$taxName ($rate%)",
-                "\$${net.toStringAsFixed(2)}",
-                "\$${total.toStringAsFixed(2)}",
+                "${qty} x ${nf.format(price)}",
+                "${rate.toStringAsFixed(0)}%",
+                nf.format(net),
+                nf.format(total),
               ];
             }).toList(),
             headerStyle: pw.TextStyle(
@@ -92,7 +136,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
               0: pw.FixedColumnWidth(95), // Producto
               1: pw.FlexColumnWidth(3), // Descripción
               2: pw.FixedColumnWidth(90), // Cant. x Precio
-              3: pw.FixedColumnWidth(80), // Impuesto
+              3: pw.FixedColumnWidth(40), // Impuesto
               4: pw.FixedColumnWidth(65), // Subtotal
               5: pw.FixedColumnWidth(65), // Total
             },
@@ -107,12 +151,54 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
           ),
           pw.SizedBox(height: 20),
         ],
-        pw.Text("Total bruto: \$${order['TotalLines']}"),
-        pw.Text("Total final: \$${order['GrandTotal']}"),
+        // Totals section
+        pw.Text(
+          "Total bruto: ${nf.format(order['TotalLines'])}",
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+        ),
+        pw.Text(
+          "Total final: ${nf.format(order['GrandTotal'])}",
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13),
+        ),
+        pw.SizedBox(height: 16),
+        // FE section if present
+        if (feInfo != null) ...[
+          pw.Divider(),
+          pw.SizedBox(height: 8),
+          pw.Text(
+            'FACTURA ELECTRÓNICA',
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            'Protocolo de Autorización: ${feInfo['protocolo']}',
+            style: pw.TextStyle(fontSize: 8),
+          ),
+          pw.Text(
+            'Consulte por la clave de acceso en:',
+            style: pw.TextStyle(fontSize: 8),
+          ),
+          pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 8)),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            'o escaneando el código QR:',
+            style: pw.TextStyle(fontSize: 8),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Center(
+            child: pw.BarcodeWidget(
+              data: feInfo['url'] ?? '',
+              barcode: pw.Barcode.qrCode(),
+              width: 120,
+              height: 120,
+            ),
+          ),
+          pw.SizedBox(height: 10),
+        ],
       ],
     ),
   );
-
   return pdf.save();
 }
 

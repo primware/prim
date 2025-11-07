@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Home/order/my_order_print_generator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
@@ -369,27 +370,32 @@ class OrderDetailPage extends StatelessWidget {
       future: feFuture,
       builder: (context, snapshot) {
         final fe = snapshot.data;
+        final bool isMobile = MediaQuery.of(context).size.width < 600;
 
         final left = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.person_outline, size: 32),
+                Icon(Icons.person_outline, size: isMobile ? 20 : 32),
                 const SizedBox(width: CustomSpacer.small),
                 Text(
                   order['bpartner']['name'],
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: isMobile
+                      ? Theme.of(context).textTheme.bodyMedium
+                      : Theme.of(context).textTheme.headlineLarge,
                 ),
               ],
             ),
             Row(
               children: [
-                const Icon(Icons.calendar_month_outlined, size: 32),
+                Icon(Icons.calendar_month_outlined, size: isMobile ? 20 : 32),
                 const SizedBox(width: CustomSpacer.small),
                 Text(
                   order['DateOrdered'],
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: isMobile
+                      ? Theme.of(context).textTheme.bodyMedium
+                      : Theme.of(context).textTheme.headlineLarge,
                 ),
               ],
             ),
@@ -400,10 +406,12 @@ class OrderDetailPage extends StatelessWidget {
         if (fe != null && (fe['url']?.isNotEmpty ?? false)) {
           final qrUrlData = fe['url']!;
           right = Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: isMobile
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.end,
             children: [
               Text(
-                'Factura electrónica',
+                AppLocale.electronicBill.getString(context),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 6),
@@ -415,6 +423,31 @@ class OrderDetailPage extends StatelessWidget {
                   child: QrImageView(data: qrUrlData),
                 ),
               ),
+              if (isMobile) ...[
+                InkWell(
+                  onTap: () {
+                    launchUrl(Uri.parse(qrUrlData));
+                  },
+                  child: Text(
+                    AppLocale.seeReceipt.getString(context),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          );
+        }
+
+        // Responsive: columna en móvil, fila en escritorio
+        if (isMobile) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              left,
+              if (right != null) ...[const SizedBox(height: 12), right],
             ],
           );
         }
