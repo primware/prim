@@ -10,7 +10,6 @@ jobs:
   build-linux:
     runs-on: ubuntu-22.04
     env:
-      FLUTTER_VERSION: '3.32.1'
       ARTIFACT_NAME: linux-release-${{ github.run_number }}
 
     steps:
@@ -22,11 +21,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
 
-      - name: Configurar Flutter ${{ env.FLUTTER_VERSION }} (stable)
+      - name: Configurar Flutter (stable - latest)
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Verificar versiones
@@ -44,21 +42,39 @@ jobs:
         run: flutter build linux --release
 
       - name: Verificar carpeta Release y listar contenido
+        shell: bash
         run: |
-          RELEASE_DIR="build/linux/x64/release/bundle"
-          if [ ! -d "$RELEASE_DIR" ]; then
-            echo "No se encontró carpeta de salida: $RELEASE_DIR"
+          candidates=(
+            "build/linux/x64/release/bundle"
+            "build/linux/arm64/release/bundle"
+            "build/linux/release/bundle"
+          )
+          releaseDir=""
+          for p in "${candidates[@]}"; do
+            if [ -d "$p" ]; then
+              releaseDir="$p"
+              break
+            fi
+          done
+          if [ -z "$releaseDir" ]; then
+            echo "No se encontró ninguna carpeta Release en: ${candidates[*]}"
             exit 1
           fi
-          echo "Carpeta Release: $RELEASE_DIR"
-          find "$RELEASE_DIR" -type f -printf "%s  %p\n" | sort -n
 
-          echo "RELEASE_DIR=$RELEASE_DIR" >> $GITHUB_ENV
+          echo "Carpeta Release detectada: $releaseDir"
+          find "$releaseDir" -type f -printf "%s  %p\n" | sort -n
+          echo "RELEASE_DIR=$releaseDir" >> "$GITHUB_ENV"
 
       - name: Empaquetar ZIP
+        shell: bash
         run: |
-          zip -r "${ARTIFACT_NAME}.zip" "$RELEASE_DIR"
-          ls -lh "${ARTIFACT_NAME}.zip"
+          zipName="${ARTIFACT_NAME}.zip"
+          rm -f "$zipName"
+          (cd "$RELEASE_DIR" && zip -r "../$zipName" .)
+          mv "build/linux/x64/release/$zipName" "./" 2>/dev/null || true
+          mv "build/linux/arm64/release/$zipName" "./" 2>/dev/null || true
+          [ -f "$zipName" ] || { echo "No se pudo crear $zipName"; exit 1; }
+          ls -lh "$zipName"
 
       - name: Subir artefacto (.zip)
         uses: actions/upload-artifact@v4
