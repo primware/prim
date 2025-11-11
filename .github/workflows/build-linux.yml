@@ -18,10 +18,23 @@ jobs:
 
       - name: Instalar dependencias de sistema (Linux desktop)
         run: |
+          set -e
           sudo apt-get update
           sudo apt-get install -y \
             clang cmake ninja-build pkg-config \
-            libgtk-3-dev liblzma-dev libcups2-dev
+            libgtk-3-dev liblzma-dev \
+            libcups2-dev libcupsimage2-dev
+
+      - name: Verificar CUPS (diagnóstico)
+        run: |
+          set -e
+          dpkg -l | grep -E 'cups|libcups' || true
+          echo "pkg-config paths:"
+          pkg-config --variable pc_path pkg-config || true
+          echo "¿cups está visible?"
+          pkg-config --list-all | grep -i cups || true
+          echo "Versión de cups vía pkg-config:"
+          pkg-config --modversion cups || true
 
       - name: Configurar Flutter (stable - latest)
         uses: subosito/flutter-action@v2
@@ -73,7 +86,6 @@ jobs:
           zipName="${ARTIFACT_NAME}.zip"
           rm -f "$zipName"
           (cd "$RELEASE_DIR" && zip -r "../$zipName" .)
-          # mover ZIP a raíz del repo sin importar la arquitectura
           mv "build/linux/x64/release/$zipName" "./" 2>/dev/null || true
           mv "build/linux/arm64/release/$zipName" "./" 2>/dev/null || true
           [ -f "$zipName" ] || { echo "No se pudo crear $zipName"; exit 1; }
