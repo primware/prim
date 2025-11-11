@@ -21,6 +21,7 @@ class MetricCard extends StatefulWidget {
   final ChartType chartType;
   final String? xAxisLabel; // eje X label
   final String? yAxisLabel; // eje Y label
+  final bool showRefresh;
 
   const MetricCard({
     super.key,
@@ -29,6 +30,7 @@ class MetricCard extends StatefulWidget {
     this.chartType = ChartType.line,
     this.xAxisLabel,
     this.yAxisLabel,
+    this.showRefresh = true,
   });
 
   @override
@@ -101,7 +103,7 @@ class _MetricCardState extends State<MetricCard> {
   // --- Horizontal scroll helpers ---
   double _tickMinWidth() {
     if (widget.chartType == ChartType.pie) return 0; // not used
-    return 64.0;
+    return 72.0;
   }
 
   double _computeChartWidth(BuildContext context) {
@@ -110,10 +112,9 @@ class _MetricCardState extends State<MetricCard> {
     }
     final screen = MediaQuery.of(context).size.width * 0.8;
     if (dataKeys.isEmpty) return screen;
-    // Reserve a bit of padding and ensure each tick has legible width
-    final desired = (dataKeys.length * _tickMinWidth()) + 24.0;
-    final width = desired > screen ? desired : screen;
-    return width > 760 ? 760 : width;
+    // sin tope; deja crecer para que no se monten las etiquetas
+    final desired = (dataKeys.length * _tickMinWidth()) + 32.0; // padding extra
+    return desired > screen ? desired : screen;
   }
 
   Future<void> _load() async {
@@ -190,6 +191,10 @@ class _MetricCardState extends State<MetricCard> {
   @override
   void initState() {
     super.initState();
+    _load();
+  }
+
+  void _reload() {
     _load();
   }
 
@@ -296,17 +301,18 @@ class _MetricCardState extends State<MetricCard> {
                   sideTitles: SideTitles(
                     showTitles: true,
                     getTitlesWidget: (value, meta) {
-                      final i = value.toInt();
+                      final i = value.round();
                       if (i < 0 || i >= dataKeys.length) {
                         return const SizedBox();
                       }
-                      final step = (dataKeys.length / 8).ceil();
-                      if (step > 1 &&
-                          i % step != 0 &&
-                          i != dataKeys.length - 1) {
-                        return const SizedBox();
-                      }
-                      return Text(dataKeys[i]);
+
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 2.0),
+                        child: Text(
+                          dataKeys[i],
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      );
                     },
                     reservedSize: 28,
                   ),
@@ -489,9 +495,20 @@ class _MetricCardState extends State<MetricCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.titleBuilder(context),
-          style: Theme.of(context).textTheme.titleMedium,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              widget.titleBuilder(context),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            if (widget.showRefresh)
+              IconButton(
+                tooltip: 'Refrescar',
+                icon: const Icon(Icons.refresh),
+                onPressed: isLoading ? null : _reload,
+              ),
+          ],
         ),
 
         const SizedBox(height: CustomSpacer.small),
