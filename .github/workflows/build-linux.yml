@@ -73,6 +73,7 @@ jobs:
           zipName="${ARTIFACT_NAME}.zip"
           rm -f "$zipName"
           (cd "$RELEASE_DIR" && zip -r "../$zipName" .)
+          # mover ZIP a raíz del repo sin importar la arquitectura
           mv "build/linux/x64/release/$zipName" "./" 2>/dev/null || true
           mv "build/linux/arm64/release/$zipName" "./" 2>/dev/null || true
           [ -f "$zipName" ] || { echo "No se pudo crear $zipName"; exit 1; }
