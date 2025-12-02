@@ -8,7 +8,6 @@ import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_dropdown.dart';
 import 'package:primware/shared/logo.dart';
 import '../../../API/pos.api.dart';
-import '../../../API/token.api.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_searchfield.dart';
