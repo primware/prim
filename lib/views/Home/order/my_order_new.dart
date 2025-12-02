@@ -8,7 +8,6 @@ import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_dropdown.dart';
 import 'package:primware/shared/logo.dart';
 import '../../../API/pos.api.dart';
-import '../../../API/token.api.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_searchfield.dart';
@@ -20,6 +19,7 @@ import '../../../shared/toast_message.dart';
 import '../../../theme/colors.dart';
 import '../bpartner/bpartner_new.dart';
 import 'my_order_print_generator.dart';
+import 'my_order_detail.dart';
 import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -1271,75 +1271,49 @@ class _OrderNewPageState extends State<OrderNewPage> {
       );
 
       if (order != null) {
-        final confirmPrintTicket = await _printTicketConfirmation(context);
+        if (POS.isPOS == true) {
+          final confirmPrintTicket = await _printTicketConfirmation(context);
+          if (confirmPrintTicket == true) {
+            try {
+              final pdfBytes = await generatePOSTicket(order);
 
-        if (confirmPrintTicket == true) {
-          try {
-            if (POS.cPosID != null) {
-              CurrentLogMessage.add(
-                'POS mode detected. Trying RAW print (ESC/POS)...',
-                tag: 'PRINT',
-              );
               try {
-                await printPOSTicketRaw(order, autoCut: true);
-                CurrentLogMessage.add(
-                  'RAW print sent successfully',
-                  tag: 'PRINT',
+                final printers = await Printing.listPrinters();
+                final defaultPrinter = printers.firstWhere(
+                  (p) => p.isDefault,
+                  orElse: () => printers.isNotEmpty
+                      ? printers.first
+                      : throw Exception('No hay impresoras disponibles'),
                 );
-                return; // listo, no seguimos al PDF
-              } on UnsupportedError catch (e) {
-                CurrentLogMessage.add(
-                  'RAW print unsupported on this platform: ${e.message}',
-                  level: 'WARN',
-                  tag: 'PRINT',
+
+                await Printing.directPrintPdf(
+                  printer: defaultPrinter,
+                  usePrinterSettings: true,
+                  dynamicLayout: true,
+                  onLayout: (_) => pdfBytes,
                 );
-                // Plataforma no soporta RAW -> seguimos al PDF de respaldo
               } catch (e) {
-                CurrentLogMessage.add(
-                  'RAW print error: $e',
-                  level: 'ERROR',
-                  tag: 'PRINT',
+                await Printing.sharePdf(
+                  bytes: pdfBytes,
+                  filename: 'Order_${order['DocumentNo']}.pdf',
                 );
-                // Cualquier otro error en RAW -> seguimos al PDF de respaldo
               }
-            }
-
-            // Respaldo: PDF (POS -> ticket; no POS -> resumen de orden)
-            final pdfBytes = POS.cPosID != null
-                ? await generatePOSTicket(order)
-                : await generateOrderTicket(order);
-
-            try {
-              final printers = await Printing.listPrinters();
-              final defaultPrinter = printers.firstWhere(
-                (p) => p.isDefault,
-                orElse: () => printers.isNotEmpty
-                    ? printers.first
-                    : throw Exception('No hay impresoras disponibles'),
-              );
-
-              await Printing.directPrintPdf(
-                printer: defaultPrinter,
-                usePrinterSettings: true,
-                dynamicLayout: true,
-                onLayout: (_) => pdfBytes,
-              );
             } catch (e) {
-              await Printing.sharePdf(
-                bytes: pdfBytes,
-                filename: 'Order_${order['DocumentNo']}.pdf',
-              );
+              try {
+                final pdfBytes = await generatePOSTicket(order);
+                await Printing.sharePdf(
+                  bytes: pdfBytes,
+                  filename: 'Order_${order['DocumentNo']}.pdf',
+                );
+              } catch (_) {}
             }
-          } catch (e) {
-            // Último fallback silencioso: intentar compartir PDF genérico
-            try {
-              final pdfBytes = await generateOrderTicket(order);
-              await Printing.sharePdf(
-                bytes: pdfBytes,
-                filename: 'Order_${order['DocumentNo']}.pdf',
-              );
-            } catch (_) {}
           }
+        } else {
+          //? Mostrar detalle de la orden [NO Es POS]
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)),
+          );
         }
       }
       ToastMessage.show(

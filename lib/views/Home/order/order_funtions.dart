@@ -398,14 +398,18 @@ Future<List<Map<String, dynamic>>> fetchOrders({
   try {
     await usuarioAuth(context: context);
 
-    filter = (filter != null && filter.isNotEmpty)
-        ? ' and contains(DocumentNo, \'$filter\')'
-        : '';
+    final docStatusFilter =
+        '(DocStatus eq \'CO\' or DocStatus eq \'CL\' or DocStatus eq \'PR\' or DocStatus eq \'PI\' or DocStatus eq \'DR\') and contains(DocumentNo, \'$filter\')';
 
-    onlyMyOrders == true
-        ? filter =
-              'SalesRep_ID eq ${UserData.id} and (DocStatus eq \'CO\' or DocStatus eq \'CL\')$filter'
-        : filter = '(DocStatus eq \'CO\' or DocStatus eq \'CL\')$filter';
+    if (filter == null || filter.isEmpty) {
+      filter = onlyMyOrders == true
+          ? 'SalesRep_ID eq ${UserData.id} and $docStatusFilter'
+          : docStatusFilter;
+    } else {
+      filter = onlyMyOrders == true
+          ? 'SalesRep_ID eq ${UserData.id} and $docStatusFilter and contains(DocumentNo, \'$filter\')'
+          : '$docStatusFilter and contains(DocumentNo, \'$filter\')';
+    }
 
     final response = await get(
       Uri.parse(
@@ -448,6 +452,7 @@ Future<List<Map<String, dynamic>>> fetchOrders({
           },
           'C_OrderLine': record['C_OrderLine'] ?? [],
           'payments': record['C_POSPayment'] ?? [],
+          'DocStatus': record['DocStatus']['id'],
         };
       }).toList();
     } else {
