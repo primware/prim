@@ -26,6 +26,17 @@ class POS {
   static Map<dynamic, dynamic> principalTaxs = {};
 }
 
+class Yappy {
+  static String? token;
+  static String? secretKey;
+  static String? apiKey;
+  static int? yappyConfigID;
+  static String? groupId;
+  static String? deviceId;
+  static bool? isTest;
+  static int? cPOSTenderTypeID;
+}
+
 class POSTenderType {
   static bool isMultiPayment = false;
 }
