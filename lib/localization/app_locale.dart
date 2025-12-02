@@ -137,7 +137,6 @@ class AppLocale {
   static const String product = 'product';
   static const String paymentMethods = 'paymentMethods';
   static const String paymentSumMustEqualTotal = 'paymentSumMustEqualTotal';
-  static const String clientMustBeSelected = 'clientMustBeSelected';
   static const String summary = 'summary';
   static const String taxes = 'taxes';
   static const String totalTaxes = 'totalTaxes';
