@@ -40,14 +40,3 @@ class POSPrinter {
   static Uint8List? logo;
   static bool isLogoSet = false;
 }
-
-class Yappy {
-  static String? token;
-  static String? secretKey;
-  static String? apiKey;
-  static int? yappyConfigID;
-  static String? groupId;
-  static String? deviceId;
-  static bool? isTest;
-  static int? cPOSTenderTypeID;
-}

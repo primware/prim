@@ -113,6 +113,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     yappyTransactionId = null;
     selectedBPartnerID = null;
     _lockedPayments.clear();
+    selectedBPartnerID = null;
   }
 
   @override
@@ -334,10 +335,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   @override
   void dispose() {
-    //todo si me voy a otra pantalla que no sea la de ordenes o la de despues de procesar entnces si cancelar
-    // Cancela Yappy si quedó pendiente al cerrar esta pantalla
-    //  _cancelPendingYappy(silent: true);
-
     for (final controller in paymentControllers.values) {
       controller.dispose();
     }

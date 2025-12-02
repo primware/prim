@@ -39,6 +39,7 @@ class AppLocale {
   static const String organization = 'organization';
   static const String selectCompanyRoleOrganization =
       'selectCompanyRoleOrganization';
+  static const String clientMustBeSelected = 'clientMustBeSelected';
   static const String continueKey = 'continueKey';
   static const String back = 'back';
   static const String invalidCredentials = 'invalidCredentials';
