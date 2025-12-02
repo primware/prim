@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import '../../API/endpoint.api.dart';
 import '../../API/pos.api.dart';
@@ -10,6 +11,7 @@ import '../../main.dart';
 import '../../shared/toast_message.dart';
 import 'login_view.dart';
 import '../../API/user.api.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 Future<void> handle401(BuildContext context) async {
   Token.auth = null;
@@ -29,6 +31,11 @@ Future<void> handle401(BuildContext context) async {
     message: "Por su seguridad la sesión a expirado",
     type: ToastType.warning,
   );
+}
+
+Future<void> _loadAppVersion() async {
+  final info = await PackageInfo.fromPlatform();
+  AppInfo.appVersion = '${info.version}+${info.buildNumber}';
 }
 
 Future<Map<String, dynamic>?> preAuth(
@@ -54,7 +61,10 @@ Future<Map<String, dynamic>?> preAuth(
 
       return responseData;
     } else {
-      print('Error: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'preAuth Error: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: 'preAuth');
     }
   } catch (e) {
     // print(e);
@@ -87,7 +97,10 @@ Future<List<Map<String, dynamic>>?> getRoles(
           .toList();
       return roles;
     } else {
-      print('Error: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'getRoles Error: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: 'getRoles');
     }
   } catch (e) {
     if (e is ClientException) {
@@ -119,7 +132,10 @@ Future<List<Map<String, dynamic>>?> getOrganizations(
               .toList();
       return organizations;
     } else {
-      print('Error: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'getOrganizations Error: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: 'getOrganizations');
     }
   } catch (e) {
     if (e is ClientException) {
@@ -152,10 +168,14 @@ Future<bool> getWarehouse({
 
       return true;
     } else {
-      print('Error en getWarehouse: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'Error en getWarehouse: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: 'getWarehouse');
     }
   } catch (e) {
-    print(e);
+    CurrentLogMessage.add('Excepción en getWarehouse: $e',
+        level: 'ERROR', tag: 'getWarehouse');
   }
   return false;
 }
@@ -201,12 +221,17 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
       await _loadPOSData(context);
       await _loadPOSPrinterData();
       POSTenderType.isMultiPayment = await _posTenderExists();
+      await _loadAppVersion();
       return success;
     } else {
-      print('Error: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'usuarioAuth Error: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: 'usuarioAuth');
     }
   } catch (e) {
-    print(e);
+    CurrentLogMessage.add('Excepción en usuarioAuth: $e',
+        level: 'ERROR', tag: 'usuarioAuth');
   }
   return false;
 }
@@ -234,11 +259,14 @@ Future<bool> _loadUserData(BuildContext context) async {
       }
       return true;
     } else {
-      print(
-          'Error al cargar loadUserData, codigo: ${response.statusCode}, detalle: ${response.body}');
+      CurrentLogMessage.add(
+          'Error al cargar loadUserData, codigo: ${response.statusCode}, detalle: ${response.body}',
+          level: 'ERROR',
+          tag: '_loadUserData');
     }
   } catch (e) {
-    print(e);
+    CurrentLogMessage.add('Excepción en _loadUserData: $e',
+        level: 'ERROR', tag: '_loadUserData');
   }
 
   return false;
@@ -248,7 +276,7 @@ Future<bool> _loadPOSPrinterData() async {
   try {
     final response = await get(
       Uri.parse(
-          '${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}'),
+          '${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}&\$expand=C_Location_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -259,20 +287,30 @@ Future<bool> _loadPOSPrinterData() async {
       final record = json.decode(utf8.decode(response.bodyBytes))['records'][0];
 
       POSPrinter.headerName = record['AD_Client_ID']?['identifier'];
-      POSPrinter.headerAddress = record['Address1'];
+      POSPrinter.headerAddress =
+          '${record['C_Location_ID']['Address1'] ?? ''}${record['C_Location_ID']['Address2'] != null ? ', ${record['C_Location_ID']['Address2']}' : ''}${record['C_Location_ID']['Address3'] != null ? ', ${record['C_Location_ID']['Address3']}' : ''}${record['C_Location_ID']['Address4'] != null ? ', ${record['C_Location_ID']['Address4']}' : ''}';
       POSPrinter.headerPhone = record['Phone'];
+      POSPrinter.headerTaxID = record['TaxID'];
+      POSPrinter.headerDV = record['dv'];
       POSPrinter.headerEmail = record['EMail'];
 
       if (record['Logo_ID'] != null) {
         POSPrinter.logo = base64Decode(record['Logo_ID']['data']);
+        POSPrinter.isLogoSet = true;
+      } else {
+        final bytes = await rootBundle.load('assets/img/logo.png');
+        POSPrinter.logo = bytes.buffer.asUint8List();
       }
       return true;
     } else {
-      print(
-          'Error al cargar _loadPOSPrinterData, codigo: ${response.statusCode}, detalle: ${response.body}');
+      CurrentLogMessage.add(
+          'Error al cargar _loadPOSPrinterData, codigo: ${response.statusCode}, detalle: ${response.body}',
+          level: 'ERROR',
+          tag: '_loadPOSPrinterData');
     }
   } catch (e) {
-    print(e);
+    CurrentLogMessage.add('Excepción en _loadPOSPrinterData: $e',
+        level: 'ERROR', tag: '_loadPOSPrinterData');
   }
 
   return false;
@@ -280,12 +318,11 @@ Future<bool> _loadPOSPrinterData() async {
 
 Future<void> _loadPOSData(BuildContext context) async {
   try {
-    final String filter = POS.cPosID != null
-        ? 'C_POS_ID eq ${POS.cPosID}'
-        : 'SalesRep_ID eq ${UserData.id}';
+    final String filter = 'C_POS_ID eq ${POS.cPosID}';
 
     final response = await get(
-      Uri.parse('${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID'),
+      Uri.parse(
+          '${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID,C_DocTypeRefund_ID'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': Token.auth!,
@@ -297,8 +334,10 @@ Future<void> _loadPOSData(BuildContext context) async {
       final records = decoded['records'] as List?;
 
       if (records == null || records.isEmpty) {
-        print(
-            'No hay Terminal PDV configurado para este usuario, obteniendo datos por defecto del priceList');
+        CurrentLogMessage.add(
+            'No hay Terminal PDV configurado para este usuario, obteniendo datos por defecto del priceList',
+            level: 'ERROR',
+            tag: '_loadPOSData');
         POS.priceListID ??= await _getMPriceListID();
         POS.priceListVersionID =
             await _getMPriceListVersion(POS.priceListID ?? 0);
@@ -312,25 +351,58 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       POS.priceListID = posData['M_PriceList_ID']?['id'];
       POS.docTypeID = posData['C_DocType_ID']?['id'];
-      POS.docTypeName = posData['C_DocType_ID']?['PrintName'];
+      POS.docTypeName = posData['C_DocType_ID']?['Name'];
+      POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
+      POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
+      POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['Name'];
+      POS.docSubTypeRefund =
+          posData['C_DocTypeRefund_ID']?['DocSubTypeSO']?['id'];
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
-      POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
+      POS.warehouseID = posData['M_Warehouse_ID']?['id'];
       POS.priceListVersionID =
           await _getMPriceListVersion(POS.priceListID ?? 0);
 
       await fetchTaxs();
 
-      POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
-      POS.isPOS = POS.docSubType == 'WR' || POS.cPosID != null;
+      POS.isPOS = POS.cPosID != null;
+      //? WR = Orden Punto de Venta
 
-      await _getCDocTypeComplete();
+      // Tomamos la informacion del Yappy si existe, si no se mantiene en null
+      Yappy.yappyConfigID = posData?['CDS_YappyConf_ID']?['id'];
+      Yappy.groupId = posData?['CDS_YappyGroup_ID']?['identifier'];
+      Yappy.deviceId = posData?['CDS_YappyReceiptUnit_ID']?['identifier'];
+
+      if (Yappy.yappyConfigID != null &&
+          Yappy.groupId != null &&
+          Yappy.deviceId != null) {
+        await _getYappyEndPoint();
+        await _getYappyKeys();
+      }
+
+      // Cargamos los tipos de documentos disponibles para el POS
+      POS.docTypesComplete = [
+        {
+          'id': POS.docTypeID.toString(),
+          'name': POS.docTypeName ?? '',
+          'DocSubTypeSO': POS.docSubType ?? ''
+        },
+        if (POS.docTypeRefundID != null)
+          {
+            'id': POS.docTypeRefundID.toString(),
+            'name': POS.docTypeRefundName ?? '',
+            'DocSubTypeSO': POS.docSubTypeRefund ?? ''
+          }
+      ];
     } else {
-      print(
-          'Error al cargar loadPOSData, código: ${response.statusCode}, detalle: ${response.body}');
+      CurrentLogMessage.add(
+          'Error al cargar loadPOSData, código: ${response.statusCode}, detalle: ${response.body}',
+          level: 'ERROR',
+          tag: '_loadPOSData');
     }
   } catch (e) {
-    print('Excepción en loadPOSData: $e');
+    CurrentLogMessage.add('Excepción en loadPOSData: $e',
+        level: 'ERROR', tag: '_loadPOSData');
     if (e is ClientException) {
       handle401(context);
     }
@@ -350,9 +422,70 @@ Future<bool> _posTenderExists() async {
     final data = json.decode(response.body);
     return data['row-count'] > 0;
   } else {
-    print(
-        'Error al verificar existencia de PosTenderExists: ${response.statusCode}, ${response.body}');
+    CurrentLogMessage.add(
+        'Error al verificar existencia de PosTenderExists: ${response.statusCode}, ${response.body}',
+        level: 'ERROR',
+        tag: '_posTenderExists');
     return false;
+  }
+}
+
+Future<void> _getYappyKeys() async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.cdsYappyGroup}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,Value,CDS_API_Key,CDS_Secret_Key'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
+      Yappy.apiKey = record['CDS_API_Key'];
+      Yappy.secretKey = record['CDS_Secret_Key'];
+    } else {
+      CurrentLogMessage.add(
+          'Error en _getYappyKeys: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: '_getYappyKeys');
+    }
+  } catch (e) {
+    CurrentLogMessage.add('Error en _getYappyKeys: $e',
+        level: 'ERROR', tag: '_getYappyKeys');
+  }
+}
+
+Future<void> _getYappyEndPoint() async {
+  try {
+    final response = await get(
+      Uri.parse(
+          '${EndPoints.cdsYappyConf}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,CDS_YappyEndPoint,CDS_IsYappyTest'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
+      Base.yappyURL = record['CDS_YappyEndPoint'];
+
+      Yappy.isTest = record['CDS_IsYappyTest'] ?? false;
+    } else {
+      CurrentLogMessage.add(
+          'Error en _getYappyEndPoint: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: '_getYappyEndPoint');
+    }
+  } catch (e) {
+    CurrentLogMessage.add('Error en _getYappyEndPoint: $e',
+        level: 'ERROR', tag: '_getYappyEndPoint');
   }
 }
 
@@ -373,11 +506,14 @@ Future<int?> _getMPriceListID() async {
 
       return responseData['records'][0]['id'];
     } else {
-      print(
-          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: '_getMPriceListID');
     }
   } catch (e) {
-    print('Error en _getMPriceListID: $e');
+    CurrentLogMessage.add('Error en _getMPriceListID: $e',
+        level: 'ERROR', tag: '_getMPriceListID');
   }
   return null;
 }
@@ -402,11 +538,14 @@ Future<int?> _getMPriceListVersion(int id) async {
         return latestVersion['id'];
       }
     } else {
-      print(
-          'Error en _getMPriceListID: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'Error en _getMPriceListVersion: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: '_getMPriceListVersion');
     }
   } catch (e) {
-    print('Error en _getMPriceListID: $e');
+    CurrentLogMessage.add('Error en _getMPriceListVersion: $e',
+        level: 'ERROR', tag: '_getMPriceListVersion');
   }
   return null;
 }
@@ -433,11 +572,14 @@ Future<int?> _getCDocTypeComplete() async {
               })
           .toList();
     } else {
-      print(
-          'Error en _getCDocTypeComplete: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'Error en _getCDocTypeComplete: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: '_getCDocTypeComplete');
     }
   } catch (e) {
-    print('Error en _getCDocTypeComplete: $e');
+    CurrentLogMessage.add('Error en _getCDocTypeComplete: $e',
+        level: 'ERROR', tag: '_getCDocTypeComplete');
   }
   return null;
 }
@@ -457,10 +599,14 @@ Future<int?> _getCDocType() async {
       final responseData = json.decode(response.body);
       return responseData['records'][0]['id'];
     } else {
-      print('Error en _getCDocType: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'Error en _getCDocType: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: '_getCDocType');
     }
   } catch (e) {
-    print('Error en _getCDocType: $e');
+    CurrentLogMessage.add('Error en _getCDocType: $e',
+        level: 'ERROR', tag: '_getCDocType');
   }
   return null;
 }
@@ -489,11 +635,14 @@ Future<List<Map<String, dynamic>>?> getOrganizationsAfterLogin(
     } else if (response.statusCode == 401) {
       handle401(context);
     } else {
-      print(
-          'Error getOrganizationsAfterLogin: ${response.statusCode}, ${response.body}');
+      CurrentLogMessage.add(
+          'Error getOrganizationsAfterLogin: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: 'getOrganizationsAfterLogin');
     }
   } catch (e) {
-    print('Error general getOrganizationsAfterLogin: $e');
+    CurrentLogMessage.add('Error general getOrganizationsAfterLogin: $e',
+        level: 'ERROR', tag: 'getOrganizationsAfterLogin');
   }
   return null;
 }
@@ -548,6 +697,7 @@ Future<void> fetchTaxs() async {
       throw Exception('Error al cargar los impuestos: ${response.statusCode}');
     }
   } catch (e) {
-    print('Excepción al obtener impuesto: $e');
+    CurrentLogMessage.add('Excepción al obtener impuesto: $e',
+        level: 'ERROR', tag: 'fetchTaxs');
   }
 }

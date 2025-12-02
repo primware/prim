@@ -4,6 +4,7 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../localization/app_locale.dart';
@@ -23,8 +24,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
   List<Map<String, dynamic>> _bpartners = [];
   bool _isLoading = true;
   bool isSearchLoading = false;
-  // ignore: prefer_final_fields
-  String _searchQuery = '';
+  String searchQuery = '';
   TextEditingController searchController = TextEditingController();
   Timer? _debounce;
 
@@ -75,7 +75,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
         .where((bp) => bp['name']
             .toString()
             .toLowerCase()
-            .contains(_searchQuery.toLowerCase()))
+            .contains(searchQuery.toLowerCase()))
         .toList();
   }
 
@@ -84,14 +84,15 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
       children: records.map((record) {
         return GestureDetector(
           onTap: () async {
-            final refreshed = await Navigator.push(
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => BPartnerDetailPage(bpartner: record),
               ),
             );
-            if (refreshed == true) {
-              debouncedLoadBPartner();
+            if (result['created'] == true) {
+              searchController.text = result['bpartner'];
+              _loadBPartner(showLoadingIndicator: true);
             }
           },
           child: Container(
@@ -102,10 +103,9 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
             ),
             child: ListTile(
               title: Text(record['name'],
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary)),
+                  style: Theme.of(context).textTheme.bodyLarge),
               subtitle: Text(
-                  '${record['LCO_TaxIdTypeName'] ?? ''}  ${record['TaxID'] ?? ''}',
+                  '${record['LCO_TaxIdTypeName'] ?? ''}  ${record['TaxID'] ?? ''}  ${record['dv'] != null ? 'DV: ${record['dv']}' : ''}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.secondary)),
             ),
@@ -127,16 +127,22 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
       },
       child: Scaffold(
         appBar: AppBar(title: Text(AppLocale.customers.getString(context))),
+        bottomNavigationBar: CustomFooter(),
         drawer: MenuDrawer(),
         floatingActionButton: FloatingActionButton(
           tooltip: AppLocale.add.getString(context),
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const BPartnerNewPage(),
               ),
             );
+
+            if (result['created'] == true) {
+              searchController.text = result['bpartner']?['Name'];
+              _loadBPartner(showLoadingIndicator: true);
+            }
           },
           child: const Icon(Icons.add),
         ),
@@ -157,15 +163,17 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                         child: TextfieldTheme(
                           texto: AppLocale.searchCustomer.getString(context),
                           controlador: searchController,
-                          icono: Icons.search,
-                          onChanged: (_) => debouncedLoadBPartner(),
+                          pista: AppLocale.taxIDOrName.getString(context),
+                          onSubmitted: (_) =>
+                              _loadBPartner(showLoadingIndicator: true),
                         ),
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       IconButton(
                         tooltip: AppLocale.refresh.getString(context),
-                        icon: const Icon(Icons.refresh),
-                        onPressed: _fetchBPartners,
+                        icon: const Icon(Icons.search),
+                        onPressed: () =>
+                            _loadBPartner(showLoadingIndicator: true),
                       ),
                     ],
                   ),

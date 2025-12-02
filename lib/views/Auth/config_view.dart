@@ -186,7 +186,7 @@ class _ConfigPageState extends State<ConfigPage> {
                 ? OrderNewPage(
                     doctypeID: POS.docTypeID,
                     orderName: POS.docTypeName,
-                    isRefund: POS.docSubType == 'WR',
+                    isRefund: POS.docSubType == 'RM',
                   )
                 : DashboardPage(),
           ),

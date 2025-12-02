@@ -4,16 +4,25 @@ import 'package:primware/API/pos.api.dart';
 import 'package:primware/API/token.api.dart';
 import 'package:primware/API/user.api.dart';
 
+import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../shared/footer.dart';
 
-class DebugPage extends StatelessWidget {
+class DebugPage extends StatefulWidget {
   const DebugPage({super.key});
+  @override
+  State<DebugPage> createState() => _DebugPageState();
+}
+
+class _DebugPageState extends State<DebugPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: MenuDrawer(),
       appBar: AppBar(
         title: Text('Settings'),
       ),
+      bottomNavigationBar: CustomFooter(),
       body: SingleChildScrollView(
         child: Center(
           child: Padding(
@@ -65,6 +74,44 @@ class DebugPage extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium),
                 SelectableText('Token - warehouseID: ${Token.warehouseID}',
                     style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: CustomSpacer.large),
+                Row(
+                  children: [
+                    Text(
+                      'Console Log (memoria)',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(width: CustomSpacer.small),
+                    OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          CurrentLogMessage.log.clear();
+                        });
+                      },
+                      child: const Text('Limpiar'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...List<Map<String, dynamic>>.from(
+                  CurrentLogMessage.log.reversed,
+                ).map((entry) {
+                  final ts = (entry['ts'] ?? '').toString();
+                  final level = (entry['level'] ?? '').toString();
+                  final tag = (entry['tag'] ?? '').toString();
+                  final message = (entry['message'] ?? '').toString();
+                  final subtitle = [ts, level, if (tag.isNotEmpty) tag]
+                      .where((e) => e.isNotEmpty)
+                      .join(' • ');
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      dense: true,
+                      title: SelectableText(message),
+                      subtitle: Text(subtitle),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
