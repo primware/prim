@@ -1,4 +1,16 @@
 class AppLocale {
+  static const String jan = 'jan';
+  static const String feb = 'feb';
+  static const String mar = 'mar';
+  static const String apr = 'apr';
+  static const String may = 'may';
+  static const String jun = 'jun';
+  static const String jul = 'jul';
+  static const String aug = 'aug';
+  static const String sep = 'sep';
+  static const String oct = 'oct';
+  static const String nov = 'nov';
+  static const String dec = 'dec';
   static const String login = 'login';
   static const String products = 'products';
   static const String searchProducts = 'searchProducts';
@@ -10,15 +22,20 @@ class AppLocale {
   static const String user = 'user';
   static const String pass = 'pass';
   static const String rememberMe = 'remenberLogin';
+  static const String onlyMyOrders = 'onlyMyOrders';
   static const String server = 'server';
+  static const String seeReceipt = 'seeReceipt';
   static const String lang = 'lang';
   static const String newOrder = 'newOrder';
   static const String customer = 'customer';
   static const String process = 'process';
   static const String cancel = 'cancel';
+  static const String electronicBill = 'electronicBill';
   static const String selectRole = 'selectRole';
   static const String company = 'company';
+  static const String seller = 'seller';
   static const String role = 'role';
+  static const String taxIDOrName = 'taxIDOrName';
   static const String organization = 'organization';
   static const String selectCompanyRoleOrganization =
       'selectCompanyRoleOrganization';
@@ -31,14 +48,21 @@ class AppLocale {
   static const String searchCustomer = 'searchCustomer';
   static const String add = 'add';
   static const String refresh = 'refresh';
+  static const String available = 'available';
+  static const String exist = 'exist';
   static const String newCustomer = 'newCustomer';
   static const String nameReq = 'nameReq';
   static const String personTypeReq = 'personTypeReq';
   static const String groupReq = 'groupReq';
+  static const String customerType = 'customerType';
   static const String taxId = 'taxId';
+  static const String dv = 'dv';
   static const String email = 'email';
   static const String addressReq = 'addressReq';
   static const String createCustomer = 'createCustomer';
+  static const String register = 'register';
+  static const String noAccount = 'noAccount';
+
   static const String confirmCreateCustomer = 'confirmCreateCustomer';
   static const String confirm = 'confirm';
   static const String errorCreateCustomer = 'errorCreateCustomer';
@@ -49,7 +73,9 @@ class AppLocale {
   static const String update = 'update';
   static const String errorUpdateCustomer = 'errorUpdateCustomer';
   static const String dashboard = 'dashboard';
-  static const String totalSoldBy = 'totalSoldBy';
+  static const String yourLogo = 'yourLogo';
+  static const String salesYTDMonthly = 'totalSoldBy';
+  static const String salesPerDay = 'salesPerDay';
   static const String days = 'days';
   static const String months = 'months';
   static const String noDataForFilter = 'noDataForFilter';
@@ -62,6 +88,9 @@ class AppLocale {
   static const String productSummary = 'productSummary';
   static const String quantity = 'quantity';
   static const String price = 'price';
+  static const String priceList = 'priceList';
+  static const String taxCategory = 'taxCategory';
+  static const String discount = 'discount';
   static const String subtotal = 'subtotal';
   static const String total = 'total';
   static const String noName = 'noName';
@@ -74,9 +103,11 @@ class AppLocale {
   static const String code = 'code';
   static const String name = 'name';
   static const String description = 'description';
+  static const String upc = 'upc';
   static const String priceKey = 'priceKey';
   static const String stockKey = 'stockKey';
   static const String category = 'category';
+  static const String productCategory = 'productCategory';
   static const String addToCart = 'addToCart';
   static const String updateProduct = 'updateProduct';
   static const String deleteProduct = 'deleteProduct';
@@ -87,13 +118,11 @@ class AppLocale {
   static const String saveChanges = 'saveChanges';
   static const String productUpdatedSuccessfully = 'productUpdatedSuccessfully';
   static const String errorUpdatingProduct = 'errorUpdatingProduct';
-
   static const String newProduct = 'newProduct';
   static const String save = 'save';
   static const String productCreatedSuccessfully = 'productCreatedSuccessfully';
   static const String errorCreatingProduct = 'errorCreatingProduct';
   static const String requiredField = 'requiredField';
-  static const String home = 'home';
   static const String orders = 'orders';
   static const String settings = 'settings';
   static const String logout = 'logout';
@@ -108,6 +137,7 @@ class AppLocale {
   static const String product = 'product';
   static const String paymentMethods = 'paymentMethods';
   static const String paymentSumMustEqualTotal = 'paymentSumMustEqualTotal';
+  static const String clientMustBeSelected = 'clientMustBeSelected';
   static const String summary = 'summary';
   static const String taxes = 'taxes';
   static const String totalTaxes = 'totalTaxes';
@@ -128,8 +158,23 @@ class AppLocale {
   static const String noTaxTypesAvailable = 'noTaxTypesAvailable';
   static const String noTaxCategoryAvailable = 'noTaxCategoryAvailable';
   static const String productType = 'productType';
+  static const String refund = 'refund';
+  static const String order = 'order';
+  static const String noData = 'noData';
 
   static const Map<String, dynamic> en = {
+    jan: 'Jan',
+    feb: 'Feb',
+    mar: 'Mar',
+    apr: 'Apr',
+    may: 'May',
+    jun: 'Jun',
+    jul: 'Jul',
+    aug: 'Aug',
+    sep: 'Sep',
+    oct: 'Oct',
+    nov: 'Nov',
+    dec: 'Dec',
     products: 'Products',
     searchProducts: 'Search products',
     productCode: 'Code',
@@ -143,32 +188,44 @@ class AppLocale {
     rememberMe: 'Remember Me',
     server: 'Server',
     lang: 'Language',
+    upc: 'UPC',
+    available: 'Available',
     newOrder: 'New Order',
+    onlyMyOrders: 'Only My Orders',
     customer: 'Customer',
     process: 'Process',
     cancel: 'Cancel',
     selectRole: 'Select Role',
     company: 'Company',
     role: 'Role',
+    discount: 'Discount',
     organization: 'Organization',
     selectCompanyRoleOrganization:
         'Please select a company, role, and organization',
     continueKey: 'Continue',
     back: 'Back',
+    taxIDOrName: 'ID or Name...',
     invalidCredentials: 'Invalid credentials',
-    serverSaved: 'Server address saved.',
+    serverSaved: 'Server address saved. Please restart the app',
     customers: 'Customers',
     searchCustomer: 'Search customer',
     add: 'Add',
     refresh: 'Refresh',
+    noAccount: 'No account?',
+    register: 'Register',
     newCustomer: 'New Customer',
     nameReq: 'Name *',
+    electronicBill: 'Electronic Bill',
+    exist: 'Exist',
+    seller: 'Seller',
+    priceList: 'Price List',
     personTypeReq: 'ID Type *',
     groupReq: 'Group *',
     taxId: 'Tax ID',
     email: 'Email',
     addressReq: 'Address *',
     createCustomer: 'Create customer',
+    salesPerDay: 'Sales Per Day',
     confirmCreateCustomer: 'Are you sure you want to create the customer?',
     confirm: 'Confirm',
     errorCreateCustomer: 'Error creating customer',
@@ -179,8 +236,9 @@ class AppLocale {
     update: 'Update',
     errorUpdateCustomer: 'Error updating customer',
     dashboard: 'Dashboard',
-    totalSoldBy: 'Total sold by',
+    salesYTDMonthly: 'Total sold by month',
     days: 'Days',
+    seeReceipt: '>> See Receipt <<',
     months: 'Months',
     noDataForFilter: 'No data available for the selected filter.',
     pressAgainToLogout: 'Press again to log out',
@@ -201,6 +259,7 @@ class AppLocale {
     finalTotal: 'Final total:',
     productDetail: 'Product Detail',
     code: 'Code',
+    yourLogo: 'Set your Logo',
     name: 'Name',
     description: 'Description',
     priceKey: 'Price',
@@ -221,7 +280,6 @@ class AppLocale {
     productCreatedSuccessfully: 'Product created successfully.',
     errorCreatingProduct: 'Error creating product.',
     requiredField: 'Required field',
-    home: 'Home',
     orders: 'Orders',
     settings: 'Settings',
     logout: 'Logout',
@@ -244,20 +302,27 @@ class AppLocale {
     descriptionOptional: 'Description (optional)',
     change: 'Change',
     close: 'Close',
-    confirmCompleteOrder: 'Are you sure you want to complete the order?',
+    confirmCompleteOrder: 'Are you sure you want to {action} the order?',
     confirmCompleteCreditNote:
-        'Are you sure you want to complete the credit note?',
+        'Are you sure you want to {action} the credit note?',
     noTax: 'No tax',
     fillWithRemaining: 'Fill with the remaining amount',
     errorCompleteOrder: 'Error completing order',
-    printTicket: 'Print Ticket',
-    confirmPrintTicket: 'Confirm LoPrint Ticketgout',
-    printTicketMessage: 'Are you want to print ticket?',
+    printTicket: 'Print',
+    confirmPrintTicket: 'Confirm LoPrint',
+    printTicketMessage: 'Are you want to print?',
     noTaxTypesAvailable: 'No tax ID types available',
     noTaxCategoryAvailable: 'No tax categories available',
     productType: 'Product Type',
     cancelYappyTransaction: 'Cancel Yappy Transaction?',
     clientMustBeSelected: 'A client must be selected',
+    refund: 'Refund',
+    order: 'Order',
+    noData: 'No data available',
+    taxCategory: 'Tax Category',
+    productCategory: 'Product Category',
+    dv: 'DV',
+    customerType: 'Customer Type',
   };
 
   static const Map<String, dynamic> es = {
@@ -281,20 +346,28 @@ class AppLocale {
     selectRole: 'Seleccionar Rol',
     company: 'Empresa',
     role: 'Rol',
+    upc: 'UPC',
     organization: 'Organización',
     selectCompanyRoleOrganization: 'Seleccione una empresa, rol y organización',
     continueKey: 'Continuar',
     back: 'Volver',
+    onlyMyOrders: 'Solo mis órdenes',
+    taxIDOrName: 'Identificación o Nombre...',
     invalidCredentials: 'Credenciales incorrectas',
-    serverSaved: 'Se guardó la dirección del servidor.',
+    serverSaved:
+        'Se guardó la dirección del servidor. Por favor reiniciar el app',
     customers: 'Clientes',
     searchCustomer: 'Buscar cliente',
     add: 'Agregar',
+    noAccount: '¿No tienes una cuenta?',
+    register: 'Regístrate',
     refresh: 'Actualizar',
+    electronicBill: 'Factura Electrónica',
     newCustomer: 'Cliente nuevo',
     nameReq: 'Nombre *',
     personTypeReq: 'Tipo ID *',
     groupReq: 'Grupo *',
+    seller: 'Vendedor',
     taxId: 'Nro. de identificación',
     email: 'Correo electrónico',
     addressReq: 'Dirección *',
@@ -309,12 +382,15 @@ class AppLocale {
     update: 'Actualizar',
     errorUpdateCustomer: 'Error al actualizar cliente',
     dashboard: 'Panel',
-    totalSoldBy: 'Total vendido por',
+    salesYTDMonthly: 'Total vendido por mes',
     days: 'Días',
+    exist: 'Existencia',
+    available: 'Disponible',
     months: 'Meses',
     noDataForFilter: 'No hay datos disponibles para el filtro seleccionado.',
     pressAgainToLogout: 'Presione nuevamente para cerrar sesión',
     myOrders: 'Mis órdenes',
+    salesPerDay: 'Ventas por día',
     searchOrder: 'Buscar orden',
     errorNoOrders: 'No se encontraron órdenes.',
     orderHash: 'Orden #',
@@ -324,6 +400,7 @@ class AppLocale {
     price: 'Precio',
     subtotal: 'Subtotal',
     total: 'Total',
+    priceList: 'Precio de lista',
     noName: 'Sin nombre',
     finalSummary: 'Resumen final:',
     grossTotal: 'Total bruto:',
@@ -331,7 +408,9 @@ class AppLocale {
     finalTotal: 'Total final:',
     productDetail: 'Detalle de producto',
     code: 'Código',
+    yourLogo: 'Tu Logo aqui',
     name: 'Nombre',
+    seeReceipt: '>> Ver factura <<',
     description: 'Descripción',
     priceKey: 'Precio',
     stockKey: 'Stock',
@@ -351,7 +430,6 @@ class AppLocale {
     productCreatedSuccessfully: 'Producto creado con éxito.',
     errorCreatingProduct: 'Error al crear el producto.',
     requiredField: 'Campo requerido',
-    home: 'Inicio',
     orders: 'Órdenes',
     settings: 'Configuración',
     logout: 'Cerrar sesión',
@@ -373,20 +451,40 @@ class AppLocale {
     taxType: 'Tipo de impuesto',
     descriptionOptional: 'Descripción (opcional)',
     change: 'Vuelto',
+    discount: 'Descuento',
     close: 'Cerrar',
-    confirmCompleteOrder: '¿Está seguro de que desea completar la orden?',
+    confirmCompleteOrder: '¿Está seguro de que desea {action} la orden?',
     confirmCompleteCreditNote:
-        '¿Está seguro de que desea completar la nota de crédito?',
+        '¿Está seguro de que desea {action} la nota de crédito?',
     noTax: 'Sin impuesto',
     fillWithRemaining: 'Llenar con el monto restante',
     errorCompleteOrder: 'Error al completar la orden',
-    printTicket: 'Imprimir ticket',
-    confirmPrintTicket: 'Confirmar imprimir ticket',
-    printTicketMessage: '¿Desea imprimir ticket?',
+    printTicket: 'Imprimir',
+    confirmPrintTicket: 'Confirmar imprimir',
+    printTicketMessage: '¿Desea imprimir?',
     noTaxTypesAvailable: 'No hay tipos de identificación fiscal disponibles',
     noTaxCategoryAvailable: 'No hay categorías de impuestos disponibles',
     productType: 'Tipo de Producto',
     cancelYappyTransaction: '¿Cancelar Transacción Yappy?',
-    clientMustBeSelected: 'Debe seleccionar un cliente'
+    clientMustBeSelected: 'Debe seleccionar un cliente',
+    refund: 'Devolución',
+    order: 'Orden',
+    noData: 'No hay datos disponibles',
+    jan: 'Ene',
+    feb: 'Feb',
+    mar: 'Mar',
+    apr: 'Abr',
+    may: 'May',
+    jun: 'Jun',
+    jul: 'Jul',
+    aug: 'Ago',
+    sep: 'Sep',
+    oct: 'Oct',
+    nov: 'Nov',
+    dec: 'Dic',
+    taxCategory: 'Categoría de impuesto',
+    productCategory: 'Categoría de producto',
+    dv: 'DV',
+    customerType: 'Tipo de Persona',
   };
 }

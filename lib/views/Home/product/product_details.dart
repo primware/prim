@@ -7,6 +7,7 @@ import 'package:primware/views/Home/product/product_funtions.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
@@ -183,12 +184,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: Text(AppLocale.productDetail.getString(context))),
+        bottomNavigationBar: CustomFooter(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
               child: CustomContainer(
                   child: Column(
                 children: [
+                  TextfieldTheme(
+                    controlador: skuController,
+                    texto: AppLocale.code.getString(context),
+                    inputType: TextInputType.text,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: nameController,
                     texto: '${AppLocale.name.getString(context)}*',
@@ -197,14 +205,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
-                    controlador: skuController,
-                    texto: AppLocale.code.getString(context),
-                    inputType: TextInputType.text,
-                  ),
-                  const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
                     controlador: upcController,
-                    texto: AppLocale.description.getString(context),
+                    texto: AppLocale.upc.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -235,7 +237,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           options: categories,
                           showSearchBox: true,
                           labelText:
-                              '${AppLocale.category.getString(context)} *',
+                              '${AppLocale.productCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedCategoryID = newValue;
@@ -250,7 +252,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           value: selectedTaxID,
                           options: taxies,
                           showSearchBox: true,
-                          labelText: '${AppLocale.price.getString(context)} *',
+                          labelText:
+                              '${AppLocale.taxCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxID = newValue;
@@ -258,18 +261,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             });
                           },
                         ),
-                  // Mensaje de error si taxTypes está vacío
-                  /*if (_taxError && !_isTaxiesLoading)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                            child: Text(
-                              AppLocale.noTaxCategoryAvailable.getString(context),
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,
@@ -295,8 +286,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto:
-                                    AppLocale.updateProduct.getString(context),
+                                texto: AppLocale.save.getString(context),
                                 onPressed: _updateProduct,
                               )
                         : null,

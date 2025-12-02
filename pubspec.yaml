@@ -1,10 +1,11 @@
 name: primware
-description: "A primware app for managing and sharing your primware collection."
+description: "Sales app fully integrated with iDempiere ERP."
 publish_to: "none"
-version: 0.1.26+26
+version: 1.0.8+47
 
 environment:
-  sdk: ^3.6.2
+  sdk: '>=3.9.0 <4.0.0'
+  
 
 dependencies:
   flutter:
@@ -21,11 +22,15 @@ dependencies:
   printing: ^5.14.2
   url_launcher: ^6.3.1
   http: ^1.4.0
-  searchfield: ^1.3.2
+  searchfield: ^1.4.0
   flutter_localization: ^0.3.3
   fl_chart: ^1.0.0
   qr_flutter: ^4.1.0
   toastification: ^3.0.3
+  image_picker: ^1.2.0
+  package_info_plus: ^9.0.0
+  flutter_native_splash: ^2.4.6
+
 
 
 flutter_launcher_icons:
@@ -36,12 +41,22 @@ flutter_launcher_icons:
     theme_color: "#FAFAFA"
   android: "launcher_icon"
   ios: true
+  ios_icon_name: AppIcon
   remove_alpha_ios: true
   image_path: "assets/img/icono.png"
+  macos:
+    generate: true
+    image_path: "assets/img/icono.png"
   windows:
     generate: true
     image_path: "assets/img/icono.png"
     icon_size: 48
+
+flutter_native_splash:
+  ios: true
+  android: false
+  color: "#FAFAFA"
+  image: assets/img/icono.png
 
 
 dev_dependencies:

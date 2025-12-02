@@ -7,6 +7,7 @@ import 'package:primware/views/Home/product/product_funtions.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
@@ -180,12 +181,19 @@ class _ProductNewPageState extends State<ProductNewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: Text(AppLocale.newProduct.getString(context))),
+        bottomNavigationBar: CustomFooter(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
               child: CustomContainer(
                   child: Column(
                 children: [
+                  TextfieldTheme(
+                    controlador: skuController,
+                    texto: AppLocale.code.getString(context),
+                    inputType: TextInputType.text,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: nameController,
                     texto: '${AppLocale.name.getString(context)}*',
@@ -194,14 +202,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
-                    controlador: skuController,
-                    texto: AppLocale.code.getString(context),
-                    inputType: TextInputType.text,
-                  ),
-                  const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
                     controlador: upcController,
-                    texto: AppLocale.description.getString(context),
+                    texto: AppLocale.upc.getString(context),
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -234,7 +236,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           options: categories,
                           showSearchBox: true,
                           labelText:
-                              '${AppLocale.category.getString(context)} *',
+                              '${AppLocale.productCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedCategoryID = newValue;
@@ -251,7 +253,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           value: selectedTaxID,
                           options: taxies,
                           showSearchBox: true,
-                          labelText: '${AppLocale.price.getString(context)} *',
+                          labelText:
+                              '${AppLocale.taxCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxID = newValue;
@@ -259,18 +262,6 @@ class _ProductNewPageState extends State<ProductNewPage> {
                             });
                           },
                         ),
-                  // Mensaje de error si taxTypes está vacío
-                  /*if (_taxError && !_isTaxiesLoading)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                            child: Text(
-                              AppLocale.noTaxCategoryAvailable.getString(context),
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: priceController,

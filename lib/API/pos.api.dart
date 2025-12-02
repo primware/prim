@@ -8,8 +8,13 @@ class POS {
   static String? docTypeName;
   static String? docSubType;
   static int? docTypeRefundID;
+  static String? docTypeRefundName;
+  static String? docSubTypeRefund;
+  static int? warehouseID;
+
   static int? templatePartnerID;
   static String? templatePartnerName;
+  static String? currencySymbol = '\$';
   static bool isPOS = false;
 
   static List<Map<String, dynamic>> docTypesComplete = [];
@@ -28,7 +33,10 @@ class POSTenderType {
 class POSPrinter {
   static String? headerName;
   static String? headerAddress;
+  static String? headerTaxID;
+  static String? headerDV;
   static String? headerPhone;
   static String? headerEmail;
   static Uint8List? logo;
+  static bool isLogoSet = false;
 }

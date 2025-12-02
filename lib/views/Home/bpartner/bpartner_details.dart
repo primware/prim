@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
+import '../../../API/lpa_config.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
-import '../../../theme/colors.dart';
+import '../../../shared/toast_message.dart';
 import 'bpartner_funtions.dart';
 import '../../../localization/app_locale.dart';
 
@@ -23,6 +25,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
   TextEditingController nameController = TextEditingController();
   TextEditingController taxController = TextEditingController();
   TextEditingController locationController = TextEditingController();
+  TextEditingController dvController = TextEditingController();
   TextEditingController emailController = TextEditingController();
 
   bool isValid = false,
@@ -31,9 +34,11 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
       _isGroupLoading = true,
       _taxTypeError = false;
 
-  int? selectedTaxTypeID, selectedBPartnerGroupID;
+  int? selectedTaxTypeID, selectedBPartnerGroupID, selectectCustomerTypeID;
 
-  List<Map<String, dynamic>> taxTypes = [], bPartnerGroups = [];
+  List<Map<String, dynamic>> taxTypes = [],
+      bPartnerGroups = [],
+      customerTypeOptions = TipoClienteFE.options;
 
   @override
   void initState() {
@@ -47,7 +52,10 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
     locationController.text = widget.bpartner['location'] ?? '';
     emailController.text = widget.bpartner['email'] ?? '';
     locationController.text = widget.bpartner['locationName'] ?? '';
-
+    dvController.text = widget.bpartner['dv'] ?? '';
+    selectectCustomerTypeID =
+        int.parse(widget.bpartner['TipoClienteFE'] ?? '02');
+    //? Consumidor final por defecto
     selectedTaxTypeID = widget.bpartner['LCO_TaxIdType_ID'];
     selectedBPartnerGroupID = widget.bpartner['C_BP_Group_ID'];
 
@@ -55,6 +63,8 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
     emailController.addListener(_isFormValid);
     taxController.addListener(_isFormValid);
     locationController.addListener(_isFormValid);
+
+    dvController.addListener(_isFormValid);
   }
 
   Future<void> _loadTaxType() async {
@@ -103,6 +113,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
   void dispose() {
     nameController.removeListener(_isFormValid);
     locationController.removeListener(_isFormValid);
+    dvController.removeListener(_isFormValid);
     super.dispose();
   }
 
@@ -123,10 +134,6 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 AppLocale.confirm.getString(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
               ),
             ),
           ],
@@ -146,6 +153,8 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
       cBPartnerGroupID: selectedBPartnerGroupID!,
       email: emailController.text,
       cTaxTypeID: selectedTaxTypeID!,
+      dv: dvController.text,
+      customerType: '0$selectectCustomerTypeID',
       context: context,
       userID: widget.bpartner['AD_User_ID'],
       locationID: widget.bpartner['C_BPartner_Location_ID'],
@@ -154,15 +163,16 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
     setState(() => isLoading = false);
 
     if (result['success'] == true) {
-      Navigator.pop(context, true);
+      Navigator.pop(context, {
+        'created': true,
+        'bpartner': nameController.text,
+      });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(
-              child: Text(result['message'] ??
-                  AppLocale.errorUpdateCustomer.getString(context))),
-          backgroundColor: ColorTheme.error,
-        ),
+      ToastMessage.show(
+        context: context,
+        message: result['message'] ??
+            AppLocale.errorUpdateCustomer.getString(context),
+        type: ToastType.failure,
       );
     }
   }
@@ -173,13 +183,32 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
         appBar: AppBar(
           title: Text(AppLocale.customerDetail.getString(context)),
           centerTitle: true,
+          leading: IconButton(
+              onPressed: () => Navigator.pop(context, {
+                    'created': false,
+                  }),
+              icon: Icon(Icons.arrow_back)),
         ),
+        bottomNavigationBar: CustomFooter(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
               child: CustomContainer(
                   child: Column(
                 children: [
+                  SearchableDropdown<int>(
+                    value: selectectCustomerTypeID,
+                    options: customerTypeOptions,
+                    showSearchBox: false,
+                    labelText: AppLocale.customerType.getString(context),
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        selectectCustomerTypeID = newValue;
+                        _isFormValid();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: nameController,
                     texto: AppLocale.nameReq.getString(context),
@@ -201,18 +230,6 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                             });
                           },
                         ),
-                        // Mensaje de error si taxTypes está vacío
-                        /*if (_taxTypeError && !_isTaxTypeLoading)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                            child: Text(
-                              AppLocale.noTaxTypesAvailable.getString(context),
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   _isGroupLoading
                       ? ShimmerList(count: 1)
@@ -232,6 +249,15 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                   TextfieldTheme(
                     controlador: taxController,
                     texto: AppLocale.taxId.getString(context),
+                    inputType: TextInputType.text,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  TextfieldTheme(
+                    controlador: dvController,
+                    texto:
+                        '${AppLocale.dv.getString(context)}${selectectCustomerTypeID == 1 ? ' *' : ''}',
+                    colorEmpty: selectectCustomerTypeID == 1 &&
+                        dvController.text.isEmpty,
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -265,7 +291,7 @@ class _BPartnerDetailPageState extends State<BPartnerDetailPage> {
                             ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 fullWidth: true,
-                                texto: AppLocale.update.getString(context),
+                                texto: AppLocale.save.getString(context),
                                 onPressed: _updateBPartner,
                               )
                         : null,

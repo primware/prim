@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:primware/API/lpa_config.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
+import 'package:primware/shared/toast_message.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_dropdown.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import '../../../shared/custom_textfield.dart';
-import '../../../theme/colors.dart';
 import '../../../localization/app_locale.dart';
 import 'bpartner_funtions.dart';
 
@@ -22,6 +24,7 @@ class BPartnerNewPage extends StatefulWidget {
 class _BPartnerNewPageState extends State<BPartnerNewPage> {
   TextEditingController nameController = TextEditingController();
   TextEditingController taxController = TextEditingController();
+  TextEditingController dvController = TextEditingController();
   TextEditingController locationController = TextEditingController();
   TextEditingController emailController = TextEditingController();
 
@@ -31,9 +34,11 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
       _isGroupLoading = true,
       _taxTypeError = false;
 
-  int? selectedTaxTypeID, selectedBPartnerGroupID;
+  int? selectedTaxTypeID, selectedBPartnerGroupID, selectectCustomerTypeID;
 
-  List<Map<String, dynamic>> taxTypes = [], bPartnerGroups = [];
+  List<Map<String, dynamic>> taxTypes = [],
+      bPartnerGroups = [],
+      customerTypeOptions = TipoClienteFE.options;
 
   @override
   void initState() {
@@ -44,19 +49,16 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
       nameController.text = widget.bpartnerName!;
     }
 
-    nameController.addListener(_isFormValid);
+    selectectCustomerTypeID = 02; //? Consumidor final
 
+    nameController.addListener(_isFormValid);
     locationController.addListener(_isFormValid);
+    dvController.addListener(_isFormValid);
   }
 
   Future<void> _loadTaxType() async {
     final fetchedTaxTypes = await getCTaxTypeID(context) ?? [];
-    /*if (fetchedTaxTypes != null) {
-      setState(() {
-        taxTypes = fetchedTaxTypes;
-        _isTaxTypeLoading = false;
-      });
-    }*/
+
     setState(() {
       taxTypes = fetchedTaxTypes;
       _isTaxTypeLoading = false;
@@ -66,12 +68,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
 
   Future<void> _loadBPartnerGroups() async {
     final fetchedGroups = await getCBPGroup(context) ?? [];
-    /*if (fetchedGroups != null) {
-      setState(() {
-        bPartnerGroups = fetchedGroups;
-        _isGroupLoading = false;
-      });
-    }*/
+
     setState(() {
       bPartnerGroups = fetchedGroups;
       _isGroupLoading = false;
@@ -83,14 +80,21 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     locationController.clear();
     taxController.clear();
     emailController.clear();
+    dvController.clear();
   }
 
   void _isFormValid() {
     setState(() {
+      bool hasDV =
+          (selectectCustomerTypeID == 1 && dvController.text.isNotEmpty) ||
+              selectectCustomerTypeID != 1;
+
       isValid = nameController.text.isNotEmpty &&
           locationController.text.isNotEmpty &&
           selectedTaxTypeID != null &&
           selectedBPartnerGroupID != null &&
+          selectectCustomerTypeID != null &&
+          hasDV &&
           !_taxTypeError;
     });
   }
@@ -107,6 +111,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
     emailController.removeListener(_isFormValid);
     taxController.removeListener(_isFormValid);
     locationController.removeListener(_isFormValid);
+    dvController.removeListener(_isFormValid);
 
     super.dispose();
   }
@@ -128,10 +133,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 AppLocale.confirm.getString(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
               ),
             ),
           ],
@@ -150,11 +151,12 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
       cBPartnerGroupID: selectedBPartnerGroupID!,
       email: emailController.text,
       cTaxTypeID: selectedTaxTypeID!,
+      dv: dvController.text,
+      customerType: '0$selectectCustomerTypeID',
       context: context,
     );
 
     setState(() => isLoading = false);
-
     if (result['success'] == true) {
       clearPartnerFields();
       Navigator.pop(context, {
@@ -162,13 +164,11 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
         'bpartner': result['bpartner'],
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(
-              child: Text(result['message'] ??
-                  AppLocale.errorCreateCustomer.getString(context))),
-          backgroundColor: ColorTheme.error,
-        ),
+      ToastMessage.show(
+        context: context,
+        message: result['message'] ??
+            AppLocale.errorCreateCustomer.getString(context),
+        type: ToastType.failure,
       );
     }
   }
@@ -180,20 +180,38 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
           title: Text(
             AppLocale.newCustomer.getString(context),
           ),
+          leading: IconButton(
+              onPressed: () => Navigator.pop(context, {
+                    'created': false,
+                  }),
+              icon: Icon(Icons.arrow_back)),
         ),
+        bottomNavigationBar: CustomFooter(),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Center(
               child: CustomContainer(
                   child: Column(
                 children: [
+                  SearchableDropdown<int>(
+                    value: selectectCustomerTypeID,
+                    options: customerTypeOptions,
+                    showSearchBox: false,
+                    labelText: AppLocale.customerType.getString(context),
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        selectectCustomerTypeID = newValue;
+                        _isFormValid();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: nameController,
                     texto: AppLocale.nameReq.getString(context),
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.name,
                   ),
-                  
                   const SizedBox(height: CustomSpacer.medium),
                   _isGroupLoading
                       ? ShimmerList(
@@ -231,22 +249,19 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                               },
                             )
                           : const SizedBox(),
-                          // Mensaje de error si taxTypes está vacío
-                          /*if (_taxTypeError && !_isTaxTypeLoading)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0, left: 12.0),
-                              child: Text(
-                                AppLocale.noTaxTypesAvailable.getString(context),
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),*/
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: taxController,
                     texto: AppLocale.taxId.getString(context),
+                    inputType: TextInputType.text,
+                  ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  TextfieldTheme(
+                    controlador: dvController,
+                    texto:
+                        '${AppLocale.dv.getString(context)}${selectectCustomerTypeID == 1 ? ' *' : ''}',
+                    colorEmpty: selectectCustomerTypeID == 1 &&
+                        dvController.text.isEmpty,
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -270,7 +285,9 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                       texto: AppLocale.cancel.getString(context),
                       onPressed: () {
                         clearPartnerFields();
-                        Navigator.pop(context);
+                        Navigator.pop(context, {
+                          'created': false,
+                        });
                       },
                     ),
                     const SizedBox(height: CustomSpacer.medium)

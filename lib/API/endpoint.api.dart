@@ -1,8 +1,7 @@
 class Base {
   static bool prod = false;
-  static bool local = false;
-  static String title = prod ? 'Prim App' : 'Demo Prim App';
-
+  static String title = prod ? 'Prim' : 'Demo Prim';
+  static bool allowCreateAccount = true;
   static String? baseURL;
 }
 
@@ -54,6 +53,8 @@ class EndPoints {
 
   static String cTax = '${Base.baseURL}/api/v1/models/C_Tax';
 
+  static String cInvoice = '${Base.baseURL}/api/v1/models/C_Invoice';
+
   static String adSequence = '${Base.baseURL}/api/v1/models/AD_Sequence';
 
   static String cTaxCategory = '${Base.baseURL}/api/v1/models/C_TaxCategory';
@@ -72,6 +73,17 @@ class EndPoints {
 
   static String cPOSTenderType =
       '${Base.baseURL}/api/v1/models/C_POSTenderType';
+
+  static String yappyDevice = '${Base.yappyURL}/session/device';
+
+  static String yappyQRGeneratorDYN = '${Base.yappyURL}/qr/generate/DYN';
+
+  static String yappyTransaction = '${Base.yappyURL}/transaction';
+
+  //? Charts
+  static String salesYTDMonthly = '${Base.baseURL}/api/v1/charts/50002/data';
+
+  static String salesPerDay = '${Base.baseURL}/api/v1/charts/1000005/data';
 }
 
 class GetCustomerData {
