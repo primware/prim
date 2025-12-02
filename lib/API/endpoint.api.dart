@@ -3,7 +3,6 @@ class Base {
   static String title = prod ? 'Prim' : 'Demo Prim';
   static bool allowCreateAccount = true;
   static String? baseURL;
-  static String? yappyURL;
 }
 
 class EndPoints {
