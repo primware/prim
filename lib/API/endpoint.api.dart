@@ -3,6 +3,7 @@ class Base {
   static String title = prod ? 'Prim' : 'Demo Prim';
   static bool allowCreateAccount = true;
   static String? baseURL;
+  static String? yappyURL;
 }
 
 class EndPoints {
@@ -134,10 +135,11 @@ class GetWarehouse {
   final int rolID;
   final int clientID;
   final int organizationID;
-  GetWarehouse(
-      {required this.rolID,
-      required this.clientID,
-      required this.organizationID});
+  GetWarehouse({
+    required this.rolID,
+    required this.clientID,
+    required this.organizationID,
+  });
 
   String get endPoint =>
       '${Base.baseURL}/api/v1/auth/warehouses?client=$clientID&role=$rolID&organization=$organizationID';
@@ -146,9 +148,7 @@ class GetWarehouse {
 class GetProductInPriceList {
   final int mPriceListID;
 
-  GetProductInPriceList({
-    required this.mPriceListID,
-  });
+  GetProductInPriceList({required this.mPriceListID});
 
   String get endPoint =>
       '${Base.baseURL}/api/v1/models/M_PriceList_Version?\$filter=M_PriceList_ID eq $mPriceListID&\$select=ValidFrom&\$expand=M_ProductPrice(\$select=M_Product_ID)&\$orderby=ValidFrom desc';
@@ -158,10 +158,7 @@ class GetDocumentActions {
   final int roleID;
   final int docTypeID;
 
-  GetDocumentActions({
-    required this.roleID,
-    required this.docTypeID,
-  });
+  GetDocumentActions({required this.roleID, required this.docTypeID});
 
   String get endPoint =>
       '${Base.baseURL}/api/v1/models/AD_Document_Action_Access?\$filter=AD_Role_ID eq $roleID AND C_DocType_ID eq $docTypeID&\$select=AD_Ref_List_ID';
