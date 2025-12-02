@@ -1,14 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:printing_ffi/printing_ffi.dart';
+// import 'package:printing_ffi/printing_ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' show Platform;
 import 'package:intl/intl.dart';
-
 import '../../../API/endpoint.api.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
@@ -609,184 +606,184 @@ class _EscPos {
 
 String _fmtMoney(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
 
-/// Construye los bytes ESC/POS del ticket POS (sin imprimir).
-Future<Uint8List> buildPOSTicketRawData(
-  Map<String, dynamic> order, {
-  bool autoCut = true,
-}) async {
-  final esc = _EscPos();
-  esc.init();
+// /// Construye los bytes ESC/POS del ticket POS (sin imprimir).
+// Future<Uint8List> buildPOSTicketRawData(
+//   Map<String, dynamic> order, {
+//   bool autoCut = true,
+// }) async {
+//   final esc = _EscPos();
+//   esc.init();
 
-  // Encabezado
-  esc.alignCenter();
-  if ((POSPrinter.headerName ?? '').isNotEmpty) esc.txt(POSPrinter.headerName!);
-  if ((POSPrinter.headerAddress ?? '').isNotEmpty) {
-    esc.txt(POSPrinter.headerAddress!);
-  }
-  if ((POSPrinter.headerTaxID ?? '').isNotEmpty) {
-    esc.txt('RUC: ${POSPrinter.headerTaxID}');
-  }
-  if ((POSPrinter.headerDV ?? '').isNotEmpty) {
-    esc.txt('DV: ${POSPrinter.headerDV}');
-  }
-  if ((POSPrinter.headerPhone ?? '').isNotEmpty) {
-    esc.txt('Tel: ${POSPrinter.headerPhone}');
-  }
-  if ((POSPrinter.headerEmail ?? '').isNotEmpty) {
-    esc.txt(POSPrinter.headerEmail!);
-  }
-  esc.feed(1);
+//   // Encabezado
+//   esc.alignCenter();
+//   if ((POSPrinter.headerName ?? '').isNotEmpty) esc.txt(POSPrinter.headerName!);
+//   if ((POSPrinter.headerAddress ?? '').isNotEmpty) {
+//     esc.txt(POSPrinter.headerAddress!);
+//   }
+//   if ((POSPrinter.headerTaxID ?? '').isNotEmpty) {
+//     esc.txt('RUC: ${POSPrinter.headerTaxID}');
+//   }
+//   if ((POSPrinter.headerDV ?? '').isNotEmpty) {
+//     esc.txt('DV: ${POSPrinter.headerDV}');
+//   }
+//   if ((POSPrinter.headerPhone ?? '').isNotEmpty) {
+//     esc.txt('Tel: ${POSPrinter.headerPhone}');
+//   }
+//   if ((POSPrinter.headerEmail ?? '').isNotEmpty) {
+//     esc.txt(POSPrinter.headerEmail!);
+//   }
+//   esc.feed(1);
 
-  final docType = (order['doctypetarget']?['name'] ?? '').toString();
-  esc.boldOn();
-  esc.txt(docType);
-  esc.boldOff();
-  esc.feed(1);
+//   final docType = (order['doctypetarget']?['name'] ?? '').toString();
+//   esc.boldOn();
+//   esc.txt(docType);
+//   esc.boldOff();
+//   esc.feed(1);
 
-  esc.alignLeft();
-  final docNo = (order['DocumentNo'] ?? '').toString();
-  final date = (order['DateOrdered'] ?? '').toString();
-  final servedBy = (order['SalesRep_ID']?['name'] ?? '').toString();
-  final taxID = (order['bpartner']?['taxID'] ?? '').toString();
-  final customerName = (order['bpartner']?['name'] ?? 'CONTADO').toString();
-  final customeLocation = (order['bpartner']?['location'] ?? '').toString();
-  final phone = (order['bpartner']?['phone'] ?? '').toString();
+//   esc.alignLeft();
+//   final docNo = (order['DocumentNo'] ?? '').toString();
+//   final date = (order['DateOrdered'] ?? '').toString();
+//   final servedBy = (order['SalesRep_ID']?['name'] ?? '').toString();
+//   final taxID = (order['bpartner']?['taxID'] ?? '').toString();
+//   final customerName = (order['bpartner']?['name'] ?? 'CONTADO').toString();
+//   final customeLocation = (order['bpartner']?['location'] ?? '').toString();
+//   final phone = (order['bpartner']?['phone'] ?? '').toString();
 
-  esc.txt('Recibo: $docNo');
-  esc.txt('Fecha : $date');
-  if (servedBy.isNotEmpty) esc.txt('Atendido por: $servedBy');
-  if (taxID.isNotEmpty) esc.txt('Cédula: $taxID');
-  esc.txt('Cliente: $customerName');
-  if (customeLocation.isNotEmpty) esc.txt('Dirección: $customeLocation');
-  if (phone.isNotEmpty) esc.txt('Teléfono: $phone');
-  esc.feed(1);
+//   esc.txt('Recibo: $docNo');
+//   esc.txt('Fecha : $date');
+//   if (servedBy.isNotEmpty) esc.txt('Atendido por: $servedBy');
+//   if (taxID.isNotEmpty) esc.txt('Cédula: $taxID');
+//   esc.txt('Cliente: $customerName');
+//   if (customeLocation.isNotEmpty) esc.txt('Dirección: $customeLocation');
+//   if (phone.isNotEmpty) esc.txt('Teléfono: $phone');
+//   esc.feed(1);
 
-  // Detalle de líneas
-  final List lines = (order['C_OrderLine'] as List?) ?? const [];
-  if (lines.isNotEmpty) {
-    esc.boldOn();
-    esc.txt('Productos');
-    esc.boldOff();
-    esc.txt('--------------------------------');
-    for (final line in lines) {
-      final name =
-          ((line['M_Product_ID']?['identifier'] ?? '_${line['Description']}')
-                  .toString()
-                  .split('_')
-                  .skip(1)
-                  .join(' '))
-              .trim();
-      final qty = ((line['QtyOrdered'] as num?)?.toDouble() ?? 0.0);
-      final price = ((line['PriceActual'] as num?)?.toDouble() ?? 0.0);
-      final net = ((line['LineNetAmt'] as num?)?.toDouble() ?? 0.0);
-      final rate = ((line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0);
-      final tax = double.parse((net * (rate / 100)).toStringAsFixed(2));
-      final total = net + tax;
+//   // Detalle de líneas
+//   final List lines = (order['C_OrderLine'] as List?) ?? const [];
+//   if (lines.isNotEmpty) {
+//     esc.boldOn();
+//     esc.txt('Productos');
+//     esc.boldOff();
+//     esc.txt('--------------------------------');
+//     for (final line in lines) {
+//       final name =
+//           ((line['M_Product_ID']?['identifier'] ?? '_${line['Description']}')
+//                   .toString()
+//                   .split('_')
+//                   .skip(1)
+//                   .join(' '))
+//               .trim();
+//       final qty = ((line['QtyOrdered'] as num?)?.toDouble() ?? 0.0);
+//       final price = ((line['PriceActual'] as num?)?.toDouble() ?? 0.0);
+//       final net = ((line['LineNetAmt'] as num?)?.toDouble() ?? 0.0);
+//       final rate = ((line['C_Tax_ID']?['Rate'] as num?)?.toDouble() ?? 0.0);
+//       final tax = double.parse((net * (rate / 100)).toStringAsFixed(2));
+//       final total = net + tax;
 
-      // Nombre (puede ser largo)
-      esc.txt(name);
-      // Precio x Cant a la izquierda, total a la derecha (formato manual)
-      final left =
-          '${_fmtMoney(price)} x ${qty % 1 == 0 ? qty.toStringAsFixed(0) : qty.toStringAsFixed(2)}';
-      final right = _fmtMoney(total);
-      final pad = 32; // ancho típico de 80mm fuentes estándar
-      final lineTxt = (left.length + right.length >= pad)
-          ? '$left\n${right.padLeft(pad)}'
-          : left + right.padLeft(pad - left.length);
-      esc.txt(lineTxt);
-      final desc = (line['Description']?.toString() ?? '').trim();
-      if (desc.isNotEmpty && desc != name) esc.txt('  $desc');
-    }
-    esc.txt('--------------------------------');
-  }
+//       // Nombre (puede ser largo)
+//       esc.txt(name);
+//       // Precio x Cant a la izquierda, total a la derecha (formato manual)
+//       final left =
+//           '${_fmtMoney(price)} x ${qty % 1 == 0 ? qty.toStringAsFixed(0) : qty.toStringAsFixed(2)}';
+//       final right = _fmtMoney(total);
+//       final pad = 32; // ancho típico de 80mm fuentes estándar
+//       final lineTxt = (left.length + right.length >= pad)
+//           ? '$left\n${right.padLeft(pad)}'
+//           : left + right.padLeft(pad - left.length);
+//       esc.txt(lineTxt);
+//       final desc = (line['Description']?.toString() ?? '').trim();
+//       if (desc.isNotEmpty && desc != name) esc.txt('  $desc');
+//     }
+//     esc.txt('--------------------------------');
+//   }
 
-  // Totales
-  final taxSummary = _calculateTaxSummary([order]);
-  final double taxTotal = taxSummary.values
-      .map((e) => e['tax'] as double)
-      .fold(0.0, (a, b) => a + b);
-  final double netSum = taxSummary.values
-      .map((e) => e['net'] as double)
-      .fold(0.0, (a, b) => a + b);
-  final double grandTotal = (order['GrandTotal'] as num?)?.toDouble() ?? 0.0;
+//   // Totales
+//   final taxSummary = _calculateTaxSummary([order]);
+//   final double taxTotal = taxSummary.values
+//       .map((e) => e['tax'] as double)
+//       .fold(0.0, (a, b) => a + b);
+//   final double netSum = taxSummary.values
+//       .map((e) => e['net'] as double)
+//       .fold(0.0, (a, b) => a + b);
+//   final double grandTotal = (order['GrandTotal'] as num?)?.toDouble() ?? 0.0;
 
-  esc.boldOn();
-  esc.alignRight();
-  esc.txt('Neto:   ${_fmtMoney(netSum)}');
-  esc.txt('ITBMS:  ${_fmtMoney(taxTotal)}');
-  esc.txt('TOTAL:  ${_fmtMoney(grandTotal)}');
-  esc.boldOff();
-  esc.alignLeft();
-  esc.feed(1);
+//   esc.boldOn();
+//   esc.alignRight();
+//   esc.txt('Neto:   ${_fmtMoney(netSum)}');
+//   esc.txt('ITBMS:  ${_fmtMoney(taxTotal)}');
+//   esc.txt('TOTAL:  ${_fmtMoney(grandTotal)}');
+//   esc.boldOff();
+//   esc.alignLeft();
+//   esc.feed(1);
 
-  // Formas de pago
-  final pays = order['payments'] as List?;
-  if (pays != null && pays.isNotEmpty) {
-    esc.boldOn();
-    esc.txt('Formas de Pago:');
-    esc.boldOff();
-    for (final p in pays) {
-      final payType = (p['C_POSTenderType_ID']?['identifier'] ?? 'Otro')
-          .toString();
-      final amount = (p['PayAmt'] as num?)?.toDouble() ?? 0.0;
-      esc.txt('- $payType: ${_fmtMoney(amount)}');
-    }
-    esc.feed(1);
-  }
+//   // Formas de pago
+//   final pays = order['payments'] as List?;
+//   if (pays != null && pays.isNotEmpty) {
+//     esc.boldOn();
+//     esc.txt('Formas de Pago:');
+//     esc.boldOff();
+//     for (final p in pays) {
+//       final payType = (p['C_POSTenderType_ID']?['identifier'] ?? 'Otro')
+//           .toString();
+//       final amount = (p['PayAmt'] as num?)?.toDouble() ?? 0.0;
+//       esc.txt('- $payType: ${_fmtMoney(amount)}');
+//     }
+//     esc.feed(1);
+//   }
 
-  // QR (Factura Electrónica)
-  final int? orderId = (order['id'] as int?);
-  final feInfo = orderId != null
-      ? await fetchElectronicInvoiceInfo(orderId: orderId)
-      : null;
-  if (feInfo != null && (feInfo['url'] ?? '').toString().isNotEmpty) {
-    esc.alignCenter();
-    esc.txt('FACTURA ELECTRÓNICA');
-    esc.txt('Protocolo: ${feInfo['protocolo']}');
-    try {
-      esc.qr(feInfo['url']!);
-      esc.feed(1);
-    } catch (_) {
-      // Si la impresora no soporta QR, imprimimos la URL
-      esc.txt(feInfo['url']!);
-      esc.feed(1);
-    }
-    esc.alignLeft();
-  }
+//   // QR (Factura Electrónica)
+//   final int? orderId = (order['id'] as int?);
+//   final feInfo = orderId != null
+//       ? await fetchElectronicInvoiceInfo(orderId: orderId)
+//       : null;
+//   if (feInfo != null && (feInfo['url'] ?? '').toString().isNotEmpty) {
+//     esc.alignCenter();
+//     esc.txt('FACTURA ELECTRÓNICA');
+//     esc.txt('Protocolo: ${feInfo['protocolo']}');
+//     try {
+//       esc.qr(feInfo['url']!);
+//       esc.feed(1);
+//     } catch (_) {
+//       // Si la impresora no soporta QR, imprimimos la URL
+//       esc.txt(feInfo['url']!);
+//       esc.feed(1);
+//     }
+//     esc.alignLeft();
+//   }
 
-  esc.alignCenter();
-  esc.txt('Gracias por mantener sus pagos al día');
-  esc.feed(3);
-  if (autoCut) esc.cut();
+//   esc.alignCenter();
+//   esc.txt('Gracias por mantener sus pagos al día');
+//   esc.feed(3);
+//   if (autoCut) esc.cut();
 
-  return Uint8List.fromList(esc.bytes);
-}
+//   return Uint8List.fromList(esc.bytes);
+// }
 
-/// Imprime el ticket en crudo usando printing_ffi.
-Future<void> _safeRawPrint(Uint8List data, {String? printerName}) async {
-  // iOS y Web no soportan impresión RAW (AirPrint requiere PDF/imagen)
-  if (kIsWeb || Platform.isIOS) {
-    throw UnsupportedError('Raw printing not supported on this platform');
-  }
-  // Evitar error de compilación cuando el método no existe en ciertos targets.
-  final dynamic ffi =
-      PrintingFfi; // dynamic para no depender de la firma en cada plataforma
-  final Function? f = (ffi as dynamic).printRawData; // puede no existir en iOS
-  if (f == null) {
-    throw UnsupportedError('printing_ffi raw API not available');
-  }
-  // Llamada dinámica para plataformas soportadas (Windows/Linux/macOS/Android según plugin)
-  await Function.apply(f, const [], {#bytes: data, #printerName: printerName});
-}
+// /// Imprime el ticket en crudo usando printing_ffi.
+// Future<void> _safeRawPrint(Uint8List data, {String? printerName}) async {
+//   // iOS y Web no soportan impresión RAW (AirPrint requiere PDF/imagen)
+//   if (kIsWeb || Platform.isIOS) {
+//     throw UnsupportedError('Raw printing not supported on this platform');
+//   }
+//   // Evitar error de compilación cuando el método no existe en ciertos targets.
+//   final dynamic ffi =
+//       PrintingFfi; // dynamic para no depender de la firma en cada plataforma
+//   final Function? f = (ffi as dynamic).printRawData; // puede no existir en iOS
+//   if (f == null) {
+//     throw UnsupportedError('printing_ffi raw API not available');
+//   }
+//   // Llamada dinámica para plataformas soportadas (Windows/Linux/macOS/Android según plugin)
+//   await Function.apply(f, const [], {#bytes: data, #printerName: printerName});
+// }
 
-Future<void> printPOSTicketRaw(
-  Map<String, dynamic> order, {
-  String? printerName,
-  bool autoCut = true,
-}) async {
-  final data = await buildPOSTicketRawData(order, autoCut: autoCut);
-  await _safeRawPrint(data, printerName: printerName);
-}
+// Future<void> printPOSTicketRaw(
+//   Map<String, dynamic> order, {
+//   String? printerName,
+//   bool autoCut = true,
+// }) async {
+//   final data = await buildPOSTicketRawData(order, autoCut: autoCut);
+//   await _safeRawPrint(data, printerName: printerName);
+// }
 
 Map<String, Map<String, double>> _calculateTaxSummary(List<dynamic> records) {
   final Map<String, Map<String, double>> taxSummary = {};

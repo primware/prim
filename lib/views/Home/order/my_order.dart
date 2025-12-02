@@ -11,7 +11,6 @@ import 'package:primware/views/Home/order/my_order_detail.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
-import '../../../API/token.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_checkbox.dart';
@@ -30,6 +29,51 @@ class _OrderListPageState extends State<OrderListPage> {
   bool _isLoading = true, isSearchLoading = false, onlyMyOrders = true;
   String _searchQuery = '';
   TextEditingController searchController = TextEditingController();
+
+  // Mapa de estados de documento (DocStatus) a nombre en español y color
+  final Map<String, Map<String, dynamic>> _docStatusMap = {
+    'DR': {'label': 'Borrador', 'color': Colors.grey, 'icon': Icons.edit_note},
+    'CO': {
+      'label': 'Completado',
+      'color': Colors.green,
+      'icon': Icons.check_circle_outline,
+    },
+    'CL': {
+      'label': 'Cerrado',
+      'color': Colors.blueGrey,
+      'icon': Icons.lock_outline,
+    },
+    'VO': {
+      'label': 'Anulado',
+      'color': Colors.red,
+      'icon': Icons.cancel_outlined,
+    },
+    'IP': {
+      'label': 'En proceso',
+      'color': Colors.orange,
+      'icon': Icons.hourglass_bottom,
+    },
+    'PR': {
+      'label': 'Preparado',
+      'color': Colors.orange,
+      'icon': Icons.hourglass_bottom,
+    },
+    'WC': {
+      'label': 'Esperando completar',
+      'color': Colors.orangeAccent,
+      'icon': Icons.hourglass_top,
+    },
+    'AP': {
+      'label': 'Aprobado',
+      'color': Colors.blue,
+      'icon': Icons.thumb_up_outlined,
+    },
+    'RJ': {
+      'label': 'Rechazado',
+      'color': Colors.redAccent,
+      'icon': Icons.thumb_down_outlined,
+    },
+  };
 
   // Confirmación para imprimir ticket
   Future<bool?> _printTicketConfirmation(BuildContext context) {
@@ -57,34 +101,7 @@ class _OrderListPageState extends State<OrderListPage> {
     final bool? confirm = await _printTicketConfirmation(context);
     if (confirm == true) {
       try {
-        if (POS.cPosID != null) {
-          CurrentLogMessage.add(
-            'POS mode detected. Trying RAW print (ESC/POS)...',
-            tag: 'PRINT',
-          );
-          try {
-            await printPOSTicketRaw(order, autoCut: true);
-            CurrentLogMessage.add('RAW print sent successfully', tag: 'PRINT');
-            return; // listo, no seguimos al PDF
-          } on UnsupportedError catch (e) {
-            CurrentLogMessage.add(
-              'RAW print unsupported on this platform: ${e.message}',
-              level: 'WARN',
-              tag: 'PRINT',
-            );
-            // Plataforma no soporta RAW -> seguimos al PDF de respaldo
-          } catch (e) {
-            CurrentLogMessage.add(
-              'RAW print error: $e',
-              level: 'ERROR',
-              tag: 'PRINT',
-            );
-            // Cualquier otro error en RAW -> seguimos al PDF de respaldo
-          }
-        }
-
-        // Respaldo: PDF (POS -> ticket; no POS -> resumen de orden)
-        final pdfBytes = POS.cPosID != null
+        final pdfBytes = POS.isPOS == true
             ? await generatePOSTicket(order)
             : await generateOrderTicket(order);
 
@@ -220,6 +237,51 @@ class _OrderListPageState extends State<OrderListPage> {
     );
   }
 
+  // Pill que muestra el estado del documento (DocStatus) en español
+  Widget _buildDocStatusPill(Map<String, dynamic> order) {
+    final String? statusCode = order['DocStatus'] as String?;
+    if (statusCode == null) {
+      return const SizedBox.shrink();
+    }
+
+    final meta =
+        _docStatusMap[statusCode] ??
+        {
+          'label': statusCode,
+          'color': Theme.of(context).colorScheme.primary,
+          'icon': Icons.flag_outlined,
+        };
+
+    final Color baseColor = meta['color'] as Color;
+    final Color bgColor = baseColor.withOpacity(0.12);
+    final String label = meta['label'] as String;
+    final IconData icon = meta['icon'] as IconData;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: baseColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: baseColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOrderList(List<Map<String, dynamic>> orders) {
     if (orders.isEmpty) {
       return Center(child: Text(AppLocale.errorNoOrders.getString(context)));
@@ -298,7 +360,14 @@ class _OrderListPageState extends State<OrderListPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  _buildSubtypePill(order),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildSubtypePill(order),
+                      const SizedBox(width: 8),
+                      _buildDocStatusPill(order),
+                    ],
+                  ),
                 ],
               ),
               trailing: PopupMenuButton<String>(

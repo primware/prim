@@ -7,12 +7,56 @@ import 'package:primware/views/Home/order/my_order_print_generator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
-import '../../../API/token.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/footer.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
+
+  // Mapa de estados de documento (DocStatus) a nombre en español, color e icono
+  static const Map<String, Map<String, Object>> _docStatusMap = {
+    'DR': {'label': 'Borrador', 'color': Colors.grey, 'icon': Icons.edit_note},
+    'CO': {
+      'label': 'Completado',
+      'color': Colors.green,
+      'icon': Icons.check_circle_outline,
+    },
+    'CL': {
+      'label': 'Cerrado',
+      'color': Colors.blueGrey,
+      'icon': Icons.lock_outline,
+    },
+    'VO': {
+      'label': 'Anulado',
+      'color': Colors.red,
+      'icon': Icons.cancel_outlined,
+    },
+    'IP': {
+      'label': 'En proceso',
+      'color': Colors.orange,
+      'icon': Icons.hourglass_bottom,
+    },
+    'PR': {
+      'label': 'Preparado',
+      'color': Colors.orange,
+      'icon': Icons.hourglass_bottom,
+    },
+    'WC': {
+      'label': 'Esperando completar',
+      'color': Colors.orangeAccent,
+      'icon': Icons.hourglass_top,
+    },
+    'AP': {
+      'label': 'Aprobado',
+      'color': Colors.blue,
+      'icon': Icons.thumb_up_outlined,
+    },
+    'RJ': {
+      'label': 'Rechazado',
+      'color': Colors.redAccent,
+      'icon': Icons.thumb_down_outlined,
+    },
+  };
 
   const OrderDetailPage({super.key, required this.order});
 
@@ -83,37 +127,7 @@ class OrderDetailPage extends StatelessWidget {
               );
               if (confirmPrintTicket == true) {
                 try {
-                  if (POS.cPosID != null) {
-                    CurrentLogMessage.add(
-                      'POS mode detected. Trying RAW print (ESC/POS)...',
-                      tag: 'PRINT',
-                    );
-                    try {
-                      await printPOSTicketRaw(order, autoCut: true);
-                      CurrentLogMessage.add(
-                        'RAW print sent successfully',
-                        tag: 'PRINT',
-                      );
-                      return; // listo, no seguimos al PDF
-                    } on UnsupportedError catch (e) {
-                      CurrentLogMessage.add(
-                        'RAW print unsupported on this platform: ${e.message}',
-                        level: 'WARN',
-                        tag: 'PRINT',
-                      );
-                      // Plataforma no soporta RAW -> seguimos al PDF de respaldo
-                    } catch (e) {
-                      CurrentLogMessage.add(
-                        'RAW print error: $e',
-                        level: 'ERROR',
-                        tag: 'PRINT',
-                      );
-                      // Cualquier otro error en RAW -> seguimos al PDF de respaldo
-                    }
-                  }
-
-                  // Respaldo: PDF (POS -> ticket; no POS -> resumen de orden)
-                  final pdfBytes = POS.cPosID != null
+                  final pdfBytes = POS.isPOS == true
                       ? await generatePOSTicket(order)
                       : await generateOrderTicket(order);
 
@@ -329,6 +343,53 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
+  // Chip/pill que muestra el estado del documento (DocStatus) en español
+  Widget _buildDocStatusPill(BuildContext context, Map<String, dynamic> order) {
+    final String? statusCode = order['DocStatus'] as String?;
+    if (statusCode == null || statusCode.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final meta =
+        _docStatusMap[statusCode] ??
+        {
+          'label': statusCode,
+          'color': Theme.of(context).colorScheme.primary,
+          'icon': Icons.flag_outlined,
+        };
+
+    final Color baseColor =
+        (meta['color'] as Color?) ?? Theme.of(context).colorScheme.primary;
+    final Color bgColor = baseColor.withOpacity(0.12);
+    final String label = meta['label'] as String? ?? statusCode;
+    final IconData icon = (meta['icon'] as IconData?) ?? Icons.flag_outlined;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: baseColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: baseColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Map<String, Map<String, double>> _calculateTaxSummary(List<dynamic> records) {
     final Map<String, Map<String, double>> taxSummary = {};
 
@@ -399,6 +460,8 @@ class OrderDetailPage extends StatelessWidget {
                 ),
               ],
             ),
+            // Estado del documento (DocStatus)
+            _buildDocStatusPill(context, order),
           ],
         );
 
