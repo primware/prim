@@ -435,29 +435,19 @@ class OrderDetailPage extends StatelessWidget {
         final left = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.person_outline, size: isMobile ? 20 : 32),
-                const SizedBox(width: CustomSpacer.small),
-                Text(
-                  order['bpartner']['name'],
-                  style: isMobile
-                      ? Theme.of(context).textTheme.bodyMedium
-                      : Theme.of(context).textTheme.headlineLarge,
-                ),
-              ],
+            Text(
+              order['bpartner']['name'],
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: isMobile
+                  ? Theme.of(context).textTheme.bodyMedium
+                  : Theme.of(context).textTheme.headlineSmall,
             ),
-            Row(
-              children: [
-                Icon(Icons.calendar_month_outlined, size: isMobile ? 20 : 32),
-                const SizedBox(width: CustomSpacer.small),
-                Text(
-                  order['DateOrdered'],
-                  style: isMobile
-                      ? Theme.of(context).textTheme.bodyMedium
-                      : Theme.of(context).textTheme.headlineLarge,
-                ),
-              ],
+            Text(
+              order['DateOrdered'],
+              style: isMobile
+                  ? Theme.of(context).textTheme.bodyMedium
+                  : Theme.of(context).textTheme.headlineSmall,
             ),
             // Estado del documento (DocStatus)
             _buildDocStatusPill(context, order),
