@@ -72,10 +72,11 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
 
   List<Map<String, dynamic>> _getFilteredPartners() {
     return _bpartners
-        .where((bp) => bp['name']
-            .toString()
-            .toLowerCase()
-            .contains(searchQuery.toLowerCase()))
+        .where(
+          (bp) => bp['name'].toString().toLowerCase().contains(
+            searchQuery.toLowerCase(),
+          ),
+        )
         .toList();
   }
 
@@ -102,12 +103,16 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: ListTile(
-              title: Text(record['name'],
-                  style: Theme.of(context).textTheme.bodyLarge),
+              title: Text(
+                record['name'],
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
               subtitle: Text(
-                  '${record['LCO_TaxIdTypeName'] ?? ''}  ${record['TaxID'] ?? ''}  ${record['dv'] != null ? 'DV: ${record['dv']}' : ''}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary)),
+                '${record['LCO_TaxIdTypeName'] ?? ''}  ${record['TaxID'] ?? ''}  ${record['dv'] != null ? 'DV: ${record['dv']}' : ''}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
             ),
           ),
         );
@@ -134,9 +139,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
           onPressed: () async {
             final result = await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const BPartnerNewPage(),
-              ),
+              MaterialPageRoute(builder: (context) => const BPartnerNewPage()),
             );
 
             if (result['created'] == true) {
