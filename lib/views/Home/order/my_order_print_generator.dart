@@ -37,48 +37,112 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   pdf.addPage(
     pw.MultiPage(
       build: (context) => <pw.Widget>[
-        POSPrinter.logo != null
-            ? pw.Image(
-                pw.MemoryImage(POSPrinter.logo!),
-                width: 100,
-                height: 100,
-                fit: pw.BoxFit.contain,
-              )
-            : pw.SizedBox(),
-        pw.SizedBox(height: 4),
-        pw.Text(POSPrinter.headerName ?? '', textAlign: pw.TextAlign.center),
-        pw.Text(POSPrinter.headerAddress ?? '', textAlign: pw.TextAlign.center),
-        if (POSPrinter.headerTaxID != null)
-          pw.Text(
-            'RUC: ${POSPrinter.headerTaxID ?? ''}',
-            textAlign: pw.TextAlign.center,
-          ),
-        if (POSPrinter.headerDV != null)
-          pw.Text(
-            'DV: ${POSPrinter.headerDV ?? ''}',
-            textAlign: pw.TextAlign.center,
-          ),
-        if (POSPrinter.headerPhone != null)
-          pw.Text(
-            'Tel: ${POSPrinter.headerPhone ?? ''}',
-            textAlign: pw.TextAlign.center,
-          ),
-        pw.Text(POSPrinter.headerEmail ?? '', textAlign: pw.TextAlign.center),
-        pw.SizedBox(height: 12),
-        pw.Text(
-          docTypename,
-          textAlign: pw.TextAlign.center,
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+        // Header + General info with QR at top-right (if FE exists)
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              flex: 3,
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                children: [
+                  POSPrinter.logo != null
+                      ? pw.Center(
+                          child: pw.Image(
+                            pw.MemoryImage(POSPrinter.logo!),
+                            width: 100,
+                            height: 100,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        )
+                      : pw.SizedBox(),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    POSPrinter.headerName ?? '',
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  pw.Text(
+                    POSPrinter.headerAddress ?? '',
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  if (POSPrinter.headerTaxID != null)
+                    pw.Text(
+                      'RUC: ${POSPrinter.headerTaxID ?? ''}',
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  if (POSPrinter.headerDV != null)
+                    pw.Text(
+                      'DV: ${POSPrinter.headerDV ?? ''}',
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  if (POSPrinter.headerPhone != null)
+                    pw.Text(
+                      'Tel: ${POSPrinter.headerPhone ?? ''}',
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  pw.Text(
+                    POSPrinter.headerEmail ?? '',
+                    textAlign: pw.TextAlign.center,
+                  ),
+                  pw.SizedBox(height: 12),
+                  pw.Text(
+                    docTypename,
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  pw.SizedBox(height: 18),
+
+                  // Order details
+                  pw.Text('Orden Nro: $docNo'),
+                  pw.Text('Fecha: $date'),
+                  if (servedBy.isNotEmpty)
+                    pw.Text('Representante Comercial: $servedBy'),
+                  if (taxID.isNotEmpty)
+                    pw.Text('Nro de Identificación: $taxID'),
+                  pw.Text('Cliente: $customerName'),
+                  if (customeLocation.isNotEmpty)
+                    pw.Text('Dirección: $customeLocation'),
+                  if (phone.isNotEmpty) pw.Text('Teléfono: $phone'),
+                ],
+              ),
+            ),
+            if (feInfo != null) pw.SizedBox(width: 10),
+            if (feInfo != null)
+              pw.Expanded(
+                flex: 2,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      'QR FE',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 6),
+                    pw.BarcodeWidget(
+                      data: feInfo['url'] ?? '',
+                      barcode: pw.Barcode.qrCode(),
+                      width: 120,
+                      height: 120,
+                    ),
+                    pw.SizedBox(height: 6),
+                    if ((feInfo['protocolo'] ?? '').toString().isNotEmpty)
+                      pw.Text(
+                        'Prot: ${feInfo['protocolo']}',
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(fontSize: 8),
+                      ),
+                  ],
+                ),
+              ),
+          ],
         ),
-        pw.SizedBox(height: 18),
-        // Order details
-        pw.Text('Orden Nro: $docNo'),
-        pw.Text('Fecha: $date'),
-        if (servedBy.isNotEmpty) pw.Text('Representante Comercial: $servedBy'),
-        if (taxID.isNotEmpty) pw.Text('Nro de Identificación: $taxID'),
-        pw.Text('Cliente: $customerName'),
-        if (customeLocation.isNotEmpty) pw.Text('Dirección: $customeLocation'),
-        if (phone.isNotEmpty) pw.Text('Teléfono: $phone'),
+
         pw.SizedBox(height: 12),
         // Products table
         if (lines.isNotEmpty) ...[
@@ -148,40 +212,22 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13),
         ),
         pw.SizedBox(height: 16),
-        // FE section if present
+        // FE footer note (QR is shown at top-right)
         if (feInfo != null) ...[
           pw.Divider(),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
           pw.Text(
             'FACTURA ELECTRÓNICA',
             textAlign: pw.TextAlign.center,
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
           ),
-          pw.SizedBox(height: 6),
-          pw.Text(
-            'Protocolo de Autorización: ${feInfo['protocolo']}',
-            style: pw.TextStyle(fontSize: 8),
-          ),
+          pw.SizedBox(height: 4),
           pw.Text(
             'Consulte por la clave de acceso en:',
             style: pw.TextStyle(fontSize: 8),
           ),
           pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 8)),
           pw.SizedBox(height: 6),
-          pw.Text(
-            'o escaneando el código QR:',
-            style: pw.TextStyle(fontSize: 8),
-          ),
-          pw.SizedBox(height: 6),
-          pw.Center(
-            child: pw.BarcodeWidget(
-              data: feInfo['url'] ?? '',
-              barcode: pw.Barcode.qrCode(),
-              width: 120,
-              height: 120,
-            ),
-          ),
-          pw.SizedBox(height: 10),
         ],
       ],
     ),
