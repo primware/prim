@@ -16,11 +16,9 @@ Future<Map<String, dynamic>> postProduct({
   required BuildContext context,
 }) async {
   try {
-    await usuarioAuth(
-      context: context,
-    );
+    await usuarioAuth(context: context);
 
-//? Revisar el sku
+    //? Revisar el sku
     if (sku != null) {
       bool uniqueSKU = await productSKUExists(sku);
 
@@ -32,7 +30,7 @@ Future<Map<String, dynamic>> postProduct({
       }
     }
 
-//? Crear el producto
+    //? Crear el producto
     final Map<String, dynamic> productData = {
       "Name": name,
       "C_UOM_ID": 100,
@@ -57,16 +55,13 @@ Future<Map<String, dynamic>> postProduct({
     if (productResponse.statusCode != 201) {
       print('Error al crear el producto: ${productResponse.statusCode}');
       print(productResponse.body);
-      return {
-        'success': false,
-        'message': 'Error al crear el producto.',
-      };
+      return {'success': false, 'message': 'Error al crear el producto.'};
     }
 
     final createdProduct = json.decode(productResponse.body);
     final int productID = createdProduct['id'];
 
-//? Identificar el ID de M_PriceList_Version_ID
+    //? Identificar el ID de M_PriceList_Version_ID
 
     final int? priceListVersionID = await getMPriceListVersionID();
     if (priceListVersionID == null) {
@@ -76,14 +71,14 @@ Future<Map<String, dynamic>> postProduct({
       };
     }
 
-//? Precio del producto
+    //? Precio del producto
 
     final Map<String, dynamic> priceData = {
       "M_Product_ID": productID,
       "M_PriceList_Version_ID": priceListVersionID,
       "PriceStd": double.parse(price),
       "PriceLimit": double.parse(price),
-      "PriceList": double.parse(price)
+      "PriceList": double.parse(price),
     };
 
     final priceResponse = await post(
@@ -98,10 +93,7 @@ Future<Map<String, dynamic>> postProduct({
     if (priceResponse.statusCode != 201) {
       print('Error al crear precio: ${priceResponse.statusCode}');
       print(priceResponse.body);
-      return {
-        'success': false,
-        'message': 'Error al crear el precio.',
-      };
+      return {'success': false, 'message': 'Error al crear el precio.'};
     }
 
     return {
@@ -121,10 +113,7 @@ Future<Map<String, dynamic>> postProduct({
 Future<bool> productSKUExists(String sku) async {
   final response = await get(
     Uri.parse("${EndPoints.mProduct}?\$filter=SKU eq '$sku'"),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': Token.auth!,
-    },
+    headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
   );
 
   if (response.statusCode == 200) {
@@ -132,7 +121,8 @@ Future<bool> productSKUExists(String sku) async {
     return data['row-count'] > 0;
   } else {
     print(
-        'Error al verificar usuario: ${response.statusCode}, ${response.body}');
+      'Error al verificar usuario: ${response.statusCode}, ${response.body}',
+    );
     return false;
   }
 }
@@ -141,20 +131,21 @@ Future<int?> getMPriceListVersionID() async {
   try {
     final response = await get(
       Uri.parse(
-          //'${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true&\$expand=M_PriceList_Version'),
-          '${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true&\$expand=M_PriceList_Version'),
+        '${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true&\$expand=M_PriceList_Version',
+      ),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
       },
     );
-    
+
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       return responseData['records'][0]['M_PriceList_Version']?[0]['id'];
     } else {
       print(
-          'Error en getMPriceListVersionID: ${response.statusCode}, ${response.body}');
+        'Error en getMPriceListVersionID: ${response.statusCode}, ${response.body}',
+      );
     }
   } catch (e) {
     print('Error en getMPriceListVersionID: $e');
@@ -163,11 +154,10 @@ Future<int?> getMPriceListVersionID() async {
 }
 
 Future<List<Map<String, dynamic>>?> getMProductCategoryID(
-    BuildContext context) async {
+  BuildContext context,
+) async {
   try {
-    await usuarioAuth(
-      context: context,
-    );
+    await usuarioAuth(context: context);
 
     final response = await get(
       Uri.parse(EndPoints.mProductCategory),
@@ -181,13 +171,14 @@ Future<List<Map<String, dynamic>>?> getMProductCategoryID(
       final responseData = json.decode(utf8.decode(response.bodyBytes));
 
       if (responseData['records'] != null && responseData['records'] is List) {
-        List<Map<String, dynamic>> records =
-            (responseData['records'] as List).map((record) {
-          return {
-            'id': record['id'],
-            'name': record['Name'] ?? record['name'] ?? '',
-          };
-        }).toList();
+        List<Map<String, dynamic>> records = (responseData['records'] as List)
+            .map((record) {
+              return {
+                'id': record['id'],
+                'name': record['Name'] ?? record['name'] ?? '',
+              };
+            })
+            .toList();
         return records;
       } else {
         print('Error: formato inesperado de la respuesta.');
@@ -203,11 +194,10 @@ Future<List<Map<String, dynamic>>?> getMProductCategoryID(
 }
 
 Future<List<Map<String, dynamic>>?> getCTaxCategoryID(
-    BuildContext context) async {
+  BuildContext context,
+) async {
   try {
-    await usuarioAuth(
-      context: context,
-    );
+    await usuarioAuth(context: context);
 
     final response = await get(
       Uri.parse(EndPoints.cTaxCategory),
@@ -221,13 +211,11 @@ Future<List<Map<String, dynamic>>?> getCTaxCategoryID(
       final responseData = json.decode(utf8.decode(response.bodyBytes));
 
       if (responseData['records'] != null && responseData['records'] is List) {
-        List<Map<String, dynamic>> records =
-            (responseData['records'] as List).map((record) {
-          return {
-            'id': record['id'],
-            'name': record['Name'] ?? '',
-          };
-        }).toList();
+        List<Map<String, dynamic>> records = (responseData['records'] as List)
+            .map((record) {
+              return {'id': record['id'], 'name': record['Name'] ?? ''};
+            })
+            .toList();
         return records;
       } else {
         print('Error: formato inesperado de la respuesta.');
@@ -246,7 +234,8 @@ Future<int?> getMProductPriceID(int productID) async {
   try {
     final response = await get(
       Uri.parse(
-          "${EndPoints.mProductPrice}?\$filter=M_Product_ID eq $productID"),
+        "${EndPoints.mProductPrice}?\$filter=M_Product_ID eq $productID",
+      ),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': Token.auth!,
@@ -260,7 +249,8 @@ Future<int?> getMProductPriceID(int productID) async {
       }
     } else {
       print(
-          "Error al obtener M_ProductPrice_ID: ${response.statusCode} - ${response.body}");
+        "Error al obtener M_ProductPrice_ID: ${response.statusCode} - ${response.body}",
+      );
     }
   } catch (e) {
     print("Excepción en getMProductPriceID: $e");
@@ -311,7 +301,7 @@ Future<Map<String, dynamic>> putProduct({
     if (productPriceID == null) {
       return {
         "success": false,
-        "message": "No se encontró M_ProductPrice para este producto."
+        "message": "No se encontró M_ProductPrice para este producto.",
       };
     }
 

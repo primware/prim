@@ -340,7 +340,7 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
   try {
     final response = await get(
       Uri.parse(
-        '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment',
+        '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment',
       ),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -404,7 +404,7 @@ Future<List<Map<String, dynamic>>> fetchOrders({
 
     final response = await get(
       Uri.parse(
-        '${EndPoints.cOrder}?\$filter=$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID',
+        '${EndPoints.cOrder}?\$filter=$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID',
       ),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',

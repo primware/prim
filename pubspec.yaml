@@ -1,11 +1,10 @@
 name: primware
 description: "Sales app fully integrated with iDempiere ERP."
 publish_to: "none"
-version: 1.0.11+50
+version: 1.0.12+51
 
 environment:
-  sdk: '>=3.9.0 <4.0.0'
-  
+  sdk: ">=3.9.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -31,8 +30,6 @@ dependencies:
   package_info_plus: ^9.0.0
   flutter_native_splash: ^2.4.6
 
-
-
 flutter_launcher_icons:
   web:
     generate: true
@@ -57,7 +54,6 @@ flutter_native_splash:
   android: false
   color: "#FAFAFA"
   image: assets/img/icono.png
-
 
 dev_dependencies:
   flutter_test:

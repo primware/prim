@@ -1,7 +1,6 @@
 // main.dart
 
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/views/Auth/login_view.dart';

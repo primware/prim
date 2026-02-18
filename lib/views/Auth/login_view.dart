@@ -19,9 +19,7 @@ import 'auth_funtions.dart';
 import 'config_view.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({
-    super.key,
-  });
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -205,12 +203,9 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ConfigPage(
-            clients: authData['clients'],
-          ),
+          builder: (context) => ConfigPage(clients: authData['clients']),
         ),
       );
-      // }
     } else {
       ToastMessage.show(
         context: context,
@@ -227,10 +222,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _openExternal(String url) async {
     final uri = Uri.parse(url);
     try {
-      final ok = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok && mounted) {
         ToastMessage.show(
           context: context,
@@ -251,8 +243,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile =
-        MediaQuery.of(context).size.width < 750 ? true : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 750
+        ? true
+        : false;
 
     return WillPopScope(
       onWillPop: () async => false,
@@ -272,14 +265,12 @@ class _LoginPageState extends State<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Center(
-                        child: Logo(
-                          width: isMobile ? 200 : 320,
-                        ),
-                      ),
+                      Center(child: Logo(width: isMobile ? 200 : 320)),
                       SizedBox(
-                          height: CustomSpacer.medium +
-                              (!isMobile ? CustomSpacer.xlarge : 10)),
+                        height:
+                            CustomSpacer.medium +
+                            (!isMobile ? CustomSpacer.xlarge : 10),
+                      ),
                       TextfieldTheme(
                         icono: Icons.mail_outline,
                         texto: AppLocale.user.getString(context),
@@ -294,13 +285,16 @@ class _LoginPageState extends State<LoginPage> {
                         showSubIcon: true,
                         controlador: claveController,
                         onSubmitted: (_) => _funcionLogin(
-                            usuarioController.text.trim(),
-                            claveController.text.trim()),
+                          usuarioController.text.trim(),
+                          claveController.text.trim(),
+                        ),
                       ),
                       const SizedBox(height: CustomSpacer.medium),
                       SearchableDropdown<String>(
                         value: FlutterLocalization
-                            .instance.currentLocale?.languageCode,
+                            .instance
+                            .currentLocale
+                            ?.languageCode,
                         onChanged: (String? lang) async {
                           if (lang != null) {
                             FlutterLocalization.instance.translate(lang);
@@ -331,15 +325,15 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: CustomSpacer.medium),
                       Container(
                         child: isLoading
-                            ? ButtonLoading(
-                                fullWidth: true,
-                              )
+                            ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 texto: AppLocale.login.getString(context),
                                 fullWidth: true,
                                 onPressed: () {
-                                  _funcionLogin(usuarioController.text.trim(),
-                                      claveController.text.trim());
+                                  _funcionLogin(
+                                    usuarioController.text.trim(),
+                                    claveController.text.trim(),
+                                  );
                                 },
                               ),
                       ),
@@ -356,33 +350,30 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(height: CustomSpacer.small),
                               InkWell(
                                 onTap: () => _openExternal(
-                                    'https://primware.net/register/'),
+                                  'https://primware.net/register/',
+                                ),
                                 child: Text(
                                   AppLocale.register.getString(context),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge
+                                  style: Theme.of(context).textTheme.bodyLarge
                                       ?.copyWith(
                                         fontWeight: FontWeight.bold,
                                         decoration: TextDecoration.underline,
                                       ),
                                 ),
-                              )
+                              ),
                             ],
                           ),
-                        )
-                      ]
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 if (version != 'No es web') ...[
                   const SizedBox(
-                      height: CustomSpacer.xlarge + CustomSpacer.medium),
-                  Text(
-                    version,
-                    style: Theme.of(context).textTheme.labelMedium,
-                  )
-                ]
+                    height: CustomSpacer.xlarge + CustomSpacer.medium,
+                  ),
+                  Text(version, style: Theme.of(context).textTheme.labelMedium),
+                ],
               ],
             ),
           ),

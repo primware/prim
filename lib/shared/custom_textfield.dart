@@ -44,13 +44,11 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
   bool mostrarClave = false;
 
   Widget get suFixIcono => Icon(
-        mostrarClave
-            ? Icons.visibility_outlined
-            : Icons.visibility_off_outlined,
-        color: mostrarClave
-            ? Theme.of(context).colorScheme.error
-            : Theme.of(context).colorScheme.secondary,
-      );
+    mostrarClave ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+    color: mostrarClave
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.secondary,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -75,25 +73,22 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control
           borderSide: BorderSide(
-              width: 2,
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary), // Color del borde cuando está enfocado
+            width: 2,
+            color: Theme.of(context).colorScheme.primary,
+          ), // Color del borde cuando está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
         enabledBorder: OutlineInputBorder(
           //Cuando no estoy en el control
           borderSide: BorderSide(
-              color: widget.colorEmpty
-                  ? Theme.of(context).colorScheme.errorContainer
-                  : Theme.of(context)
-                      .primaryColor), // Color del borde cuando no está enfocado
+            color: widget.colorEmpty
+                ? Theme.of(context).colorScheme.errorContainer
+                : Theme.of(context).primaryColor,
+          ), // Color del borde cuando no está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
         border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(4),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(4)),
         ),
         labelText: widget.texto,
         labelStyle: Theme.of(context).textTheme.bodyLarge,
@@ -101,8 +96,10 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
         prefixIcon: widget.icono != null
             ? Padding(
                 padding: const EdgeInsets.only(left: 12, right: 8),
-                child: Icon(widget.icono,
-                    color: Theme.of(context).colorScheme.primary),
+                child: Icon(
+                  widget.icono,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               )
             : null,
         suffixIcon: widget.showSubIcon
@@ -131,15 +128,16 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
 }
 
 class TextFieldComments extends StatefulWidget {
-  const TextFieldComments(
-      {super.key,
-      this.pista,
-      this.controlador,
-      this.readOnly = false,
-      this.texto,
-      this.onSubmitted,
-      this.colorEmpty = false,
-      this.onChanged});
+  const TextFieldComments({
+    super.key,
+    this.pista,
+    this.controlador,
+    this.readOnly = false,
+    this.texto,
+    this.onSubmitted,
+    this.colorEmpty = false,
+    this.onChanged,
+  });
 
   final String? pista, texto;
   final TextEditingController? controlador;
@@ -170,25 +168,22 @@ class _TextFieldCommentsState extends State<TextFieldComments> {
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control
           borderSide: BorderSide(
-              width: 2,
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary), // Color del borde cuando está enfocado
+            width: 2,
+            color: Theme.of(context).colorScheme.primary,
+          ), // Color del borde cuando está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
         enabledBorder: OutlineInputBorder(
           //Cuando no estoy en el control
           borderSide: BorderSide(
-              color: widget.colorEmpty
-                  ? Theme.of(context).colorScheme.errorContainer
-                  : Theme.of(context)
-                      .primaryColor), // Color del borde cuando no está enfocado
+            color: widget.colorEmpty
+                ? Theme.of(context).colorScheme.errorContainer
+                : Theme.of(context).primaryColor,
+          ), // Color del borde cuando no está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
         border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(4),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(4)),
         ),
         labelText: widget.texto,
         labelStyle: Theme.of(context).textTheme.bodyMedium,
