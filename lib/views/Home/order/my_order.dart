@@ -26,7 +26,7 @@ class OrderListPage extends StatefulWidget {
 
 class _OrderListPageState extends State<OrderListPage> {
   List<Map<String, dynamic>> _orders = [];
-  bool _isLoading = true, isSearchLoading = false, onlyMyOrders = true;
+  bool _isLoading = true, isSearchLoading = false, onlyMyOrders = false;
   String _searchQuery = '';
   TextEditingController searchController = TextEditingController();
 
