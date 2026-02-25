@@ -9,6 +9,9 @@ class Base {
 class EndPoints {
   static String postUserAuth = '${Base.baseURL}/api/v1/auth/tokens';
 
+  static String createCreditMemo =
+      '${Base.baseURL}/api/v1/processes/cds-invoicecreatecreditmemo';
+
   static String adUser = '${Base.baseURL}/api/v1/models/AD_User';
 
   static String mWarehouse = '${Base.baseURL}/api/v1/models/M_Warehouse';

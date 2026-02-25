@@ -404,7 +404,7 @@ Future<List<Map<String, dynamic>>> fetchOrders({
 
     final response = await get(
       Uri.parse(
-        '${EndPoints.cOrder}?\$filter=$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID',
+        '${EndPoints.cOrder}?\$filter=$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID,C_Invoice(\$select=RelatedInvoice_ID,DocStatus)',
       ),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
@@ -435,13 +435,15 @@ Future<List<Map<String, dynamic>>> fetchOrders({
           'doctypetarget': {
             'id': record['C_DocTypeTarget_ID']?['id'],
             'name': record['C_DocTypeTarget_ID']?['Name'],
-            'subtype': record['C_DocTypeTarget_ID']?['DocSubTypeSO'],
+            'subtype':
+                record['C_DocTypeTarget_ID']?['DocSubTypeSO'], // WR orden de venta
           },
           'SalesRep_ID': {
             'id': record['SalesRep_ID']?['id'],
             'name': record['SalesRep_ID']?['identifier'],
           },
           'C_OrderLine': record['C_OrderLine'] ?? [],
+          'C_Invoice': record['C_Invoice'] ?? [],
           'payments': record['C_POSPayment'] ?? [],
           'DocStatus': record['DocStatus']['id'],
         };
@@ -454,6 +456,75 @@ Future<List<Map<String, dynamic>>> fetchOrders({
     debugPrint('Error de red en fetchOrders: $e');
     return [];
   }
+}
+
+Future<int?> _fetchCreditDocType() async {
+  try {
+    final response = await get(
+      Uri.parse(
+        '${EndPoints.cDocType}?\$filter=DocBaseType in (\'ARC\',\'APC\') and IsSOTrx eq true&\$select=Name',
+      ),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      final records = jsonResponse['records'] as List;
+      return records[0]['id'];
+    } else {
+      throw Exception(
+        'Error al cargar Tipo de Documento de Nota Crédito: ${response.statusCode}',
+      );
+    }
+  } catch (e) {
+    CurrentLogMessage.add(
+      'Error al cargar Tipo de Documento de Nota Crédito: $e',
+      level: 'ERROR',
+      tag: 'fetchPaymentMethods',
+    );
+  }
+  return null;
+}
+
+Future<bool> createCreditMemo({required int cInvoiceID}) async {
+  try {
+    final int? cDocTypeID = await _fetchCreditDocType();
+    final Map<String, dynamic> body = {
+      "C_Invoice_ID": cInvoiceID,
+      "C_DocType_ID": cDocTypeID,
+      "DateInvoiced": DateTime.now().toIso8601String().split('T').first,
+      "DateAcct": DateTime.now().toIso8601String().split('T').first,
+      "DocAction": "CO",
+      "IsCreateAllocation": true,
+    };
+
+    final response = await post(
+      Uri.parse(EndPoints.createCreditMemo),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    } else {
+      throw Exception(
+        'Error al ejecutar proceso Crear Nota Crédito: ${response.statusCode}',
+      );
+    }
+  } catch (e) {
+    CurrentLogMessage.add(
+      'Error al ejecutar proceso Crear Nota Crédito:$e',
+      level: 'ERROR',
+      tag: 'fetchPaymentMethods',
+    );
+  }
+  return false;
 }
 
 Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {

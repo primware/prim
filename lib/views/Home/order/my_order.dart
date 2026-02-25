@@ -176,7 +176,7 @@ class _OrderListPageState extends State<OrderListPage> {
         .toList();
   }
 
-  void _onOrderAction(String action, Map<String, dynamic> order) {
+  Future<void> _onOrderAction(String action, Map<String, dynamic> order) async {
     switch (action) {
       case 'refund':
         Navigator.push(
@@ -194,6 +194,13 @@ class _OrderListPageState extends State<OrderListPage> {
         break;
       case 'printTicket':
         _printTicket(order);
+        break;
+      case 'arc':
+        print('nota de crédito');
+        final bool creditMemoSucces = await createCreditMemo(
+          cInvoiceID: order['C_Invoice']?[0]?['id'],
+        );
+        print(creditMemoSucces);
         break;
       default:
         break;
@@ -288,8 +295,16 @@ class _OrderListPageState extends State<OrderListPage> {
     }
     return Column(
       children: orders.map((order) {
+        final bool isComplete = (order['DocStatus'] == 'CO');
         final bool isReturn =
             (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+
+        // --- REVISAR SI YA EXISTE NOTA DE CRÉDITO ---
+        final List invoices = order['C_Invoice'] ?? [];
+        final bool hasCreditNote = invoices.any((inv) {
+          return inv['RelatedInvoice_ID'] != null;
+        });
+
         return GestureDetector(
           onTap: () async {
             final refreshed = await Navigator.push(
@@ -379,17 +394,16 @@ class _OrderListPageState extends State<OrderListPage> {
                       value: 'printTicket',
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.receipt_long_rounded,
-                            color: Colors.blue,
-                          ),
+                          const Icon(Icons.print_outlined, color: Colors.green),
                           const SizedBox(width: 8),
                           Text(AppLocale.printTicket.getString(context)),
                         ],
                       ),
                     ),
                   ];
-                  if (isReturn == false && POS.isPOS == true) {
+                  if (isReturn == false &&
+                      POS.isPOS == true &&
+                      !hasCreditNote) {
                     items.add(
                       PopupMenuItem<String>(
                         value: 'refund',
@@ -398,6 +412,25 @@ class _OrderListPageState extends State<OrderListPage> {
                             const Icon(Icons.undo, color: Colors.red),
                             const SizedBox(width: 8),
                             Text(AppLocale.refund.getString(context)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  if (POS.isPOS == false &&
+                      isComplete == true &&
+                      !hasCreditNote) {
+                    items.add(
+                      PopupMenuItem<String>(
+                        value: 'arc',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.receipt_long_rounded,
+                              color: Colors.blue,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(AppLocale.arc.getString(context)),
                           ],
                         ),
                       ),
