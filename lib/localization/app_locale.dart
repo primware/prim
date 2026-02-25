@@ -165,10 +165,12 @@ class AppLocale {
   static const String noTaxCategoryAvailable = 'noTaxCategoryAvailable';
   static const String productType = 'productType';
   static const String refund = 'refund';
+  static const String arc = 'arc';
   static const String order = 'order';
   static const String noData = 'noData';
 
   static const Map<String, dynamic> en = {
+    arc: 'Credit Memo',
     jan: 'Jan',
     feb: 'Feb',
     mar: 'Mar',
@@ -353,6 +355,7 @@ class AppLocale {
     server: 'Servidor',
     onlyMyRecords: 'Solo Mis Registros',
     lang: 'Idioma',
+    arc: 'Nota de Crédito',
 
     newOrder: 'Nueva Orden',
     customer: 'Cliente',

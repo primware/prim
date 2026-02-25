@@ -1388,23 +1388,34 @@ class _OrderNewPageState extends State<OrderNewPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Row(
+          // Utilizamos un Column para apilar la información verticalmente
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (isMobile == false) ...[
-                Text(
-                  '${AppLocale.user.getString(context)}: ${UserData.name} -',
+              // Primera línea: Información del Usuario (Letra más pequeña y sutil)
+              Text(
+                '${AppLocale.user.getString(context)}: ${UserData.name}',
+                style: TextStyle(
+                  fontSize: isMobile ? 12 : 14,
+                  fontWeight: FontWeight.w400,
+                  // Le damos un poco de transparencia para diferenciarlo del título principal
+                  color: Colors.white70,
                 ),
-                const SizedBox(width: 4),
-              ],
+                overflow: TextOverflow.ellipsis,
+              ),
+              // Segunda línea: Título del documento (Letra más grande y en negrita)
               Text(
                 widget.orderName != null
-                    ? '${isMobile ? '' : '${widget.orderName!}: '}${docNoSequenceNumber != null ? "$docNoSequenceNumber" : ""}'
+                    ? '${widget.orderName!}: ${docNoSequenceNumber ?? ""}'
                     : widget.isRefund
                     ? '${AppLocale.creditNote.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}'
                     : '${AppLocale.newOrder.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}',
+                style: TextStyle(
+                  fontSize: isMobile ? 16 : 20,
+                  fontWeight: FontWeight.bold,
+                ),
                 overflow: TextOverflow.ellipsis,
-                maxLines: 1,
               ),
             ],
           ),
@@ -1412,21 +1423,21 @@ class _OrderNewPageState extends State<OrderNewPage> {
               ? Theme.of(context).colorScheme.error
               : null,
           actions: [
-            !isMobile
-                ? Padding(
-                    padding: const EdgeInsets.only(right: CustomSpacer.medium),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          CustomSpacer.medium,
-                        ),
-                        color: Colors.white,
-                      ),
-                      padding: EdgeInsets.all(CustomSpacer.small),
-                      child: Logo(width: 60),
-                    ),
-                  )
-                : SizedBox.shrink(),
+            // Se eliminó la condición isMobile para que el logo SIEMPRE se muestre
+            Padding(
+              padding: const EdgeInsets.only(right: CustomSpacer.medium),
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(CustomSpacer.small),
+                    color: Colors.white,
+                  ),
+                  // Se redujo el padding y el tamaño del logo en móviles para no saturar la pantalla
+                  padding: EdgeInsets.all(isMobile ? 4.0 : CustomSpacer.small),
+                  child: Logo(width: isMobile ? 45 : 60),
+                ),
+              ),
+            ),
           ],
         ),
         drawer: MenuDrawer(),
