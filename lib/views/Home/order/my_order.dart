@@ -80,8 +80,87 @@ class _OrderListPageState extends State<OrderListPage> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocale.confirmPrintTicket.getString(context)),
-        content: Text(AppLocale.printTicketMessage.getString(context)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Theme.of(context).cardColor,
+        title: Column(
+          children: [
+            Icon(
+              Icons.print_rounded,
+              size: 45,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              AppLocale.confirmPrintTicket.getString(context),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: Text(
+          AppLocale.printTicketMessage.getString(context),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Confirmación para convertir a Nota de Crédito
+  Future<bool?> _refundConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Theme.of(context).cardColor,
+        title: const Column(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 45,
+              color: Colors.redAccent,
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Confirmar Nota de Crédito',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '¿Seguro que quiere convertir a nota de crédito?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Recuerde que esta acción no se puede deshacer.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.red, // Texto en rojo
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        actionsAlignment:
+            MainAxisAlignment.spaceEvenly, // Centra y separa los botones
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -176,16 +255,37 @@ class _OrderListPageState extends State<OrderListPage> {
         .toList();
   }
 
-  Future<void> _onOrderAction(String action, Map<String, dynamic> order) async {
+  void _onOrderAction(String action, Map<String, dynamic> order) async {
     switch (action) {
       case 'refund':
+        // LLamamos al nuevo cuadro de confirmación
+        final bool? confirm = await _refundConfirmation(context);
+
+        // Si el usuario dijo que "Sí"
+        if (confirm == true) {
+          if (!mounted) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OrderNewPage(
+                isRefund: true,
+                doctypeID: POS.docTypeRefundID,
+                orderName: POS.docTypeRefundName,
+                sourceOrderId:
+                    order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
+              ),
+            ),
+          );
+        }
+        break;
+      case 'convertQuote':
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => OrderNewPage(
-              isRefund: true,
-              doctypeID: POS.docTypeRefundID,
-              orderName: POS.docTypeRefundName,
+              isRefund: false,
+              doctypeID: POS.docTypeID,
+              orderName: POS.docTypeName,
               sourceOrderId:
                   order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
             ),
@@ -196,11 +296,15 @@ class _OrderListPageState extends State<OrderListPage> {
         _printTicket(order);
         break;
       case 'arc':
-        print('nota de crédito');
-        final bool creditMemoSucces = await createCreditMemo(
-          cInvoiceID: order['C_Invoice']?[0]?['id'],
-        );
-        print(creditMemoSucces);
+        final bool? confirmArc = await _refundConfirmation(context);
+        if (confirmArc == true) {
+          final bool creditMemoSucces = await createCreditMemo(
+            cInvoiceID: order['C_Invoice']?[0]?['id'],
+          );
+          if (creditMemoSucces) {
+            _fetchOrders(showLoadingIndicator: true);
+          }
+        }
         break;
       default:
         break;
@@ -218,6 +322,37 @@ class _OrderListPageState extends State<OrderListPage> {
         ? AppLocale.refund.getString(context)
         : AppLocale.order.getString(context);
     final IconData icon = isReturn ? Icons.undo : Icons.shopping_cart;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: baseColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: baseColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCreditMemoPill() {
+    final Color baseColor = Colors.red;
+    final Color bgColor = baseColor.withOpacity(0.12);
+    final String label = AppLocale.creditNote.getString(context);
+    final IconData icon = Icons.receipt_long_outlined;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -375,12 +510,22 @@ class _OrderListPageState extends State<OrderListPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Row(
+                  Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSubtypePill(order),
-                      const SizedBox(width: 8),
-                      _buildDocStatusPill(order),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildSubtypePill(order),
+                          const SizedBox(width: 8),
+                          _buildDocStatusPill(order),
+                        ],
+                      ),
+                      if (hasCreditNote) ...[
+                        const SizedBox(height: 8),
+                        _buildCreditMemoPill(),
+                      ],
                     ],
                   ),
                 ],

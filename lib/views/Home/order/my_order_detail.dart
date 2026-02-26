@@ -9,6 +9,8 @@ import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/footer.dart';
+import 'package:primware/views/Home/order/my_order_new.dart';
+import 'package:primware/views/Home/order/order_funtions.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -65,8 +67,29 @@ class OrderDetailPage extends StatelessWidget {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocale.confirmPrintTicket.getString(context)),
-        content: Text(AppLocale.printTicketMessage.getString(context)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Theme.of(context).cardColor,
+        title: Column(
+          children: [
+            Icon(
+              Icons.print_outlined,
+              size: 45,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              AppLocale.confirmPrintTicket.getString(context),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: Text(
+          AppLocale.printTicketMessage.getString(context),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -75,6 +98,172 @@ class OrderDetailPage extends StatelessWidget {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: Text(AppLocale.yes.getString(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _refundConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Theme.of(context).cardColor,
+        title: const Column(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 45,
+              color: Colors.redAccent,
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Confirmar Devolución',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: Text(
+          '¿Seguro que quiere hacer una devolución?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Confirmación para convertir a Nota de Crédito
+  Future<bool?> _creditMemoConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Theme.of(context).cardColor,
+        title: const Column(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 45,
+              color: Colors.redAccent,
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Confirmar Nota de Crédito',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '¿Seguro que quiere convertir a nota de crédito?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Recuerde que esta acción no se puede deshacer.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubtypePill(BuildContext context, Map<String, dynamic> order) {
+    final sub = order['doctypetarget']?['subtype']?['id'];
+    final bool isReturn =
+        (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+
+    final Color baseColor = isReturn ? Colors.red : Colors.green;
+    final Color bgColor = baseColor.withOpacity(0.12);
+    final String label = isReturn
+        ? AppLocale.refund.getString(context)
+        : AppLocale.order.getString(context);
+    final IconData icon = isReturn ? Icons.undo : Icons.shopping_cart;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: baseColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: baseColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCreditMemoPill() {
+    const Color baseColor = Colors.red;
+    final Color bgColor = baseColor.withOpacity(0.12);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: baseColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.receipt_long_outlined, size: 14, color: baseColor),
+          const SizedBox(width: 6),
+          const Text(
+            'Nota de Crédito',
+            style: TextStyle(
+              fontSize: 12,
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -95,6 +284,14 @@ class OrderDetailPage extends StatelessWidget {
     final String? subId = (subField is Map) ? subField['id'] : subField;
     final bool isReturn = subId == 'RM';
 
+    // --- NUEVO: Validaciones de Estado y Nota de Crédito ---
+    final bool isComplete = (order['DocStatus'] == 'CO');
+    final List invoices = order['C_Invoice'] ?? [];
+    final bool hasCreditNote = invoices.any((inv) {
+      return inv['RelatedInvoice_ID'] != null;
+    });
+    // -------------------------------------------------------
+
     // Obtener métodos de pago
     final List<dynamic> payments =
         (order['C_POSPayment'] ?? order['payments'] ?? []) as List<dynamic>;
@@ -107,6 +304,7 @@ class OrderDetailPage extends StatelessWidget {
           '${order['doctypetarget']['name']} #${order['DocumentNo']}',
         ),
         actions: [
+          // 1. Botón de Exportar/Compartir PDF (Se mantiene a la izquierda)
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: AppLocale.exportPdf.getString(context),
@@ -118,8 +316,63 @@ class OrderDetailPage extends StatelessWidget {
               );
             },
           ),
+
+          // 2. Botón de Devolución POS (Al centro, si aplica)
+          if (isReturn == false && POS.isPOS == true && !hasCreditNote)
+            IconButton(
+              icon: const Icon(
+                Icons.undo,
+                color: Colors.redAccent,
+              ), // Ícono en rojo para que destaque
+              tooltip: AppLocale.refund.getString(context),
+              onPressed: () async {
+                final bool? confirm = await _refundConfirmation(context);
+                if (confirm == true) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => OrderNewPage(
+                        isRefund: true,
+                        doctypeID: POS.docTypeRefundID,
+                        orderName: POS.docTypeRefundName,
+                        sourceOrderId:
+                            order['id'] ??
+                            order['C_Order_ID'] ??
+                            order['record_id'],
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+
+          // 3. Botón de Devolución NO-POS / ARC (Al centro, si aplica)
+          if (POS.isPOS == false && isComplete == true && !hasCreditNote)
+            IconButton(
+              icon: const Icon(
+                Icons.receipt_long_outlined,
+                color: Colors.redAccent,
+              ),
+              tooltip: AppLocale.arc.getString(context),
+              onPressed: () async {
+                final bool? confirm = await _creditMemoConfirmation(context);
+                if (confirm == true) {
+                  final bool creditMemoSucces = await createCreditMemo(
+                    cInvoiceID: order['C_Invoice']?[0]?['id'],
+                  );
+                  if (creditMemoSucces) {
+                    Navigator.pop(
+                      context,
+                      true,
+                    ); // Devuelve a la lista para refrescar
+                  }
+                }
+              },
+            ),
+
+          // 4. Botón de Imprimir Ticket (A la derecha, con nuevo ícono de impresora)
           IconButton(
-            icon: const Icon(Icons.receipt_long_rounded),
+            icon: const Icon(Icons.print_rounded),
             tooltip: AppLocale.printTicket.getString(context),
             onPressed: () async {
               final bool? confirmPrintTicket = await _printTicketConfirmation(
@@ -153,7 +406,6 @@ class OrderDetailPage extends StatelessWidget {
                     );
                   }
                 } catch (e) {
-                  // Último fallback silencioso: intentar compartir PDF genérico
                   try {
                     final pdfBytes = await generateOrderTicket(order);
                     await Printing.sharePdf(
@@ -174,7 +426,12 @@ class OrderDetailPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildHeader(order: order, context: context, feFuture: feFuture),
+              _buildHeader(
+                order: order,
+                context: context,
+                feFuture: feFuture,
+                hasCreditNote: hasCreditNote,
+              ),
               const SizedBox(height: CustomSpacer.large),
               Text(
                 AppLocale.productSummary.getString(context),
@@ -425,6 +682,7 @@ class OrderDetailPage extends StatelessWidget {
     required Map<String, dynamic> order,
     required BuildContext context,
     required Future<Map<String, String>?> feFuture,
+    required bool hasCreditNote, // NUEVO PARÁMETRO
   }) {
     return FutureBuilder<Map<String, String>?>(
       future: feFuture,
@@ -449,8 +707,17 @@ class OrderDetailPage extends StatelessWidget {
                   ? Theme.of(context).textTheme.bodyMedium
                   : Theme.of(context).textTheme.headlineSmall,
             ),
-            // Estado del documento (DocStatus)
-            _buildDocStatusPill(context, order),
+            const SizedBox(height: 4),
+            // MOSTRAR TODOS LOS CHIPS JUNTOS ORDENADOS
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                _buildSubtypePill(context, order),
+                _buildDocStatusPill(context, order),
+                if (hasCreditNote) _buildCreditMemoPill(),
+              ],
+            ),
           ],
         );
 
