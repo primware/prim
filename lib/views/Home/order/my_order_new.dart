@@ -2398,7 +2398,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           Text(
-                            '\$${total}',
+                            '\$$total',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ],

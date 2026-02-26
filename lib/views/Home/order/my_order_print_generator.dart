@@ -172,7 +172,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
               return [
                 name,
                 description,
-                "${qty} x ${nf.format(price)}",
+                "$qty x ${nf.format(price)}",
                 "${rate.toStringAsFixed(0)}%",
                 nf.format(net),
                 nf.format(total),
