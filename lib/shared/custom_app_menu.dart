@@ -1,6 +1,8 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:typed_data';
 
+import 'package:primware/views/Auth/config_view.dart';
+import 'package:primware/views/Auth/auth_funtions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:intl/intl.dart';
@@ -530,6 +532,41 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 );
               },
             ),
+          // BOTÓN DE CAMBIAR ROL
+          ListTile(
+            leading: const Icon(Icons.manage_accounts_outlined),
+            title: const Text('Cambiar Rol'),
+            onTap: () async {
+              // Rescatamos el usuario y clave actuales
+              final String currentUser = usuarioController.text.trim();
+              final String currentPass = claveController.text.trim();
+
+              // Hacemos una pre-autenticación
+              final authData = await preAuth(currentUser, currentPass, context);
+
+              if (!mounted) return;
+
+              if (authData != null) {
+                // Navegación normal (APILA la vista).
+                // Si el usuario le da a "Volver", la sesión intacta sigue ahí.
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ConfigPage(clients: authData['clients']),
+                  ),
+                );
+              } else {
+                // Fallback por si la contraseña cambió o el token expiró
+                await cleanSessionData();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (Route<dynamic> route) => false,
+                );
+              }
+            },
+          ),
+
           ListTile(
             leading: Icon(Icons.logout_outlined, color: ColorTheme.error),
             title: Text(

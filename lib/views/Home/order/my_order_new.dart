@@ -1393,7 +1393,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Primera línea: Información del Usuario (Letra más pequeña y sutil)
+              // Primera línea: Información del Usuario
               Text(
                 '${AppLocale.user.getString(context)}: ${UserData.name}',
                 style: TextStyle(
@@ -1404,7 +1404,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
-              // Segunda línea: Título del documento (Letra más grande y en negrita)
+              // Segunda línea: Título del documento
               Text(
                 widget.orderName != null
                     ? '${widget.orderName!}: ${docNoSequenceNumber ?? ""}'
