@@ -168,6 +168,14 @@ class _OrderListPageState extends State<OrderListPage> {
 
   void _onOrderAction(String action, Map<String, dynamic> order) async {
     switch (action) {
+      case 'duplicate':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
+          ),
+        );
+        break;
       case 'refund':
         // LLamamos al nuevo cuadro de confirmación
         final bool? confirm = await _refundConfirmation(context);
@@ -429,6 +437,16 @@ class _OrderListPageState extends State<OrderListPage> {
                           const Icon(Icons.print_outlined, color: Colors.green),
                           const SizedBox(width: 8),
                           Text(AppLocale.printTicket.getString(context)),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'duplicate',
+                      child: Row(
+                        children: [
+                          Icon(Icons.copy, color: Theme.of(context).primaryColor),
+                          const SizedBox(width: 8),
+                          Text(AppLocale.duplicate.getString(context)),
                         ],
                       ),
                     ),
