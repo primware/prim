@@ -547,7 +547,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
               if (!mounted) return;
 
               if (authData != null) {
-                // Navegación normal (APILA la vista).
                 // Si el usuario le da a "Volver", la sesión intacta sigue ahí.
                 Navigator.push(
                   context,

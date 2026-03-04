@@ -270,6 +270,53 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
+  Widget _buildEditPill(BuildContext context, Map<String, dynamic> order) {
+    return InkWell(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderNewPage(
+              isRefund: false,
+              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
+              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
+              sourceOrderId: order['id'],
+            ),
+          ),
+        );
+        // Si se guardó, refrescamos devolviendo un true
+        if (result == true) {
+          Navigator.pop(context, true);
+        }
+      },
+      borderRadius: BorderRadius.circular(50),
+      child: Container(
+        margin: const EdgeInsets.only(top: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.amberAccent.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: Colors.amber.shade700, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.edit_document, size: 14, color: Colors.amber.shade800),
+            const SizedBox(width: 6),
+            Text(
+              AppLocale.edit.getString(context),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.amber.shade800,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lines = (order['C_OrderLine'] as List?) ?? [];
@@ -715,6 +762,7 @@ class OrderDetailPage extends StatelessWidget {
               children: [
                 _buildSubtypePill(context, order),
                 _buildDocStatusPill(context, order),
+                if (order['DocStatus'] == 'DR') _buildEditPill(context, order),
                 if (hasCreditNote) _buildCreditMemoPill(),
               ],
             ),

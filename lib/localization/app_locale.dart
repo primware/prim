@@ -168,8 +168,10 @@ class AppLocale {
   static const String arc = 'arc';
   static const String order = 'order';
   static const String noData = 'noData';
+  static const String edit = 'edit';
 
   static const Map<String, dynamic> en = {
+    edit: 'Editar',
     arc: 'Credit Memo',
     jan: 'Jan',
     feb: 'Feb',
@@ -341,6 +343,7 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    edit: 'Editar',
     products: 'Productos',
     searchProducts: 'Buscar productos',
     productCode: 'Código',
