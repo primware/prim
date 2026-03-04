@@ -450,17 +450,17 @@ class _OrderListPageState extends State<OrderListPage> {
                         ],
                       ),
                     ),
-                    if (order['DocStatus'] == 'DR')
-                      PopupMenuItem<String>(
-                        value: 'docComplete',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check, color: Colors.green),
-                            const SizedBox(width: 8),
-                            Text(AppLocale.complete.getString(context)),
-                          ],
-                        ),
-                      ),
+                    // if (order['DocStatus'] == 'DR')
+                    //   PopupMenuItem<String>(
+                    //     value: 'docComplete',
+                    //     child: Row(
+                    //       children: [
+                    //         const Icon(Icons.check, color: Colors.green),
+                    //         const SizedBox(width: 8),
+                    //         Text(AppLocale.complete.getString(context)),
+                    //       ],
+                    //     ),
+                    //   ),
                   ];
                   if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
                     items.add(
