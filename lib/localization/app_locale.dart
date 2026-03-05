@@ -39,8 +39,7 @@ class AppLocale {
   static const String role = 'role';
   static const String taxIDOrName = 'taxIDOrName';
   static const String organization = 'organization';
-  static const String selectCompanyRoleOrganization =
-      'selectCompanyRoleOrganization';
+  static const String selectCompanyRoleOrganization = 'selectCompanyRoleOrganization';
   static const String clientMustBeSelected = 'clientMustBeSelected';
   static const String continueKey = 'continueKey';
   static const String back = 'back';
@@ -159,6 +158,7 @@ class AppLocale {
   static const String fillWithRemaining = 'fillWithRemaining';
   static const String errorCompleteOrder = 'errorCompleteOrder';
   static const String printTicket = 'printTicket';
+  static const String duplicate = 'duplicate';
   static const String confirmPrintTicket = 'confirmPrintTicket';
   static const String printTicketMessage = 'printTicketMessage';
   static const String noTaxTypesAvailable = 'noTaxTypesAvailable';
@@ -168,8 +168,11 @@ class AppLocale {
   static const String arc = 'arc';
   static const String order = 'order';
   static const String noData = 'noData';
+  static const String edit = 'edit';
 
   static const Map<String, dynamic> en = {
+    duplicate: 'Duplicate',
+    edit: 'Edit',
     arc: 'Credit Memo',
     jan: 'Jan',
     feb: 'Feb',
@@ -212,8 +215,7 @@ class AppLocale {
     discount: 'Discount',
 
     organization: 'Organization',
-    selectCompanyRoleOrganization:
-        'Please select a company, role, and organization',
+    selectCompanyRoleOrganization: 'Please select a company, role, and organization',
     continueKey: 'Continue',
     back: 'Back',
     taxIDOrName: 'ID or Name...',
@@ -318,8 +320,7 @@ class AppLocale {
     change: 'Change',
     close: 'Close',
     confirmCompleteOrder: 'Are you sure you want to {action} the order?',
-    confirmCompleteCreditNote:
-        'Are you sure you want to {action} the credit note?',
+    confirmCompleteCreditNote: 'Are you sure you want to {action} the credit note?',
     noTax: 'No tax',
     fillWithRemaining: 'Fill with the remaining amount',
     errorCompleteOrder: 'Error completing order',
@@ -341,6 +342,8 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    duplicate: 'Duplicar',
+    edit: 'Editar',
     products: 'Productos',
     searchProducts: 'Buscar productos',
     productCode: 'Código',
@@ -374,8 +377,7 @@ class AppLocale {
     onlyMyOrders: 'Solo mis órdenes',
     taxIDOrName: 'Identificación o Nombre...',
     invalidCredentials: 'Credenciales incorrectas',
-    serverSaved:
-        'Se guardó la dirección del servidor. Por favor reiniciar el app',
+    serverSaved: 'Se guardó la dirección del servidor. Por favor reiniciar el app',
     customers: 'Clientes',
     searchCustomer: 'Buscar cliente',
     add: 'Agregar',
@@ -477,8 +479,7 @@ class AppLocale {
     discount: 'Descuento',
     close: 'Cerrar',
     confirmCompleteOrder: '¿Está seguro de que desea {action} la orden?',
-    confirmCompleteCreditNote:
-        '¿Está seguro de que desea {action} la nota de crédito?',
+    confirmCompleteCreditNote: '¿Está seguro de que desea {action} la nota de crédito?',
     noTax: 'Sin impuesto',
     fillWithRemaining: 'Llenar con el monto restante',
     errorCompleteOrder: 'Error al completar la orden',

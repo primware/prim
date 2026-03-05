@@ -21,10 +21,7 @@ import 'login_view.dart';
 class ConfigPage extends StatefulWidget {
   final List<dynamic> clients;
 
-  const ConfigPage({
-    super.key,
-    required this.clients,
-  });
+  const ConfigPage({super.key, required this.clients});
 
   @override
   State<ConfigPage> createState() => _ConfigPageState();
@@ -55,10 +52,7 @@ class _ConfigPageState extends State<ConfigPage> {
     });
 
     clients = widget.clients.map((client) {
-      return {
-        'id': client['id'],
-        'name': client['name'],
-      };
+      return {'id': client['id'], 'name': client['name']};
     }).toList();
 
     setState(() {
@@ -87,8 +81,9 @@ class _ConfigPageState extends State<ConfigPage> {
             _onRoleSelected(selectedRoleId);
           }
 
-          final selectClient =
-              clients.firstWhere((client) => client['id'] == clientId);
+          final selectClient = clients.firstWhere(
+            (client) => client['id'] == clientId,
+          );
           UserData.clientName = selectClient['name'];
         });
       }
@@ -132,8 +127,11 @@ class _ConfigPageState extends State<ConfigPage> {
     });
 
     if (roleId != null) {
-      final fetchedOrganizations =
-          await getOrganizations(selectedClientId!, roleId, context);
+      final fetchedOrganizations = await getOrganizations(
+        selectedClientId!,
+        roleId,
+        context,
+      );
       if (fetchedOrganizations != null) {
         setState(() {
           organizations = fetchedOrganizations;
@@ -166,7 +164,25 @@ class _ConfigPageState extends State<ConfigPage> {
       setState(() {
         isLoading = true;
       });
+
+      // Limpiamos los datos específicos del rol/organización antes de autenticar
+      // Esto evita fugas de memoria (como guardar una orden en la organización anterior)
+      Token.warehouseID = null;
+      POS.priceListID = null;
+      POS.priceListVersionID = null;
+      POS.docTypeID = null;
+      POS.docTypeName = null;
+      POS.docTypeRefundName = null;
+      POS.templatePartnerID = null;
+      POS.docTypeRefundID = null;
+      POS.isPOS = false;
+      POS.documentActions.clear();
+      POS.principalTaxs.clear();
+      POS.docTypesComplete.clear();
+
       bool login = await usuarioAuth(context: context);
+
+      if (!mounted) return; // Freno de seguridad
 
       if (login) {
         if (rememberConfig) {
@@ -175,11 +191,15 @@ class _ConfigPageState extends State<ConfigPage> {
           await prefs.setInt('clientId_$usuario', selectedClientId!);
           await prefs.setInt('roleId_$usuario', selectedRoleId!);
           await prefs.setInt(
-              'organizationId_$usuario', selectedOrganizationId!);
+            'organizationId_$usuario',
+            selectedOrganizationId!,
+          );
           await prefs.setString('roleName_$usuario', UserData.rolName!);
         }
 
-        Navigator.pushReplacement(
+        // Usamos pushAndRemoveUntil para destruir el Dashboard anterior
+        // y evitar que se queden abiertas múltiples pantallas viejas de fondo.
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (context) => POS.isPOS
@@ -190,8 +210,13 @@ class _ConfigPageState extends State<ConfigPage> {
                   )
                 : DashboardPage(),
           ),
+          (Route<dynamic> route) => false,
         );
 
+        setState(() {
+          isLoading = false;
+        });
+      } else {
         setState(() {
           isLoading = false;
         });
@@ -207,82 +232,83 @@ class _ConfigPageState extends State<ConfigPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile =
-        MediaQuery.of(context).size.width < 750 ? true : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 750
+        ? true
+        : false;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
-          child: SingleChildScrollView(
-        child: CustomContainer(
-          maxWidthContainer: isMobile ? 420 : 500,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Text(
-                  AppLocale.selectRole.getString(context),
-                  style: Theme.of(context).textTheme.headlineSmall,
+        child: SingleChildScrollView(
+          child: CustomContainer(
+            maxWidthContainer: isMobile ? 420 : 500,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Text(
+                    AppLocale.selectRole.getString(context),
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ),
-              ),
-              const SizedBox(height: CustomSpacer.medium),
-              SearchableDropdown<int>(
-                value: selectedClientId,
-                options: clients,
-                showSearchBox: false,
-                labelText: AppLocale.company.getString(context),
-                onChanged: _onClientSelected,
-              ),
-              const SizedBox(height: CustomSpacer.medium),
-              SearchableDropdown<int>(
-                value: selectedRoleId,
-                options: roles,
-                showSearchBox: false,
-                labelText: AppLocale.role.getString(context),
-                onChanged: _onRoleSelected,
-              ),
-              const SizedBox(height: CustomSpacer.medium),
-              SearchableDropdown<int>(
-                value: selectedOrganizationId,
-                options: organizations,
-                showSearchBox: false,
-                labelText: AppLocale.organization.getString(context),
-                onChanged: _onOrganizationSelected,
-              ),
-              const SizedBox(height: CustomSpacer.medium),
-              CustomCheckbox(
-                value: rememberConfig,
-                text: AppLocale.rememberMe.getString(context),
-                onChanged: (newValue) {
-                  setState(() {
-                    rememberConfig = newValue;
-                  });
-                },
-              ),
-              const SizedBox(height: CustomSpacer.xlarge),
-              Container(
-                child: isLoading
-                    ? ButtonLoading(
-                        fullWidth: true,
-                      )
-                    : ButtonPrimary(
-                        texto: AppLocale.continueKey.getString(context),
-                        fullWidth: true,
-                        onPressed: _onContinue,
-                      ),
-              ),
-              const SizedBox(height: 12),
-              ButtonSecondary(
+                const SizedBox(height: CustomSpacer.medium),
+                SearchableDropdown<int>(
+                  value: selectedClientId,
+                  options: clients,
+                  showSearchBox: false,
+                  labelText: AppLocale.company.getString(context),
+                  onChanged: _onClientSelected,
+                ),
+                const SizedBox(height: CustomSpacer.medium),
+                SearchableDropdown<int>(
+                  value: selectedRoleId,
+                  options: roles,
+                  showSearchBox: false,
+                  labelText: AppLocale.role.getString(context),
+                  onChanged: _onRoleSelected,
+                ),
+                const SizedBox(height: CustomSpacer.medium),
+                SearchableDropdown<int>(
+                  value: selectedOrganizationId,
+                  options: organizations,
+                  showSearchBox: false,
+                  labelText: AppLocale.organization.getString(context),
+                  onChanged: _onOrganizationSelected,
+                ),
+                const SizedBox(height: CustomSpacer.medium),
+                CustomCheckbox(
+                  value: rememberConfig,
+                  text: AppLocale.rememberMe.getString(context),
+                  onChanged: (newValue) {
+                    setState(() {
+                      rememberConfig = newValue;
+                    });
+                  },
+                ),
+                const SizedBox(height: CustomSpacer.xlarge),
+                Container(
+                  child: isLoading
+                      ? ButtonLoading(fullWidth: true)
+                      : ButtonPrimary(
+                          texto: AppLocale.continueKey.getString(context),
+                          fullWidth: true,
+                          onPressed: _onContinue,
+                        ),
+                ),
+                const SizedBox(height: 12),
+                ButtonSecondary(
                   texto: AppLocale.back.getString(context),
                   fullWidth: true,
                   onPressed: () async {
                     Navigator.pop(context);
-                  }),
-            ],
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-      )),
+      ),
     );
   }
 }
