@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/custom_textfield.dart';
 import 'package:primware/shared/shimmer_list.dart';
+import 'package:primware/shared/toast_message.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
 import 'package:primware/views/Home/order/my_order_detail.dart';
@@ -114,6 +116,34 @@ class _OrderListPageState extends State<OrderListPage> {
     );
   }
 
+  // Confirmación para Completar la Orden
+  Future<bool?> _completeConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Theme.of(context).cardColor,
+        title: const Column(
+          children: [
+            Icon(Icons.check, size: 45, color: Colors.green),
+            SizedBox(height: 10),
+            Text(
+              'Completar Orden',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: const Text('¿Seguro que desea completar esta orden?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+        ],
+      ),
+    );
+  }
+
   // Imprimir ticket directamente desde la lista
   Future<void> _printTicket(Map<String, dynamic> order) async {
     final bool? confirm = await _printTicketConfirmation(context);
@@ -212,11 +242,16 @@ class _OrderListPageState extends State<OrderListPage> {
         }
         break;
       case 'docComplete':
-        final bool? confirmDocComplete = await _refundConfirmation(context);
+        final bool? confirmDocComplete = await _completeConfirmation(context);
         if (confirmDocComplete == true) {
-          final bool docCompleteSucces = await docComplete(cOrderID: order['id']);
-          if (docCompleteSucces) {
+          final docCompleteSucces = await docComplete(cOrderID: order['id']);
+          if (docCompleteSucces["success"] == true && docCompleteSucces["isError"] == false) {
             _fetchOrders(showLoadingIndicator: true);
+          } else if (docCompleteSucces["success"] == true && docCompleteSucces["isError"] == true) {
+            if (mounted) ToastMessage.show(context: context, message: docCompleteSucces["summary"], type: ToastType.failure);
+          } else {
+            if (mounted) ToastMessage.show(context: context, message: "No se pudo completar la acción", type: ToastType.failure);
+            //TODO Traducir
           }
         }
         break;
@@ -450,17 +485,17 @@ class _OrderListPageState extends State<OrderListPage> {
                         ],
                       ),
                     ),
-                    // if (order['DocStatus'] == 'DR')
-                    //   PopupMenuItem<String>(
-                    //     value: 'docComplete',
-                    //     child: Row(
-                    //       children: [
-                    //         const Icon(Icons.check, color: Colors.green),
-                    //         const SizedBox(width: 8),
-                    //         Text(AppLocale.complete.getString(context)),
-                    //       ],
-                    //     ),
-                    //   ),
+                    if (order['DocStatus'] == 'DR')
+                      PopupMenuItem<String>(
+                        value: 'docComplete',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check, color: Colors.green),
+                            const SizedBox(width: 8),
+                            Text(AppLocale.complete.getString(context)),
+                          ],
+                        ),
+                      ),
                   ];
                   if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
                     items.add(

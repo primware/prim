@@ -124,6 +124,34 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
+  // Confirmación para Completar la Orden
+  Future<bool?> _completeConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Theme.of(context).cardColor,
+        title: const Column(
+          children: [
+            Icon(Icons.check, size: 45, color: Colors.green),
+            SizedBox(height: 10),
+            Text(
+              'Completar Orden',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: const Text('¿Seguro que desea completar esta orden?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSubtypePill(BuildContext context, Map<String, dynamic> order) {
     final sub = order['doctypetarget']?['subtype']?['id'];
     final bool isReturn = (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
@@ -251,7 +279,6 @@ class OrderDetailPage extends StatelessWidget {
             builder: (context) {
               final bool isMobileVertical = MediaQuery.of(context).size.width < 600;
 
-              // --- FUNCIONES POPUPMENU
               void actionShare() async {
                 final pdfBytes = await generateOrderTicket(order);
                 await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
@@ -309,8 +336,24 @@ class OrderDetailPage extends StatelessWidget {
                 }
               }
 
+              void actionComplete() async {
+                final bool? confirmComplete = await _completeConfirmation(context);
+                if (confirmComplete == true) {
+                  final Map<String, dynamic> completeResult = await docComplete(cOrderID: order['id']);
+                  if (completeResult['success'] == true && completeResult['isError'] != true) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(completeResult['summary'] ?? 'Orden completada con éxito'), backgroundColor: Colors.green));
+                      Navigator.pop(context, true);
+                    }
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(completeResult['summary'] ?? 'Error al completar la orden'), backgroundColor: Colors.red));
+                    }
+                  }
+                }
+              }
+
               if (isMobileVertical) {
-                // VISTA VERTICAL)
                 return PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert),
                   onSelected: (value) {
@@ -330,6 +373,9 @@ class OrderDetailPage extends StatelessWidget {
                       case 'printTicket':
                         actionPrint();
                         break;
+                      case 'complete':
+                        actionComplete();
+                        break; // <-- Lo agregamos al router
                     }
                   },
                   itemBuilder: (context) {
@@ -365,6 +411,24 @@ class OrderDetailPage extends StatelessWidget {
                         ),
                       ),
                     ];
+
+                    //Opción de Completar
+
+                    if (order['DocStatus'] == 'DR') {
+                      items.add(
+                        const PopupMenuItem<String>(
+                          value: 'complete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.check, color: Colors.green),
+                              SizedBox(width: 8),
+                              Text('Completar'),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
                     if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
                       items.add(
                         PopupMenuItem<String>(
@@ -397,12 +461,19 @@ class OrderDetailPage extends StatelessWidget {
                   },
                 );
               } else {
-                // VISTA HORIZONTAL
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(icon: const Icon(Icons.share), tooltip: AppLocale.exportPdf.getString(context), onPressed: actionShare),
                     IconButton(icon: const Icon(Icons.copy), tooltip: AppLocale.duplicate.getString(context), onPressed: actionDuplicate),
+
+                    if (order['DocStatus'] == 'DR')
+                      IconButton(
+                        icon: const Icon(Icons.check, color: Colors.green),
+                        tooltip: 'Completar',
+                        onPressed: actionComplete,
+                      ),
+
                     if (isReturn == false && POS.isPOS == true && !hasCreditNote)
                       IconButton(
                         icon: const Icon(Icons.undo, color: Colors.redAccent),
