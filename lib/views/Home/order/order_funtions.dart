@@ -276,7 +276,7 @@ Future<List<Map<String, dynamic>>> fetchOrders({required BuildContext context, S
   try {
     await usuarioAuth(context: context);
 
-    filter = onlyMyOrders == true ? 'SalesRep_ID eq ${UserData.id} and contains(DocumentNo, \'$filter\')' : 'contains(DocumentNo, \'$filter\')';
+    filter = onlyMyOrders == true ? 'SalesRep_ID eq ${UserData.id} and contains(DocumentNo, \'$filter\') and IsSOTrx eq true' : 'contains(DocumentNo, \'$filter\') and IsSOTrx eq true';
 
     final response = await get(Uri.parse('${EndPoints.cOrder}?\$filter=$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID,C_Invoice(\$select=RelatedInvoice_ID,DocStatus)'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
@@ -350,21 +350,21 @@ Future<bool> createCreditMemo({required int cInvoiceID}) async {
   return false;
 }
 
-Future<bool> docComplete({required int cOrderID}) async {
+Future<Map<String, dynamic>> docComplete({required int cOrderID}) async {
   try {
-    final Map<String, dynamic> body = {"DocAction": "CO"};
+    final Map<String, dynamic> body = {"DocAction": "CO", "C_Order_ID": cOrderID};
 
-    final response = await put(Uri.parse('${EndPoints.cOrder}/$cOrderID'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!}, body: jsonEncode(body));
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return true;
+    final response = await post(Uri.parse(EndPoints.orderExecuteDocAction), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!}, body: jsonEncode(body));
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      return {"success": true, "isError": jsonResponse["isError"], "summary": jsonResponse["summary"]};
     } else {
       throw Exception('Error al completar documento: ${response.statusCode}');
     }
   } catch (e) {
     CurrentLogMessage.add('Error al completar documento:$e', level: 'ERROR', tag: 'docComplete');
   }
-  return false;
+  return {"success": false};
 }
 
 Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
