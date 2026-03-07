@@ -449,16 +449,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     final quantityController = TextEditingController(text: index != null && product['quantity'] != null ? product['quantity'].toString() : "1");
 
-    // --- Funciones Matemáticas ---
+    // --- Funciones Matemáticas sin la función clamp para permitir negativos ---
     double r2local(num v) {
       final x = v * 100.0;
       final adj = v >= 0 ? 1e-9 : -1e-9;
       return ((x + adj).round()) / 100.0;
     }
 
-    double calcDiscount(double priceList, double priceActual) => priceList <= 0 ? 0 : (100 * (1 - (priceActual / priceList))).clamp(0, 100);
+    // Si el precio es mayor al de lista, el descuento dará negativo
+    double calcDiscount(double priceList, double priceActual) => priceList <= 0 ? 0 : (100 * (1 - (priceActual / priceList)));
 
-    double calcPrice(double priceList, double discount) => priceList * (1 - (discount.clamp(0, 100) / 100));
+    double calcPrice(double priceList, double discount) => priceList * (1 - (discount / 100));
 
     final double priceList = (index != null ? (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0) : (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0)).toDouble();
 
@@ -467,28 +468,20 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     double initialDiscount = index != null ? (product['Discount'] ?? 0).toDouble() : calcDiscount(priceList, initialPrice);
 
-    // LA IDEA DEL USUARIO: Iniciamos el Checkbox
-    // Si la línea ya tenía un descuento guardado mayor a 0, iniciará encendido
-    bool applyDiscount = initialDiscount > 0;
-
     final priceController = TextEditingController(text: initialPrice == 0 ? '' : initialPrice.toStringAsFixed(2));
-    final discountController = TextEditingController(text: initialDiscount.toStringAsFixed(2));
+    final discountController = TextEditingController(text: initialDiscount == 0 ? '' : initialDiscount.toStringAsFixed(2));
     final descriptionController = TextEditingController(text: index != null && product['Description'] != null ? product['Description'].toString() : '');
 
     void onSubmitted(BuildContext dialogContext) {
       final qty = int.tryParse(quantityController.text) ?? 1;
       final effectivePrice = double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
-
-      // Si el check está activo, tomamos el descuento de la caja. Si no, calculamos el real en base al precio final ingresado
-      final effectiveDiscount = applyDiscount ? (double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0) : calcDiscount(priceList, effectivePrice);
+      final effectiveDiscount = double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0;
 
       if (index != null) {
         invoiceLines.removeAt(index);
       }
 
       setState(() {
-        // BONUS: Usamos "insert" en lugar de "add" para que el producto no se vaya
-        // al fondo de la lista cuando lo editas, sino que mantenga su posición original.
         invoiceLines.insert(index ?? invoiceLines.length, {...product, 'quantity': qty, 'price': r2local(effectivePrice), 'C_Tax_ID': selectedTaxID ?? selectedTax?['id'], 'Description': descriptionController.text, 'PriceList': r2local(priceList), 'Discount': r2local(effectiveDiscount)});
       });
 
@@ -508,7 +501,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
             return true;
           },
           child: StatefulBuilder(
-            // StatefulBuilder permite actualizar el check en vivo
             builder: (context, setModalState) {
               return AlertDialog(
                 backgroundColor: Theme.of(context).cardColor,
@@ -526,7 +518,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: IconButton(
-                                icon: Icon(Icons.remove),
+                                icon: const Icon(Icons.remove),
                                 color: ColorTheme.error,
                                 onPressed: () {
                                   int current = int.tryParse(quantityController.text) ?? 1;
@@ -544,7 +536,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: IconButton(
-                                icon: Icon(Icons.add),
+                                icon: const Icon(Icons.add),
                                 color: ColorTheme.success,
                                 onPressed: () {
                                   int current = int.tryParse(quantityController.text) ?? 1;
@@ -566,60 +558,46 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         ),
                         const SizedBox(height: CustomSpacer.medium),
 
-                        // --- EL NUEVO CHECKBOX ---
-                        CheckboxListTile(
-                          title: Text("Aplicar Descuento", style: Theme.of(context).textTheme.bodyMedium),
-                          value: applyDiscount,
-                          activeColor: Theme.of(context).colorScheme.primary,
-                          contentPadding: EdgeInsets.zero,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          onChanged: (bool? value) {
-                            setModalState(() {
-                              applyDiscount = value ?? false;
-                              if (!applyDiscount) {
-                                discountController.text = "0.00";
-                              } else {
-                                final p = double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
-                                discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
-                              }
-                            });
-                          },
+                        //
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 6,
+                              child: TextfieldTheme(
+                                controlador: priceController,
+                                pista: product['price'] == 0 ? product['price'].toString() : null,
+                                texto: AppLocale.price.getString(context),
+                                inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+                                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
+                                onChanged: (val) {
+                                  setModalState(() {
+                                    final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                    // Calcula el descuento incluso si es negativo
+                                    discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: CustomSpacer.small),
+                            Expanded(
+                              flex: 4,
+                              child: TextfieldTheme(
+                                controlador: discountController,
+                                texto: '% Desc.',
+                                inputType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\-0-9\.,]'))],
+                                onChanged: (val) {
+                                  setModalState(() {
+                                    if (val == '-') return; // Evita error si el usuario solo ha escrito el signo menos
+                                    final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                    priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: CustomSpacer.small),
-
-                        // Precio Actual (Libre si check=OFF, calcula si check=ON)
-                        TextfieldTheme(
-                          controlador: priceController,
-                          pista: product['price'] == 0 ? product['price'].toString() : null,
-                          texto: AppLocale.price.getString(context),
-                          inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
-                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
-                          onChanged: (val) {
-                            if (applyDiscount) {
-                              setModalState(() {
-                                final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
-                              });
-                            }
-                          },
-                        ),
-
-                        // Descuento (Solo visible si el checkbox está encendido)
-                        if (applyDiscount) ...[
-                          const SizedBox(height: CustomSpacer.medium),
-                          TextfieldTheme(
-                            controlador: discountController,
-                            texto: '% Descuento',
-                            inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
-                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
-                            onChanged: (val) {
-                              setModalState(() {
-                                final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
-                              });
-                            },
-                          ),
-                        ],
 
                         const SizedBox(height: CustomSpacer.medium),
                         SearchableDropdown<int>(
@@ -648,14 +626,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                     },
                     child: Text(AppLocale.cancel.getString(context)),
                   ),
-                  ElevatedButton(
-                    onPressed: () => onSubmitted(dialogContext),
-                    child: Text(
-                      index != null
-                          ? 'Editar' // Si ya existe, el botón dice Editar
-                          : AppLocale.add.getString(context),
-                    ),
-                  ),
+                  ElevatedButton(onPressed: () => onSubmitted(dialogContext), child: Text(index != null ? 'Editar' : AppLocale.add.getString(context))),
                 ],
               );
             },
