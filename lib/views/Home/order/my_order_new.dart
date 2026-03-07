@@ -330,10 +330,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
         createAnchorCustomerTerm = null;
       });
     }
-    setState(() {
-      selectedBPartnerID = null;
-      _validateForm();
-    });
 
     final partner = await fetchBPartner(context: context, searchTerm: clienteController.text.trim());
 
@@ -1058,305 +1054,468 @@ class _OrderNewPageState extends State<OrderNewPage> {
               children: [
                 CustomContainer(
                   maxWidthContainer: 320,
-                  margin: EdgeInsets.only(top: 24),
+                  margin: const EdgeInsets.only(top: 24),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: CustomSpacer.medium),
-                          SearchableDropdown<int>(
-                            value: selectedSalesRepID,
-                            options: salesRep,
-                            showSearchBox: false,
-                            labelText: AppLocale.seller.getString(context),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedSalesRepID = value;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: CustomSpacer.medium),
-                          if (isCustomerSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CustomSearchField(
-                                  options: bPartnerOptions,
-                                  labelText: AppLocale.customer.getString(context),
-                                  searchBy: "TaxID",
-                                  controller: clienteController,
-                                  showCreateButtonIfNotFound: canShowCreateCustomerButton,
-                                  createAnchorTerm: createAnchorCustomerTerm,
-                                  fieldController: customerFieldController,
-                                  onSubmit: (_) => _loadBPartner(showLoadingIndicator: true),
-                                  onCreate: (value) async {
-                                    final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => BPartnerNewPage(bpartnerName: value)));
-                                    if (result != null && result?['created'] == true) {
-                                      setState(() {
-                                        clienteController.text = result['bpartner']['Name'];
-                                        selectedBPartnerID = result['bpartner']['id'];
-                                      });
+                      const SizedBox(height: CustomSpacer.medium),
+                      SearchableDropdown<int>(
+                        value: selectedSalesRepID,
+                        options: salesRep,
+                        showSearchBox: false,
+                        labelText: AppLocale.seller.getString(context),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedSalesRepID = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: CustomSpacer.medium),
+                      if (isCustomerSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
 
-                                      _loadBPartner(showLoadingIndicator: true);
-                                    }
-                                  },
-                                  onItemSelected: (item) {
-                                    setState(() {
-                                      selectedBPartnerID = item['id'];
-                                      _validateForm();
-                                    });
-                                  },
-                                  itemBuilder: (item) => Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(item['name'], style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
-                                      if (item['TaxID'] != null) Text(item['TaxID'], style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: CustomSpacer.small),
-                              IconButton(tooltip: AppLocale.refresh.getString(context), icon: const Icon(Icons.search), onPressed: () => _loadBPartner(showLoadingIndicator: true)),
-                            ],
-                          ),
-                          if (selectedBPartnerID == null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(AppLocale.clientMustBeSelected.getString(context), style: TextStyle(color: ColorTheme.error, fontSize: 13)),
-                            ),
-                          const SizedBox(height: CustomSpacer.medium),
-                          isProductLoading
-                              ? _buildShimmerField()
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Segmento de selección de categorías con botón y modal
-                                    if (!isProductCategoryLoading)
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          TextButton.icon(
-                                            style: ButtonStyle(textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium), backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary), foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary)),
-                                            icon: const Icon(Icons.category),
-                                            label: Text(AppLocale.categories.getString(context)),
-                                            onPressed: () async {
-                                              Set<int> tempSelected = Set<int>.from(selectedCategories);
-                                              await showModalBottomSheet(
-                                                context: context,
-                                                isScrollControlled: true,
-                                                builder: (context) {
-                                                  return StatefulBuilder(
-                                                    builder: (context, setModalState) {
-                                                      return SafeArea(
-                                                        child: Padding(
-                                                          padding: MediaQuery.of(context).viewInsets,
-                                                          child: Container(
-                                                            constraints: const BoxConstraints(maxHeight: 400),
-                                                            child: Column(
-                                                              mainAxisSize: MainAxisSize.min,
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                Padding(
-                                                                  padding: const EdgeInsets.all(16.0),
-                                                                  child: Text(AppLocale.selectCategories.getString(context), style: Theme.of(context).textTheme.bodyLarge),
-                                                                ),
-                                                                Expanded(
-                                                                  child: ListView.builder(
-                                                                    shrinkWrap: true,
-                                                                    itemCount: categpryOptions.length,
-                                                                    itemBuilder: (context, idx) {
-                                                                      final cat = categpryOptions[idx];
-                                                                      final isSelected = tempSelected.contains(cat['id']);
-                                                                      return ListTile(
-                                                                        title: Text(cat['name']),
-                                                                        selected: isSelected,
-                                                                        onTap: () {
-                                                                          setModalState(() {
-                                                                            if (isSelected) {
-                                                                              tempSelected.remove(cat['id']);
-                                                                            } else {
-                                                                              tempSelected.add(cat['id']);
-                                                                            }
-                                                                          });
-                                                                        },
-                                                                        trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
-                                                                      );
-                                                                    },
-                                                                  ),
-                                                                ),
-                                                                Padding(
-                                                                  padding: const EdgeInsets.all(16.0),
-                                                                  child: Row(
-                                                                    mainAxisAlignment: MainAxisAlignment.end,
-                                                                    children: [
-                                                                      TextButton(
-                                                                        onPressed: () {
-                                                                          Navigator.pop(context);
-                                                                        },
-                                                                        child: Text(AppLocale.cancel.getString(context)),
-                                                                      ),
-                                                                      const SizedBox(width: 8),
-                                                                      ElevatedButton(
-                                                                        onPressed: () {
-                                                                          Navigator.pop(context, tempSelected);
-                                                                        },
-                                                                        child: Text(AppLocale.apply.getString(context)),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                              ).then((result) {
-                                                if (result != null && result is Set<int>) {
-                                                  setState(() {
-                                                    selectedCategories = Set<int>.from(result);
-                                                  });
-                                                  _loadProduct(showLoadingIndicator: true);
-                                                }
-                                              });
-                                            },
-                                          ),
-                                          // Chips de categorías seleccionadas
-                                          if (selectedCategories.isNotEmpty)
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 8.0),
-                                              child: Wrap(
-                                                spacing: 6,
-                                                runSpacing: 6,
-                                                children: selectedCategories.map((catId) {
-                                                  final cat = categpryOptions.firstWhere((c) => c['id'] == catId, orElse: () => <String, dynamic>{});
-                                                  final catName = cat.isNotEmpty ? cat['name'] : 'Categoría';
-                                                  return Chip(
-                                                    label: Text(catName),
-                                                    onDeleted: () {
-                                                      setState(() {
-                                                        selectedCategories.remove(catId);
-                                                      });
-                                                      _loadProduct(showLoadingIndicator: true);
-                                                    },
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            ),
-                                          const SizedBox(height: CustomSpacer.medium),
-                                        ],
-                                      ),
-                                    // Campo de producto
-                                    if (isProductSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: CustomSearchField(
-                                            options: productOptions,
-                                            controller: productController,
-                                            labelText: AppLocale.product.getString(context),
-                                            searchBy: 'UPC',
-                                            fieldController: productFieldController,
-                                            showCreateButtonIfNotFound: true,
-                                            onItemSelected: (item) {
-                                              // Si estamos en modo POS (hay cPosID), agregar directo sin mostrar el diálogo.
-                                              if (POS.cPosID != null) {
-                                                final int? selectedTaxID = (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
-
-                                                final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
-                                                final double priceList = _r2((item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble());
-
-                                                final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
-
-                                                setState(() {
-                                                  invoiceLines.add({...item, 'quantity': 1, 'price': priceActual, 'C_Tax_ID': selectedTaxID, 'Description': item['Description'] ?? '', 'PriceList': priceList, 'Discount': discount});
-                                                });
-
-                                                _recalculateSummary();
-                                                productController.clear();
-                                                _validateForm();
-
-                                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                                  if (mounted) {
-                                                    productFieldController.requestFocus();
-                                                  }
-                                                });
-                                              } else {
-                                                _showQuantityDialog(item);
-                                              }
-                                            },
-                                            onSubmit: (_) => _loadProduct(showLoadingIndicator: true),
-                                            itemBuilder: (item) => Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: EdgeInsets.all(selectedBPartnerID == null ? 8.0 : 0.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: selectedBPartnerID == null ? Colors.red.shade400 : Colors.transparent, width: selectedBPartnerID == null ? 1.5 : 0),
+                          color: selectedBPartnerID == null ? Colors.red.withOpacity(0.02) : Colors.transparent,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomSearchField(
+                                    options: bPartnerOptions,
+                                    labelText: AppLocale.customer.getString(context),
+                                    searchBy: "TaxID",
+                                    controller: clienteController,
+                                    showCreateButtonIfNotFound: canShowCreateCustomerButton,
+                                    createAnchorTerm: createAnchorCustomerTerm,
+                                    fieldController: customerFieldController,
+                                    onSubmit: (_) => _loadBPartner(showLoadingIndicator: true),
+                                    onCreate: (value) async {
+                                      if (selectedBPartnerID != null && invoiceLines.isNotEmpty) {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                            backgroundColor: Theme.of(context).cardColor,
+                                            title: const Column(
                                               children: [
-                                                Expanded(
-                                                  child: Column(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text('${item['name'] ?? ''}', overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
-                                                      if (item['value'] != null) Text('Cod: ${item['value'] ?? ''}', maxLines: 2, style: Theme.of(context).textTheme.bodySmall, overflow: TextOverflow.ellipsis),
-                                                      if (POS.isPOS) Text(item['QtyAvailable'] != null ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}' : '${AppLocale.exist.getString(context)}: 0', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
-                                                    ],
-                                                  ),
+                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                SizedBox(height: 10),
+                                                Text(
+                                                  '¿Cambiar cliente?',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                                                 ),
-                                                Text('\$${item['price'] ?? '0.00'}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                                               ],
                                             ),
+                                            content: const Text('Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                                                onPressed: () => Navigator.pop(ctx, true),
+                                                child: Text(AppLocale.yes.getString(context)),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        const SizedBox(width: CustomSpacer.small),
-                                        IconButton(tooltip: AppLocale.refresh.getString(context), icon: const Icon(Icons.search), onPressed: () => _loadProduct(showLoadingIndicator: true)),
+                                        );
+                                        if (confirm != true) return;
+                                        setState(() {
+                                          invoiceLines.clear();
+                                          _recalculateSummary();
+                                        });
+                                      }
+                                      final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => BPartnerNewPage(bpartnerName: value)));
+                                      if (result != null && result?['created'] == true) {
+                                        setState(() {
+                                          clienteController.text = result['bpartner']['Name'];
+                                          selectedBPartnerID = result['bpartner']['id'];
+                                        });
+                                        _loadBPartner(showLoadingIndicator: true);
+                                      }
+                                    },
+                                    onItemSelected: (item) async {
+                                      if (selectedBPartnerID != null && selectedBPartnerID != item['id'] && invoiceLines.isNotEmpty) {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                            backgroundColor: Theme.of(context).cardColor,
+                                            title: const Column(
+                                              children: [
+                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                SizedBox(height: 10),
+                                                Text(
+                                                  '¿Cambiar cliente?',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                ),
+                                              ],
+                                            ),
+                                            content: const Text('Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                                                onPressed: () => Navigator.pop(ctx, true),
+                                                child: Text(AppLocale.yes.getString(context)),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm != true) {
+                                          final prevCustomer = bPartnerOptions.firstWhere((c) => c['id'] == selectedBPartnerID, orElse: () => {'name': ''});
+                                          setState(() => clienteController.text = prevCustomer['name']);
+                                          return;
+                                        }
+                                        setState(() {
+                                          invoiceLines.clear();
+                                          _recalculateSummary();
+                                        });
+                                      }
+                                      setState(() {
+                                        selectedBPartnerID = item['id'];
+                                        _validateForm();
+                                      });
+                                    },
+                                    itemBuilder: (item) => Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(item['name'], style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                                        if (item['TaxID'] != null) Text(item['TaxID'], style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
                                       ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: CustomSpacer.small),
+
+                                // --- BOTÓN DINÁMICO PARA BUSCAR Y BORRAR ---
+                                if (selectedBPartnerID != null)
+                                  IconButton(
+                                    tooltip: 'Quitar cliente',
+                                    icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                                    onPressed: () async {
+                                      if (invoiceLines.isNotEmpty) {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                            backgroundColor: Theme.of(context).cardColor,
+                                            title: const Column(
+                                              children: [
+                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                SizedBox(height: 10),
+                                                Text(
+                                                  '¿Quitar cliente?',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                ),
+                                              ],
+                                            ),
+                                            content: const Text('Al quitar el cliente, se eliminarán los productos agregados a la orden.\n¿Desea continuar?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                                                onPressed: () => Navigator.pop(ctx, true),
+                                                child: Text(AppLocale.yes.getString(context)),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm != true) return;
+                                      }
+                                      setState(() {
+                                        selectedBPartnerID = null;
+                                        clienteController.clear();
+                                        invoiceLines.clear();
+                                        _recalculateSummary();
+                                        _validateForm();
+                                      });
+                                    },
+                                  )
+                                else
+                                  IconButton(tooltip: AppLocale.refresh.getString(context), icon: const Icon(Icons.search), onPressed: () => _loadBPartner(showLoadingIndicator: true)),
+                              ],
+                            ),
+
+                            if (selectedBPartnerID == null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 16),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        'Seleccione un cliente',
+                                        style: TextStyle(color: Colors.red.shade400, fontSize: 13, fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ],
                                 ),
-                          if (invoiceLines.isNotEmpty) ...[
-                            const SizedBox(height: CustomSpacer.large),
-                            Text(AppLocale.productSummary.getString(context), style: Theme.of(context).textTheme.titleLarge),
-                            const SizedBox(height: CustomSpacer.medium),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: invoiceLines.asMap().entries.map((entry) {
-                                final index = entry.key;
-                                final line = entry.value;
-                                final tax = taxOptions.firstWhere((t) => t['id'] == line['C_Tax_ID'], orElse: () => {});
-                                final taxRate = tax['rate'] != null ? '${tax['rate']}%' : AppLocale.noTax.getString(context);
-                                return Tooltip(
-                                  message: line['name'],
-                                  child: InputChip(
-                                    onPressed: () => _showQuantityDialog(line, index: index),
-                                    deleteIcon: const Icon(Icons.close),
-                                    onDeleted: () => _deleteLine(index),
-                                    deleteIconColor: ColorTheme.error,
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    label: Column(
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: CustomSpacer.medium),
+
+                      // --- ANIMACIÓN PARA PRODUCTOS ---
+                      AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 400),
+                        crossFadeState: selectedBPartnerID == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                        firstChild: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.withOpacity(0.3), style: BorderStyle.solid),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.shopping_cart_outlined, size: 48, color: Colors.grey.withOpacity(0.6)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Seleccione un cliente para poder agregar productos a la orden.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                        secondChild: isProductLoading
+                            ? _buildShimmerField()
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (!isProductCategoryLoading)
+                                    Column(
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          line['name'],
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                        TextButton.icon(
+                                          style: ButtonStyle(textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium), backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary), foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary)),
+                                          icon: const Icon(Icons.category),
+                                          label: Text(AppLocale.categories.getString(context)),
+                                          onPressed: () async {
+                                            Set<int> tempSelected = Set<int>.from(selectedCategories);
+                                            await showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              builder: (context) {
+                                                return StatefulBuilder(
+                                                  builder: (context, setModalState) {
+                                                    return SafeArea(
+                                                      child: Padding(
+                                                        padding: MediaQuery.of(context).viewInsets,
+                                                        child: Container(
+                                                          constraints: const BoxConstraints(maxHeight: 400),
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Padding(
+                                                                padding: const EdgeInsets.all(16.0),
+                                                                child: Text(AppLocale.selectCategories.getString(context), style: Theme.of(context).textTheme.bodyLarge),
+                                                              ),
+                                                              Expanded(
+                                                                child: ListView.builder(
+                                                                  shrinkWrap: true,
+                                                                  itemCount: categpryOptions.length,
+                                                                  itemBuilder: (context, idx) {
+                                                                    final cat = categpryOptions[idx];
+                                                                    final isSelected = tempSelected.contains(cat['id']);
+                                                                    return ListTile(
+                                                                      title: Text(cat['name']),
+                                                                      selected: isSelected,
+                                                                      onTap: () {
+                                                                        setModalState(() {
+                                                                          if (isSelected) {
+                                                                            tempSelected.remove(cat['id']);
+                                                                          } else {
+                                                                            tempSelected.add(cat['id']);
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                      trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ),
+                                                              Padding(
+                                                                padding: const EdgeInsets.all(16.0),
+                                                                child: Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.end,
+                                                                  children: [
+                                                                    TextButton(
+                                                                      onPressed: () {
+                                                                        Navigator.pop(context);
+                                                                      },
+                                                                      child: Text(AppLocale.cancel.getString(context)),
+                                                                    ),
+                                                                    const SizedBox(width: 8),
+                                                                    ElevatedButton(
+                                                                      onPressed: () {
+                                                                        Navigator.pop(context, tempSelected);
+                                                                      },
+                                                                      child: Text(AppLocale.apply.getString(context)),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            ).then((result) {
+                                              if (result != null && result is Set<int>) {
+                                                setState(() {
+                                                  selectedCategories = Set<int>.from(result);
+                                                });
+                                                _loadProduct(showLoadingIndicator: true);
+                                              }
+                                            });
+                                          },
                                         ),
-                                        if (line['Description'] != null && line['Description'].toString().isNotEmpty) Text('${line['Description']}', style: Theme.of(context).textTheme.labelSmall),
-                                        Text('${line['quantity']} x \$${line['price']} + $taxRate', style: Theme.of(context).textTheme.bodySmall),
+                                        if (selectedCategories.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 8.0),
+                                            child: Wrap(
+                                              spacing: 6,
+                                              runSpacing: 6,
+                                              children: selectedCategories.map((catId) {
+                                                final cat = categpryOptions.firstWhere((c) => c['id'] == catId, orElse: () => <String, dynamic>{});
+                                                final catName = cat.isNotEmpty ? cat['name'] : 'Categoría';
+                                                return Chip(
+                                                  label: Text(catName),
+                                                  onDeleted: () {
+                                                    setState(() {
+                                                      selectedCategories.remove(catId);
+                                                    });
+                                                    _loadProduct(showLoadingIndicator: true);
+                                                  },
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        const SizedBox(height: CustomSpacer.medium),
                                       ],
                                     ),
-                                    backgroundColor: Theme.of(context).cardColor,
+                                  if (isProductSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: CustomSearchField(
+                                          options: productOptions,
+                                          controller: productController,
+                                          labelText: AppLocale.product.getString(context),
+                                          searchBy: 'UPC',
+                                          fieldController: productFieldController,
+                                          showCreateButtonIfNotFound: true,
+                                          onItemSelected: (item) {
+                                            if (POS.cPosID != null) {
+                                              final int? selectedTaxID = (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
+                                              final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
+                                              final double priceList = _r2((item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble());
+                                              final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
+                                              setState(() {
+                                                invoiceLines.add({...item, 'quantity': 1, 'price': priceActual, 'C_Tax_ID': selectedTaxID, 'Description': item['Description'] ?? '', 'PriceList': priceList, 'Discount': discount});
+                                              });
+                                              _recalculateSummary();
+                                              productController.clear();
+                                              _validateForm();
+                                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                                if (mounted) {
+                                                  productFieldController.requestFocus();
+                                                }
+                                              });
+                                            } else {
+                                              _showQuantityDialog(item);
+                                            }
+                                          },
+                                          onSubmit: (_) => _loadProduct(showLoadingIndicator: true),
+                                          itemBuilder: (item) => Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text('${item['name'] ?? ''}', overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+                                                    if (item['value'] != null) Text('Cod: ${item['value'] ?? ''}', maxLines: 2, style: Theme.of(context).textTheme.bodySmall, overflow: TextOverflow.ellipsis),
+                                                    if (POS.isPOS) Text(item['QtyAvailable'] != null ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}' : '${AppLocale.exist.getString(context)}: 0', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
+                                                  ],
+                                                ),
+                                              ),
+                                              Text('\$${item['price'] ?? '0.00'}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: CustomSpacer.small),
+                                      IconButton(tooltip: AppLocale.refresh.getString(context), icon: const Icon(Icons.search), onPressed: () => _loadProduct(showLoadingIndicator: true)),
+                                    ],
                                   ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ],
+                                  if (invoiceLines.isNotEmpty) ...[
+                                    const SizedBox(height: CustomSpacer.large),
+                                    Text(AppLocale.productSummary.getString(context), style: Theme.of(context).textTheme.titleLarge),
+                                    const SizedBox(height: CustomSpacer.medium),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: invoiceLines.asMap().entries.map((entry) {
+                                        final index = entry.key;
+                                        final line = entry.value;
+                                        final tax = taxOptions.firstWhere((t) => t['id'] == line['C_Tax_ID'], orElse: () => {});
+                                        final taxRate = tax['rate'] != null ? '${tax['rate']}%' : AppLocale.noTax.getString(context);
+                                        return Tooltip(
+                                          message: line['name'],
+                                          child: InputChip(
+                                            onPressed: () => _showQuantityDialog(line, index: index),
+                                            deleteIcon: const Icon(Icons.close),
+                                            onDeleted: () => _deleteLine(index),
+                                            deleteIconColor: ColorTheme.error,
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            label: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  line['name'],
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                                ),
+                                                if (line['Description'] != null && line['Description'].toString().isNotEmpty) Text('${line['Description']}', style: Theme.of(context).textTheme.labelSmall),
+                                                Text('${line['quantity']} x \$${line['price']} + $taxRate', style: Theme.of(context).textTheme.bodySmall),
+                                              ],
+                                            ),
+                                            backgroundColor: Theme.of(context).cardColor,
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ],
+                              ),
                       ),
                     ],
                   ),
