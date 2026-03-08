@@ -215,7 +215,12 @@ class OrderDetailPage extends StatelessWidget {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
+            builder: (_) => OrderNewPage(
+              isRefund: false,
+              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
+              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
+              sourceOrderId: order['id'],
+            ),
           ),
         );
         // Si se guardó, refrescamos devolviendo un true
@@ -288,7 +293,12 @@ class OrderDetailPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
+                    builder: (_) => OrderNewPage(
+                      isRefund: false,
+                      doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
+                      orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
+                      sourceOrderId: order['id'],
+                    ),
                   ),
                 );
               }
@@ -299,7 +309,12 @@ class OrderDetailPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => OrderNewPage(isRefund: true, doctypeID: POS.docTypeRefundID, orderName: POS.docTypeRefundName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
+                      builder: (_) => OrderNewPage(
+                        isRefund: true,
+                        doctypeID: POS.docTypeRefundID,
+                        orderName: POS.docTypeRefundName,
+                        sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
+                      ),
                     ),
                   );
                 }
@@ -322,8 +337,16 @@ class OrderDetailPage extends StatelessWidget {
                     final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order) : await generateOrderTicket(order);
                     try {
                       final printers = await Printing.listPrinters();
-                      final defaultPrinter = printers.firstWhere((p) => p.isDefault, orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'));
-                      await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
+                      final defaultPrinter = printers.firstWhere(
+                        (p) => p.isDefault,
+                        orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
+                      );
+                      await Printing.directPrintPdf(
+                        printer: defaultPrinter,
+                        usePrinterSettings: true,
+                        dynamicLayout: true,
+                        onLayout: (_) => pdfBytes,
+                      );
                     } catch (e) {
                       await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
                     }
@@ -342,123 +365,130 @@ class OrderDetailPage extends StatelessWidget {
                   final Map<String, dynamic> completeResult = await docComplete(cOrderID: order['id']);
                   if (completeResult['success'] == true && completeResult['isError'] != true) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(completeResult['summary'] ?? 'Orden completada con éxito'), backgroundColor: Colors.green));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(completeResult['summary'] ?? 'Orden completada con éxito'), backgroundColor: Colors.green),
+                      );
                       Navigator.pop(context, true);
                     }
                   } else {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(completeResult['summary'] ?? 'Error al completar la orden'), backgroundColor: Colors.red));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(completeResult['summary'] ?? 'Error al completar la orden'), backgroundColor: Colors.red),
+                      );
                     }
                   }
                 }
               }
 
               if (isMobileVertical) {
-                return PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'share':
-                        actionShare();
-                        break;
-                      case 'duplicate':
-                        actionDuplicate();
-                        break;
-                      case 'refund':
-                        actionRefund();
-                        break;
-                      case 'arc':
-                        actionArc();
-                        break;
-                      case 'printTicket':
-                        actionPrint();
-                        break;
-                      case 'complete':
-                        actionComplete();
-                        break; // <-- Lo agregamos al router
-                    }
-                  },
-                  itemBuilder: (context) {
-                    final items = <PopupMenuEntry<String>>[
-                      PopupMenuItem<String>(
-                        value: 'share',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.share, color: Colors.blue),
-                            const SizedBox(width: 8),
-                            Text(AppLocale.exportPdf.getString(context)),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'printTicket',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.print_outlined, color: Colors.green),
-                            const SizedBox(width: 8),
-                            Text(AppLocale.printTicket.getString(context)),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'duplicate',
-                        child: Row(
-                          children: [
-                            Icon(Icons.copy, color: Theme.of(context).primaryColor),
-                            const SizedBox(width: 8),
-                            Text(AppLocale.duplicate.getString(context)),
-                          ],
-                        ),
-                      ),
-                    ];
-
-                    //Opción de Completar
-
-                    if (order['DocStatus'] == 'DR') {
-                      items.add(
-                        const PopupMenuItem<String>(
-                          value: 'complete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.check, color: Colors.green),
-                              SizedBox(width: 8),
-                              Text('Completar'),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
-                      items.add(
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'share':
+                          actionShare();
+                          break;
+                        case 'duplicate':
+                          actionDuplicate();
+                          break;
+                        case 'refund':
+                          actionRefund();
+                          break;
+                        case 'arc':
+                          actionArc();
+                          break;
+                        case 'printTicket':
+                          actionPrint();
+                          break;
+                        case 'complete':
+                          actionComplete();
+                          break; // <-- Lo agregamos al router
+                      }
+                    },
+                    itemBuilder: (context) {
+                      final items = <PopupMenuEntry<String>>[
                         PopupMenuItem<String>(
-                          value: 'refund',
+                          value: 'share',
                           child: Row(
                             children: [
-                              const Icon(Icons.undo, color: Colors.red),
+                              const Icon(Icons.share, color: Colors.blue),
                               const SizedBox(width: 8),
-                              Text(AppLocale.refund.getString(context)),
+                              Text(AppLocale.exportPdf.getString(context)),
                             ],
                           ),
                         ),
-                      );
-                    }
-                    if (POS.isPOS == false && isComplete == true && !hasCreditNote) {
-                      items.add(
                         PopupMenuItem<String>(
-                          value: 'arc',
+                          value: 'printTicket',
                           child: Row(
                             children: [
-                              const Icon(Icons.receipt_long_rounded, color: Colors.blue),
+                              const Icon(Icons.print_outlined, color: Colors.green),
                               const SizedBox(width: 8),
-                              Text(AppLocale.arc.getString(context)),
+                              Text(AppLocale.printTicket.getString(context)),
                             ],
                           ),
                         ),
-                      );
-                    }
-                    return items;
-                  },
+                        PopupMenuItem<String>(
+                          value: 'duplicate',
+                          child: Row(
+                            children: [
+                              Icon(Icons.copy, color: Theme.of(context).primaryColor),
+                              const SizedBox(width: 8),
+                              Text(AppLocale.duplicate.getString(context)),
+                            ],
+                          ),
+                        ),
+                      ];
+
+                      //Opción de Completar
+
+                      if (order['DocStatus'] == 'DR') {
+                        items.add(
+                          const PopupMenuItem<String>(
+                            value: 'complete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.check, color: Colors.green),
+                                SizedBox(width: 8),
+                                Text('Completar'),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
+                        items.add(
+                          PopupMenuItem<String>(
+                            value: 'refund',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.undo, color: Colors.red),
+                                const SizedBox(width: 8),
+                                Text(AppLocale.refund.getString(context)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
+                        items.add(
+                          PopupMenuItem<String>(
+                            value: 'arc',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.receipt_long_rounded, color: Colors.blue),
+                                const SizedBox(width: 8),
+                                Text(AppLocale.arc.getString(context)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      return items;
+                    },
+                  ),
                 );
               } else {
                 return Row(
@@ -480,13 +510,20 @@ class OrderDetailPage extends StatelessWidget {
                         tooltip: AppLocale.refund.getString(context),
                         onPressed: actionRefund,
                       ),
-                    if (POS.isPOS == false && isComplete == true && !hasCreditNote)
+                    if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty)
                       IconButton(
                         icon: const Icon(Icons.receipt_long_outlined, color: Colors.redAccent),
                         tooltip: AppLocale.arc.getString(context),
                         onPressed: actionArc,
                       ),
-                    IconButton(icon: const Icon(Icons.print_rounded), tooltip: AppLocale.printTicket.getString(context), onPressed: actionPrint),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: IconButton(
+                        icon: const Icon(Icons.print_rounded),
+                        tooltip: AppLocale.printTicket.getString(context),
+                        onPressed: actionPrint,
+                      ),
+                    ),
                   ],
                 );
               }
@@ -513,7 +550,10 @@ class OrderDetailPage extends StatelessWidget {
                         itemCount: lines.length,
                         itemBuilder: (context, index) {
                           final line = lines[index];
-                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}').split('_').skip(1).join(' ');
+                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}')
+                              .split('_')
+                              .skip(1)
+                              .join(' ');
                           final double qty = (line['QtyOrdered'] as num).toDouble();
                           final double price = (line['PriceActual'] as num).toDouble();
                           final double net = (line['LineNetAmt'] as num).toDouble();
@@ -523,11 +563,15 @@ class OrderDetailPage extends StatelessWidget {
 
                           // Precio original (PriceList) y descuento
                           final double priceList = (line['PriceList'] as num?)?.toDouble() ?? price;
-                          final double discountPct = (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
+                          final double discountPct =
+                              (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
 
                           return Container(
                             margin: EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             child: ListTile(
                               tileColor: Colors.transparent,
                               title: Text(name, style: Theme.of(context).textTheme.bodyMedium),
@@ -535,16 +579,32 @@ class OrderDetailPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text("${AppLocale.quantity.getString(context)}: $qty", style: Theme.of(context).textTheme.bodySmall),
-                                  Text(["${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}", if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%", "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}"].join(" | "), style: Theme.of(context).textTheme.bodySmall),
+                                  Text(
+                                    [
+                                      "${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}",
+                                      if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%",
+                                      "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
+                                    ].join(" | "),
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
                                 ],
                               ),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text("${line['C_Tax_ID']['Name']} ($rate%)", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
-                                  Text("${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
-                                  Text("${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
+                                  Text(
+                                    "${line['C_Tax_ID']['Name']} ($rate%)",
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+                                  ),
+                                  Text(
+                                    "${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}",
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+                                  ),
+                                  Text(
+                                    "${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}",
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+                                  ),
                                 ],
                               ),
                             ),
@@ -566,11 +626,16 @@ class OrderDetailPage extends StatelessWidget {
                         itemBuilder: (context, index) {
                           final p = payments[index] as Map<String, dynamic>;
                           final dynamic tenderField = p['C_POSTenderType_ID'];
-                          final String tenderName = (tenderField is Map) ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString() : tenderField?.toString() ?? '---';
+                          final String tenderName = (tenderField is Map)
+                              ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString()
+                              : tenderField?.toString() ?? '---';
                           final double payAmt = ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25), borderRadius: BorderRadius.circular(8)),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -607,7 +672,10 @@ class OrderDetailPage extends StatelessWidget {
                         itemCount: lines.length,
                         itemBuilder: (context, index) {
                           final line = lines[index];
-                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}').split('_').skip(1).join(' ');
+                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}')
+                              .split('_')
+                              .skip(1)
+                              .join(' ');
                           final double qty = (line['QtyOrdered'] as num).toDouble();
                           final double price = (line['PriceActual'] as num).toDouble();
                           final double net = (line['LineNetAmt'] as num).toDouble();
@@ -616,11 +684,15 @@ class OrderDetailPage extends StatelessWidget {
                           final double total = net + tax;
 
                           final double priceList = (line['PriceList'] as num?)?.toDouble() ?? price;
-                          final double discountPct = (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
+                          final double discountPct =
+                              (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
 
                           return Container(
                             margin: EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             child: ListTile(
                               tileColor: Colors.transparent,
                               title: Text(name, style: Theme.of(context).textTheme.bodyMedium),
@@ -628,16 +700,32 @@ class OrderDetailPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text("${AppLocale.quantity.getString(context)}: $qty", style: Theme.of(context).textTheme.bodySmall),
-                                  Text(["${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}", if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%", "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}"].join(" | "), style: Theme.of(context).textTheme.bodySmall),
+                                  Text(
+                                    [
+                                      "${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}",
+                                      if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%",
+                                      "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
+                                    ].join(" | "),
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
                                 ],
                               ),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text("${line['C_Tax_ID']['Name']} ($rate%)", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
-                                  Text("${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
-                                  Text("${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
+                                  Text(
+                                    "${line['C_Tax_ID']['Name']} ($rate%)",
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+                                  ),
+                                  Text(
+                                    "${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}",
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+                                  ),
+                                  Text(
+                                    "${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}",
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+                                  ),
                                 ],
                               ),
                             ),
@@ -658,11 +746,16 @@ class OrderDetailPage extends StatelessWidget {
                           itemBuilder: (context, index) {
                             final p = payments[index] as Map<String, dynamic>;
                             final dynamic tenderField = p['C_POSTenderType_ID'];
-                            final String tenderName = (tenderField is Map) ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString() : tenderField?.toString() ?? '---';
+                            final String tenderName = (tenderField is Map)
+                                ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString()
+                                : tenderField?.toString() ?? '---';
                             final double payAmt = ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25), borderRadius: BorderRadius.circular(8)),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -695,7 +788,8 @@ class OrderDetailPage extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final meta = _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+    final meta =
+        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = (meta['color'] as Color?) ?? Theme.of(context).colorScheme.primary;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -750,7 +844,12 @@ class OrderDetailPage extends StatelessWidget {
     return taxSummary;
   }
 
-  Widget _buildHeader({required Map<String, dynamic> order, required BuildContext context, required Future<Map<String, String>?> feFuture, required bool hasCreditNote}) {
+  Widget _buildHeader({
+    required Map<String, dynamic> order,
+    required BuildContext context,
+    required Future<Map<String, String>?> feFuture,
+    required bool hasCreditNote,
+  }) {
     return FutureBuilder<Map<String, String>?>(
       future: feFuture,
       builder: (context, snapshot) {
@@ -760,8 +859,16 @@ class OrderDetailPage extends StatelessWidget {
         final left = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(order['bpartner']['name'], maxLines: 2, overflow: TextOverflow.ellipsis, style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall),
-            Text(order['DateOrdered'], style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall),
+            Text(
+              order['bpartner']['name'],
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall,
+            ),
+            Text(
+              order['DateOrdered'],
+              style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 4),
             // MOSTRAR TODOS LOS CHIPS JUNTOS ORDENADOS
             Wrap(
@@ -796,7 +903,9 @@ class OrderDetailPage extends StatelessWidget {
                   },
                   child: Text(
                     AppLocale.seeReceipt.getString(context),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
                   ),
                 ),
               ],
@@ -828,7 +937,11 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFinalSummary({required Map<String, Map<String, double>> taxSummary, required double grandTotal, required BuildContext context}) {
+  Widget _buildFinalSummary({
+    required Map<String, Map<String, double>> taxSummary,
+    required double grandTotal,
+    required BuildContext context,
+  }) {
     final double totalNeto = taxSummary.values.map((e) => e['net']!).reduce((a, b) => a + b);
     final double totalImpuesto = taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b);
 
@@ -838,9 +951,17 @@ class OrderDetailPage extends StatelessWidget {
         Text(AppLocale.finalSummary.getString(context), style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: CustomSpacer.small),
         Text("${AppLocale.grossTotal.getString(context)} \$${totalNeto.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
-        ...taxSummary.entries.map((entry) => Text("${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium)),
-        Text("${AppLocale.taxTotal.getString(context)} \$${totalImpuesto.toStringAsFixed(2)}", style: Theme.of(context).textTheme.titleMedium),
-        Text("${AppLocale.finalTotal.getString(context)} \$${grandTotal.toStringAsFixed(2)}", style: Theme.of(context).textTheme.titleMedium),
+        ...taxSummary.entries.map(
+          (entry) => Text("${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
+        ),
+        Text(
+          "${AppLocale.taxTotal.getString(context)} \$${totalImpuesto.toStringAsFixed(2)}",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        Text(
+          "${AppLocale.finalTotal.getString(context)} \$${grandTotal.toStringAsFixed(2)}",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
       ],
     );
   }
