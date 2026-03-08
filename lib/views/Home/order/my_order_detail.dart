@@ -750,12 +750,7 @@ class OrderDetailPage extends StatelessWidget {
     return taxSummary;
   }
 
-  Widget _buildHeader({
-    required Map<String, dynamic> order,
-    required BuildContext context,
-    required Future<Map<String, String>?> feFuture,
-    required bool hasCreditNote, // NUEVO PARÁMETRO
-  }) {
+  Widget _buildHeader({required Map<String, dynamic> order, required BuildContext context, required Future<Map<String, String>?> feFuture, required bool hasCreditNote}) {
     return FutureBuilder<Map<String, String>?>(
       future: feFuture,
       builder: (context, snapshot) {
