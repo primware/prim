@@ -153,7 +153,10 @@ class _OrderListPageState extends State<OrderListPage> {
 
         try {
           final printers = await Printing.listPrinters();
-          final defaultPrinter = printers.firstWhere((p) => p.isDefault, orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'));
+          final defaultPrinter = printers.firstWhere(
+            (p) => p.isDefault,
+            orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
+          );
 
           await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
         } catch (e) {
@@ -202,7 +205,12 @@ class _OrderListPageState extends State<OrderListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
+            builder: (_) => OrderNewPage(
+              isRefund: false,
+              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
+              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
+              sourceOrderId: order['id'],
+            ),
           ),
         );
         break;
@@ -216,7 +224,12 @@ class _OrderListPageState extends State<OrderListPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OrderNewPage(isRefund: true, doctypeID: POS.docTypeRefundID, orderName: POS.docTypeRefundName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
+              builder: (_) => OrderNewPage(
+                isRefund: true,
+                doctypeID: POS.docTypeRefundID,
+                orderName: POS.docTypeRefundName,
+                sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
+              ),
             ),
           );
         }
@@ -225,7 +238,12 @@ class _OrderListPageState extends State<OrderListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(isRefund: false, doctypeID: POS.docTypeID, orderName: POS.docTypeName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
+            builder: (_) => OrderNewPage(
+              isRefund: false,
+              doctypeID: POS.docTypeID,
+              orderName: POS.docTypeName,
+              sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
+            ),
           ),
         );
         break;
@@ -324,7 +342,8 @@ class _OrderListPageState extends State<OrderListPage> {
       return const SizedBox.shrink();
     }
 
-    final meta = _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+    final meta =
+        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = meta['color'] as Color;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -358,7 +377,12 @@ class _OrderListPageState extends State<OrderListPage> {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
+            builder: (_) => OrderNewPage(
+              isRefund: false,
+              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
+              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
+              sourceOrderId: order['id'],
+            ),
           ),
         );
         // Si se guardó con éxito, recargamos la lista de órdenes en automático
@@ -414,13 +438,21 @@ class _OrderListPageState extends State<OrderListPage> {
           },
           child: Container(
             margin: EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: ListTile(
               title: Row(
                 children: [
                   Icon(Icons.person_outline, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: CustomSpacer.small),
-                  Expanded(child: Text('${order['bpartner']['name']} - ${order['doctypetarget']['name']} #${order['DocumentNo']}', style: Theme.of(context).textTheme.bodyMedium)),
+                  Expanded(
+                    child: Text(
+                      '${order['bpartner']['name']} - ${order['doctypetarget']['name']} #${order['DocumentNo']}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
                 ],
               ),
               subtitle: Column(
@@ -438,7 +470,10 @@ class _OrderListPageState extends State<OrderListPage> {
                       Icon(Icons.calendar_month_outlined, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: CustomSpacer.small),
                       Expanded(
-                        child: Text(order['DateOrdered'], style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                        child: Text(
+                          order['DateOrdered'],
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+                        ),
                       ),
                     ],
                   ),
@@ -511,13 +546,13 @@ class _OrderListPageState extends State<OrderListPage> {
                       ),
                     );
                   }
-                  if (POS.isPOS == false && isComplete == true && !hasCreditNote) {
+                  if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
                     items.add(
                       PopupMenuItem<String>(
                         value: 'arc',
                         child: Row(
                           children: [
-                            const Icon(Icons.receipt_long_rounded, color: Colors.blue),
+                            const Icon(Icons.receipt_long_rounded, color: Colors.red),
                             const SizedBox(width: 8),
                             Text(AppLocale.arc.getString(context)),
                           ],
@@ -551,7 +586,8 @@ class _OrderListPageState extends State<OrderListPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM'),
+                      builder: (context) =>
+                          OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM'),
                     ),
                   );
                 },
