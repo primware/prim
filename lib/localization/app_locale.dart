@@ -169,8 +169,14 @@ class AppLocale {
   static const String order = 'order';
   static const String noData = 'noData';
   static const String edit = 'edit';
+  static const String noDocComplete = 'noDocComplete';
+  static const String changeClient = 'changeClient';
+  static const String changeClientWarning = 'changeClientWarning';
 
   static const Map<String, dynamic> en = {
+    changeClientWarning: 'If you select another customer, the products will be removed.\nDo you want to continue?',
+    changeClient: 'Change customer?',
+    noDocComplete: 'The action could not be completed',
     duplicate: 'Duplicate',
     edit: 'Edit',
     arc: 'Credit Memo',
@@ -342,6 +348,9 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    changeClientWarning: 'Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?',
+    changeClient: '¿Cambiar cliente?',
+    noDocComplete: 'No se pudo completar la acción',
     duplicate: 'Duplicar',
     edit: 'Editar',
     products: 'Productos',

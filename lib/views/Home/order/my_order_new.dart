@@ -24,6 +24,7 @@ import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:printing/printing.dart';
+import '../product/product_new.dart';
 
 class OrderNewPage extends StatefulWidget {
   final bool isRefund;
@@ -38,11 +39,11 @@ class OrderNewPage extends StatefulWidget {
 }
 
 class _OrderNewPageState extends State<OrderNewPage> {
-  final CustomSearchFieldController customerFieldController = CustomSearchFieldController(),
-      productFieldController = CustomSearchFieldController();
+  final CustomSearchFieldController customerFieldController = CustomSearchFieldController(), productFieldController = CustomSearchFieldController();
 
   // Anchor term for create customer button
   String? createAnchorCustomerTerm;
+  String? createAnchorProductTerm;
 
   // Timer? _debounce;
   double calculatedChange = 0.0;
@@ -50,17 +51,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   TextEditingController qtyProductController = TextEditingController();
   TextEditingController productController = TextEditingController();
   TextEditingController taxController = TextEditingController();
-  bool isSending = false,
-      isTaxLoading = true,
-      isProductCategoryLoading = true,
-      isCustomerSearchLoading = false,
-      isProductSearchLoading = false,
-      isProductLoading = true,
-      isYappyLoading = false,
-      isSalesRepLoading = true,
-      isYappyConfigAvailable = false,
-      canShowCreateCustomerButton = false,
-      firtsLoad = false;
+  bool isSending = false, isTaxLoading = true, isProductCategoryLoading = true, isCustomerSearchLoading = false, isProductSearchLoading = false, isProductLoading = true, isYappyLoading = false, isSalesRepLoading = true, isYappyConfigAvailable = false, canShowCreateCustomerButton = false, firtsLoad = false, canShowCreateProductButton = false;
 
   final Set<int> _lockedPayments = {};
   List<Map<String, dynamic>> bPartnerOptions = [];
@@ -306,9 +297,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   double get totalAmount => total;
 
   void _validateForm() {
-    final totalPayment = _r2(
-      paymentControllers.values.map((c) => _r2(double.tryParse((c.text).replaceAll(',', '.')) ?? 0.0)).fold(0.0, (sum, val) => sum + val),
-    );
+    final totalPayment = _r2(paymentControllers.values.map((c) => _r2(double.tryParse((c.text).replaceAll(',', '.')) ?? 0.0)).fold(0.0, (sum, val) => sum + val));
 
     final totalCash = _r2(
       paymentControllers.entries
@@ -372,19 +361,29 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (showLoadingIndicator) {
       setState(() {
         isProductSearchLoading = true;
+        canShowCreateProductButton = false; // Limpiamos al empezar a buscar
+        createAnchorProductTerm = null;
       });
     }
-    final product = await fetchProductInPriceList(
-      context: context,
-      categoryID: selectedCategories.isNotEmpty ? selectedCategories.toList() : null,
-      searchTerm: productController.text.trim(),
-      priceListID: bpartnerPriceListID,
-    );
+
+    final product = await fetchProductInPriceList(context: context, categoryID: selectedCategories.isNotEmpty ? selectedCategories.toList() : null, searchTerm: productController.text.trim(), priceListID: bpartnerPriceListID);
+
     setState(() {
       productOptions = product;
       isProductLoading = false;
       isProductSearchLoading = false;
+
+      // --- NUEVA LÓGICA: ¿Mostramos el botón de crear producto? ---
+      if (productOptions.isNotEmpty) {
+        canShowCreateProductButton = false;
+        createAnchorProductTerm = null;
+      } else {
+        // Si no hay resultados y el usuario escribió algo, encendemos el botón
+        canShowCreateProductButton = productController.text.trim().isNotEmpty;
+        createAnchorProductTerm = canShowCreateProductButton ? productController.text.trim() : null;
+      }
     });
+
     if (mounted && firtsLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -462,9 +461,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   Future<void> _showQuantityDialog(Map<String, dynamic> product, {int? index}) async {
     int? selectedTaxID = index != null ? (product['C_Tax_ID'] ?? product['tax']?['id']) : (product['tax']?['id'] ?? selectedTax?['id']);
 
-    final quantityController = TextEditingController(
-      text: index != null && product['quantity'] != null ? product['quantity'].toString() : "1",
-    );
+    final quantityController = TextEditingController(text: index != null && product['quantity'] != null ? product['quantity'].toString() : "1");
 
     // --- Funciones Matemáticas sin la función clamp para permitir negativos ---
     double r2local(num v) {
@@ -478,11 +475,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     double calcPrice(double priceList, double discount) => priceList * (1 - (discount / 100));
 
-    final double priceList =
-        (index != null
-                ? (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0)
-                : (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0))
-            .toDouble();
+    final double priceList = (index != null ? (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0) : (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0)).toDouble();
 
     // Valores iniciales
     double initialPrice = index != null ? (product['price'] ?? product['PriceActual'] ?? 0).toDouble() : (product['price'] ?? 0).toDouble();
@@ -491,9 +484,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     final priceController = TextEditingController(text: initialPrice == 0 ? '' : initialPrice.toStringAsFixed(2));
     final discountController = TextEditingController(text: initialDiscount == 0 ? '' : initialDiscount.toStringAsFixed(2));
-    final descriptionController = TextEditingController(
-      text: index != null && product['Description'] != null ? product['Description'].toString() : '',
-    );
+    final descriptionController = TextEditingController(text: index != null && product['Description'] != null ? product['Description'].toString() : '');
 
     void onSubmitted(BuildContext dialogContext) {
       final qty = int.tryParse(quantityController.text) ?? 1;
@@ -505,15 +496,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       }
 
       setState(() {
-        invoiceLines.insert(index ?? invoiceLines.length, {
-          ...product,
-          'quantity': qty,
-          'price': r2local(effectivePrice),
-          'C_Tax_ID': selectedTaxID ?? selectedTax?['id'],
-          'Description': descriptionController.text,
-          'PriceList': r2local(priceList),
-          'Discount': r2local(effectiveDiscount),
-        });
+        invoiceLines.insert(index ?? invoiceLines.length, {...product, 'quantity': qty, 'price': r2local(effectivePrice), 'C_Tax_ID': selectedTaxID ?? selectedTax?['id'], 'Description': descriptionController.text, 'PriceList': r2local(priceList), 'Discount': r2local(effectiveDiscount)});
       });
 
       _recalculateSummary();
@@ -536,135 +519,151 @@ class _OrderNewPageState extends State<OrderNewPage> {
             builder: (context, setModalState) {
               return AlertDialog(
                 backgroundColor: Theme.of(context).cardColor,
+                insetPadding: const EdgeInsets.all(16.0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
 
                 title: Text(product['name'] ?? 'Producto', style: Theme.of(context).textTheme.bodyMedium),
-                content: SingleChildScrollView(
-                  child: Padding(
-                    padding: MediaQuery.of(context).viewInsets,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Divider(color: Theme.of(context).colorScheme.primary),
-                        const SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: IconButton(
-                                icon: const Icon(Icons.remove),
-                                color: ColorTheme.error,
-                                onPressed: () {
-                                  int current = int.tryParse(quantityController.text) ?? 1;
-                                  if (current > 1) {
+
+                content: SizedBox(
+                  width: 500,
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: MediaQuery.of(context).viewInsets,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Divider(color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(height: CustomSpacer.medium),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IconButton(
+                                  icon: const Icon(Icons.remove),
+                                  color: ColorTheme.error,
+                                  onPressed: () {
+                                    int current = int.tryParse(quantityController.text) ?? 1;
+                                    if (current > 1) {
+                                      setModalState(() {
+                                        quantityController.text = (current - 1).toString();
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: 120,
+                                child: TextfieldTheme(controlador: quantityController, texto: AppLocale.quantity.getString(context), inputType: TextInputType.number, onSubmitted: (_) => onSubmitted(dialogContext), textAlign: TextAlign.center),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IconButton(
+                                  icon: const Icon(Icons.add),
+                                  color: ColorTheme.success,
+                                  onPressed: () {
+                                    int current = int.tryParse(quantityController.text) ?? 1;
                                     setModalState(() {
-                                      quantityController.text = (current - 1).toString();
+                                      quantityController.text = (current + 1).toString();
                                     });
-                                  }
-                                },
+                                  },
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
                             ),
-                            Expanded(
-                              child: TextfieldTheme(
-                                controlador: quantityController,
-                                texto: AppLocale.quantity.getString(context),
-                                inputType: TextInputType.number,
-                                onSubmitted: (_) => onSubmitted(dialogContext),
-                                textAlign: TextAlign.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.local_offer_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      AppLocale.priceList.getString(context),
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '\$${r2local(priceList).toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: CustomSpacer.large),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 6,
+                                child: TextfieldTheme(
+                                  controlador: priceController,
+                                  pista: product['price'] == 0 ? product['price'].toString() : null,
+                                  texto: AppLocale.price.getString(context),
+                                  inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                      discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
+                                    });
+                                  },
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: IconButton(
-                                icon: const Icon(Icons.add),
-                                color: ColorTheme.success,
-                                onPressed: () {
-                                  int current = int.tryParse(quantityController.text) ?? 1;
-                                  setModalState(() {
-                                    quantityController.text = (current + 1).toString();
-                                  });
-                                },
+                              const SizedBox(width: CustomSpacer.small),
+                              Expanded(
+                                flex: 4,
+                                child: TextfieldTheme(
+                                  controlador: discountController,
+                                  texto: '% Desc.',
+                                  inputType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\-0-9\.,]'))],
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      if (val == '-') return;
+                                      final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                      priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
+                                    });
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(AppLocale.priceList.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                            Text(
-                              '\$${r2local(priceList).toStringAsFixed(2)}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              textAlign: TextAlign.right,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
+                            ],
+                          ),
 
-                        //
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 6,
-                              child: TextfieldTheme(
-                                controlador: priceController,
-                                pista: product['price'] == 0 ? product['price'].toString() : null,
-                                texto: AppLocale.price.getString(context),
-                                inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
-                                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
-                                onChanged: (val) {
-                                  setModalState(() {
-                                    final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                    // Calcula el descuento incluso si es negativo
-                                    discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: CustomSpacer.small),
-                            Expanded(
-                              flex: 4,
-                              child: TextfieldTheme(
-                                controlador: discountController,
-                                texto: '% Desc.',
-                                inputType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\-0-9\.,]'))],
-                                onChanged: (val) {
-                                  setModalState(() {
-                                    if (val == '-') return; // Evita error si el usuario solo ha escrito el signo menos
-                                    final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                    priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+                          const SizedBox(height: CustomSpacer.small),
+                          Divider(color: Colors.grey.withOpacity(0.3), thickness: 1, height: 24),
 
-                        const SizedBox(height: CustomSpacer.medium),
-                        SearchableDropdown<int>(
-                          labelText: AppLocale.taxType.getString(context),
-                          showSearchBox: false,
-                          options: taxOptions,
-                          value: selectedTaxID,
-                          onChanged: (value) {
-                            setModalState(() {
-                              selectedTaxID = value;
-                            });
-                          },
-                          displayItem: (item) => '${item['name']} (${item['rate']}%)',
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        TextFieldComments(
-                          controlador: descriptionController,
-                          texto: AppLocale.descriptionOptional.getString(context),
-                          onSubmitted: (_) => onSubmitted(dialogContext),
-                        ),
-                      ],
+                          SearchableDropdown<int>(
+                            labelText: AppLocale.taxType.getString(context),
+                            showSearchBox: false,
+                            options: taxOptions,
+                            value: selectedTaxID,
+                            onChanged: (value) {
+                              setModalState(() {
+                                selectedTaxID = value;
+                              });
+                            },
+                            displayItem: (item) => '${item['name']} (${item['rate']}%)',
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          TextFieldComments(controlador: descriptionController, texto: AppLocale.descriptionOptional.getString(context), onSubmitted: (_) => onSubmitted(dialogContext)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
+                actionsAlignment: MainAxisAlignment.center,
                 actions: [
                   TextButton(
                     onPressed: () {
@@ -673,10 +672,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                     },
                     child: Text(AppLocale.cancel.getString(context)),
                   ),
-                  ElevatedButton(
-                    onPressed: () => onSubmitted(dialogContext),
-                    child: Text(index != null ? 'Editar' : AppLocale.add.getString(context)),
-                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(onPressed: () => onSubmitted(dialogContext), child: Text(index != null ? 'Editar' : AppLocale.add.getString(context))),
                 ],
               );
             },
@@ -684,30 +681,20 @@ class _OrderNewPageState extends State<OrderNewPage> {
         );
       },
     );
+
     if (result != true) {
       productController.clear();
     }
   }
 
   //? para mostrar el dialogo de Yappy
-  Future<void> _showYappyQRDialog({
-    required double subTotal,
-    required double totalTax,
-    required double total,
-    required int methodId,
-  }) async {
+  Future<void> _showYappyQRDialog({required double subTotal, required double totalTax, required double total, required int methodId}) async {
     setState(() {
       isYappyLoading = true;
     });
 
     // 1) Solicitar el QR dinámico (hash + transactionId)
-    final result = await showYappyQR(
-      subTotal: double.parse(subTotal.toStringAsFixed(2)),
-      totalTax: double.parse(totalTax.toStringAsFixed(2)),
-      total: double.parse(total.toStringAsFixed(2)),
-      docNoSequence: docNoSequenceNumber,
-      context: context,
-    );
+    final result = await showYappyQR(subTotal: double.parse(subTotal.toStringAsFixed(2)), totalTax: double.parse(totalTax.toStringAsFixed(2)), total: double.parse(total.toStringAsFixed(2)), docNoSequence: docNoSequenceNumber, context: context);
 
     if (result['success'] != true) {
       ToastMessage.show(context: context, message: result['message'] ?? 'No se pudo generar el QR', type: ToastType.failure);
@@ -898,10 +885,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   Future<void> _createInvoice({required List<Map<String, dynamic>> product, required int bPartner}) async {
     final String actionLabel = (() {
       try {
-        final match = POS.documentActions.firstWhere(
-          (a) => a['code'] == (selectedDocActionCode ?? ''),
-          orElse: () => POS.documentActions.isNotEmpty ? POS.documentActions.first : const {'name': ''},
-        );
+        final match = POS.documentActions.firstWhere((a) => a['code'] == (selectedDocActionCode ?? ''), orElse: () => POS.documentActions.isNotEmpty ? POS.documentActions.first : const {'name': ''});
         return (match['name'] ?? '').toString();
       } catch (_) {
         return AppLocale.process.getString(context);
@@ -914,15 +898,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
           title: Text(AppLocale.process.getString(context)),
-          content: Text(
-            widget.isRefund
-                ? AppLocale.confirmCompleteCreditNote
-                      .getString(context)
-                      .replaceAll('{action}', actionLabel.isEmpty ? AppLocale.process.getString(context) : actionLabel)
-                : AppLocale.confirmCompleteOrder
-                      .getString(context)
-                      .replaceAll('{action}', actionLabel.isEmpty ? AppLocale.process.getString(context) : actionLabel),
-          ),
+          content: Text(widget.isRefund ? AppLocale.confirmCompleteCreditNote.getString(context).replaceAll('{action}', actionLabel.isEmpty ? AppLocale.process.getString(context) : actionLabel) : AppLocale.confirmCompleteOrder.getString(context).replaceAll('{action}', actionLabel.isEmpty ? AppLocale.process.getString(context) : actionLabel)),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocale.confirm.getString(context))),
@@ -938,19 +914,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final double price = _r2(item['price'] ?? 0);
       final double priceList = _r2(item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0);
       final double discount = _r2(item['Discount'] ?? (priceList > 0 ? (100 * (1 - (price / priceList))) : 0));
-      return {
-        'M_Product_ID': item['id'],
-        'SKU': item['sku'],
-        'upc': item['upc'],
-        'Category': item['category'],
-        'Name': item['name'],
-        'Price': price,
-        'PriceList': priceList,
-        'Discount': discount,
-        'Quantity': item['quantity'],
-        'C_Tax_ID': item['C_Tax_ID'],
-        'Description': item['Description'] ?? '',
-      };
+      return {'M_Product_ID': item['id'], 'SKU': item['sku'], 'upc': item['upc'], 'Category': item['category'], 'Name': item['name'], 'Price': price, 'PriceList': priceList, 'Discount': discount, 'Quantity': item['quantity'], 'C_Tax_ID': item['C_Tax_ID'], 'Description': item['Description'] ?? ''};
     }).toList();
 
     final paymentData = paymentControllers.entries
@@ -987,17 +951,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         .where((p) => (p['PayAmt'] ?? 0) > 0)
         .toList();
 
-    final result = await postInvoice(
-      cBPartnerID: bPartner,
-      salesRepID: selectedSalesRepID!,
-      invoiceLines: invoiceLine,
-      payments: paymentData,
-      context: context,
-      docAction: selectedDocActionCode ?? 'DR',
-      isRefund: widget.isRefund,
-      doctypeID: widget.doctypeID,
-      priceListID: bpartnerPriceListID,
-    );
+    final result = await postInvoice(cBPartnerID: bPartner, salesRepID: selectedSalesRepID!, invoiceLines: invoiceLine, payments: paymentData, context: context, docAction: selectedDocActionCode ?? 'DR', isRefund: widget.isRefund, doctypeID: widget.doctypeID, priceListID: bpartnerPriceListID);
 
     if (result['success'] == true) {
       if (calculatedChange > 0) {
@@ -1006,10 +960,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
           builder: (_) => AlertDialog(
             backgroundColor: Theme.of(context).cardColor,
             title: Text(AppLocale.change.getString(context), style: Theme.of(context).textTheme.titleMedium),
-            content: Text(
-              '\$${calculatedChange.toStringAsFixed(2)}',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            content: Text('\$${calculatedChange.toStringAsFixed(2)}', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold)),
             actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocale.close.getString(context)))],
           ),
         );
@@ -1026,17 +977,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
               try {
                 final printers = await Printing.listPrinters();
-                final defaultPrinter = printers.firstWhere(
-                  (p) => p.isDefault,
-                  orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
-                );
+                final defaultPrinter = printers.firstWhere((p) => p.isDefault, orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'));
 
-                await Printing.directPrintPdf(
-                  printer: defaultPrinter,
-                  usePrinterSettings: true,
-                  dynamicLayout: true,
-                  onLayout: (_) => pdfBytes,
-                );
+                await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
               } catch (e) {
                 await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
               }
@@ -1052,11 +995,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
           await Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)));
         }
       }
-      ToastMessage.show(
-        context: context,
-        message: widget.isRefund ? AppLocale.creditNote.getString(context) : AppLocale.newOrder.getString(context),
-        type: ToastType.success,
-      );
+      ToastMessage.show(context: context, message: widget.isRefund ? AppLocale.creditNote.getString(context) : AppLocale.newOrder.getString(context), type: ToastType.success);
 
       clearInvoiceFields();
       _loadSequence();
@@ -1072,11 +1011,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         _validateForm();
       });
     } else {
-      ToastMessage.show(
-        context: context,
-        message: result['message'] ?? AppLocale.errorCompleteOrder.getString(context),
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: result['message'] ?? AppLocale.errorCompleteOrder.getString(context), type: ToastType.failure);
     }
     setState(() => isSending = false);
   }
@@ -1188,21 +1123,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         },
                       ),
                       const SizedBox(height: CustomSpacer.medium),
-                      if (isCustomerSearchLoading) ...[
-                        const SizedBox(height: 4),
-                        const LinearProgressIndicator(),
-                        const SizedBox(height: 8),
-                      ],
+                      if (isCustomerSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
 
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         padding: EdgeInsets.all(selectedBPartnerID == null ? 8.0 : 0.0),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: selectedBPartnerID == null ? Colors.red.shade400 : Colors.transparent,
-                            width: selectedBPartnerID == null ? 1.5 : 0,
-                          ),
+                          border: Border.all(color: selectedBPartnerID == null ? Colors.red.shade400 : Colors.transparent, width: selectedBPartnerID == null ? 1.5 : 0),
                           color: selectedBPartnerID == null ? Colors.red.withOpacity(0.02) : Colors.transparent,
                         ),
                         child: Column(
@@ -1238,22 +1166,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 ),
                                               ],
                                             ),
-                                            content: const Text(
-                                              'Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(fontSize: 16),
-                                            ),
+                                            content: const Text('Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
                                             actionsAlignment: MainAxisAlignment.spaceEvenly,
                                             actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(ctx, false),
-                                                child: Text(AppLocale.no.getString(context)),
-                                              ),
+                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
                                               ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.redAccent,
-                                                  foregroundColor: Colors.white,
-                                                ),
+                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
                                                 onPressed: () => Navigator.pop(ctx, true),
                                                 child: Text(AppLocale.yes.getString(context)),
                                               ),
@@ -1266,10 +1184,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           _recalculateSummary();
                                         });
                                       }
-                                      final result = await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => BPartnerNewPage(bpartnerName: value)),
-                                      );
+                                      final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => BPartnerNewPage(bpartnerName: value)));
                                       if (result != null && result?['created'] == true) {
                                         setState(() {
                                           clienteController.text = result['bpartner']['Name'];
@@ -1285,34 +1200,23 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           builder: (ctx) => AlertDialog(
                                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                             backgroundColor: Theme.of(context).cardColor,
-                                            title: const Column(
+                                            title: Column(
                                               children: [
                                                 Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
                                                 SizedBox(height: 10),
-                                                //TODO traducir este bloque
                                                 Text(
-                                                  '¿Cambiar cliente?',
+                                                  AppLocale.changeClient.getString(context),
                                                   textAlign: TextAlign.center,
                                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                                                 ),
                                               ],
                                             ),
-                                            content: const Text(
-                                              'Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(fontSize: 16),
-                                            ),
+                                            content: Text(AppLocale.changeClientWarning.getString(context), textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
                                             actionsAlignment: MainAxisAlignment.spaceEvenly,
                                             actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(ctx, false),
-                                                child: Text(AppLocale.no.getString(context)),
-                                              ),
+                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
                                               ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.redAccent,
-                                                  foregroundColor: Colors.white,
-                                                ),
+                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
                                                 onPressed: () => Navigator.pop(ctx, true),
                                                 child: Text(AppLocale.yes.getString(context)),
                                               ),
@@ -1320,10 +1224,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           ),
                                         );
                                         if (confirm != true) {
-                                          final prevCustomer = bPartnerOptions.firstWhere(
-                                            (c) => c['id'] == selectedBPartnerID,
-                                            orElse: () => {'name': ''},
-                                          );
+                                          final prevCustomer = bPartnerOptions.firstWhere((c) => c['id'] == selectedBPartnerID, orElse: () => {'name': ''});
                                           setState(() => clienteController.text = prevCustomer['name']);
                                           return;
                                         }
@@ -1346,12 +1247,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(item['name'], style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
-                                        if (item['TaxID'] != null)
-                                          Text(
-                                            item['TaxID'],
-                                            style: Theme.of(context).textTheme.bodyMedium,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                        if (item['TaxID'] != null) Text(item['TaxID'], style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
                                       ],
                                     ),
                                   ),
@@ -1381,22 +1277,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 ),
                                               ],
                                             ),
-                                            content: const Text(
-                                              'Al quitar el cliente, se eliminarán los productos agregados a la orden.\n¿Desea continuar?',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(fontSize: 16),
-                                            ),
+                                            content: const Text('Al quitar el cliente, se eliminarán los productos agregados a la orden.\n¿Desea continuar?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
                                             actionsAlignment: MainAxisAlignment.spaceEvenly,
                                             actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(ctx, false),
-                                                child: Text(AppLocale.no.getString(context)),
-                                              ),
+                                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
                                               ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.redAccent,
-                                                  foregroundColor: Colors.white,
-                                                ),
+                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
                                                 onPressed: () => Navigator.pop(ctx, true),
                                                 child: Text(AppLocale.yes.getString(context)),
                                               ),
@@ -1415,11 +1301,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     },
                                   )
                                 else
-                                  IconButton(
-                                    tooltip: AppLocale.refresh.getString(context),
-                                    icon: const Icon(Icons.search),
-                                    onPressed: () => _loadBPartner(showLoadingIndicator: true),
-                                  ),
+                                  IconButton(tooltip: AppLocale.refresh.getString(context), icon: const Icon(Icons.search), onPressed: () => _loadBPartner(showLoadingIndicator: true)),
                               ],
                             ),
 
@@ -1482,11 +1364,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         TextButton.icon(
-                                          style: ButtonStyle(
-                                            textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium),
-                                            backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary),
-                                            foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary),
-                                          ),
+                                          style: ButtonStyle(textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium), backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary), foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary)),
                                           icon: const Icon(Icons.category),
                                           label: Text(AppLocale.categories.getString(context)),
                                           onPressed: () async {
@@ -1508,10 +1386,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                             children: [
                                                               Padding(
                                                                 padding: const EdgeInsets.all(16.0),
-                                                                child: Text(
-                                                                  AppLocale.selectCategories.getString(context),
-                                                                  style: Theme.of(context).textTheme.bodyLarge,
-                                                                ),
+                                                                child: Text(AppLocale.selectCategories.getString(context), style: Theme.of(context).textTheme.bodyLarge),
                                                               ),
                                                               Expanded(
                                                                 child: ListView.builder(
@@ -1532,9 +1407,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                                           }
                                                                         });
                                                                       },
-                                                                      trailing: isSelected
-                                                                          ? const Icon(Icons.check, color: Colors.blue)
-                                                                          : null,
+                                                                      trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
                                                                     );
                                                                   },
                                                                 ),
@@ -1585,10 +1458,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                               spacing: 6,
                                               runSpacing: 6,
                                               children: selectedCategories.map((catId) {
-                                                final cat = categpryOptions.firstWhere(
-                                                  (c) => c['id'] == catId,
-                                                  orElse: () => <String, dynamic>{},
-                                                );
+                                                final cat = categpryOptions.firstWhere((c) => c['id'] == catId, orElse: () => <String, dynamic>{});
                                                 final catName = cat.isNotEmpty ? cat['name'] : 'Categoría';
                                                 return Chip(
                                                   label: Text(catName),
@@ -1605,11 +1475,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         const SizedBox(height: CustomSpacer.medium),
                                       ],
                                     ),
-                                  if (isProductSearchLoading) ...[
-                                    const SizedBox(height: 4),
-                                    const LinearProgressIndicator(),
-                                    const SizedBox(height: 8),
-                                  ],
+                                  if (isProductSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
                                   Row(
                                     children: [
                                       Expanded(
@@ -1619,26 +1485,28 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           labelText: AppLocale.product.getString(context),
                                           searchBy: 'UPC',
                                           fieldController: productFieldController,
-                                          showCreateButtonIfNotFound: true,
+
+                                          // --- CREACION DE PRODUCTOS DESDE BUSQUEDA ---
+                                          showCreateButtonIfNotFound: canShowCreateProductButton,
+                                          createAnchorTerm: createAnchorProductTerm,
+                                          onCreate: (value) async {
+                                            final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => ProductNewPage(productName: value)));
+                                            if (result != null && result['created'] == true) {
+                                              setState(() {
+                                                productController.text = result['product']['name'] ?? result['product']['Name'] ?? value;
+                                              });
+                                              _loadProduct(showLoadingIndicator: true);
+                                            }
+                                          },
+
                                           onItemSelected: (item) {
                                             if (POS.cPosID != null) {
-                                              final int? selectedTaxID =
-                                                  (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
+                                              final int? selectedTaxID = (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
                                               final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
-                                              final double priceList = _r2(
-                                                (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble(),
-                                              );
+                                              final double priceList = _r2((item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble());
                                               final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
                                               setState(() {
-                                                invoiceLines.add({
-                                                  ...item,
-                                                  'quantity': 1,
-                                                  'price': priceActual,
-                                                  'C_Tax_ID': selectedTaxID,
-                                                  'Description': item['Description'] ?? '',
-                                                  'PriceList': priceList,
-                                                  'Discount': discount,
-                                                });
+                                                invoiceLines.add({...item, 'quantity': 1, 'price': priceActual, 'C_Tax_ID': selectedTaxID, 'Description': item['Description'] ?? '', 'PriceList': priceList, 'Discount': discount});
                                               });
                                               _recalculateSummary();
                                               productController.clear();
@@ -1661,42 +1529,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                   mainAxisSize: MainAxisSize.min,
                                                   crossAxisAlignment: CrossAxisAlignment.start,
                                                   children: [
-                                                    Text(
-                                                      '${item['name'] ?? ''}',
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: Theme.of(context).textTheme.bodySmall,
-                                                    ),
-                                                    if (item['value'] != null)
-                                                      Text(
-                                                        'Cod: ${item['value'] ?? ''}',
-                                                        maxLines: 2,
-                                                        style: Theme.of(context).textTheme.bodySmall,
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    if (POS.isPOS)
-                                                      Text(
-                                                        item['QtyAvailable'] != null
-                                                            ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}'
-                                                            : '${AppLocale.exist.getString(context)}: 0',
-                                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-                                                      ),
+                                                    Text('${item['name'] ?? ''}', overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+                                                    if (item['value'] != null) Text('Cod: ${item['value'] ?? ''}', maxLines: 2, style: Theme.of(context).textTheme.bodySmall, overflow: TextOverflow.ellipsis),
+                                                    if (POS.isPOS) Text(item['QtyAvailable'] != null ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}' : '${AppLocale.exist.getString(context)}: 0', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
                                                   ],
                                                 ),
                                               ),
-                                              Text(
-                                                '\$${item['price'] ?? '0.00'}',
-                                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-                                              ),
+                                              Text('\$${item['price'] ?? '0.00'}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                                             ],
                                           ),
                                         ),
                                       ),
                                       const SizedBox(width: CustomSpacer.small),
-                                      IconButton(
-                                        tooltip: AppLocale.refresh.getString(context),
-                                        icon: const Icon(Icons.search),
-                                        onPressed: () => _loadProduct(showLoadingIndicator: true),
-                                      ),
+                                      IconButton(tooltip: AppLocale.refresh.getString(context), icon: const Icon(Icons.search), onPressed: () => _loadProduct(showLoadingIndicator: true)),
                                     ],
                                   ),
                                   if (invoiceLines.isNotEmpty) ...[
@@ -1728,12 +1573,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                   overflow: TextOverflow.ellipsis,
                                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
                                                 ),
-                                                if (line['Description'] != null && line['Description'].toString().isNotEmpty)
-                                                  Text('${line['Description']}', style: Theme.of(context).textTheme.labelSmall),
-                                                Text(
-                                                  '${line['quantity']} x \$${line['price']} + $taxRate',
-                                                  style: Theme.of(context).textTheme.bodySmall,
-                                                ),
+                                                if (line['Description'] != null && line['Description'].toString().isNotEmpty) Text('${line['Description']}', style: Theme.of(context).textTheme.labelSmall),
+                                                Text('${line['quantity']} x \$${line['price']} + $taxRate', style: Theme.of(context).textTheme.bodySmall),
                                               ],
                                             ),
                                             backgroundColor: Theme.of(context).cardColor,
@@ -1773,53 +1614,31 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: TextfieldTheme(
-                                              controlador: paymentControllers[method['id']],
-                                              texto: method['name'],
-                                              inputType: TextInputType.number,
-                                              inputFormatters: [NumericTextFormatterWithDecimal()],
-                                              readOnly: _lockedPayments.contains(method['id']),
-                                              onChanged: (_) => _validateForm(),
-                                            ),
+                                            child: TextfieldTheme(controlador: paymentControllers[method['id']], texto: method['name'], inputType: TextInputType.number, inputFormatters: [NumericTextFormatterWithDecimal()], readOnly: _lockedPayments.contains(method['id']), onChanged: (_) => _validateForm()),
                                           ),
                                           const SizedBox(width: 8),
                                           IconButton(
                                             icon: const Icon(Icons.attach_money_rounded),
                                             tooltip: 'Llenar con el máximo disponible',
                                             onPressed: () {
-                                              final currentSum = paymentControllers.entries
-                                                  .where((e) => e.key != method['id'])
-                                                  .map((e) => double.tryParse(e.value.text) ?? 0.0)
-                                                  .fold(0.0, (a, b) => a + b);
+                                              final currentSum = paymentControllers.entries.where((e) => e.key != method['id']).map((e) => double.tryParse(e.value.text) ?? 0.0).fold(0.0, (a, b) => a + b);
 
                                               final remaining = _r2((totalAmount - currentSum).clamp(0.0, totalAmount));
                                               paymentControllers[method['id']]?.text = remaining.toStringAsFixed(2);
                                               _validateForm();
                                             },
                                           ),
-                                          if (method['name'].toString().toLowerCase().contains('yappy') &&
-                                              isYappyConfigAvailable &&
-                                              paymentControllers[method['id']]?.text != null &&
-                                              (double.tryParse(paymentControllers[method['id']]?.text ?? '0') ?? 0) > 0 &&
-                                              yappyTransactionId == null)
+                                          if (method['name'].toString().toLowerCase().contains('yappy') && isYappyConfigAvailable && paymentControllers[method['id']]?.text != null && (double.tryParse(paymentControllers[method['id']]?.text ?? '0') ?? 0) > 0 && yappyTransactionId == null)
                                             isYappyLoading
                                                 ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator())
                                                 : IconButton(
                                                     icon: const Icon(Icons.qr_code),
                                                     tooltip: 'Mostrar código QR',
                                                     onPressed: () {
-                                                      _showYappyQRDialog(
-                                                        subTotal: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'),
-                                                        totalTax: 0,
-                                                        total: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'),
-                                                        methodId: method['id'],
-                                                      );
+                                                      _showYappyQRDialog(subTotal: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'), totalTax: 0, total: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'), methodId: method['id']);
                                                     },
                                                   ),
-                                          if (yappyTransactionId != null &&
-                                              method['name'].toString().toLowerCase().contains('yappy') &&
-                                              paymentControllers[method['id']]?.text != null &&
-                                              (paymentControllers[method['id']]?.text ?? '0.0') != '0.0')
+                                          if (yappyTransactionId != null && method['name'].toString().toLowerCase().contains('yappy') && paymentControllers[method['id']]?.text != null && (paymentControllers[method['id']]?.text ?? '0.0') != '0.0')
                                             if (yappyTransactionId != null)
                                               IconButton(
                                                 icon: Icon(Icons.cancel),
@@ -1833,18 +1652,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                         backgroundColor: Theme.of(context).cardColor,
                                                         title: Text(AppLocale.cancelYappyTransaction.getString(context)),
                                                         actions: [
-                                                          TextButton(
-                                                            onPressed: () => Navigator.pop(context, false),
-                                                            child: Text(AppLocale.cancel.getString(context)),
-                                                          ),
+                                                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
                                                           ElevatedButton(
                                                             onPressed: () => Navigator.pop(context, true),
-                                                            child: Text(
-                                                              AppLocale.confirm.getString(context),
-                                                              style: Theme.of(
-                                                                context,
-                                                              ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
-                                                            ),
+                                                            child: Text(AppLocale.confirm.getString(context), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface)),
                                                           ),
                                                         ],
                                                       );
@@ -1859,11 +1670,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                       paymentControllers[method['id']]?.text = '0.0';
                                                       yappyTransactionId = null;
                                                       _validateForm();
-                                                      ToastMessage.show(
-                                                        context: context,
-                                                        message: 'Pago anulado correctamente',
-                                                        type: ToastType.help,
-                                                      );
+                                                      ToastMessage.show(context: context, message: 'Pago anulado correctamente', type: ToastType.help);
                                                     }
                                                   }
                                                 },
@@ -1873,12 +1680,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       if (calculatedChange > 0 && method['isCash'])
                                         Padding(
                                           padding: const EdgeInsets.only(top: 2, bottom: 4),
-                                          child: Text(
-                                            'Vuelto: \$${calculatedChange.toStringAsFixed(2)}',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
-                                          ),
+                                          child: Text('Vuelto: \$${calculatedChange.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
                                         ),
                                     ],
                                   ),
@@ -1890,10 +1692,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         if (!_isInvoiceValid && clientSelected && products.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              AppLocale.paymentSumMustEqualTotal.getString(context),
-                              style: TextStyle(color: ColorTheme.error, fontSize: 13),
-                            ),
+                            child: Text(AppLocale.paymentSumMustEqualTotal.getString(context), style: TextStyle(color: ColorTheme.error, fontSize: 13)),
                           ),
                       ],
                     ),
@@ -1934,14 +1733,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  AppLocale.totalTaxes.getString(context),
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  '\$${getTotalTaxAmount().toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-                                ),
+                                Text(AppLocale.totalTaxes.getString(context), style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                                Text('\$${getTotalTaxAmount().toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ],
@@ -1978,8 +1771,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 fullWidth: true,
                                 texto: AppLocale.process.getString(context),
                                 enable: _isInvoiceValid,
-                                onPressed: () =>
-                                    _isInvoiceValid ? _createInvoice(product: invoiceLines, bPartner: selectedBPartnerID ?? 0) : null,
+                                onPressed: () => _isInvoiceValid ? _createInvoice(product: invoiceLines, bPartner: selectedBPartnerID ?? 0) : null,
                               ),
                       ),
                     ],
