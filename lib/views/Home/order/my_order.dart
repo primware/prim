@@ -249,8 +249,7 @@ class _OrderListPageState extends State<OrderListPage> {
           } else if (docCompleteSucces["success"] == true && docCompleteSucces["isError"] == true) {
             if (mounted) ToastMessage.show(context: context, message: docCompleteSucces["summary"], type: ToastType.failure);
           } else {
-            if (mounted) ToastMessage.show(context: context, message: "No se pudo completar la acción", type: ToastType.failure);
-            //TODO Traducir
+            if (mounted) ToastMessage.show(context: context, message: AppLocale.noDocComplete.getString(context), type: ToastType.failure);
           }
         }
         break;

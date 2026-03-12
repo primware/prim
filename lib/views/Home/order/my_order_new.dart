@@ -519,121 +519,151 @@ class _OrderNewPageState extends State<OrderNewPage> {
             builder: (context, setModalState) {
               return AlertDialog(
                 backgroundColor: Theme.of(context).cardColor,
+                insetPadding: const EdgeInsets.all(16.0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
 
                 title: Text(product['name'] ?? 'Producto', style: Theme.of(context).textTheme.bodyMedium),
-                content: SingleChildScrollView(
-                  child: Padding(
-                    padding: MediaQuery.of(context).viewInsets,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Divider(color: Theme.of(context).colorScheme.primary),
-                        const SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: IconButton(
-                                icon: const Icon(Icons.remove),
-                                color: ColorTheme.error,
-                                onPressed: () {
-                                  int current = int.tryParse(quantityController.text) ?? 1;
-                                  if (current > 1) {
+
+                content: SizedBox(
+                  width: 500,
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: MediaQuery.of(context).viewInsets,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Divider(color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(height: CustomSpacer.medium),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IconButton(
+                                  icon: const Icon(Icons.remove),
+                                  color: ColorTheme.error,
+                                  onPressed: () {
+                                    int current = int.tryParse(quantityController.text) ?? 1;
+                                    if (current > 1) {
+                                      setModalState(() {
+                                        quantityController.text = (current - 1).toString();
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: 120,
+                                child: TextfieldTheme(controlador: quantityController, texto: AppLocale.quantity.getString(context), inputType: TextInputType.number, onSubmitted: (_) => onSubmitted(dialogContext), textAlign: TextAlign.center),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IconButton(
+                                  icon: const Icon(Icons.add),
+                                  color: ColorTheme.success,
+                                  onPressed: () {
+                                    int current = int.tryParse(quantityController.text) ?? 1;
                                     setModalState(() {
-                                      quantityController.text = (current - 1).toString();
+                                      quantityController.text = (current + 1).toString();
                                     });
-                                  }
-                                },
+                                  },
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
                             ),
-                            Expanded(
-                              child: TextfieldTheme(controlador: quantityController, texto: AppLocale.quantity.getString(context), inputType: TextInputType.number, onSubmitted: (_) => onSubmitted(dialogContext), textAlign: TextAlign.center),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.local_offer_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      AppLocale.priceList.getString(context),
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '\$${r2local(priceList).toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: IconButton(
-                                icon: const Icon(Icons.add),
-                                color: ColorTheme.success,
-                                onPressed: () {
-                                  int current = int.tryParse(quantityController.text) ?? 1;
-                                  setModalState(() {
-                                    quantityController.text = (current + 1).toString();
-                                  });
-                                },
+                          ),
+                          const SizedBox(height: CustomSpacer.large),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 6,
+                                child: TextfieldTheme(
+                                  controlador: priceController,
+                                  pista: product['price'] == 0 ? product['price'].toString() : null,
+                                  texto: AppLocale.price.getString(context),
+                                  inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                      discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
+                                    });
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(AppLocale.priceList.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                            Text('\$${r2local(priceList).toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.right),
-                          ],
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
+                              const SizedBox(width: CustomSpacer.small),
+                              Expanded(
+                                flex: 4,
+                                child: TextfieldTheme(
+                                  controlador: discountController,
+                                  texto: '% Desc.',
+                                  inputType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\-0-9\.,]'))],
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      if (val == '-') return;
+                                      final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                      priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
 
-                        //
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 6,
-                              child: TextfieldTheme(
-                                controlador: priceController,
-                                pista: product['price'] == 0 ? product['price'].toString() : null,
-                                texto: AppLocale.price.getString(context),
-                                inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
-                                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
-                                onChanged: (val) {
-                                  setModalState(() {
-                                    final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                    // Calcula el descuento incluso si es negativo
-                                    discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: CustomSpacer.small),
-                            Expanded(
-                              flex: 4,
-                              child: TextfieldTheme(
-                                controlador: discountController,
-                                texto: '% Desc.',
-                                inputType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\-0-9\.,]'))],
-                                onChanged: (val) {
-                                  setModalState(() {
-                                    if (val == '-') return; // Evita error si el usuario solo ha escrito el signo menos
-                                    final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                    priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+                          const SizedBox(height: CustomSpacer.small),
+                          Divider(color: Colors.grey.withOpacity(0.3), thickness: 1, height: 24),
 
-                        const SizedBox(height: CustomSpacer.medium),
-                        SearchableDropdown<int>(
-                          labelText: AppLocale.taxType.getString(context),
-                          showSearchBox: false,
-                          options: taxOptions,
-                          value: selectedTaxID,
-                          onChanged: (value) {
-                            setModalState(() {
-                              selectedTaxID = value;
-                            });
-                          },
-                          displayItem: (item) => '${item['name']} (${item['rate']}%)',
-                        ),
-                        const SizedBox(height: CustomSpacer.medium),
-                        TextFieldComments(controlador: descriptionController, texto: AppLocale.descriptionOptional.getString(context), onSubmitted: (_) => onSubmitted(dialogContext)),
-                      ],
+                          SearchableDropdown<int>(
+                            labelText: AppLocale.taxType.getString(context),
+                            showSearchBox: false,
+                            options: taxOptions,
+                            value: selectedTaxID,
+                            onChanged: (value) {
+                              setModalState(() {
+                                selectedTaxID = value;
+                              });
+                            },
+                            displayItem: (item) => '${item['name']} (${item['rate']}%)',
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          TextFieldComments(controlador: descriptionController, texto: AppLocale.descriptionOptional.getString(context), onSubmitted: (_) => onSubmitted(dialogContext)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
+                actionsAlignment: MainAxisAlignment.center,
                 actions: [
                   TextButton(
                     onPressed: () {
@@ -642,6 +672,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                     },
                     child: Text(AppLocale.cancel.getString(context)),
                   ),
+                  const SizedBox(width: 10),
                   ElevatedButton(onPressed: () => onSubmitted(dialogContext), child: Text(index != null ? 'Editar' : AppLocale.add.getString(context))),
                 ],
               );
@@ -650,6 +681,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         );
       },
     );
+
     if (result != true) {
       productController.clear();
     }
@@ -1168,19 +1200,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           builder: (ctx) => AlertDialog(
                                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                             backgroundColor: Theme.of(context).cardColor,
-                                            title: const Column(
+                                            title: Column(
                                               children: [
                                                 Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
                                                 SizedBox(height: 10),
-                                                //TODO traducir este bloque
                                                 Text(
-                                                  '¿Cambiar cliente?',
+                                                  AppLocale.changeClient.getString(context),
                                                   textAlign: TextAlign.center,
                                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                                                 ),
                                               ],
                                             ),
-                                            content: const Text('Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                                            content: Text(AppLocale.changeClientWarning.getString(context), textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
                                             actionsAlignment: MainAxisAlignment.spaceEvenly,
                                             actions: [
                                               TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
