@@ -11,6 +11,7 @@ import '../../../shared/footer.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
+import '../../../shared/custom_searchfield.dart';
 
 class ProductNewPage extends StatefulWidget {
   final String? productName;
@@ -26,16 +27,14 @@ class _ProductNewPageState extends State<ProductNewPage> {
   final TextEditingController skuController = TextEditingController();
   final TextEditingController upcController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
+  final TextEditingController categoryController = TextEditingController();
 
-  bool isValid = false,
-      isLoading = false,
-      _isCategoryLoading = true,
-      _isTaxiesLoading = true,
-      _taxError = false;
+  bool isValid = false, isLoading = false, _isCategoryLoading = true, _isTaxiesLoading = true, _taxError = false;
 
   int? selectedCategoryID;
   int? selectedTaxID;
   String? selectedProductType = 'I'; // Valor por defecto: Artículo
+  String categorySearchTerm = '';
 
   List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> taxies = [];
@@ -62,12 +61,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   Future<void> _loadCategories() async {
     final fetchedCategories = await getMProductCategoryID(context) ?? [];
-    /*if (fetchedCategories != null) {
-      setState(() {
-        categories = fetchedCategories;
-        _isCategoryLoading = false;
-      });
-    }*/
+    if (!mounted) return;
     setState(() {
       categories = fetchedCategories;
       _isCategoryLoading = false;
@@ -76,12 +70,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   Future<void> _loadTaxies() async {
     final fetchedTaxies = await getCTaxCategoryID(context) ?? [];
-    /*if (fetchedTaxies != null) {
-      setState(() {
-        taxies = fetchedTaxies;
-        _isTaxiesLoading = false;
-      });
-    }*/
+    if (!mounted) return;
     setState(() {
       taxies = fetchedTaxies;
       _isTaxiesLoading = false;
@@ -91,12 +80,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   void _isFormValid() {
     setState(() {
-      isValid = nameController.text.isNotEmpty &&
-          priceController.text.isNotEmpty &&
-          selectedCategoryID != null &&
-          selectedTaxID != null &&
-          selectedProductType != null &&
-          !_taxError;
+      isValid = nameController.text.isNotEmpty && priceController.text.isNotEmpty && selectedCategoryID != null && selectedTaxID != null && selectedProductType != null && !_taxError;
     });
   }
 
@@ -104,8 +88,80 @@ class _ProductNewPageState extends State<ProductNewPage> {
   void dispose() {
     nameController.removeListener(_isFormValid);
     priceController.removeListener(_isFormValid);
-
+    categoryController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showCreateCategoryDialog(String initialName) async {
+    final TextEditingController catNameController = TextEditingController(text: initialName);
+    final TextEditingController catValueController = TextEditingController();
+    final TextEditingController catDescController = TextEditingController();
+    bool isCreating = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: Theme.of(context).cardColor,
+              insetPadding: const EdgeInsets.all(16.0),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('Nueva Categoría', style: Theme.of(context).textTheme.bodyMedium),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextfieldTheme(controlador: catNameController, texto: '${AppLocale.name.getString(context)}*', inputType: TextInputType.text),
+                    const SizedBox(height: CustomSpacer.medium),
+                    TextfieldTheme(controlador: catValueController, texto: 'Código (Valor)', inputType: TextInputType.text),
+                    const SizedBox(height: CustomSpacer.medium),
+                    TextfieldTheme(controlador: catDescController, texto: 'Descripción (Opcional)', inputType: TextInputType.text),
+                  ],
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                if (!isCreating) TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
+                if (!isCreating)
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (catNameController.text.isEmpty) return;
+
+                      setModalState(() => isCreating = true);
+
+                      final result = await postProductCategory(name: catNameController.text, value: catValueController.text, description: catDescController.text, context: context);
+
+                      if (!mounted) return;
+
+                      if (result['success'] == true) {
+                        final newCat = result['category'];
+                        setState(() {
+                          categories.add({'id': newCat['id'], 'name': newCat['Name'] ?? newCat['name'] ?? catNameController.text});
+                          categoryController.text = catNameController.text;
+                          selectedCategoryID = newCat['id'];
+                          categorySearchTerm = catNameController.text;
+                          _isFormValid();
+                        });
+
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Categoría creada con éxito'), backgroundColor: ColorTheme.success));
+                      } else {
+                        setModalState(() => isCreating = false);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Error al crear'), backgroundColor: ColorTheme.error));
+                      }
+                    },
+                    child: Text(AppLocale.save.getString(context)),
+                  ),
+                if (isCreating) const CircularProgressIndicator(),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _createProduct() async {
@@ -117,19 +173,10 @@ class _ProductNewPageState extends State<ProductNewPage> {
           title: Text(AppLocale.newProduct.getString(context)),
           content: Text('¿Está seguro de que desea crear el producto?'),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(AppLocale.cancel.getString(context)),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                AppLocale.save.getString(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
-              ),
+              child: Text(AppLocale.save.getString(context), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface)),
             ),
           ],
         );
@@ -140,37 +187,24 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     setState(() => isLoading = true);
 
-    final result = await postProduct(
-      name: nameController.text,
-      sku: skuController.text,
-      upc: upcController.text,
-      taxID: selectedTaxID!,
-      categoryID: selectedCategoryID!,
-      price: priceController.text,
-      productType: selectedProductType!,
-      context: context,
-    );
+    final result = await postProduct(name: nameController.text, sku: skuController.text, upc: upcController.text, taxID: selectedTaxID!, categoryID: selectedCategoryID!, price: priceController.text, productType: selectedProductType!, context: context);
+
+    if (!mounted) return;
 
     setState(() => isLoading = false);
 
     if (result['success'] == true) {
-      Navigator.pop(context, {
-        'created': true,
-        'product': result['product'],
-      });
+      Navigator.pop(context, {'created': true, 'product': result['product']});
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Center(
-              child: Text(
-                  AppLocale.productCreatedSuccessfully.getString(context))),
+          content: Center(child: Text(AppLocale.productCreatedSuccessfully.getString(context))),
           backgroundColor: ColorTheme.success,
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Center(
-              child: Text(AppLocale.errorCreatingProduct.getString(context))),
+          content: Center(child: Text(AppLocale.errorCreatingProduct.getString(context))),
           backgroundColor: ColorTheme.error,
         ),
       );
@@ -180,41 +214,23 @@ class _ProductNewPageState extends State<ProductNewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text(AppLocale.newProduct.getString(context))),
-        bottomNavigationBar: CustomFooter(),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: CustomContainer(
-                  child: Column(
+      appBar: AppBar(title: Text(AppLocale.newProduct.getString(context))),
+      bottomNavigationBar: CustomFooter(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
+            child: CustomContainer(
+              child: Column(
                 children: [
-                  TextfieldTheme(
-                    controlador: skuController,
-                    texto: AppLocale.code.getString(context),
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: nameController,
-                    texto: '${AppLocale.name.getString(context)}*',
-                    colorEmpty: nameController.text.isEmpty,
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: nameController, texto: '${AppLocale.name.getString(context)}*', colorEmpty: nameController.text.isEmpty, inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: upcController,
-                    texto: AppLocale.upc.getString(context),
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: upcController, texto: AppLocale.upc.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
                   SearchableDropdown<String>(
                     value: selectedProductType,
-                    options: productTypes
-                        .map((type) => {
-                              'id': type['value'],
-                              'name': type['label'],
-                            })
-                        .toList(),
+                    options: productTypes.map((type) => {'id': type['value'], 'name': type['label']}).toList(),
                     labelText: '${AppLocale.productType.getString(context)} *',
                     showSearchBox: false,
                     onChanged: (String? newValue) {
@@ -228,33 +244,38 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isCategoryLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
-                      : SearchableDropdown<int>(
-                          value: selectedCategoryID,
+                      ? const ShimmerList(count: 1)
+                      : CustomSearchField(
+                          controller: categoryController,
+                          labelText: '${AppLocale.productCategory.getString(context)} *',
                           options: categories,
-                          showSearchBox: true,
-                          labelText:
-                              '${AppLocale.productCategory.getString(context)} *',
-                          onChanged: (int? newValue) {
+                          showCreateButtonIfNotFound: true,
+                          createAnchorTerm: categorySearchTerm,
+                          onChanged: (String val) {
                             setState(() {
-                              selectedCategoryID = newValue;
+                              categorySearchTerm = val;
+                              selectedCategoryID = null;
                               _isFormValid();
                             });
+                          },
+                          onItemSelected: (Map<String, dynamic> item) {
+                            setState(() {
+                              selectedCategoryID = item['id'];
+                              _isFormValid();
+                            });
+                          },
+                          onCreate: (String searchTerm) {
+                            _showCreateCategoryDialog(searchTerm);
                           },
                         ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isTaxiesLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
+                      ? ShimmerList(count: 1)
                       : SearchableDropdown<int>(
                           value: selectedTaxID,
                           options: taxies,
                           showSearchBox: true,
-                          labelText:
-                              '${AppLocale.taxCategory.getString(context)} *',
+                          labelText: '${AppLocale.taxCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxID = newValue;
@@ -263,13 +284,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           },
                         ),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: priceController,
-                    texto: '${AppLocale.price.getString(context)}*',
-                    colorEmpty: priceController.text.isEmpty,
-                    inputType: TextInputType.number,
-                    inputFormatters: [NumericTextFormatterWithDecimal()],
-                  ),
+                  TextfieldTheme(controlador: priceController, texto: '${AppLocale.price.getString(context)}*', colorEmpty: priceController.text.isEmpty, inputType: TextInputType.number, inputFormatters: [NumericTextFormatterWithDecimal()]),
                   const SizedBox(height: CustomSpacer.xlarge),
                   if (!isLoading) ...[
                     ButtonSecondary(
@@ -279,23 +294,21 @@ class _ProductNewPageState extends State<ProductNewPage> {
                         Navigator.pop(context);
                       },
                     ),
-                    const SizedBox(height: CustomSpacer.medium)
+                    const SizedBox(height: CustomSpacer.medium),
                   ],
                   Container(
                     child: isValid
                         ? isLoading
-                            ? ButtonLoading(fullWidth: true)
-                            : ButtonPrimary(
-                                fullWidth: true,
-                                texto: AppLocale.save.getString(context),
-                                onPressed: _createProduct,
-                              )
+                              ? ButtonLoading(fullWidth: true)
+                              : ButtonPrimary(fullWidth: true, texto: AppLocale.save.getString(context), onPressed: _createProduct)
                         : null,
-                  )
+                  ),
                 ],
-              )),
+              ),
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

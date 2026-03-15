@@ -457,7 +457,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
   }
 
-  //TODO hacer el cuadro de dialogo mas grande, con un ancho maximo por definir, y que tenga un margin
   Future<void> _showQuantityDialog(Map<String, dynamic> product, {int? index}) async {
     int? selectedTaxID = index != null ? (product['C_Tax_ID'] ?? product['tax']?['id']) : (product['tax']?['id'] ?? selectedTax?['id']);
 

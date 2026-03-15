@@ -17,7 +17,7 @@ import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../shared/toast_message.dart';
 import '../shared/file_picker_helper.dart';
-import '../API/endpoint.api.dart';
+import '../API/endpoint.dart';
 import '../API/pos.api.dart';
 import '../API/user.api.dart';
 import '../localization/app_locale.dart';

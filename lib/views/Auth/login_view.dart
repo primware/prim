@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../API/endpoint.api.dart';
+import '../../API/endpoint.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
@@ -30,8 +30,7 @@ TextEditingController claveController = TextEditingController();
 
 class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
-  final TextEditingController baseURLController = TextEditingController(),
-      cPosController = TextEditingController();
+  final TextEditingController baseURLController = TextEditingController(), cPosController = TextEditingController();
   bool rememberUser = false;
   String version = '';
 
@@ -107,35 +106,18 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            AppLocale.server.getString(context),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          title: Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.bodyLarge),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextfieldTheme(
-                texto: 'URL',
-                controlador: baseURLController,
-                pista: 'Ej: https://test.idempiere.org',
-              ),
+              TextfieldTheme(texto: 'URL', controlador: baseURLController, pista: 'Ej: https://test.idempiere.org'),
               const SizedBox(height: CustomSpacer.medium),
-              TextfieldTheme(
-                texto: 'POS ID',
-                controlador: cPosController,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                inputType: TextInputType.number,
-              ),
+              TextfieldTheme(texto: 'POS ID', controlador: cPosController, inputFormatters: [FilteringTextInputFormatter.digitsOnly], inputType: TextInputType.number),
             ],
           ),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.cancel_outlined),
-              color: ColorTheme.error,
-              iconSize: 32,
-            ),
+            IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.cancel_outlined), color: ColorTheme.error, iconSize: 32),
             IconButton(
               onPressed: () async {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -159,22 +141,9 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            AppLocale.server.getString(context),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          content: Text(
-            AppLocale.serverSaved.getString(context),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          actions: [
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.check_circle_outline),
-              color: ColorTheme.success,
-              iconSize: 32,
-            ),
-          ],
+          title: Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.titleMedium),
+          content: Text(AppLocale.serverSaved.getString(context), style: Theme.of(context).textTheme.bodyLarge),
+          actions: [IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.check_circle_outline), color: ColorTheme.success, iconSize: 32)],
         );
       },
     );
@@ -200,18 +169,9 @@ class _LoginPageState extends State<LoginPage> {
       }
       _saveConfig();
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ConfigPage(clients: authData['clients']),
-        ),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (context) => ConfigPage(clients: authData['clients'])));
     } else {
-      ToastMessage.show(
-        context: context,
-        message: AppLocale.invalidCredentials.getString(context),
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: AppLocale.invalidCredentials.getString(context), type: ToastType.failure);
     }
 
     setState(() {
@@ -224,36 +184,23 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok && mounted) {
-        ToastMessage.show(
-          context: context,
-          message: 'No se pudo abrir el navegador.',
-          type: ToastType.failure,
-        );
+        ToastMessage.show(context: context, message: 'No se pudo abrir el navegador.', type: ToastType.failure);
       }
     } catch (e) {
       if (mounted) {
-        ToastMessage.show(
-          context: context,
-          message: 'No se pudo abrir el navegador.',
-          type: ToastType.failure,
-        );
+        ToastMessage.show(context: context, message: 'No se pudo abrir el navegador.', type: ToastType.failure);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 750
-        ? true
-        : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
 
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showBaseURLDialog,
-          child: Icon(Icons.settings),
-        ),
+        floatingActionButton: FloatingActionButton(onPressed: _showBaseURLDialog, child: Icon(Icons.settings)),
         body: Center(
           child: SingleChildScrollView(
             child: Column(
@@ -266,41 +213,18 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Center(child: Logo(width: isMobile ? 200 : 320)),
-                      SizedBox(
-                        height:
-                            CustomSpacer.medium +
-                            (!isMobile ? CustomSpacer.xlarge : 10),
-                      ),
-                      TextfieldTheme(
-                        icono: Icons.mail_outline,
-                        texto: AppLocale.user.getString(context),
-                        inputType: TextInputType.emailAddress,
-                        controlador: usuarioController,
-                      ),
+                      SizedBox(height: CustomSpacer.medium + (!isMobile ? CustomSpacer.xlarge : 10)),
+                      TextfieldTheme(icono: Icons.mail_outline, texto: AppLocale.user.getString(context), inputType: TextInputType.emailAddress, controlador: usuarioController),
                       const SizedBox(height: CustomSpacer.small),
-                      TextfieldTheme(
-                        icono: Icons.lock_outline,
-                        texto: AppLocale.pass.getString(context),
-                        obscure: true,
-                        showSubIcon: true,
-                        controlador: claveController,
-                        onSubmitted: (_) => _funcionLogin(
-                          usuarioController.text.trim(),
-                          claveController.text.trim(),
-                        ),
-                      ),
+                      TextfieldTheme(icono: Icons.lock_outline, texto: AppLocale.pass.getString(context), obscure: true, showSubIcon: true, controlador: claveController, onSubmitted: (_) => _funcionLogin(usuarioController.text.trim(), claveController.text.trim())),
                       const SizedBox(height: CustomSpacer.medium),
                       SearchableDropdown<String>(
-                        value: FlutterLocalization
-                            .instance
-                            .currentLocale
-                            ?.languageCode,
+                        value: FlutterLocalization.instance.currentLocale?.languageCode,
                         onChanged: (String? lang) async {
                           if (lang != null) {
                             FlutterLocalization.instance.translate(lang);
                             if (rememberUser) {
-                              SharedPreferences prefs =
-                                  await SharedPreferences.getInstance();
+                              SharedPreferences prefs = await SharedPreferences.getInstance();
                               await prefs.setString('languageCode', lang);
                             }
                           }
@@ -330,10 +254,7 @@ class _LoginPageState extends State<LoginPage> {
                                 texto: AppLocale.login.getString(context),
                                 fullWidth: true,
                                 onPressed: () {
-                                  _funcionLogin(
-                                    usuarioController.text.trim(),
-                                    claveController.text.trim(),
-                                  );
+                                  _funcionLogin(usuarioController.text.trim(), claveController.text.trim());
                                 },
                               ),
                       ),
@@ -343,22 +264,13 @@ class _LoginPageState extends State<LoginPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                AppLocale.noAccount.getString(context),
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
+                              Text(AppLocale.noAccount.getString(context), style: Theme.of(context).textTheme.bodyLarge),
                               const SizedBox(height: CustomSpacer.small),
                               InkWell(
-                                onTap: () => _openExternal(
-                                  'https://primware.net/register/',
-                                ),
+                                onTap: () => _openExternal('https://primware.net/register/'),
                                 child: Text(
                                   AppLocale.register.getString(context),
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline,
-                                      ),
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
                                 ),
                               ),
                             ],
@@ -368,12 +280,7 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                if (version != 'No es web') ...[
-                  const SizedBox(
-                    height: CustomSpacer.xlarge + CustomSpacer.medium,
-                  ),
-                  Text(version, style: Theme.of(context).textTheme.labelMedium),
-                ],
+                if (version != 'No es web') ...[const SizedBox(height: CustomSpacer.xlarge + CustomSpacer.medium), Text(version, style: Theme.of(context).textTheme.labelMedium)],
               ],
             ),
           ),
