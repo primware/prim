@@ -164,48 +164,50 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
           child: const Icon(Icons.add),
         ),
         body: SafeArea(
-          child: CustomContainer(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextfieldTheme(texto: AppLocale.searchCustomer.getString(context), controlador: searchController, pista: AppLocale.taxIDOrName.getString(context), onSubmitted: (_) => _loadBPartner(showLoadingIndicator: true)),
-                    ),
-                    const SizedBox(width: CustomSpacer.small),
-                    Container(
-                      height: 55,
-                      decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
-                      child: IconButton(
-                        icon: const Icon(Icons.search, color: Colors.white),
-                        onPressed: () => _loadBPartner(showLoadingIndicator: true),
+          child: Center(
+            child: CustomContainer(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextfieldTheme(texto: AppLocale.searchCustomer.getString(context), controlador: searchController, pista: AppLocale.taxIDOrName.getString(context), onSubmitted: (_) => _loadBPartner(showLoadingIndicator: true)),
                       ),
-                    ),
-                  ],
-                ),
-
-                if (isSearchLoading) ...[const SizedBox(height: CustomSpacer.small), const LinearProgressIndicator()],
-
-                const SizedBox(height: CustomSpacer.medium),
-
-                Expanded(
-                  child: _isLoading
-                      ? ShimmerList(separation: CustomSpacer.medium)
-                      : _getFilteredPartners().isEmpty
-                      ? Center(
-                          child: Text(AppLocale.noProductsFound.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
-                        )
-                      : ListView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _getFilteredPartners().length,
-                          itemBuilder: (context, index) {
-                            final record = _getFilteredPartners()[index];
-                            return _buildPartnerCard(record);
-                          },
+                      const SizedBox(width: CustomSpacer.small),
+                      Container(
+                        height: 55,
+                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
+                        child: IconButton(
+                          icon: const Icon(Icons.search, color: Colors.white),
+                          onPressed: () => _loadBPartner(showLoadingIndicator: true),
                         ),
-                ),
-              ],
+                      ),
+                    ],
+                  ),
+
+                  if (isSearchLoading) ...[const SizedBox(height: CustomSpacer.small), const LinearProgressIndicator()],
+
+                  const SizedBox(height: CustomSpacer.medium),
+
+                  Expanded(
+                    child: _isLoading
+                        ? ShimmerList(separation: CustomSpacer.medium)
+                        : _getFilteredPartners().isEmpty
+                        ? Center(
+                            child: Text(AppLocale.noProductsFound.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
+                          )
+                        : ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: _getFilteredPartners().length,
+                            itemBuilder: (context, index) {
+                              final record = _getFilteredPartners()[index];
+                              return _buildPartnerCard(record);
+                            },
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

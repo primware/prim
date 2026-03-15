@@ -185,10 +185,11 @@ class _ProductListPageState extends State<ProductListPage> {
                           borderRadius: BorderRadius.circular(12),
                           onTap: () {
                             setModalState(() {
-                              if (isSelected)
+                              if (isSelected) {
                                 tempSelected.remove(cat['id']);
-                              else
+                              } else {
                                 tempSelected.add(cat['id']);
+                              }
                             });
                           },
                           child: AnimatedContainer(
@@ -396,95 +397,97 @@ class _ProductListPageState extends State<ProductListPage> {
           ],
         ),
         body: SafeArea(
-          child: CustomContainer(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextfieldTheme(texto: AppLocale.searchProducts.getString(context), controlador: productController, onSubmitted: (_) => _loadProduct(showLoadingIndicator: true)),
-                    ),
-                    const SizedBox(width: CustomSpacer.small),
-                    Container(
-                      height: 55,
-                      decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
-                      child: IconButton(
-                        icon: const Icon(Icons.search, color: Colors.white),
-                        tooltip: 'Buscar',
-                        onPressed: () => _loadProduct(showLoadingIndicator: true),
-                      ),
-                    ),
-                  ],
-                ),
-
-                if (isProductSearchLoading) ...[const SizedBox(height: CustomSpacer.small), const LinearProgressIndicator()],
-
-                const SizedBox(height: CustomSpacer.medium),
-
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
+          child: Center(
+            child: CustomContainer(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      ActionChip(
-                        avatar: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSecondary, size: 18),
-                        label: Text(
-                          AppLocale.categories.getString(context),
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSecondary, fontWeight: FontWeight.bold),
-                        ),
-                        backgroundColor: Theme.of(context).colorScheme.secondary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        side: BorderSide.none,
-                        onPressed: _openCategoryFilter,
+                      Expanded(
+                        child: TextfieldTheme(texto: AppLocale.searchProducts.getString(context), controlador: productController, onSubmitted: (_) => _loadProduct(showLoadingIndicator: true)),
                       ),
-
-                      if (selectedCategories.isNotEmpty) ...[
-                        const SizedBox(width: 12),
-                        Container(width: 1, height: 24, color: Colors.grey.withOpacity(0.4)),
-                        const SizedBox(width: 12),
-                        ...selectedCategories.map((catId) {
-                          final cat = categpryOptions.firstWhere((c) => c['id'] == catId, orElse: () => <String, dynamic>{});
-                          final catName = cat.isNotEmpty ? cat['name'] : 'Categoría';
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: Chip(
-                              label: Text(catName, style: const TextStyle(fontSize: 12)),
-                              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                              deleteIconColor: Theme.of(context).primaryColor,
-                              side: BorderSide(color: Theme.of(context).primaryColor.withOpacity(0.3)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              onDeleted: () {
-                                setState(() => selectedCategories.remove(catId));
-                                _loadProduct(showLoadingIndicator: true);
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ],
+                      const SizedBox(width: CustomSpacer.small),
+                      Container(
+                        height: 55,
+                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
+                        child: IconButton(
+                          icon: const Icon(Icons.search, color: Colors.white),
+                          tooltip: 'Buscar',
+                          onPressed: () => _loadProduct(showLoadingIndicator: true),
+                        ),
+                      ),
                     ],
                   ),
-                ),
 
-                const SizedBox(height: CustomSpacer.medium),
+                  if (isProductSearchLoading) ...[const SizedBox(height: CustomSpacer.small), const LinearProgressIndicator()],
 
-                Expanded(
-                  child: _isLoading
-                      ? ShimmerList(separation: CustomSpacer.medium)
-                      : _getFilteredOrders().isEmpty
-                      ? Center(
-                          child: Text(AppLocale.noProductsFound.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
-                        )
-                      : ListView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _getFilteredOrders().length,
-                          itemBuilder: (context, index) {
-                            final record = _getFilteredOrders()[index];
-                            return _buildProductCard(record);
-                          },
+                  const SizedBox(height: CustomSpacer.medium),
+
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: [
+                        ActionChip(
+                          avatar: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSecondary, size: 18),
+                          label: Text(
+                            AppLocale.categories.getString(context),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSecondary, fontWeight: FontWeight.bold),
+                          ),
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          side: BorderSide.none,
+                          onPressed: _openCategoryFilter,
                         ),
-                ),
-              ],
+
+                        if (selectedCategories.isNotEmpty) ...[
+                          const SizedBox(width: 12),
+                          Container(width: 1, height: 24, color: Colors.grey.withOpacity(0.4)),
+                          const SizedBox(width: 12),
+                          ...selectedCategories.map((catId) {
+                            final cat = categpryOptions.firstWhere((c) => c['id'] == catId, orElse: () => <String, dynamic>{});
+                            final catName = cat.isNotEmpty ? cat['name'] : 'Categoría';
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Chip(
+                                label: Text(catName, style: const TextStyle(fontSize: 12)),
+                                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                deleteIconColor: Theme.of(context).primaryColor,
+                                side: BorderSide(color: Theme.of(context).primaryColor.withOpacity(0.3)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                onDeleted: () {
+                                  setState(() => selectedCategories.remove(catId));
+                                  _loadProduct(showLoadingIndicator: true);
+                                },
+                              ),
+                            );
+                          }),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: CustomSpacer.medium),
+
+                  Expanded(
+                    child: _isLoading
+                        ? ShimmerList(separation: CustomSpacer.medium)
+                        : _getFilteredOrders().isEmpty
+                        ? Center(
+                            child: Text(AppLocale.noProductsFound.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
+                          )
+                        : ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: _getFilteredOrders().length,
+                            itemBuilder: (context, index) {
+                              final record = _getFilteredOrders()[index];
+                              return _buildProductCard(record);
+                            },
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
