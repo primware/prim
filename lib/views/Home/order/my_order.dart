@@ -387,149 +387,185 @@ class _OrderListPageState extends State<OrderListPage> {
     );
   }
 
-  Widget _buildOrderList(List<Map<String, dynamic>> orders) {
-    if (orders.isEmpty) {
-      return Center(child: Text(AppLocale.errorNoOrders.getString(context)));
-    }
-    return Column(
-      children: orders.map((order) {
-        final bool isComplete = (order['DocStatus'] == 'CO');
-        final bool isReturn = (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+  Widget _buildOrderCard(Map<String, dynamic> order) {
+    final bool isComplete = (order['DocStatus'] == 'CO');
+    final bool isReturn = (order['doctypetarget']?['id'] == POS.docTypeRefundID);
 
-        // --- REVISAR SI YA EXISTE NOTA DE CRÉDITO ---
-        final List invoices = order['C_Invoice'] ?? [];
-        final bool hasCreditNote = invoices.any((inv) {
-          return inv['RelatedInvoice_ID'] != null;
-        });
+    // --- REVISAR SI YA EXISTE NOTA DE CRÉDITO ---
+    final List invoices = order['C_Invoice'] ?? [];
+    final bool hasCreditNote = invoices.any((inv) {
+      return inv['RelatedInvoice_ID'] != null;
+    });
 
-        return GestureDetector(
-          onTap: () async {
-            final refreshed = await Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)));
+    return GestureDetector(
+      onTap: () async {
+        final refreshed = await Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)));
+        if (refreshed == true) {
+          _fetchOrders();
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Cliente y Menú de Opciones
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icono del cliente
+                Container(
+                  height: 40,
+                  width: 40,
+                  decoration: BoxDecoration(color: Theme.of(context).primaryColor.withOpacity(0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.person, color: Theme.of(context).primaryColor, size: 20),
+                ),
+                const SizedBox(width: 12),
 
-            if (refreshed == true) {
-              _fetchOrders();
-            }
-          },
-          child: Container(
-            margin: EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
-            child: ListTile(
-              title: Row(
-                children: [
-                  Icon(Icons.person_outline, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: CustomSpacer.small),
-                  Expanded(child: Text('${order['bpartner']['name']} - ${order['doctypetarget']['name']} #${order['DocumentNo']}', style: Theme.of(context).textTheme.bodyMedium)),
-                ],
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                // Nombre del cliente y Tipo de Documento
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.attach_money_rounded, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: CustomSpacer.small),
-                      Expanded(child: Text(order['GrandTotal'].toString(), style: Theme.of(context).textTheme.bodyLarge)),
+                      Text(
+                        order['bpartner']['name'],
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text('${order['doctypetarget']['name']} #${order['DocumentNo']}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_month_outlined, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: CustomSpacer.small),
-                      Expanded(
-                        child: Text(order['DateOrdered'], style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8, // Espacio horizontal entre los chips
-                    runSpacing: 8, // Espacio vertical si saltan a otra línea
-                    children: [
-                      _buildSubtypePill(order),
-                      _buildDocStatusPill(order),
+                ),
 
-                      // Píldora de Editar (Solo si es Borrador)
-                      //if (order['DocStatus'] == 'DR')
-                      //_buildEditPill(context, order),
-
-                      // Píldora de Nota de Crédito
-                      if (hasCreditNote) _buildCreditMemoPill(),
-                    ],
-                  ),
-                ],
-              ),
-              trailing: PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                onSelected: (value) => _onOrderAction(value, order),
-                itemBuilder: (context) {
-                  final items = <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                      value: 'printTicket',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.print_outlined, color: Colors.green),
-                          const SizedBox(width: 8),
-                          Text(AppLocale.printTicket.getString(context)),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'duplicate',
-                      child: Row(
-                        children: [
-                          Icon(Icons.copy, color: Theme.of(context).primaryColor),
-                          const SizedBox(width: 8),
-                          Text(AppLocale.duplicate.getString(context)),
-                        ],
-                      ),
-                    ),
-                    if (order['DocStatus'] == 'DR')
+                // Menú de opciones de la orden
+                PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.more_vert, color: Colors.grey),
+                  onSelected: (value) => _onOrderAction(value, order),
+                  itemBuilder: (context) {
+                    final items = <PopupMenuEntry<String>>[
                       PopupMenuItem<String>(
-                        value: 'docComplete',
+                        value: 'printTicket',
                         child: Row(
                           children: [
-                            const Icon(Icons.check, color: Colors.green),
+                            const Icon(Icons.print_outlined, color: Colors.green),
                             const SizedBox(width: 8),
-                            Text(AppLocale.complete.getString(context)),
+                            Text(AppLocale.printTicket.getString(context)),
                           ],
                         ),
                       ),
-                  ];
-                  if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
-                    items.add(
                       PopupMenuItem<String>(
-                        value: 'refund',
+                        value: 'duplicate',
                         child: Row(
                           children: [
-                            const Icon(Icons.undo, color: Colors.red),
+                            Icon(Icons.copy, color: Theme.of(context).primaryColor),
                             const SizedBox(width: 8),
-                            Text(AppLocale.refund.getString(context)),
+                            Text(AppLocale.duplicate.getString(context)),
                           ],
                         ),
                       ),
-                    );
-                  }
-                  if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
-                    items.add(
-                      PopupMenuItem<String>(
-                        value: 'arc',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.receipt_long_rounded, color: Colors.red),
-                            const SizedBox(width: 8),
-                            Text(AppLocale.arc.getString(context)),
-                          ],
+                      if (order['DocStatus'] == 'DR')
+                        PopupMenuItem<String>(
+                          value: 'docComplete',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check, color: Colors.green),
+                              const SizedBox(width: 8),
+                              Text(AppLocale.complete.getString(context)),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }
-                  return items;
-                },
-              ),
+                    ];
+                    if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
+                      items.add(
+                        PopupMenuItem<String>(
+                          value: 'refund',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.undo, color: Colors.red),
+                              const SizedBox(width: 8),
+                              Text(AppLocale.refund.getString(context)),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                    if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
+                      items.add(
+                        PopupMenuItem<String>(
+                          value: 'arc',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.receipt_long_rounded, color: Colors.red),
+                              const SizedBox(width: 8),
+                              Text(AppLocale.arc.getString(context)),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                    return items;
+                  },
+                ),
+              ],
             ),
-          ),
-        );
-      }).toList(),
+
+            const SizedBox(height: 16),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Total
+                Row(
+                  children: [
+                    Icon(Icons.payments_outlined, color: Theme.of(context).colorScheme.secondary, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      order['GrandTotal'].toString(),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+                // Fecha
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today_outlined, color: Colors.grey.shade500, size: 16),
+                    const SizedBox(width: 6),
+                    Text(order['DateOrdered'], style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
+                  ],
+                ),
+              ],
+            ),
+
+            const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, thickness: 0.5)),
+
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildSubtypePill(order),
+                _buildDocStatusPill(order),
+
+                // Píldora de Editar (Solo si es Borrador)
+                //if (order['DocStatus'] == 'DR')
+                //_buildEditPill(context, order),
+
+                // Píldora de Nota de Crédito
+                if (hasCreditNote) _buildCreditMemoPill(),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -557,23 +593,12 @@ class _OrderListPageState extends State<OrderListPage> {
               )
             : null,
         bottomNavigationBar: CustomFooter(),
-        body: SingleChildScrollView(
+        body: SafeArea(
           child: Center(
             child: CustomContainer(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CustomCheckbox(
-                    value: onlyMyOrders,
-                    text: AppLocale.onlyMyOrders.getString(context),
-                    onChanged: (newValue) {
-                      setState(() {
-                        onlyMyOrders = newValue;
-                        _fetchOrders(showLoadingIndicator: true);
-                      });
-                    },
-                  ),
-                  if (isSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
                   Row(
                     children: [
                       Expanded(
@@ -590,11 +615,50 @@ class _OrderListPageState extends State<OrderListPage> {
                         ),
                       ),
                       const SizedBox(width: CustomSpacer.small),
-                      IconButton(icon: const Icon(Icons.search), onPressed: () => _fetchOrders(showLoadingIndicator: true)),
+                      Container(
+                        height: 55,
+                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
+                        child: IconButton(
+                          icon: const Icon(Icons.search, color: Colors.white),
+                          onPressed: () => _fetchOrders(showLoadingIndicator: true),
+                        ),
+                      ),
                     ],
                   ),
+
+                  const SizedBox(height: 8),
+
+                  CustomCheckbox(
+                    value: onlyMyOrders,
+                    text: AppLocale.onlyMyOrders.getString(context),
+                    onChanged: (newValue) {
+                      setState(() {
+                        onlyMyOrders = newValue;
+                        _fetchOrders(showLoadingIndicator: true);
+                      });
+                    },
+                  ),
+
+                  if (isSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
+
                   const SizedBox(height: CustomSpacer.medium),
-                  _isLoading ? ShimmerList(separation: CustomSpacer.medium) : _buildOrderList(_getFilteredOrders()),
+
+                  Expanded(
+                    child: _isLoading
+                        ? ShimmerList(separation: CustomSpacer.medium)
+                        : _getFilteredOrders().isEmpty
+                        ? Center(
+                            child: Text(AppLocale.errorNoOrders.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
+                          )
+                        : ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: _getFilteredOrders().length,
+                            itemBuilder: (context, index) {
+                              final order = _getFilteredOrders()[index];
+                              return _buildOrderCard(order);
+                            },
+                          ),
+                  ),
                 ],
               ),
             ),

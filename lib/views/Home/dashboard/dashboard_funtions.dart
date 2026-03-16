@@ -2,29 +2,19 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import '../../../API/endpoint.api.dart';
+import '../../../API/endpoint.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 
-Future<Map<String, double>> fetchSalesYTDData({
-  required BuildContext context,
-}) async {
+Future<Map<String, double>> fetchSalesYTDData({required BuildContext context}) async {
   try {
     await usuarioAuth(context: context);
 
-    final response = await get(
-      Uri.parse(EndPoints.salesYTDMonthly),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
-    );
+    final response = await get(Uri.parse(EndPoints.salesYTDMonthly), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
     if (response.statusCode != 200) {
-      debugPrint(
-        'Error al obtener datos del gráfico mensual (status ${response.statusCode}): ${response.body}',
-      );
+      debugPrint('Error al obtener datos del gráfico mensual (status ${response.statusCode}): ${response.body}');
       return {};
     }
 
@@ -32,29 +22,14 @@ Future<Map<String, double>> fetchSalesYTDData({
     final List data = (jsonResponse['data'] as List?) ?? [];
 
     // Nombres de meses abreviados
-    const monthNames = <String>[
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ];
+    const monthNames = <String>['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     // Agrupar totales por año+mes
     final Map<String, double> groupedTotals = {};
 
     for (final item in data) {
       final String? x = item['x']?.toString();
-      final num? yNum = item['y'] is num
-          ? item['y'] as num
-          : num.tryParse(item['y']?.toString() ?? '');
+      final num? yNum = item['y'] is num ? item['y'] as num : num.tryParse(item['y']?.toString() ?? '');
       if (x == null || yNum == null) continue;
 
       DateTime? date;
@@ -105,24 +80,14 @@ Future<Map<String, double>> fetchSalesYTDData({
   }
 }
 
-Future<Map<String, double>> fetchSalesPerDay({
-  required BuildContext context,
-}) async {
+Future<Map<String, double>> fetchSalesPerDay({required BuildContext context}) async {
   try {
     await usuarioAuth(context: context);
 
-    final response = await get(
-      Uri.parse(EndPoints.salesPerDay),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
-    );
+    final response = await get(Uri.parse(EndPoints.salesPerDay), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
     if (response.statusCode != 200) {
-      debugPrint(
-        'Error al obtener datos del gráfico por día (status ${response.statusCode}): ${response.body}',
-      );
+      debugPrint('Error al obtener datos del gráfico por día (status ${response.statusCode}): ${response.body}');
       return {};
     }
 
@@ -134,9 +99,7 @@ Future<Map<String, double>> fetchSalesPerDay({
 
     for (final item in data) {
       final String? xStr = item['x']?.toString();
-      final num? yNum = item['y'] is num
-          ? item['y'] as num
-          : num.tryParse(item['y']?.toString() ?? '');
+      final num? yNum = item['y'] is num ? item['y'] as num : num.tryParse(item['y']?.toString() ?? '');
       if (xStr == null || yNum == null) continue;
 
       DateTime? dt;
@@ -160,25 +123,11 @@ Future<Map<String, double>> fetchSalesPerDay({
           '${dOnly.month.toString().padLeft(2, '0')}-'
           '${dOnly.day.toString().padLeft(2, '0')}';
 
-      totalsByDate[storageKey] =
-          (totalsByDate[storageKey] ?? 0) + yNum.toDouble();
+      totalsByDate[storageKey] = (totalsByDate[storageKey] ?? 0) + yNum.toDouble();
     }
 
     // Nombres de meses para la etiqueta
-    const monthNames = <String>[
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ];
+    const monthNames = <String>['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     // Ordena TODAS las fechas disponibles de menor a mayor
     final List<DateTime> sortedDates =
@@ -186,11 +135,7 @@ Future<Map<String, double>> fetchSalesPerDay({
             .map((k) {
               try {
                 final parts = k.split('-');
-                return DateTime(
-                  int.parse(parts[0]),
-                  int.parse(parts[1]),
-                  int.parse(parts[2]),
-                );
+                return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
               } catch (_) {
                 return null;
               }
@@ -206,8 +151,7 @@ Future<Map<String, double>> fetchSalesPerDay({
           '${d.year.toString().padLeft(4, '0')}-'
           '${d.month.toString().padLeft(2, '0')}-'
           '${d.day.toString().padLeft(2, '0')}';
-      final label =
-          '${d.day.toString().padLeft(2, '0')} ${monthNames[d.month - 1]}';
+      final label = '${d.day.toString().padLeft(2, '0')} ${monthNames[d.month - 1]}';
       ordered[label] = totalsByDate[storageKey] ?? 0.0;
     }
 
@@ -220,30 +164,14 @@ Future<Map<String, double>> fetchSalesPerDay({
 
 Future<bool> updateOrgLogo(Uint8List fileBytes, BuildContext context) async {
   try {
-    final getResp = await get(
-      Uri.parse(
-        '${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}',
-      ),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
-    );
+    final getResp = await get(Uri.parse('${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
     if (getResp.statusCode != 200) {
-      CurrentLogMessage.add(
-        'updateOrgLogo GET OrgInfo: ${getResp.statusCode}, ${getResp.body}',
-        level: 'ERROR',
-        tag: 'updateOrgLogo',
-      );
+      CurrentLogMessage.add('updateOrgLogo GET OrgInfo: ${getResp.statusCode}, ${getResp.body}', level: 'ERROR', tag: 'updateOrgLogo');
       return false;
     }
     final getJson = json.decode(utf8.decode(getResp.bodyBytes));
     if (getJson['records'] == null || (getJson['records'] as List).isEmpty) {
-      CurrentLogMessage.add(
-        'updateOrgLogo: OrgInfo no encontrado',
-        level: 'ERROR',
-        tag: 'updateOrgLogo',
-      );
+      CurrentLogMessage.add('updateOrgLogo: OrgInfo no encontrado', level: 'ERROR', tag: 'updateOrgLogo');
       return false;
     }
     final int orgInfoId = getJson['records'][0]['id'] ?? Token.organitation;
@@ -253,30 +181,15 @@ Future<bool> updateOrgLogo(Uint8List fileBytes, BuildContext context) async {
     final body = jsonEncode({
       'Logo_ID': {'data': b64},
     });
-    final putResp = await put(
-      Uri.parse('${EndPoints.adOrgInfo}/$orgInfoId'),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
-      body: body,
-    );
+    final putResp = await put(Uri.parse('${EndPoints.adOrgInfo}/$orgInfoId'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!}, body: body);
     if (putResp.statusCode == 200 || putResp.statusCode == 204) {
       POSPrinter.isLogoSet = true;
       return true;
     } else {
-      CurrentLogMessage.add(
-        'updateOrgLogo PUT: ${putResp.statusCode}, ${putResp.body}',
-        level: 'ERROR',
-        tag: 'updateOrgLogo',
-      );
+      CurrentLogMessage.add('updateOrgLogo PUT: ${putResp.statusCode}, ${putResp.body}', level: 'ERROR', tag: 'updateOrgLogo');
     }
   } catch (e) {
-    CurrentLogMessage.add(
-      'Excepción en updateOrgLogo: $e',
-      level: 'ERROR',
-      tag: 'updateOrgLogo',
-    );
+    CurrentLogMessage.add('Excepción en updateOrgLogo: $e', level: 'ERROR', tag: 'updateOrgLogo');
     if (e is ClientException) {
       handle401(context);
     }

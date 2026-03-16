@@ -1,4 +1,5 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:primware/views/Auth/config_view.dart';
@@ -17,7 +18,7 @@ import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../shared/toast_message.dart';
 import '../shared/file_picker_helper.dart';
-import '../API/endpoint.api.dart';
+import '../API/endpoint.dart';
 import '../API/pos.api.dart';
 import '../API/user.api.dart';
 import '../localization/app_locale.dart';
@@ -58,7 +59,6 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          // width: Base.maxWithApp,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -104,13 +104,7 @@ class _MobileMenu extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu),
-                color: Theme.of(context).primaryColor,
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              ),
+              builder: (context) => IconButton(icon: const Icon(Icons.menu), color: Theme.of(context).primaryColor, onPressed: () => Scaffold.of(context).openDrawer()),
             ),
             Logo(width: 150),
           ],
@@ -128,21 +122,24 @@ class MenuDrawer extends StatefulWidget {
 }
 
 class _MenuDrawerState extends State<MenuDrawer> {
+  // Variables de estado originales
   bool _isDarkMode = false, _isCreatingCloseCash = false;
+
   @override
   void initState() {
     super.initState();
     _loadTheme();
   }
 
+  // Lógica de carga de tema original
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
-
     setState(() {
       _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     });
   }
 
+  // Lógica de confirmación de salida original
   Future<bool?> _showLogoutConfirmation(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -199,233 +196,276 @@ class _MenuDrawerState extends State<MenuDrawer> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.only(top: CustomSpacer.xlarge + CustomSpacer.xlarge, bottom: CustomSpacer.medium),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      child: Column(
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (POSPrinter.logo != null)
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await pickValidFile(context: context, maxUploadMB: 4);
-                    if (picked == null) return;
-                    final bytes = picked['fileBytes'] as Uint8List;
-                    setState(() {
-                      POSPrinter.logo = bytes;
-                      POSPrinter.isLogoSet = true;
-                    });
-                    final ok = await updateOrgLogo(bytes, context);
-                    if (!mounted) return;
-                    if (ok) {
-                      ToastMessage.show(context: context, message: 'Logo actualizado correctamente', type: ToastType.success);
-                    } else {
-                      ToastMessage.show(context: context, message: 'No se pudo actualizar el logo', type: ToastType.failure);
-                    }
-                  },
-                  child: Image.memory(POSPrinter.logo!, width: 160, fit: BoxFit.contain),
-                ),
-              if (POSPrinter.isLogoSet == false)
-                TextButton(
-                  child: Text(
-                    AppLocale.yourLogo.getString(context),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () async {
-                    final picked = await pickValidFile(context: context, maxUploadMB: 4);
-                    if (picked == null) return;
-                    final bytes = picked['fileBytes'] as Uint8List;
-                    setState(() {
-                      POSPrinter.logo = bytes;
-                      POSPrinter.isLogoSet = true;
-                    });
-                    final ok = await updateOrgLogo(bytes, context);
-                    if (!mounted) return;
-                    if (ok) {
-                      ToastMessage.show(context: context, message: 'Logo actualizado correctamente', type: ToastType.success);
-                    } else {
-                      ToastMessage.show(context: context, message: 'No se pudo actualizar el logo', type: ToastType.failure);
-                    }
-                  },
-                ),
-              Text(
-                UserData.name ?? 'Usuario',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const Divider(height: 24),
-          ListTile(
-            leading: Icon(Icons.dashboard_outlined),
-            title: Text(AppLocale.dashboard.getString(context), style: TextStyle()),
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const DashboardPage()));
-            },
-          ),
-          if (POS.docTypesComplete.isEmpty)
-            ListTile(
-              leading: Icon(Icons.add),
-              title: Text(AppLocale.newOrder.getString(context)),
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderNewPage()));
-              },
-            ),
-          if (POS.docTypesComplete.isNotEmpty) ...[
-            Column(
+          _buildHeader(context),
+
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              physics: const BouncingScrollPhysics(),
               children: [
-                const Divider(height: 24),
-                ...POS.docTypesComplete.map((doc) {
-                  final dynamic rawId = doc['id'];
-                  final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
-                  final String title = (doc['name'] ?? doc['Name'] ?? '').toString();
-                  return ListTile(
-                    leading: Icon((doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID) ? Icons.undo : Icons.add, color: (doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID) ? Colors.red : null),
-                    title: Text(title.isEmpty ? 'Documento' : title),
-                    onTap: () {
-                      Navigator.push(
+                _buildMenuItem(
+                  context,
+                  icon: Icons.dashboard_outlined,
+                  title: AppLocale.dashboard.getString(context),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardPage())),
+                ),
+
+                const SizedBox(height: CustomSpacer.medium),
+                _buildSectionTitle(context, 'OPERACIONES COMERCIALES'),
+
+                // Pedidos / Ventas Dinámicos de iDempiere
+                if (POS.docTypesComplete.isEmpty)
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.add_circle_outline,
+                    title: AppLocale.newOrder.getString(context),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderNewPage())),
+                  ),
+
+                if (POS.docTypesComplete.isNotEmpty)
+                  ...POS.docTypesComplete.map((doc) {
+                    final dynamic rawId = doc['id'];
+                    final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+                    final bool isRefund = doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID;
+                    return _buildMenuItem(
+                      context,
+                      icon: isRefund ? Icons.assignment_return_outlined : Icons.add_circle_outline,
+                      title: (doc['name'] ?? doc['Name'] ?? 'Documento').toString(),
+                      iconColor: isRefund ? Colors.redAccent : null,
+                      onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => OrderNewPage(doctypeID: docTypeId, orderName: doc['name'], isRefund: doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID),
+                          builder: (_) => OrderNewPage(doctypeID: docTypeId, orderName: doc['name'], isRefund: isRefund),
                         ),
-                      );
-                    },
-                  );
-                }),
-                const Divider(height: 24),
+                      ),
+                    );
+                  }),
+
+                _buildMenuItem(
+                  context,
+                  icon: Icons.receipt_long_outlined,
+                  title: AppLocale.myOrders.getString(context),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListPage())),
+                ),
+
+                // Sección Punto de Venta
+                if (POS.isPOS) ...[
+                  const SizedBox(height: CustomSpacer.medium),
+                  _buildSectionTitle(context, 'PUNTO DE VENTA'),
+                  _buildMenuItem(context, icon: Icons.point_of_sale_outlined, title: AppLocale.closeCash.getString(context), isLoading: _isCreatingCloseCash, onTap: _isCreatingCloseCash ? null : _handleCloseCashLogic),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.history_outlined,
+                    title: AppLocale.mycloseCashs.getString(context),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CloseCashPage())),
+                  ),
+                ],
+
+                const SizedBox(height: CustomSpacer.medium),
+                _buildSectionTitle(context, 'CATÁLOGOS'),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.inventory_2_outlined,
+                  title: AppLocale.products.getString(context),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductListPage())),
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.people_alt_outlined,
+                  title: AppLocale.customers.getString(context),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BPartnerListPage())),
+                ),
+                const SizedBox(height: CustomSpacer.medium),
+                _buildSectionTitle(context, 'SISTEMA'),
+
+                //! BOTÓN MODO OSCURO
+                // _buildMenuItem(
+                //   context,
+                //   icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
+                //   title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+                //   onTap: () {
+                //     ThemeManager.themeNotifier.toggleTheme();
+                //     _loadTheme();
+                //   },
+                // ),
+                _buildMenuItem(context, icon: Icons.manage_accounts_outlined, title: 'Cambiar Rol', onTap: _handleChangeRole),
+                if (!Base.prod)
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.settings_outlined,
+                    title: AppLocale.settings.getString(context),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DebugPage())),
+                  ),
               ],
             ),
-          ],
-          if (POS.isPOS) ...[
-            ListTile(
-              leading: _isCreatingCloseCash ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.print),
-              title: Text(AppLocale.closeCash.getString(context)),
-              onTap: _isCreatingCloseCash
-                  ? null
-                  : () async {
-                      setState(() => _isCreatingCloseCash = true);
-
-                      // Verificar si ya hay un cierre de caja abierto
-                      int? closeCashId = await currentCloseCash();
-                      if (closeCashId != null) {
-                        await updateCloseCashDateTrx(cdsCloseCashID: closeCashId);
-                        await refreshCloseCash(cdsCloseCashID: closeCashId);
-
-                        if (!mounted) return;
-                        setState(() => _isCreatingCloseCash = false);
-
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: {'success': true, 'Record_ID': closeCashId})));
-                        return;
-                      }
-
-                      final String nowText = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-
-                      try {
-                        final result = await postNewCloseCash(context: context, salesRepID: UserData.id, terminalID: POS.cPosID!, dateTrx: nowText);
-
-                        if (!mounted) return;
-                        setState(() => _isCreatingCloseCash = false);
-
-                        if (result['success'] == true) {
-                          await Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: result)));
-                        } else {
-                          ToastMessage.show(context: context, message: 'No se pudo crear el cierre de caja', type: ToastType.failure);
-                        }
-                      } catch (e) {
-                        if (!mounted) return;
-                        setState(() => _isCreatingCloseCash = false);
-                        ToastMessage.show(context: context, message: 'Error al crear el cierre de caja', type: ToastType.failure);
-                      }
-                    },
-            ),
-
-            ListTile(
-              leading: Icon(Icons.list_alt_outlined),
-              title: Text(AppLocale.mycloseCashs.getString(context)),
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const CloseCashPage()));
-              },
-            ),
-            const Divider(height: 24),
-          ],
-          ListTile(
-            leading: Icon(Icons.attach_money_outlined),
-            title: Text(AppLocale.myOrders.getString(context), style: TextStyle()),
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderListPage()));
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.inventory_2_outlined),
-            title: Text(AppLocale.products.getString(context)),
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductListPage()));
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.people_alt_outlined),
-            title: Text(AppLocale.customers.getString(context)),
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const BPartnerListPage()));
-            },
           ),
 
-          if (!Base.prod)
-            ListTile(
-              leading: Icon(Icons.settings),
-              title: Text(AppLocale.settings.getString(context)),
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const DebugPage()));
-              },
-            ),
-          //!BOTÓN MODO OSCURO
-          // ListTile(
-          //   tileColor: Theme.of(context).cardColor,
-          //   leading: Icon(_isDarkMode ? Icons.nightlight : Icons.sunny, color: Theme.of(context).colorScheme.onSurface),
-          //   title: Text(_isDarkMode ? 'Modo oscuro' : 'Modo claro', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
-          //   onTap: () {
-          //     ThemeManager.themeNotifier.toggleTheme();
-          //     _loadTheme();
-          //   },
-          // ),
-          // BOTÓN DE CAMBIAR ROL
-          ListTile(
-            leading: const Icon(Icons.manage_accounts_outlined),
-            title: const Text('Cambiar Rol'),
-            onTap: () async {
-              // Rescatamos el usuario y clave actuales
-              final String currentUser = usuarioController.text.trim();
-              final String currentPass = claveController.text.trim();
-
-              // Hacemos una pre-autenticación
-              final authData = await preAuth(currentUser, currentPass, context);
-
-              if (!mounted) return;
-
-              if (authData != null) {
-                // Si el usuario le da a "Volver", la sesión intacta sigue ahí.
-                Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigPage(clients: authData['clients'])));
-              } else {
-                // Fallback por si la contraseña cambió o el token expiró
-                await cleanSessionData();
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginPage()), (Route<dynamic> route) => false);
-              }
-            },
-          ),
-
-          ListTile(
-            leading: Icon(Icons.logout_outlined, color: ColorTheme.error),
-            title: Text(AppLocale.logout.getString(context), style: TextStyle(color: ColorTheme.error)),
-            onTap: () async {
-              final confirmed = await _showLogoutConfirmation(context);
-              if (confirmed == true) {
-                await cleanSessionData();
-
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
-              }
-            },
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            child: _buildMenuItem(context, icon: Icons.logout_rounded, title: AppLocale.logout.getString(context), iconColor: ColorTheme.error, textColor: ColorTheme.error, onTap: _handleLogout),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,
+        borderRadius: const BorderRadius.only(bottomRight: Radius.circular(40)),
+        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _updateLogo,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+              child: CircleAvatar(
+                radius: 35,
+                backgroundColor: Colors.white,
+                backgroundImage: POSPrinter.logo != null ? MemoryImage(POSPrinter.logo!) : null,
+                child: POSPrinter.logo == null ? Icon(Icons.business, color: Theme.of(context).primaryColor, size: 35) : null,
+              ),
+            ),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  UserData.name ?? 'Usuario',
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  UserData.rolName ?? 'LIRION ERP',
+                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, bottom: 8, top: 12),
+      child: Text(
+        title,
+        style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(BuildContext context, {required IconData icon, required String title, required VoidCallback? onTap, Color? iconColor, Color? textColor, bool isLoading = false}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 2),
+      child: ListTile(
+        onTap: onTap,
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        leading: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(icon, color: iconColor ?? Theme.of(context).primaryColor.withOpacity(0.8)),
+        title: Text(
+          title,
+          style: TextStyle(color: textColor ?? Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500, fontSize: 14),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateLogo() async {
+    final picked = await pickValidFile(context: context, maxUploadMB: 4);
+    if (picked == null) return;
+    final bytes = picked['fileBytes'] as Uint8List;
+    setState(() {
+      POSPrinter.logo = bytes;
+      POSPrinter.isLogoSet = true;
+    });
+    final ok = await updateOrgLogo(bytes, context);
+    if (!mounted) return;
+    if (ok) {
+      ToastMessage.show(context: context, message: 'Logo actualizado correctamente', type: ToastType.success);
+    } else {
+      ToastMessage.show(context: context, message: 'No se pudo actualizar el logo', type: ToastType.failure);
+    }
+  }
+
+  Future<void> _handleChangeRole() async {
+    // Rescatamos el usuario y clave actuales
+    final String currentUser = usuarioController.text.trim();
+    final String currentPass = claveController.text.trim();
+
+    // Hacemos una pre-autenticación
+    final authData = await preAuth(currentUser, currentPass, context);
+    if (!mounted) return;
+
+    if (authData != null) {
+      // Si el usuario le da a "Volver", la sesión intacta sigue ahí.
+      Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigPage(clients: authData['clients'])));
+    } else {
+      // Fallback por si la contraseña cambió o el token expiró
+      await cleanSessionData();
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginPage()), (Route<dynamic> route) => false);
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    final confirmed = await _showLogoutConfirmation(context);
+    if (confirmed == true) {
+      await cleanSessionData();
+      if (!mounted) return;
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+    }
+  }
+
+  Future<void> _handleCloseCashLogic() async {
+    setState(() => _isCreatingCloseCash = true);
+
+    // Verificar si ya hay un cierre de caja abierto
+    int? closeCashId = await currentCloseCash();
+    if (closeCashId != null) {
+      await updateCloseCashDateTrx(cdsCloseCashID: closeCashId);
+      await refreshCloseCash(cdsCloseCashID: closeCashId);
+
+      if (!mounted) return;
+      setState(() => _isCreatingCloseCash = false);
+
+      Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: {'success': true, 'Record_ID': closeCashId})));
+      return;
+    }
+
+    final String nowText = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+
+    try {
+      final result = await postNewCloseCash(context: context, salesRepID: UserData.id, terminalID: POS.cPosID!, dateTrx: nowText);
+
+      if (!mounted) return;
+      setState(() => _isCreatingCloseCash = false);
+
+      if (result['success'] == true) {
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: result)));
+      } else {
+        ToastMessage.show(context: context, message: 'No se pudo crear el cierre de caja', type: ToastType.failure);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isCreatingCloseCash = false);
+      ToastMessage.show(context: context, message: 'Error al crear el cierre de caja', type: ToastType.failure);
+    }
   }
 }
