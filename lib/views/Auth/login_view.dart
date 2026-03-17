@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:ui';
+
 import '../../API/endpoint.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
@@ -17,6 +19,116 @@ import '../../shared/toast_message.dart';
 import '../../theme/colors.dart';
 import 'auth_funtions.dart';
 import 'config_view.dart';
+
+class LiquidBackground extends StatelessWidget {
+  final Widget child;
+  const LiquidBackground({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final secondary = Theme.of(context).colorScheme.secondary;
+    final bg = Theme.of(context).scaffoldBackgroundColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(color: bg),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -150,
+            left: -100,
+            child: Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [primary.withOpacity(isDark ? 0.35 : 0.15), Colors.transparent], stops: const [0.1, 1.0]),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -200,
+            right: -150,
+            child: Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [secondary.withOpacity(isDark ? 0.35 : 0.15), Colors.transparent], stops: const [0.1, 1.0]),
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.3,
+            right: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [primary.withOpacity(isDark ? 0.2 : 0.08), Colors.transparent], stops: const [0.1, 1.0]),
+              ),
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------------
+// 2. CONTENEDOR GLASS ULTRA PREMIUM (Estilo iOS / Prim)
+// ------------------------------------------------------------------
+class GlassContainer extends StatelessWidget {
+  final Widget child;
+  final double? width;
+  final double? height;
+  final double blur;
+  final EdgeInsetsGeometry? padding;
+  final BorderRadius? borderRadius;
+  final double borderOpacity;
+
+  const GlassContainer({super.key, required this.child, this.width, this.height, this.blur = 12.0, this.padding, this.borderRadius, this.borderOpacity = 0.2});
+
+  @override
+  Widget build(BuildContext context) {
+    final br = borderRadius ?? BorderRadius.circular(24);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final glassColor = isDark ? Colors.black : Colors.white;
+    final glassOpacityStart = isDark ? 0.4 : 0.5;
+    final glassOpacityEnd = isDark ? 0.1 : 0.2;
+    final borderColor = isDark ? Colors.white30 : Colors.white;
+
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: br,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.4 : 0.08), blurRadius: 24, spreadRadius: -5, offset: const Offset(0, 8))],
+      ),
+      child: ClipRRect(
+        borderRadius: br,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: Container(
+            padding: padding ?? const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: br,
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [glassColor.withOpacity(glassOpacityStart), glassColor.withOpacity(glassOpacityEnd)], stops: const [0.0, 1.0]),
+              border: Border.all(color: borderColor.withOpacity(borderOpacity), width: 1.5),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -43,16 +155,14 @@ class _LoginPageState extends State<LoginPage> {
     _checkVersion();
   }
 
+  // --- LÓGICA INTACTA ---
   Future<void> _loadRememberedUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool? remember = prefs.getBool('rememberUser');
     if (remember != null && remember) {
       String? usuario = prefs.getString('usuario');
-      // String? clave = prefs.getString('clave');
-
       if (usuario != null) {
         usuarioController.text = usuario;
-        // claveController.text = clave;
         setState(() {
           rememberUser = true;
         });
@@ -90,7 +200,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _loadConfig() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? baseURL = prefs.getString('baseURL') ?? 'https://fe.primware.net';
-
     String? cPosID = prefs.getString('cPosID');
 
     setState(() {
@@ -193,95 +302,208 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _showLanguageBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      barrierColor: Colors.black.withOpacity(0.1),
+
+      builder: (BuildContext bc) {
+        return GlassContainer(
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.5), borderRadius: BorderRadius.circular(10)),
+              ),
+              const SizedBox(height: 24),
+
+              Text(AppLocale.lang.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 24),
+
+              // Opciones de idioma
+              _buildLanguageOption('es', 'Español'),
+              const SizedBox(height: 12),
+              _buildLanguageOption('en', 'English'),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageOption(String code, String name) {
+    final isSelected = FlutterLocalization.instance.currentLocale?.languageCode == code;
+    final primaryColor = Theme.of(context).primaryColor;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () async {
+        FlutterLocalization.instance.translate(code);
+        if (rememberUser) {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('languageCode', code);
+        }
+
+        setState(() {});
+        if (mounted) Navigator.pop(context);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isSelected ? primaryColor : Colors.grey.withOpacity(0.3), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                name,
+                style: TextStyle(fontSize: 16, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? primaryColor : Theme.of(context).colorScheme.onSurface),
+              ),
+            ),
+            if (isSelected) Icon(Icons.check_circle, color: primaryColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // INTERFAZ DE LOGIN
+  // ------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
+    // Calculamos si es móvil para ajustar el tamaño del cristal
     final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
 
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        floatingActionButton: FloatingActionButton(onPressed: _showBaseURLDialog, child: Icon(Icons.settings)),
-        body: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CustomContainer(
-                  maxWidthContainer: isMobile ? 420 : 500,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Center(child: Logo(width: isMobile ? 200 : 320)),
-                      SizedBox(height: CustomSpacer.medium + (!isMobile ? CustomSpacer.xlarge : 10)),
-                      TextfieldTheme(icono: Icons.mail_outline, texto: AppLocale.user.getString(context), inputType: TextInputType.emailAddress, controlador: usuarioController),
-                      const SizedBox(height: CustomSpacer.small),
-                      TextfieldTheme(icono: Icons.lock_outline, texto: AppLocale.pass.getString(context), obscure: true, showSubIcon: true, controlador: claveController, onSubmitted: (_) => _funcionLogin(usuarioController.text.trim(), claveController.text.trim())),
-                      const SizedBox(height: CustomSpacer.medium),
-                      SearchableDropdown<String>(
-                        value: FlutterLocalization.instance.currentLocale?.languageCode,
-                        onChanged: (String? lang) async {
-                          if (lang != null) {
-                            FlutterLocalization.instance.translate(lang);
-                            if (rememberUser) {
-                              SharedPreferences prefs = await SharedPreferences.getInstance();
-                              await prefs.setString('languageCode', lang);
-                            }
-                          }
-                        },
-                        labelText: AppLocale.lang.getString(context),
-                        showSearchBox: false,
-                        options: [
-                          {'id': 'es', 'name': 'Español'},
-                          {'id': 'en', 'name': 'English'},
-                        ],
-                      ),
-                      const SizedBox(height: CustomSpacer.small),
-                      CustomCheckbox(
-                        value: rememberUser,
-                        text: AppLocale.rememberMe.getString(context),
-                        onChanged: (newValue) {
-                          setState(() {
-                            rememberUser = newValue;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: CustomSpacer.medium),
-                      Container(
-                        child: isLoading
-                            ? ButtonLoading(fullWidth: true)
-                            : ButtonPrimary(
-                                texto: AppLocale.login.getString(context),
-                                fullWidth: true,
-                                onPressed: () {
-                                  _funcionLogin(usuarioController.text.trim(), claveController.text.trim());
-                                },
-                              ),
-                      ),
-                      if (Base.allowCreateAccount) ...[
+        extendBodyBehindAppBar: true,
+        floatingActionButton: FloatingActionButton(
+          onPressed: _showBaseURLDialog,
+          backgroundColor: Theme.of(context).cardColor.withOpacity(0.9),
+          elevation: 4,
+          child: Icon(Icons.settings, color: Theme.of(context).primaryColor),
+        ),
+
+        // 1. INYECTAMOS EL FONDO LÍQUIDO
+        body: LiquidBackground(
+          child: Center(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 2. CONTENEDOR DE CRISTAL
+                  GlassContainer(
+                    width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 500,
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 40, vertical: 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Center(child: Logo(width: isMobile ? 200 : 320)),
+                        SizedBox(height: CustomSpacer.medium + (!isMobile ? CustomSpacer.xlarge : 10)),
+
+                        TextfieldTheme(icono: Icons.mail_outline, texto: AppLocale.user.getString(context), inputType: TextInputType.emailAddress, controlador: usuarioController),
+                        const SizedBox(height: CustomSpacer.small),
+
+                        TextfieldTheme(icono: Icons.lock_outline, texto: AppLocale.pass.getString(context), obscure: true, showSubIcon: true, controlador: claveController, onSubmitted: (_) => _funcionLogin(usuarioController.text.trim(), claveController.text.trim())),
                         const SizedBox(height: CustomSpacer.medium),
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(AppLocale.noAccount.getString(context), style: Theme.of(context).textTheme.bodyLarge),
-                              const SizedBox(height: CustomSpacer.small),
-                              InkWell(
-                                onTap: () => _openExternal('https://primware.net/register/'),
-                                child: Text(
-                                  AppLocale.register.getString(context),
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
+
+                        // NUEVO BOTÓN SELECTOR DE IDIOMA PREMIUM
+                        InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _showLanguageBottomSheet(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.language, color: Theme.of(context).primaryColor),
+                                    const SizedBox(width: 12),
+                                    Text(FlutterLocalization.instance.currentLocale?.languageCode == 'en' ? 'English 🇺🇸' : 'Español 🇪🇸', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
+                              ],
+                            ),
                           ),
                         ),
+                        const SizedBox(height: CustomSpacer.small),
+
+                        CustomCheckbox(
+                          value: rememberUser,
+                          text: AppLocale.rememberMe.getString(context),
+                          onChanged: (newValue) {
+                            setState(() {
+                              rememberUser = newValue;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: CustomSpacer.medium),
+
+                        Container(
+                          child: isLoading
+                              ? ButtonLoading(fullWidth: true)
+                              : ButtonPrimary(
+                                  texto: AppLocale.login.getString(context),
+                                  fullWidth: true,
+                                  onPressed: () {
+                                    _funcionLogin(usuarioController.text.trim(), claveController.text.trim());
+                                  },
+                                ),
+                        ),
+
+                        if (Base.allowCreateAccount) ...[
+                          const SizedBox(height: CustomSpacer.medium),
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(AppLocale.noAccount.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                                const SizedBox(height: CustomSpacer.small),
+                                InkWell(
+                                  onTap: () => _openExternal('https://primware.net/register/'),
+                                  child: Text(
+                                    AppLocale.register.getString(context),
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, decoration: TextDecoration.underline, color: Theme.of(context).primaryColor),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                if (version != 'No es web') ...[const SizedBox(height: CustomSpacer.xlarge + CustomSpacer.medium), Text(version, style: Theme.of(context).textTheme.labelMedium)],
-              ],
+
+                  if (version != 'No es web') ...[
+                    const SizedBox(height: CustomSpacer.xlarge),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(color: Theme.of(context).cardColor.withOpacity(0.4), borderRadius: BorderRadius.circular(20)),
+                      child: Text(version, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
