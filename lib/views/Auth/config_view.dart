@@ -10,7 +10,6 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/localization/app_locale.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
-import '../../shared/custom_container.dart';
 import '../../shared/custom_spacer.dart'; // Quitamos custom_dropdown.dart porque usaremos BottomSheets
 import '../../shared/toast_message.dart';
 import '../Home/dashboard/dashboard_view.dart';

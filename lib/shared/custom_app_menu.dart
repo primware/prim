@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
@@ -36,7 +37,7 @@ class CustomAppMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, constraints) => (constraints.maxWidth > 750) ? _TableDesktopMenu() : _MobileMenu());
+    return LayoutBuilder(builder: (_, constraints) => (constraints.maxWidth > 750) ? const _TableDesktopMenu() : _MobileMenu());
   }
 }
 
@@ -62,7 +63,7 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Logo(width: 200),
+              const Logo(width: 200),
               if (!Base.prod) ...[
                 const SizedBox(width: CustomSpacer.large),
                 Container(
@@ -99,14 +100,14 @@ class _MobileMenu extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 2, blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Padding(
-        padding: EdgeInsets.only(right: CustomSpacer.medium),
+        padding: const EdgeInsets.only(right: CustomSpacer.medium),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Builder(
               builder: (context) => IconButton(icon: const Icon(Icons.menu), color: Theme.of(context).primaryColor, onPressed: () => Scaffold.of(context).openDrawer()),
             ),
-            Logo(width: 150),
+            const Logo(width: 150),
           ],
         ),
       ),
@@ -122,7 +123,6 @@ class MenuDrawer extends StatefulWidget {
 }
 
 class _MenuDrawerState extends State<MenuDrawer> {
-  // Variables de estado originales
   bool _isDarkMode = false, _isCreatingCloseCash = false;
 
   @override
@@ -131,7 +131,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
     _loadTheme();
   }
 
-  // Lógica de carga de tema original
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -139,7 +138,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
     });
   }
 
-  // Lógica de confirmación de salida original
   Future<bool?> _showLogoutConfirmation(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -155,11 +153,8 @@ class _MenuDrawerState extends State<MenuDrawer> {
   }
 
   Future<void> cleanSessionData() async {
-    // Limpiar controladores
     usuarioController.clear();
     claveController.clear();
-
-    // Limpiar tokens
     Token.auth = null;
     Token.preAuth = null;
     Token.superAuth = null;
@@ -167,16 +162,12 @@ class _MenuDrawerState extends State<MenuDrawer> {
     Token.client = null;
     Token.rol = null;
     Token.organitation = null;
-
-    // Limpiar datos de usuario
     UserData.id = null;
     UserData.name = null;
     UserData.email = null;
     UserData.phone = null;
     UserData.imageBytes = null;
     UserData.rolName = null;
-
-    // Limpiar datos POS
     POS.priceListID = null;
     POS.priceListVersionID = null;
     POS.docTypeID = null;
@@ -188,152 +179,196 @@ class _MenuDrawerState extends State<MenuDrawer> {
     POS.documentActions.clear();
     POS.principalTaxs.clear();
     POS.docTypesComplete.clear();
-
     POSPrinter.logo = null;
     POSPrinter.isLogoSet = false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      child: Column(
-        children: [
-          _buildHeader(context),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _buildMenuItem(
-                  context,
-                  icon: Icons.dashboard_outlined,
-                  title: AppLocale.dashboard.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardPage())),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        drawerTheme: const DrawerThemeData(backgroundColor: Colors.transparent, elevation: 0, shadowColor: Colors.transparent, surfaceTintColor: Colors.transparent),
+      ),
+      child: Drawer(
+        width: MediaQuery.of(context).size.width * 0.85,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.4 : 0.1), // Sombra más suave en modo claro
+                  blurRadius: 20,
+                  offset: const Offset(5, 0),
                 ),
-
-                const SizedBox(height: CustomSpacer.medium),
-                _buildSectionTitle(context, 'OPERACIONES COMERCIALES'),
-
-                // Pedidos / Ventas Dinámicos de iDempiere
-                if (POS.docTypesComplete.isEmpty)
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.add_circle_outline,
-                    title: AppLocale.newOrder.getString(context),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderNewPage())),
-                  ),
-
-                if (POS.docTypesComplete.isNotEmpty)
-                  ...POS.docTypesComplete.map((doc) {
-                    final dynamic rawId = doc['id'];
-                    final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
-                    final bool isRefund = doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID;
-                    return _buildMenuItem(
-                      context,
-                      icon: isRefund ? Icons.assignment_return_outlined : Icons.add_circle_outline,
-                      title: (doc['name'] ?? doc['Name'] ?? 'Documento').toString(),
-                      iconColor: isRefund ? Colors.redAccent : null,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => OrderNewPage(doctypeID: docTypeId, orderName: doc['name'], isRefund: isRefund),
-                        ),
-                      ),
-                    );
-                  }),
-
-                _buildMenuItem(
-                  context,
-                  icon: Icons.receipt_long_outlined,
-                  title: AppLocale.myOrders.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListPage())),
-                ),
-
-                // Sección Punto de Venta
-                if (POS.isPOS) ...[
-                  const SizedBox(height: CustomSpacer.medium),
-                  _buildSectionTitle(context, 'PUNTO DE VENTA'),
-                  _buildMenuItem(context, icon: Icons.point_of_sale_outlined, title: AppLocale.closeCash.getString(context), isLoading: _isCreatingCloseCash, onTap: _isCreatingCloseCash ? null : _handleCloseCashLogic),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.history_outlined,
-                    title: AppLocale.mycloseCashs.getString(context),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CloseCashPage())),
-                  ),
-                ],
-
-                const SizedBox(height: CustomSpacer.medium),
-                _buildSectionTitle(context, 'CATÁLOGOS'),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.inventory_2_outlined,
-                  title: AppLocale.products.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductListPage())),
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.people_alt_outlined,
-                  title: AppLocale.customers.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BPartnerListPage())),
-                ),
-                const SizedBox(height: CustomSpacer.medium),
-                _buildSectionTitle(context, 'SISTEMA'),
-
-                //! BOTÓN MODO OSCURO
-                // _buildMenuItem(
-                //   context,
-                //   icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
-                //   title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-                //   onTap: () {
-                //     ThemeManager.themeNotifier.toggleTheme();
-                //     _loadTheme();
-                //   },
-                // ),
-                _buildMenuItem(context, icon: Icons.manage_accounts_outlined, title: 'Cambiar Rol', onTap: _handleChangeRole),
-                if (!Base.prod)
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.settings_outlined,
-                    title: AppLocale.settings.getString(context),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DebugPage())),
-                  ),
               ],
             ),
-          ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(topRight: Radius.circular(30), bottomRight: Radius.circular(30)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0), // Desenfoque cristalino
+                child: Container(
+                  // Magia adaptativa: Oscuro para Dark Mode, Blanco translúcido para Light Mode
+                  color: isDark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.65),
+                  child: Column(
+                    children: [
+                      // --- CABECERA ---
+                      _buildHeader(context, isDark),
 
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            child: _buildMenuItem(context, icon: Icons.logout_rounded, title: AppLocale.logout.getString(context), iconColor: ColorTheme.error, textColor: ColorTheme.error, onTap: _handleLogout),
+                      // --- LISTA DE MENÚ ---
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
+                          physics: const BouncingScrollPhysics(),
+                          children: [
+                            _buildPillMenu(
+                              context,
+                              icon: Icons.dashboard_outlined,
+                              title: AppLocale.dashboard.getString(context),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardPage())),
+                            ),
+
+                            const SizedBox(height: 15),
+                            Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                            _buildSectionTitle('OPERACIONES COMERCIALES', isDark),
+
+                            if (POS.docTypesComplete.isEmpty)
+                              _buildPillMenu(
+                                context,
+                                icon: Icons.add_circle_outline,
+                                title: AppLocale.newOrder.getString(context),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderNewPage())),
+                              ),
+
+                            if (POS.docTypesComplete.isNotEmpty)
+                              ...POS.docTypesComplete.map((doc) {
+                                final dynamic rawId = doc['id'];
+                                final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+                                final bool isRefund = doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID;
+                                return _buildPillMenu(
+                                  context,
+                                  icon: isRefund ? Icons.assignment_return_outlined : Icons.add_circle_outline,
+                                  title: (doc['name'] ?? doc['Name'] ?? 'Documento').toString(),
+                                  iconColor: isRefund ? Colors.redAccent : null,
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => OrderNewPage(doctypeID: docTypeId, orderName: doc['name'], isRefund: isRefund),
+                                    ),
+                                  ),
+                                );
+                              }),
+
+                            _buildPillMenu(
+                              context,
+                              icon: Icons.receipt_long_outlined,
+                              title: AppLocale.myOrders.getString(context),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListPage())),
+                            ),
+
+                            if (POS.isPOS) ...[
+                              const SizedBox(height: 15),
+                              Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                              _buildSectionTitle('PUNTO DE VENTA', isDark),
+                              _buildPillMenu(context, icon: Icons.point_of_sale_outlined, title: AppLocale.closeCash.getString(context), isLoading: _isCreatingCloseCash, onTap: _isCreatingCloseCash ? null : _handleCloseCashLogic),
+                              _buildPillMenu(
+                                context,
+                                icon: Icons.history_outlined,
+                                title: AppLocale.mycloseCashs.getString(context),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CloseCashPage())),
+                              ),
+                            ],
+
+                            const SizedBox(height: 15),
+                            Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                            _buildSectionTitle('CATÁLOGOS', isDark),
+                            _buildPillMenu(
+                              context,
+                              icon: Icons.inventory_2_outlined,
+                              title: AppLocale.products.getString(context),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductListPage())),
+                            ),
+                            _buildPillMenu(
+                              context,
+                              icon: Icons.people_alt_outlined,
+                              title: AppLocale.customers.getString(context),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BPartnerListPage())),
+                            ),
+
+                            const SizedBox(height: 15),
+                            Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                            _buildSectionTitle('SISTEMA', isDark),
+
+                            //! BOTÓN MODO OSCURO INTACTO
+                            // _buildPillMenu(
+                            //   context,
+                            //   icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
+                            //   title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+                            //   onTap: () {
+                            //     ThemeManager.themeNotifier.toggleTheme();
+                            //     _loadTheme();
+                            //   },
+                            // ),
+                            _buildPillMenu(context, icon: Icons.manage_accounts_outlined, title: 'Cambiar Rol', onTap: _handleChangeRole),
+                            if (!Base.prod)
+                              _buildPillMenu(
+                                context,
+                                icon: Icons.settings_outlined,
+                                title: AppLocale.settings.getString(context),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DebugPage())),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      // --- FOOTER ---
+                      Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
+                        child: _buildPillMenu(context, icon: Icons.logout_rounded, title: AppLocale.logout.getString(context), iconColor: Colors.redAccent, textColor: Colors.redAccent, onTap: _handleLogout),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
-      decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor,
-        borderRadius: const BorderRadius.only(bottomRight: Radius.circular(40)),
-        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))],
-      ),
+  // --- CABECERA ---
+  Widget _buildHeader(BuildContext context, bool isDark) {
+    final String name = UserData.name ?? 'Usuario';
+    final String initials = name.isNotEmpty ? name.substring(0, 2).toUpperCase() : 'US';
+    final primary = Theme.of(context).primaryColor;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
       child: Row(
         children: [
           GestureDetector(
             onTap: _updateLogo,
             child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.1) : primary.withOpacity(0.05),
+                shape: BoxShape.circle,
+                border: Border.all(color: isDark ? Colors.white.withOpacity(0.2) : primary.withOpacity(0.3), width: 1.5),
+              ),
               child: CircleAvatar(
-                radius: 35,
-                backgroundColor: Colors.white,
+                radius: 25,
+                backgroundColor: Colors.transparent,
                 backgroundImage: POSPrinter.logo != null ? MemoryImage(POSPrinter.logo!) : null,
-                child: POSPrinter.logo == null ? Icon(Icons.business, color: Theme.of(context).primaryColor, size: 35) : null,
+                child: POSPrinter.logo == null
+                    ? Text(
+                        initials,
+                        style: TextStyle(color: isDark ? Colors.white : primary, fontWeight: FontWeight.bold, fontSize: 18),
+                      )
+                    : null,
               ),
             ),
           ),
@@ -343,14 +378,14 @@ class _MenuDrawerState extends State<MenuDrawer> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  UserData.name ?? 'Usuario',
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  name,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   UserData.rolName ?? 'LIRION ERP',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
+                  style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black54),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -362,32 +397,50 @@ class _MenuDrawerState extends State<MenuDrawer> {
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title) {
+  Widget _buildSectionTitle(String title, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 8, top: 12),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Text(
         title,
-        style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        style: TextStyle(color: isDark ? Colors.white.withOpacity(0.5) : Colors.black45, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
       ),
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, {required IconData icon, required String title, required VoidCallback? onTap, Color? iconColor, Color? textColor, bool isLoading = false}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 2),
-      child: ListTile(
-        onTap: onTap,
-        dense: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(icon, color: iconColor ?? Theme.of(context).primaryColor.withOpacity(0.8)),
-        title: Text(
-          title,
-          style: TextStyle(color: textColor ?? Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500, fontSize: 14),
+  // --- BOTONES ESTILO PÍLDORAS ---
+  Widget _buildPillMenu(BuildContext context, {required IconData icon, required String title, required VoidCallback? onTap, Color? iconColor, Color? textColor, bool isLoading = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).primaryColor;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          // Fonde claro/translúcido si es modo claro, fondo oscuro translúcido si es oscuro
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isDark ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.7), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            isLoading ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: isDark ? Colors.white : primary, strokeWidth: 2)) : Icon(icon, size: 18, color: iconColor ?? (isDark ? Colors.white70 : primary)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(color: textColor ?? (isDark ? Colors.white : Colors.black87), fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+            ),
+            if (onTap != null && !isLoading) Icon(Icons.chevron_right, color: isDark ? Colors.white.withOpacity(0.3) : Colors.black26, size: 18),
+          ],
         ),
       ),
     );
   }
 
+  // --- FUNCIONES LÓGICAS INTACTAS ---
   Future<void> _updateLogo() async {
     final picked = await pickValidFile(context: context, maxUploadMB: 4);
     if (picked == null) return;
@@ -406,19 +459,13 @@ class _MenuDrawerState extends State<MenuDrawer> {
   }
 
   Future<void> _handleChangeRole() async {
-    // Rescatamos el usuario y clave actuales
     final String currentUser = usuarioController.text.trim();
     final String currentPass = claveController.text.trim();
-
-    // Hacemos una pre-autenticación
     final authData = await preAuth(currentUser, currentPass, context);
     if (!mounted) return;
-
     if (authData != null) {
-      // Si el usuario le da a "Volver", la sesión intacta sigue ahí.
       Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigPage(clients: authData['clients'])));
     } else {
-      // Fallback por si la contraseña cambió o el token expiró
       await cleanSessionData();
       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginPage()), (Route<dynamic> route) => false);
     }
@@ -435,28 +482,20 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
   Future<void> _handleCloseCashLogic() async {
     setState(() => _isCreatingCloseCash = true);
-
-    // Verificar si ya hay un cierre de caja abierto
     int? closeCashId = await currentCloseCash();
     if (closeCashId != null) {
       await updateCloseCashDateTrx(cdsCloseCashID: closeCashId);
       await refreshCloseCash(cdsCloseCashID: closeCashId);
-
       if (!mounted) return;
       setState(() => _isCreatingCloseCash = false);
-
       Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: {'success': true, 'Record_ID': closeCashId})));
       return;
     }
-
     final String nowText = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-
     try {
       final result = await postNewCloseCash(context: context, salesRepID: UserData.id, terminalID: POS.cPosID!, dateTrx: nowText);
-
       if (!mounted) return;
       setState(() => _isCreatingCloseCash = false);
-
       if (result['success'] == true) {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: result)));
       } else {

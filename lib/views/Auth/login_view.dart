@@ -10,8 +10,6 @@ import 'dart:ui';
 import '../../API/endpoint.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
-import '../../shared/custom_container.dart';
-import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
 import '../../shared/logo.dart';
 import '../../shared/custom_textfield.dart';
