@@ -9,10 +9,6 @@ class Base {
 class EndPoints {
   static String postUserAuth = '${Base.baseURL}/api/v1/auth/tokens';
 
-  static String createCreditMemo = '${Base.baseURL}/api/v1/processes/cds-invoicecreatecreditmemo';
-
-  static String orderExecuteDocAction = '${Base.baseURL}/api/v1/processes/orderexecutedocaction';
-
   static String adUser = '${Base.baseURL}/api/v1/models/AD_User';
 
   static String mWarehouse = '${Base.baseURL}/api/v1/models/M_Warehouse';
@@ -25,7 +21,8 @@ class EndPoints {
 
   static String adUserRoles = '${Base.baseURL}/api/v1/models/AD_User_Roles';
 
-  static String salesRep = '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
+  static String salesRep =
+      '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
 
   static String getOrganizationsAfterLogin = '${Base.baseURL}/api/v1/models/AD_Org';
 
@@ -92,7 +89,8 @@ class GetCustomerData {
 
   GetCustomerData({required this.id});
 
-  String get endPoint => '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=EMail,Phone,Phone2,Comments,Birthday,AD_Image_ID)&\$select=Value,Name,Name2,TaxID,Description,SalesRep_ID&\$filter=Value eq \'$id\' or TaxID eq \'$id\'';
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=EMail,Phone,Phone2,Comments,Birthday,AD_Image_ID)&\$select=Value,Name,Name2,TaxID,Description,SalesRep_ID&\$filter=Value eq \'$id\' or TaxID eq \'$id\'';
 }
 
 class GetAttachmentProduct {
@@ -141,7 +139,8 @@ class GetProductInPriceList {
 
   GetProductInPriceList({required this.mPriceListID});
 
-  String get endPoint => '${Base.baseURL}/api/v1/models/M_PriceList_Version?\$filter=M_PriceList_ID eq $mPriceListID&\$select=ValidFrom&\$expand=M_ProductPrice(\$select=M_Product_ID)&\$orderby=ValidFrom desc';
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/models/M_PriceList_Version?\$filter=M_PriceList_ID eq $mPriceListID&\$select=ValidFrom&\$expand=M_ProductPrice(\$select=M_Product_ID)&\$orderby=ValidFrom desc';
 }
 
 class GetDocumentActions {
@@ -150,10 +149,14 @@ class GetDocumentActions {
 
   GetDocumentActions({required this.roleID, required this.docTypeID});
 
-  String get endPoint => '${Base.baseURL}/api/v1/models/AD_Document_Action_Access?\$filter=AD_Role_ID eq $roleID AND C_DocType_ID eq $docTypeID&\$select=AD_Ref_List_ID';
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/models/AD_Document_Action_Access?\$filter=AD_Role_ID eq $roleID AND C_DocType_ID eq $docTypeID&\$select=AD_Ref_List_ID';
 }
 
 class Processes {
   static String cdsCloseCashProcess = '${Base.baseURL}/api/v1/processes/cds_closecash_process'; // Action
   static String closeCash = '${Base.baseURL}/api/v1/processes/closecash'; // Report
+  static String syncFE = '${Base.baseURL}/api/v1/processes/factelecsyncinvoice'; // process to sync factura electronica
+  static String createCreditMemo = '${Base.baseURL}/api/v1/processes/cds-invoicecreatecreditmemo';
+  static String orderExecuteDocAction = '${Base.baseURL}/api/v1/processes/orderexecutedocaction';
 }

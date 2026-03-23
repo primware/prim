@@ -12,6 +12,8 @@ class AppLocale {
   static const String nov = 'nov';
   static const String dec = 'dec';
   static const String login = 'login';
+  static const String syncFe = 'syncFe';
+
   static const String products = 'products';
   static const String searchProducts = 'searchProducts';
   static const String productCode = 'productCode';
@@ -26,6 +28,7 @@ class AppLocale {
   static const String onlyMyRecords = 'onlyMyRecords';
   static const String server = 'server';
   static const String seeReceipt = 'seeReceipt';
+  static const String retryFE = 'retryFE';
   static const String lang = 'lang';
   static const String newOrder = 'newOrder';
   static const String customer = 'customer';
@@ -199,6 +202,7 @@ class AppLocale {
     productPrice: 'Price',
     productStock: 'Stock',
     noProductsFound: 'No products found.',
+    retryFE: 'Retry Electronic Bill',
     login: 'Login',
     user: 'User',
     pass: 'Password',
@@ -209,6 +213,7 @@ class AppLocale {
     server: 'Server',
     lang: 'Language',
     upc: 'UPC',
+    syncFe: 'Sync FE',
     available: 'Available',
     newOrder: 'New Order',
     onlyMyOrders: 'Only My Orders',
@@ -368,7 +373,7 @@ class AppLocale {
     onlyMyRecords: 'Solo Mis Registros',
     lang: 'Idioma',
     arc: 'Nota de Crédito',
-
+    retryFE: 'Reintentar Factura Electrónica',
     newOrder: 'Nueva Orden',
     customer: 'Cliente',
     process: 'Procesar',
@@ -447,6 +452,7 @@ class AppLocale {
     description: 'Descripción',
     priceKey: 'Precio',
     stockKey: 'Stock',
+    syncFe: 'Sincronizar FE',
     category: 'Categoría',
     addToCart: 'Agregar al carrito',
     updateProduct: 'Actualizar producto',

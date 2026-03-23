@@ -15,7 +15,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   final NumberFormat nf = NumberFormat.currency(locale: 'es_PA', symbol: 'B/.');
 
   // Fetch FE info if order['id'] exists
-  Map<String, String>? feInfo;
+  Map<String, dynamic>? feInfo;
   if (order['id'] != null) {
     feInfo = await fetchElectronicInvoiceInfo(orderId: order['id']);
   }
@@ -46,7 +46,9 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
-                  POSPrinter.logo != null ? pw.Center(child: pw.Image(pw.MemoryImage(POSPrinter.logo!), width: 100, height: 100, fit: pw.BoxFit.contain)) : pw.SizedBox(),
+                  POSPrinter.logo != null
+                      ? pw.Center(child: pw.Image(pw.MemoryImage(POSPrinter.logo!), width: 100, height: 100, fit: pw.BoxFit.contain))
+                      : pw.SizedBox(),
                   pw.SizedBox(height: 4),
                   pw.Text(POSPrinter.headerName ?? '', textAlign: pw.TextAlign.center),
                   pw.Text(POSPrinter.headerAddress ?? '', textAlign: pw.TextAlign.center),
@@ -84,7 +86,8 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
                     pw.SizedBox(height: 6),
                     pw.BarcodeWidget(data: feInfo['url'] ?? '', barcode: pw.Barcode.qrCode(), width: 120, height: 120),
                     pw.SizedBox(height: 6),
-                    if ((feInfo['protocolo'] ?? '').toString().isNotEmpty) pw.Text('Prot: ${feInfo['protocolo']}', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: 8)),
+                    if ((feInfo['protocolo'] ?? '').toString().isNotEmpty)
+                      pw.Text('Prot: ${feInfo['protocolo']}', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: 8)),
                   ],
                 ),
               ),
@@ -117,7 +120,14 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
               4: pw.FixedColumnWidth(65), // Subtotal
               5: pw.FixedColumnWidth(65), // Total
             },
-            cellAlignments: {0: pw.Alignment.centerLeft, 1: pw.Alignment.centerLeft, 2: pw.Alignment.centerRight, 3: pw.Alignment.centerRight, 4: pw.Alignment.centerRight, 5: pw.Alignment.centerRight},
+            cellAlignments: {
+              0: pw.Alignment.centerLeft,
+              1: pw.Alignment.centerLeft,
+              2: pw.Alignment.centerRight,
+              3: pw.Alignment.centerRight,
+              4: pw.Alignment.centerRight,
+              5: pw.Alignment.centerRight,
+            },
           ),
           pw.SizedBox(height: 20),
         ],
@@ -145,13 +155,12 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   return pdf.save();
 }
 
-Future<Map<String, String>?> fetchElectronicInvoiceInfo({required int orderId}) async {
+Future<Map<String, dynamic>?> fetchElectronicInvoiceInfo({required int orderId}) async {
   try {
     final uri = Uri.parse('${EndPoints.cInvoice}?\$filter=C_Order_ID eq $orderId&\$expand=FE_InvoiceResponseLog');
     final response = await get(uri, headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
     if (response.statusCode != 200) {
-      // Si la tabla/expand no existe o hay otro problema, devolver null silenciosamente
       debugPrint('FE query non-200: ${response.statusCode}');
       return null;
     }
@@ -160,28 +169,36 @@ Future<Map<String, String>?> fetchElectronicInvoiceInfo({required int orderId}) 
     final List records = (jsonResponse['records'] as List?) ?? const [];
     if (records.isEmpty) return null;
 
-    final invoice = records.first;
+    final invoice = records.firstWhere((record) {
+      final logs = (record['FE_InvoiceResponseLog'] as List?) ?? const [];
+      return record['RelatedInvoice_ID'] == null && logs.isNotEmpty;
+    }, orElse: () => records.firstWhere((record) => record['RelatedInvoice_ID'] == null, orElse: () => records.first));
     final List logs = (invoice['FE_InvoiceResponseLog'] as List?) ?? const [];
     if (logs.isEmpty) return null;
 
-    // Buscar el primer log con FE_ResponseCode == 200 (num o string)
-    final match = logs.firstWhere((e) {
-      final code = e['FE_ResponseCode'];
-      if (code == null) return false;
-      if (code is num) return code == 200;
-      if (code is String) return code.trim() == '200';
-      return false;
-    }, orElse: () => null);
+    final logsSorted = [...logs]
+      ..sort((a, b) {
+        final aId = (a['id'] as num?)?.toInt() ?? 0;
+        final bId = (b['id'] as num?)?.toInt() ?? 0;
+        return bId.compareTo(aId);
+      });
 
-    if (match == null) return null;
+    final latest = logsSorted.first;
 
-    final cufe = match['FE_ResponseCUFE']?.toString();
-    final protocolo = match['FE_NroProtocoloAutorizacion']?.toString();
-    final url = match['FE_ResponseQR']?.toString();
+    final responseCode = latest['FE_ResponseCode']?.toString() ?? '';
+    final responseMessage = latest['FE_ResponseMessage']?.toString() ?? '';
+    final cufe = latest['FE_ResponseCUFE']?.toString() ?? '';
+    final protocolo = latest['FE_NroProtocoloAutorizacion']?.toString() ?? '';
+    final url = latest['FE_ResponseQR']?.toString() ?? '';
 
-    if (cufe == null || protocolo == null || url == null) return null;
-
-    return {'cufe': cufe, 'protocolo': protocolo, 'url': url};
+    return {
+      'responseCode': responseCode,
+      'responseMessage': responseMessage,
+      'cufe': cufe,
+      'protocolo': protocolo,
+      'url': url,
+      'cInvoiceID': invoice['id'],
+    };
   } catch (e) {
     debugPrint('Error consultando FE_InvoiceResponseLog: $e');
     return null;
@@ -235,7 +252,9 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
         return pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
-            POSPrinter.logo != null ? pw.Center(child: pw.Image(pw.MemoryImage(POSPrinter.logo!), width: 60, height: 60, fit: pw.BoxFit.contain)) : pw.SizedBox(),
+            POSPrinter.logo != null
+                ? pw.Center(child: pw.Image(pw.MemoryImage(POSPrinter.logo!), width: 60, height: 60, fit: pw.BoxFit.contain))
+                : pw.SizedBox(),
             pw.SizedBox(height: 4),
             pw.Text(POSPrinter.headerName ?? '', textAlign: pw.TextAlign.center),
             pw.Text(POSPrinter.headerAddress ?? '', textAlign: pw.TextAlign.center),
@@ -308,8 +327,14 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
                             children: [
                               pw.Text(name, overflow: pw.TextOverflow.span),
                               pw.Text('${money(price)} x ${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)}', maxLines: 1, style: smallTextStyle),
-                              if (discount > 0) pw.Text('Desc: ${discount.toStringAsFixed(2)}%', maxLines: 1, style: smallTextStyle.copyWith(fontStyle: pw.FontStyle.italic)),
-                              if (description.isNotEmpty && description != name) pw.Text(description, maxLines: 1, style: smallTextStyle.copyWith(fontStyle: pw.FontStyle.italic)),
+                              if (discount > 0)
+                                pw.Text(
+                                  'Desc: ${discount.toStringAsFixed(2)}%',
+                                  maxLines: 1,
+                                  style: smallTextStyle.copyWith(fontStyle: pw.FontStyle.italic),
+                                ),
+                              if (description.isNotEmpty && description != name)
+                                pw.Text(description, maxLines: 1, style: smallTextStyle.copyWith(fontStyle: pw.FontStyle.italic)),
                             ],
                           ),
                         ),
