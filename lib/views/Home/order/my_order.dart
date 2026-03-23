@@ -205,6 +205,64 @@ class _OrderListPageState extends State<OrderListPage> {
           ),
         );
         break;
+      case 'convert':
+        if (POS.docTypesComplete.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay tipos de documento disponibles para convertir.'), backgroundColor: Colors.red));
+          return;
+        }
+
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Theme.of(context).cardColor,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          builder: (BuildContext context) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Convertir documento a...', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    const Divider(),
+                    ...POS.docTypesComplete.map((doc) {
+                      final dynamic rawId = doc['id'];
+                      final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+                      final String docName = (doc['name'] ?? doc['Name'] ?? 'Documento').toString();
+
+                      // Excluir devoluciones y el mismo tipo de documento
+                      if (doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID || docTypeId == order['doctypetarget']?['id']) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: Theme.of(context).primaryColor.withOpacity(0.1), shape: BoxShape.circle),
+                          child: Icon(Icons.transform_outlined, color: Theme.of(context).primaryColor),
+                        ),
+                        title: Text(docName, style: Theme.of(context).textTheme.bodyLarge),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
+                            ),
+                          ).then((value) {
+                            if (value == true) _fetchOrders(showLoadingIndicator: true);
+                          });
+                        },
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+        break;
       case 'refund':
         // LLamamos al nuevo cuadro de confirmación
         final bool? confirm = await _refundConfirmation(context);
@@ -470,6 +528,16 @@ class _OrderListPageState extends State<OrderListPage> {
                             Icon(Icons.copy, color: Theme.of(context).primaryColor),
                             const SizedBox(width: 8),
                             Text(AppLocale.duplicate.getString(context)),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'convert',
+                        child: Row(
+                          children: [
+                            Icon(Icons.transform_outlined, color: Colors.purple.shade400),
+                            const SizedBox(width: 8),
+                            const Text('Convertir'),
                           ],
                         ),
                       ),

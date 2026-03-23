@@ -25,6 +25,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:printing/printing.dart';
 import '../product/product_new.dart';
+import 'package:primware/shared/shimmer_list.dart';
 
 class OrderNewPage extends StatefulWidget {
   final bool isRefund;
@@ -51,7 +52,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   TextEditingController qtyProductController = TextEditingController();
   TextEditingController productController = TextEditingController();
   TextEditingController taxController = TextEditingController();
-  bool isSending = false, isTaxLoading = true, isProductCategoryLoading = true, isCustomerSearchLoading = false, isProductSearchLoading = false, isProductLoading = true, isYappyLoading = false, isSalesRepLoading = true, isYappyConfigAvailable = false, canShowCreateCustomerButton = false, firtsLoad = false, canShowCreateProductButton = false;
+  bool isSending = false, isTaxLoading = true, isProductCategoryLoading = true, isCustomerSearchLoading = false, isProductSearchLoading = false, isProductLoading = true, isYappyLoading = false, isSalesRepLoading = true, isYappyConfigAvailable = false, canShowCreateCustomerButton = false, firtsLoad = false, canShowCreateProductButton = false, isDocActionsLoading = true;
 
   final Set<int> _lockedPayments = {};
   List<Map<String, dynamic>> bPartnerOptions = [];
@@ -142,13 +143,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _loadDocumentActions() async {
-    await fetchDocumentActions(docTypeID: widget.doctypeID!);
+    setState(() => isDocActionsLoading = true);
 
-    if (POS.documentActions.isNotEmpty) {
-      setState(() {
-        selectedDocActionCode = POS.documentActions.first['code'];
-      });
+    if (widget.doctypeID != null) {
+      await fetchDocumentActions(docTypeID: widget.doctypeID!);
     }
+
+    setState(() {
+      isDocActionsLoading = false;
+      if (POS.documentActions.isNotEmpty) {
+        selectedDocActionCode = POS.documentActions.first['code'];
+      }
+    });
   }
 
   Future<void> _initialPartner() async {
@@ -1749,19 +1755,22 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       ),
                       const Divider(),
                       const SizedBox(height: CustomSpacer.xlarge),
-                      SearchableDropdown<String>(
-                        options: POS.documentActions,
-                        idKey: 'code',
-                        nameKey: 'name',
-                        labelText: AppLocale.documentAction.getString(context),
-                        value: selectedDocActionCode,
-                        showSearchBox: false,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedDocActionCode = value;
-                          });
-                        },
-                      ),
+                      if (isDocActionsLoading)
+                        const ShimmerList(count: 1)
+                      else
+                        SearchableDropdown<String>(
+                          options: POS.documentActions,
+                          idKey: 'code',
+                          nameKey: 'name',
+                          labelText: AppLocale.documentAction.getString(context),
+                          value: selectedDocActionCode,
+                          showSearchBox: false,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedDocActionCode = value;
+                            });
+                          },
+                        ),
                       const SizedBox(height: CustomSpacer.small),
                       Container(
                         child: isSending
