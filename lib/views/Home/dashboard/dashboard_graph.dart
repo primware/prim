@@ -11,27 +11,17 @@ import '../../../shared/custom_spacer.dart';
 
 enum ChartType { line, bar, pie }
 
-typedef ChartDataLoader =
-    Future<Map<String, double>> Function({required BuildContext context});
+typedef ChartDataLoader = Future<Map<String, double>> Function({required BuildContext context});
 
-/// Reusable metric card that supports multiple chart types (line, bar, pie).
 class MetricCard extends StatefulWidget {
   final String Function(BuildContext) titleBuilder;
-  final ChartDataLoader dataLoader; // returns Map<X, Y>
+  final ChartDataLoader dataLoader;
   final ChartType chartType;
-  final String? xAxisLabel; // eje X label
-  final String? yAxisLabel; // eje Y label
+  final String? xAxisLabel;
+  final String? yAxisLabel;
   final bool showRefresh;
 
-  const MetricCard({
-    super.key,
-    required this.titleBuilder,
-    required this.dataLoader,
-    this.chartType = ChartType.line,
-    this.xAxisLabel,
-    this.yAxisLabel,
-    this.showRefresh = true,
-  });
+  const MetricCard({super.key, required this.titleBuilder, required this.dataLoader, this.chartType = ChartType.line, this.xAxisLabel, this.yAxisLabel, this.showRefresh = true});
 
   @override
   State<MetricCard> createState() => _MetricCardState();
@@ -39,12 +29,20 @@ class MetricCard extends StatefulWidget {
 
 class _MetricCardState extends State<MetricCard> {
   List<String> dataKeys = [];
-  List<FlSpot> points = [];
-  List<BarChartGroupData> barGroups = [];
-  List<PieChartSectionData> pieSections = [];
+  Map<String, double> rawChartData = {};
   bool isLoading = true;
 
+  late ChartType _currentChartType;
+  int _touchedPieIndex = -1;
+
   final NumberFormat _moneyFmt = NumberFormat('#,##0.00', 'en_US');
+
+  @override
+  void initState() {
+    super.initState();
+    _currentChartType = widget.chartType;
+    _load();
+  }
 
   String _formatMoneyFull(double value) {
     final formatted = _moneyFmt.format(value);
@@ -53,516 +51,416 @@ class _MetricCardState extends State<MetricCard> {
 
   String _formatY(double value) {
     final abs = value.abs();
-    String formatted;
-    if (abs >= 1000000) {
-      formatted = '${(value / 1000000).toStringAsFixed(1)}M';
-    } else if (abs >= 1000) {
-      formatted = '${(value / 1000).toStringAsFixed(0)}k';
-    } else {
-      formatted = value.toStringAsFixed(0);
-    }
-    return '${POS.currencySymbol} $formatted';
+    if (abs >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
+    if (abs >= 1000) return '${(value / 1000).toStringAsFixed(0)}k';
+    return value.toStringAsFixed(0);
   }
 
   double _niceInterval(double maxY) {
     if (maxY <= 0) return 1;
-    // choose rough 5 steps
     final double rough = maxY / 5.0;
     final num pow10 = pow(10, (log(rough) / ln10).floor());
     final double normalized = rough / pow10;
-    double step;
-    if (normalized < 1.5) {
-      step = 1;
-    } else if (normalized < 3) {
-      step = 2;
-    } else if (normalized < 7) {
-      step = 5;
-    } else {
-      step = 10;
-    }
+    double step = (normalized < 1.5)
+        ? 1
+        : (normalized < 3)
+        ? 2
+        : (normalized < 7)
+        ? 5
+        : 10;
     return step * pow10;
   }
 
   double _gridInterval() {
-    if (points.isEmpty) return 1;
-    final double maxY = points.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+    if (rawChartData.isEmpty) return 1;
+    final double maxY = rawChartData.values.reduce((a, b) => a > b ? a : b);
     return _niceInterval(maxY);
   }
 
   double _maxYWithPadding() {
-    if (points.isEmpty) return 0;
-    final double maxVal = points
-        .map((e) => e.y)
-        .reduce((a, b) => a > b ? a : b);
+    if (rawChartData.isEmpty) return 0;
+    final double maxVal = rawChartData.values.reduce((a, b) => a > b ? a : b);
     final double step = _niceInterval(maxVal);
-    // Round up to next tick and add a small headroom so the top label isn’t clipped
-    final double rounded = ((maxVal) / step).ceil() * step;
-    return rounded + step * 0.5; // 20% of a step as headroom
+    return ((maxVal) / step).ceil() * step + (step * 0.2);
   }
 
-  // --- Horizontal scroll helpers ---
-  double _tickMinWidth() {
-    if (widget.chartType == ChartType.pie) return 0; // not used
-    return 72.0;
-  }
+  double _tickMinWidth() => _currentChartType == ChartType.pie ? 0 : 72.0;
 
   double _computeChartWidth(BuildContext context) {
-    if (widget.chartType == ChartType.pie) {
-      return MediaQuery.of(context).size.width; // no scroll for pie
-    }
-    final screen = MediaQuery.of(context).size.width * 0.8;
-    if (dataKeys.isEmpty) return screen;
-    // sin tope; deja crecer para que no se monten las etiquetas
-    final desired = (dataKeys.length * _tickMinWidth()) + 32.0; // padding extra
+    final screen = MediaQuery.of(context).size.width - 48;
+    if (_currentChartType == ChartType.pie || dataKeys.isEmpty) return screen;
+    final desired = (dataKeys.length * _tickMinWidth()) + 32.0;
     return desired > screen ? desired : screen;
   }
 
   Future<void> _load() async {
     setState(() => isLoading = true);
-    final rawData = await widget.dataLoader(context: context);
-    final groupedData = rawData;
-
-    // Respetar el orden provisto por el dataLoader (ya viene cronológico)
-    final keys = groupedData.keys.toList();
-
-    // Build line points
-    final linePoints = <FlSpot>[];
-    double xIndex = 0;
-    for (var k in keys) {
-      linePoints.add(FlSpot(xIndex, (groupedData[k] ?? 0).toDouble()));
-      xIndex++;
-    }
-
-    // Build bar groups
-    final groups = <BarChartGroupData>[];
-    for (int i = 0; i < keys.length; i++) {
-      final y = (groupedData[keys[i]] ?? 0).toDouble();
-      groups.add(
-        BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
-              toY: y,
-              width: 14,
-              borderRadius: BorderRadius.circular(4),
-              // Forzar color sólido igual al de la línea (algunas versiones ignoran `color`)
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.secondary,
-                  Theme.of(context).colorScheme.secondary,
-                ],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Build pie sections
-    final total = groupedData.values.fold<double>(
-      0,
-      (a, b) => a + (b.toDouble()),
-    );
-    final sections = <PieChartSectionData>[];
-    for (int i = 0; i < keys.length; i++) {
-      final label = keys[i];
-      final value = (groupedData[label] ?? 0).toDouble();
-      final pct = total == 0 ? 0 : (value / total) * 100;
-      sections.add(
-        PieChartSectionData(
-          value: value,
-          title: '${pct.toStringAsFixed(0)}%',
-          radius: 50,
-        ),
-      );
-    }
-
-    setState(() {
-      dataKeys = keys;
-      points = linePoints;
-      barGroups = groups;
-      pieSections = sections;
-      isLoading = false;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
+    rawChartData = await widget.dataLoader(context: context);
+    dataKeys = rawChartData.keys.toList();
+    setState(() => isLoading = false);
   }
 
   void _reload() {
+    setState(() => _touchedPieIndex = -1);
     _load();
   }
 
-  Widget _withAlwaysOnLabels({required Widget chart, required bool forBars}) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const double edgePad =
-            20.0; // espacio extra para que no se corten los extremos
-        final innerLeft =
-            50.0 +
-            edgePad; // debe corresponder al reservedSize de los leftTitles
-        final innerRight = edgePad;
-        final innerTop = 0.0;
-        final innerBottom = forBars
-            ? 38.0
-            : 24.0; // match bottomTitles reserved
-        final innerWidth = constraints.maxWidth - innerLeft - innerRight;
-        final innerHeight = constraints.maxHeight - innerTop - innerBottom;
-        final maxX = (dataKeys.isNotEmpty)
-            ? (dataKeys.length - 1).toDouble()
-            : 0.0;
-        final maxY = _maxYWithPadding();
-        final List<Widget> labels = [];
-        for (int i = 0; i < dataKeys.length; i++) {
-          final double xRel = (maxX == 0) ? 0.0 : (i / maxX);
-          final double x = innerLeft + xRel * innerWidth;
-          final double yVal = forBars
-              ? (barGroups[i].barRods.first.toY)
-              : points[i].y;
-          final double yRel = (maxY == 0) ? 0.0 : (yVal / maxY);
-          final double y = innerTop + (1.0 - yRel) * innerHeight;
-          labels.add(
-            Positioned(
-              left: (x - 36).clamp(0.0, constraints.maxWidth - 72),
-              top: (y - 22).clamp(0.0, constraints.maxHeight - 22),
-              width: 72,
-              child: IgnorePointer(
-                child: Text(
-                  _formatMoneyFull(yVal),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          );
-        }
-        return Stack(
-          children: [
-            Positioned.fill(child: chart),
-            ...labels,
-          ],
-        );
+  Widget _buildTypeToggle(ChartType type, IconData icon) {
+    final isSelected = _currentChartType == type;
+    final color = isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade400;
+
+    return InkWell(
+      onTap: () {
+        if (!mounted) return;
+        setState(() {
+          _currentChartType = type;
+          _touchedPieIndex = -1;
+        });
       },
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(6),
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(color: isSelected ? color.withOpacity(0.15) : Colors.transparent, borderRadius: BorderRadius.circular(8)),
+        child: Icon(icon, size: 20, color: color),
+      ),
     );
   }
 
   Widget _buildChart() {
-    switch (widget.chartType) {
-      case ChartType.bar:
-        return _withAlwaysOnLabels(
-          chart: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceBetween,
-              groupsSpace: 8,
-              barTouchData: BarTouchData(
-                enabled: false,
-                touchTooltipData: BarTouchTooltipData(
-                  getTooltipColor: (group) =>
-                      Theme.of(context).colorScheme.secondary,
-                  fitInsideHorizontally: true,
-                  fitInsideVertically: true,
-                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                    return BarTooltipItem(
-                      _formatMoneyFull(rod.toY),
-                      Theme.of(context).textTheme.titleMedium!.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: _gridInterval(),
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.secondaryContainer.withOpacity(0.6),
-                  strokeWidth: 1,
-                ),
-              ),
-              titlesData: FlTitlesData(
-                bottomTitles: AxisTitles(
-                  axisNameWidget: widget.xAxisLabel != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(widget.xAxisLabel!),
-                        )
-                      : null,
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      final i = value.round();
-                      if (i < 0 || i >= dataKeys.length) {
-                        return const SizedBox();
-                      }
+    final textColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+    final gridColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.1);
+    final tooltipBgColor = Theme.of(context).colorScheme.onSurface;
+    final tooltipTextColor = Theme.of(context).colorScheme.surface;
 
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 2.0),
-                        child: Text(
-                          dataKeys[i],
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      );
-                    },
-                    reservedSize: 28,
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  axisNameWidget: widget.yAxisLabel != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: RotatedBox(
-                            quarterTurns: 3,
-                            child: Text(widget.yAxisLabel!),
-                          ),
-                        )
-                      : null,
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 60,
-                    interval: _gridInterval(),
-                    getTitlesWidget: (value, meta) => Text(
-                      _formatY(value),
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ),
-                ),
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              maxY: _maxYWithPadding(),
-              barGroups: barGroups,
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final secondaryColor = Theme.of(context).colorScheme.secondary;
+
+    final linePoints = <FlSpot>[];
+    final barGroups = <BarChartGroupData>[];
+
+    for (int i = 0; i < dataKeys.length; i++) {
+      final val = rawChartData[dataKeys[i]] ?? 0;
+      linePoints.add(FlSpot(i.toDouble(), val));
+
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: val,
+              width: 22,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+              gradient: LinearGradient(colors: [primaryColor, secondaryColor], begin: Alignment.bottomCenter, end: Alignment.topCenter),
             ),
-          ),
-          forBars: true,
-        );
-      case ChartType.pie:
-        return PieChart(
-          PieChartData(
-            sections: pieSections,
-            sectionsSpace: 2,
-            centerSpaceRadius: 0,
-          ),
-        );
-      case ChartType.line:
-        return _withAlwaysOnLabels(
-          chart: LineChart(
-            LineChartData(
-              lineTouchData: LineTouchData(
-                enabled: false,
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (touchedSpot) =>
-                      Theme.of(context).colorScheme.secondary,
-                  fitInsideHorizontally: true,
-                  fitInsideVertically: true,
-                  getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
-                    return LineTooltipItem(
-                      _formatMoneyFull(spot.y),
-                      Theme.of(context).textTheme.titleMedium!.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: true,
-                horizontalInterval: _gridInterval(),
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.secondaryContainer.withOpacity(0.6),
-                  strokeWidth: 1,
-                ),
-              ),
-              titlesData: FlTitlesData(
-                bottomTitles: AxisTitles(
-                  axisNameWidget: widget.xAxisLabel != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(widget.xAxisLabel!),
-                        )
-                      : null,
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 24,
-                    getTitlesWidget: (value, meta) {
-                      // Show labels only on integer ticks to avoid repetition
-                      final nearest = value.roundToDouble();
-                      if ((value - nearest).abs() > 0.01) {
-                        return const SizedBox();
-                      }
-                      final index = nearest.toInt();
-                      if (index < 0 || index >= dataKeys.length) {
-                        return const SizedBox();
-                      }
-                      final total = dataKeys.length;
-                      final step = (total / 8).ceil();
-                      if (step > 1 &&
-                          index % step != 0 &&
-                          index != total - 1 &&
-                          index != 0) {
-                        return const SizedBox();
-                      }
-                      return Text(
-                        dataKeys[index],
-                        style: Theme.of(context).textTheme.titleSmall,
-                      );
-                    },
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  axisNameWidget: widget.yAxisLabel != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: RotatedBox(
-                            quarterTurns: 3,
-                            child: Text(widget.yAxisLabel!),
-                          ),
-                        )
-                      : null,
-                  sideTitles: SideTitles(
-                    reservedSize: 60,
-                    showTitles: true,
-                    interval: _gridInterval(),
-                    getTitlesWidget: (value, meta) => Text(
-                      _formatY(value),
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ),
-                ),
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              minX: 0,
-              maxX: points.isNotEmpty ? points.length.toDouble() - 1 : 0,
-              minY: 0,
-              maxY: _maxYWithPadding(),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: points,
-                  isCurved: false,
-                  color: Theme.of(context).colorScheme.secondary,
-                  barWidth: 3,
-                  isStrokeCapRound: true,
-                  dotData: const FlDotData(show: true),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(
-                          context,
-                        ).colorScheme.secondary.withOpacity(0.5),
-                        Theme.of(context).colorScheme.secondary.withOpacity(0),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          forBars: false,
-        );
+          ],
+        ),
+      );
     }
+
+    if (_currentChartType == ChartType.bar) {
+      return BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceBetween,
+          groupsSpace: 8,
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (group) => tooltipBgColor,
+              fitInsideHorizontally: true,
+              fitInsideVertically: true,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                return BarTooltipItem(
+                  '${dataKeys[group.x.toInt()]}\n',
+                  TextStyle(color: tooltipTextColor.withOpacity(0.8), fontSize: 12),
+                  children: [
+                    TextSpan(
+                      text: _formatMoneyFull(rod.toY),
+                      style: TextStyle(color: tooltipTextColor, fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: _gridInterval(),
+            getDrawingHorizontalLine: (value) => FlLine(color: gridColor, strokeWidth: 1, dashArray: [5, 5]),
+          ),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 28,
+                getTitlesWidget: (value, meta) {
+                  final i = value.round();
+                  if (i < 0 || i >= dataKeys.length) return const SizedBox();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(dataKeys[i], style: TextStyle(color: textColor, fontSize: 11)),
+                  );
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 45,
+                interval: _gridInterval(),
+                getTitlesWidget: (value, meta) => Text(_formatY(value), style: TextStyle(color: textColor, fontSize: 11)),
+              ),
+            ),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(show: false),
+          maxY: max(1.0, _maxYWithPadding()),
+          barGroups: barGroups,
+        ),
+        duration: Duration.zero,
+      );
+    } else if (_currentChartType == ChartType.pie) {
+      final List<Color> pieColors = [primaryColor, secondaryColor, Colors.orange.shade400, Colors.purple.shade400, Colors.teal.shade400, Colors.redAccent];
+      final total = rawChartData.values.fold<double>(0, (a, b) => a + b);
+      final sections = <PieChartSectionData>[];
+
+      for (int i = 0; i < dataKeys.length; i++) {
+        final val = rawChartData[dataKeys[i]] ?? 0;
+        final isTouched = i == _touchedPieIndex;
+        sections.add(
+          PieChartSectionData(
+            color: pieColors[i % pieColors.length],
+            value: val > 0 ? val : 0.001,
+            title: total > 0 ? '${((val / total) * 100).toStringAsFixed(isTouched ? 1 : 0)}%' : '0%',
+            radius: isTouched ? 65.0 : 55.0,
+            titleStyle: TextStyle(
+              fontSize: isTouched ? 16 : 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              shadows: const [Shadow(color: Colors.black26, blurRadius: 2)],
+            ),
+          ),
+        );
+      }
+
+      return PieChart(
+        PieChartData(
+          pieTouchData: PieTouchData(
+            touchCallback: (FlTouchEvent event, pieTouchResponse) {
+              if (!mounted) return; // 👇 DEFENSA DE ESTADO: Evita error al destruir el widget
+              setState(() {
+                if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
+                  _touchedPieIndex = -1;
+                  return;
+                }
+                _touchedPieIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+              });
+            },
+          ),
+          sections: sections,
+          centerSpaceRadius: 40,
+        ),
+        duration: Duration.zero,
+      );
+    }
+
+    return LineChart(
+      LineChartData(
+        lineTouchData: LineTouchData(
+          enabled: true,
+          handleBuiltInTouches: true,
+          getTouchedSpotIndicator: (barData, spotIndexes) => spotIndexes
+              .map(
+                (index) => TouchedSpotIndicatorData(
+                  FlLine(color: secondaryColor.withOpacity(0.5), strokeWidth: 2, dashArray: [4, 4]),
+                  FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(radius: 6, color: primaryColor, strokeWidth: 2, strokeColor: Colors.white),
+                  ),
+                ),
+              )
+              .toList(),
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (spot) => tooltipBgColor,
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
+            getTooltipItems: (touchedSpots) => touchedSpots
+                .map(
+                  (spot) => LineTooltipItem(
+                    '${dataKeys[spot.x.toInt()]}\n',
+                    TextStyle(color: tooltipTextColor.withOpacity(0.8), fontSize: 12),
+                    children: [
+                      TextSpan(
+                        text: _formatMoneyFull(spot.y),
+                        style: TextStyle(color: tooltipTextColor, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: _gridInterval(),
+          getDrawingHorizontalLine: (value) => FlLine(color: gridColor, strokeWidth: 1, dashArray: [5, 5]),
+        ),
+        titlesData: FlTitlesData(
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              getTitlesWidget: (value, meta) {
+                final nearest = value.roundToDouble();
+                if ((value - nearest).abs() > 0.01) return const SizedBox();
+                final index = nearest.toInt();
+                if (index < 0 || index >= dataKeys.length) return const SizedBox();
+                final step = (dataKeys.length / 8).ceil();
+                if (step > 1 && index % step != 0 && index != dataKeys.length - 1 && index != 0) return const SizedBox();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(dataKeys[index], style: TextStyle(color: textColor, fontSize: 11)),
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              reservedSize: 45,
+              showTitles: true,
+              interval: _gridInterval(),
+              getTitlesWidget: (value, meta) => Text(_formatY(value), style: TextStyle(color: textColor, fontSize: 11)),
+            ),
+          ),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        minX: 0,
+        maxX: linePoints.length > 1 ? linePoints.length.toDouble() - 1 : 1, // 👇 DEFENSA MATEMÁTICA (Evita min == max)
+        minY: 0,
+        maxY: max(1.0, _maxYWithPadding()), // 👇 DEFENSA MATEMÁTICA
+        lineBarsData: [
+          LineChartBarData(
+            spots: linePoints,
+            isCurved: true,
+            curveSmoothness: 0.35,
+            barWidth: 4,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            gradient: LinearGradient(colors: [primaryColor, secondaryColor], begin: Alignment.centerLeft, end: Alignment.centerRight),
+            shadow: Shadow(color: primaryColor.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 5)),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(colors: [primaryColor.withOpacity(0.3), secondaryColor.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+            ),
+          ),
+        ],
+      ),
+      duration: Duration.zero,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              widget.titleBuilder(context),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            if (widget.showRefresh)
-              IconButton(
-                tooltip: 'Refrescar',
-                icon: const Icon(Icons.refresh),
-                onPressed: isLoading ? null : _reload,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.titleBuilder(context),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-          ],
-        ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTypeToggle(ChartType.line, Icons.show_chart),
+                  _buildTypeToggle(ChartType.bar, Icons.bar_chart),
+                  _buildTypeToggle(ChartType.pie, Icons.pie_chart),
+                  if (widget.showRefresh) ...[const SizedBox(width: 8), IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload)],
+                ],
+              ),
+            ],
+          ),
 
-        const SizedBox(height: CustomSpacer.small),
-        // Chart area with optional horizontal scroll for narrow screens
-        SizedBox(
-          height: widget.chartType == ChartType.pie ? 220 : 200,
-          child: isLoading
-              ? Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: Container(
-                    width: double.infinity,
-                    height: 200,
-                    color: Colors.white,
-                  ),
-                )
-              : (dataKeys.isEmpty)
-              ? Center(
-                  child: Text(
-                    AppLocale.noDataForFilter.getString(context),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                )
-              : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: _computeChartWidth(context),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8, right: 24),
-                      child: _buildChart(),
+          const SizedBox(height: CustomSpacer.medium),
+
+          SizedBox(
+            height: _currentChartType == ChartType.pie ? 260 : 240,
+            child: isLoading
+                ? Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                    ),
+                  )
+                : (dataKeys.isEmpty)
+                ? Center(
+                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+                  )
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: _currentChartType == ChartType.pie ? const NeverScrollableScrollPhysics() : const BouncingScrollPhysics(),
+                    child: SizedBox(
+                      width: _computeChartWidth(context),
+                      child: TweenAnimationBuilder<double>(
+                        key: ValueKey(_currentChartType),
+                        tween: Tween<double>(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeOutBack,
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: 0.90 + (0.10 * value),
+                            child: Opacity(opacity: value.clamp(0.0, 1.0), child: child),
+                          );
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 16, right: _currentChartType == ChartType.pie ? 0 : 24),
+                          child: _buildChart(),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// A simple container that can host multiple charts stacked vertically.
 class DashboardCharts extends StatelessWidget {
   final List<Widget> children;
   const DashboardCharts({super.key, required this.children});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (int i = 0; i < children.length; i++) ...[
-          if (i > 0) const SizedBox(height: 24),
-          children[i],
-        ],
-      ],
-    );
+    List<Widget> columnChildren = [];
+    for (int i = 0; i < children.length; i++) {
+      if (i > 0) {
+        columnChildren.add(const SizedBox(height: 24));
+      }
+      columnChildren.add(children[i]);
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: columnChildren);
   }
 }
