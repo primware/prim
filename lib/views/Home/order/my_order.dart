@@ -157,10 +157,7 @@ class _OrderListPageState extends State<OrderListPage> {
 
         try {
           final printers = await Printing.listPrinters();
-          final defaultPrinter = printers.firstWhere(
-            (p) => p.isDefault,
-            orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
-          );
+          final defaultPrinter = printers.firstWhere((p) => p.isDefault, orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'));
 
           await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
         } catch (e) {
@@ -209,21 +206,14 @@ class _OrderListPageState extends State<OrderListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(
-              isRefund: false,
-              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
-              sourceOrderId: order['id'],
-            ),
+            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
           ),
         );
         break;
       case 'convert':
         if (POS.docTypesComplete.isEmpty) {
-          //TODO Traducir y usar el sistema de ToastMessage
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No hay tipos de documento disponibles para convertir.'), backgroundColor: Colors.red),
-          );
+          //TODO Traducir
+          ToastMessage.show(context: context, message: 'No hay tipos de documento disponibles para convertir.', type: ToastType.help);
           return;
         }
 
@@ -265,8 +255,7 @@ class _OrderListPageState extends State<OrderListPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
+                              builder: (_) => OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
                             ),
                           ).then((value) {
                             if (value == true) _fetchOrders(showLoadingIndicator: true);
@@ -291,12 +280,7 @@ class _OrderListPageState extends State<OrderListPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OrderNewPage(
-                isRefund: true,
-                doctypeID: POS.docTypeRefundID,
-                orderName: POS.docTypeRefundName,
-                sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
-              ),
+              builder: (_) => OrderNewPage(isRefund: true, doctypeID: POS.docTypeRefundID, orderName: POS.docTypeRefundName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
             ),
           );
         }
@@ -305,12 +289,7 @@ class _OrderListPageState extends State<OrderListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(
-              isRefund: false,
-              doctypeID: POS.docTypeID,
-              orderName: POS.docTypeName,
-              sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
-            ),
+            builder: (_) => OrderNewPage(isRefund: false, doctypeID: POS.docTypeID, orderName: POS.docTypeName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
           ),
         );
         break;
@@ -408,8 +387,7 @@ class _OrderListPageState extends State<OrderListPage> {
       return const SizedBox.shrink();
     }
 
-    final meta =
-        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+    final meta = _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = meta['color'] as Color;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -443,12 +421,7 @@ class _OrderListPageState extends State<OrderListPage> {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(
-              isRefund: false,
-              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
-              sourceOrderId: order['id'],
-            ),
+            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
           ),
         );
         // Si se guardó con éxito, recargamos la lista de órdenes en automático
@@ -533,10 +506,7 @@ class _OrderListPageState extends State<OrderListPage> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        '${order['doctypetarget']['name']} #${order['DocumentNo']}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-                      ),
+                      Text('${order['doctypetarget']['name']} #${order['DocumentNo']}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
                     ],
                   ),
                 ),
@@ -637,9 +607,7 @@ class _OrderListPageState extends State<OrderListPage> {
                     const SizedBox(width: 6),
                     Text(
                       order['GrandTotal'].toString(),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800),
                     ),
                   ],
                 ),
@@ -693,8 +661,7 @@ class _OrderListPageState extends State<OrderListPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM'),
+                      builder: (context) => OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM'),
                     ),
                   );
                 },
@@ -757,10 +724,7 @@ class _OrderListPageState extends State<OrderListPage> {
                         ? ShimmerList(separation: CustomSpacer.medium)
                         : _getFilteredOrders().isEmpty
                         ? Center(
-                            child: Text(
-                              AppLocale.errorNoOrders.getString(context),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-                            ),
+                            child: Text(AppLocale.errorNoOrders.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
                           )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),
