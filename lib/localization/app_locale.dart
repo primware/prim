@@ -175,8 +175,32 @@ class AppLocale {
   static const String noDocComplete = 'noDocComplete';
   static const String changeClient = 'changeClient';
   static const String changeClientWarning = 'changeClientWarning';
+  static const String confirmCreditNoteTitle = 'confirmCreditNoteTitle';
+  static const String confirmCreditNoteBody = 'confirmCreditNoteBody';
+  static const String cannotUndoWarning = 'cannotUndoWarning';
+  static const String completeOrderTitle = 'completeOrderTitle';
+  static const String completeOrderBody = 'completeOrderBody';
+  static const String syncFETitle = 'syncFETitle';
+  static const String syncFEBody = 'syncFEBody';
+  static const String invoiceSentSuccess = 'invoiceSentSuccess';
+  static const String invoiceSendError = 'invoiceSendError';
+  static const String noDocTypesAvailable = 'noDocTypesAvailable';
+  static const String documentType = 'documentType';
+  static const String copyToNewDocument = 'copyToNewDocument';
 
   static const Map<String, dynamic> en = {
+    copyToNewDocument: 'Copy to new document',
+    documentType: 'Document Type',
+    noDocTypesAvailable: 'No document types available to convert.',
+    invoiceSentSuccess: 'Invoice sent successfully',
+    invoiceSendError: 'Error sending invoice',
+    completeOrderTitle: 'Complete Order',
+    completeOrderBody: 'Are you sure you want to complete this order?',
+    syncFETitle: 'Sync Electronic Invoice',
+    syncFEBody: 'Are you sure you want to sync this electronic invoice?',
+    confirmCreditNoteTitle: 'Confirm Credit Note',
+    confirmCreditNoteBody: 'Are you sure you want to convert to a credit note?',
+    cannotUndoWarning: 'Remember that this action cannot be undone.',
     changeClientWarning: 'If you select another customer, the products will be removed.\nDo you want to continue?',
     changeClient: 'Change customer?',
     noDocComplete: 'The action could not be completed',
@@ -353,6 +377,18 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    copyToNewDocument: 'Copiar a nuevo documento',
+    documentType: 'Tipo de documento',
+    noDocTypesAvailable: 'No hay tipos de documento disponibles para convertir.',
+    invoiceSentSuccess: 'Factura enviada con éxito',
+    invoiceSendError: 'Error al enviar la factura',
+    completeOrderTitle: 'Completar Orden',
+    completeOrderBody: '¿Seguro que desea completar esta orden?',
+    syncFETitle: 'Sincronizar Factura Electrónica',
+    syncFEBody: '¿Seguro que desea sincronizar esta factura electrónica?',
+    confirmCreditNoteTitle: 'Confirmar Nota de Crédito',
+    confirmCreditNoteBody: '¿Seguro que quiere convertir a nota de crédito?',
+    cannotUndoWarning: 'Recuerde que esta acción no se puede deshacer.',
     changeClientWarning: 'Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?',
     changeClient: '¿Cambiar cliente?',
     noDocComplete: 'No se pudo completar la acción',

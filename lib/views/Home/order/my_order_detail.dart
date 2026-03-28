@@ -12,6 +12,7 @@ import '../../../localization/app_locale.dart';
 import '../../../shared/footer.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -125,7 +126,6 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
-  //TODO Traducir
   // Confirmación para Completar la Orden
   Future<bool?> _completeConfirmation(BuildContext context) {
     return showDialog<bool>(
@@ -133,18 +133,18 @@ class OrderDetailPage extends StatelessWidget {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Theme.of(context).cardColor,
-        title: const Column(
+        title: Column(
           children: [
             Icon(Icons.check, size: 45, color: Colors.green),
             SizedBox(height: 10),
             Text(
-              'Completar Orden',
+              AppLocale.completeOrderTitle.getString(context),
               textAlign: TextAlign.center,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
-        content: const Text('¿Seguro que desea completar esta orden?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+        content: Text(AppLocale.completeOrderBody.getString(context), textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
@@ -154,7 +154,6 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
-  //TODO Traducir
   // confirmación para sincronizar factura electrónica (FE)
   Future<bool?> _syncFEConfirmation(BuildContext context) {
     return showDialog<bool>(
@@ -162,22 +161,18 @@ class OrderDetailPage extends StatelessWidget {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Theme.of(context).cardColor,
-        title: const Column(
+        title: Column(
           children: [
             Icon(Icons.error_outline, size: 45, color: Colors.red),
             SizedBox(height: 10),
             Text(
-              'Sincronizar Factura Electrónica',
+              AppLocale.syncFETitle.getString(context),
               textAlign: TextAlign.center,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
-        content: const Text(
-          '¿Seguro que desea sincronizar esta factura electrónica?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16),
-        ),
+        content: Text(AppLocale.syncFEBody.getString(context), textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
@@ -250,12 +245,7 @@ class OrderDetailPage extends StatelessWidget {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(
-              isRefund: false,
-              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
-              sourceOrderId: order['id'],
-            ),
+            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
           ),
         );
         // Si se guardó, refrescamos devolviendo un true
@@ -328,12 +318,7 @@ class OrderDetailPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => OrderNewPage(
-                      isRefund: false,
-                      doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-                      orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
-                      sourceOrderId: order['id'],
-                    ),
+                    builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
                   ),
                 );
               }
@@ -341,9 +326,7 @@ class OrderDetailPage extends StatelessWidget {
               // 👇 NUEVA FUNCIÓN: CONVERTIR DOCUMENTO 👇
               void actionConvert() {
                 if (POS.docTypesComplete.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No hay tipos de documento disponibles para convertir.'), backgroundColor: Colors.red),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay tipos de documento disponibles para convertir.'), backgroundColor: Colors.red));
                   return;
                 }
 
@@ -358,10 +341,7 @@ class OrderDetailPage extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'Convertir documento a...',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                            ),
+                            Text('Convertir documento a...', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             const Divider(),
                             ...POS.docTypesComplete.map((doc) {
@@ -370,9 +350,7 @@ class OrderDetailPage extends StatelessWidget {
                               final String docName = (doc['name'] ?? doc['Name'] ?? 'Documento').toString();
 
                               // Excluir notas de crédito (RM) y el MISMO tipo de documento actual
-                              if (doc['DocSubTypeSO'] == 'RM' ||
-                                  docTypeId == POS.docTypeRefundID ||
-                                  docTypeId == order['doctypetarget']?['id']) {
+                              if (doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID || docTypeId == order['doctypetarget']?['id']) {
                                 return const SizedBox.shrink();
                               }
 
@@ -389,12 +367,7 @@ class OrderDetailPage extends StatelessWidget {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => OrderNewPage(
-                                        isRefund: false,
-                                        doctypeID: docTypeId,
-                                        orderName: docName,
-                                        sourceOrderId: order['id'],
-                                      ),
+                                      builder: (_) => OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
                                     ),
                                   );
                                 },
@@ -415,12 +388,7 @@ class OrderDetailPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => OrderNewPage(
-                        isRefund: true,
-                        doctypeID: POS.docTypeRefundID,
-                        orderName: POS.docTypeRefundName,
-                        sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
-                      ),
+                      builder: (_) => OrderNewPage(isRefund: true, doctypeID: POS.docTypeRefundID, orderName: POS.docTypeRefundName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
                     ),
                   );
                 }
@@ -443,16 +411,8 @@ class OrderDetailPage extends StatelessWidget {
                     final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order) : await generateOrderTicket(order);
                     try {
                       final printers = await Printing.listPrinters();
-                      final defaultPrinter = printers.firstWhere(
-                        (p) => p.isDefault,
-                        orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
-                      );
-                      await Printing.directPrintPdf(
-                        printer: defaultPrinter,
-                        usePrinterSettings: true,
-                        dynamicLayout: true,
-                        onLayout: (_) => pdfBytes,
-                      );
+                      final defaultPrinter = printers.firstWhere((p) => p.isDefault, orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'));
+                      await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
                     } catch (e) {
                       await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
                     }
@@ -471,16 +431,12 @@ class OrderDetailPage extends StatelessWidget {
                   final Map<String, dynamic> completeResult = await docComplete(cOrderID: order['id']);
                   if (completeResult['success'] == true && completeResult['isError'] != true) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(completeResult['summary'] ?? 'Orden completada con éxito'), backgroundColor: Colors.green),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(completeResult['summary'] ?? 'Orden completada con éxito'), backgroundColor: Colors.green));
                       Navigator.pop(context, true);
                     }
                   } else {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(completeResult['summary'] ?? 'Error al completar la orden'), backgroundColor: Colors.red),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(completeResult['summary'] ?? 'Error al completar la orden'), backgroundColor: Colors.red));
                     }
                   }
                 }
@@ -639,11 +595,7 @@ class OrderDetailPage extends StatelessWidget {
 
                     Padding(
                       padding: const EdgeInsets.only(right: 8.0),
-                      child: IconButton(
-                        icon: const Icon(Icons.print_rounded),
-                        tooltip: AppLocale.printTicket.getString(context),
-                        onPressed: actionPrint,
-                      ),
+                      child: IconButton(icon: const Icon(Icons.print_rounded), tooltip: AppLocale.printTicket.getString(context), onPressed: actionPrint),
                     ),
                   ],
                 );
@@ -671,10 +623,7 @@ class OrderDetailPage extends StatelessWidget {
                         itemCount: lines.length,
                         itemBuilder: (context, index) {
                           final line = lines[index];
-                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}')
-                              .split('_')
-                              .skip(1)
-                              .join(' ');
+                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}').split('_').skip(1).join(' ');
                           final double qty = (line['QtyOrdered'] as num).toDouble();
                           final double price = (line['PriceActual'] as num).toDouble();
                           final double net = (line['LineNetAmt'] as num).toDouble();
@@ -684,15 +633,11 @@ class OrderDetailPage extends StatelessWidget {
 
                           // Precio original (PriceList) y descuento
                           final double priceList = (line['PriceList'] as num?)?.toDouble() ?? price;
-                          final double discountPct =
-                              (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
+                          final double discountPct = (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
 
                           return Container(
                             margin: EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
                             child: ListTile(
                               tileColor: Colors.transparent,
                               title: Text(name, style: Theme.of(context).textTheme.bodyMedium),
@@ -700,32 +645,16 @@ class OrderDetailPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text("${AppLocale.quantity.getString(context)}: $qty", style: Theme.of(context).textTheme.bodySmall),
-                                  Text(
-                                    [
-                                      "${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}",
-                                      if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%",
-                                      "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
-                                    ].join(" | "),
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
+                                  Text(["${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}", if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%", "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}"].join(" | "), style: Theme.of(context).textTheme.bodySmall),
                                 ],
                               ),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text(
-                                    "${line['C_Tax_ID']['Name']} ($rate%)",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
-                                  Text(
-                                    "${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
-                                  Text(
-                                    "${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
+                                  Text("${line['C_Tax_ID']['Name']} ($rate%)", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
+                                  Text("${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
+                                  Text("${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
                                 ],
                               ),
                             ),
@@ -747,16 +676,11 @@ class OrderDetailPage extends StatelessWidget {
                         itemBuilder: (context, index) {
                           final p = payments[index] as Map<String, dynamic>;
                           final dynamic tenderField = p['C_POSTenderType_ID'];
-                          final String tenderName = (tenderField is Map)
-                              ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString()
-                              : tenderField?.toString() ?? '---';
+                          final String tenderName = (tenderField is Map) ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString() : tenderField?.toString() ?? '---';
                           final double payAmt = ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25), borderRadius: BorderRadius.circular(8)),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -793,10 +717,7 @@ class OrderDetailPage extends StatelessWidget {
                         itemCount: lines.length,
                         itemBuilder: (context, index) {
                           final line = lines[index];
-                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}')
-                              .split('_')
-                              .skip(1)
-                              .join(' ');
+                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}').split('_').skip(1).join(' ');
                           final double qty = (line['QtyOrdered'] as num).toDouble();
                           final double price = (line['PriceActual'] as num).toDouble();
                           final double net = (line['LineNetAmt'] as num).toDouble();
@@ -805,15 +726,11 @@ class OrderDetailPage extends StatelessWidget {
                           final double total = net + tax;
 
                           final double priceList = (line['PriceList'] as num?)?.toDouble() ?? price;
-                          final double discountPct =
-                              (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
+                          final double discountPct = (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
 
                           return Container(
                             margin: EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
                             child: ListTile(
                               tileColor: Colors.transparent,
                               title: Text(name, style: Theme.of(context).textTheme.bodyMedium),
@@ -821,32 +738,16 @@ class OrderDetailPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text("${AppLocale.quantity.getString(context)}: $qty", style: Theme.of(context).textTheme.bodySmall),
-                                  Text(
-                                    [
-                                      "${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}",
-                                      if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%",
-                                      "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
-                                    ].join(" | "),
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
+                                  Text(["${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}", if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%", "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}"].join(" | "), style: Theme.of(context).textTheme.bodySmall),
                                 ],
                               ),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text(
-                                    "${line['C_Tax_ID']['Name']} ($rate%)",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
-                                  Text(
-                                    "${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
-                                  Text(
-                                    "${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
+                                  Text("${line['C_Tax_ID']['Name']} ($rate%)", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
+                                  Text("${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
+                                  Text("${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
                                 ],
                               ),
                             ),
@@ -867,16 +768,11 @@ class OrderDetailPage extends StatelessWidget {
                           itemBuilder: (context, index) {
                             final p = payments[index] as Map<String, dynamic>;
                             final dynamic tenderField = p['C_POSTenderType_ID'];
-                            final String tenderName = (tenderField is Map)
-                                ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString()
-                                : tenderField?.toString() ?? '---';
+                            final String tenderName = (tenderField is Map) ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString() : tenderField?.toString() ?? '---';
                             final double payAmt = ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                              decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25), borderRadius: BorderRadius.circular(8)),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -909,8 +805,7 @@ class OrderDetailPage extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final meta =
-        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+    final meta = _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = (meta['color'] as Color?) ?? Theme.of(context).colorScheme.primary;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -965,29 +860,19 @@ class OrderDetailPage extends StatelessWidget {
     return taxSummary;
   }
 
-  Widget _buildHeader({
-    required Map<String, dynamic> order,
-    required BuildContext context,
-    required Future<Map<String, dynamic>?> feFuture,
-    required bool hasCreditNote,
-  }) {
+  Widget _buildHeader({required Map<String, dynamic> order, required BuildContext context, required Future<Map<String, dynamic>?> feFuture, required bool hasCreditNote}) {
     void syncFE({required int cInvoiceID}) async {
       final bool? confirmComplete = await _syncFEConfirmation(context);
       if (confirmComplete == true) {
         final Map<String, dynamic> syncResult = await syncFEProcess(cInvoiceID: cInvoiceID);
         if (syncResult['success'] == true && syncResult['isError'] != true) {
           if (context.mounted) {
-            //TODO Traducir y usar toast en vez de snackbar
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(syncResult['summary'] ?? 'Factura enviada con éxito'), backgroundColor: Colors.green));
+            Fluttertoast.showToast(msg: syncResult['summary'] ?? AppLocale.invoiceSentSuccess.getString(context), backgroundColor: Colors.green, textColor: Colors.white, gravity: ToastGravity.BOTTOM, toastLength: Toast.LENGTH_LONG);
             Navigator.pop(context, true);
           }
         } else {
           if (context.mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(syncResult['summary'] ?? 'Error al enviar la factura'), backgroundColor: Colors.red));
+            Fluttertoast.showToast(msg: syncResult['summary'] ?? AppLocale.invoiceSendError.getString(context), backgroundColor: Colors.red, textColor: Colors.white, gravity: ToastGravity.BOTTOM, toastLength: Toast.LENGTH_LONG);
           }
         }
       }
@@ -1002,16 +887,8 @@ class OrderDetailPage extends StatelessWidget {
         final left = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              order['bpartner']['name'],
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall,
-            ),
-            Text(
-              order['DateOrdered'],
-              style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text(order['bpartner']['name'], maxLines: 2, overflow: TextOverflow.ellipsis, style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall),
+            Text(order['DateOrdered'], style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall),
 
             const SizedBox(height: 4),
             // MOSTRAR TODOS LOS CHIPS JUNTOS ORDENADOS
@@ -1046,10 +923,7 @@ class OrderDetailPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
-                  child: Text(
-                    AppLocale.retryFE.getString(context),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white),
-                  ),
+                  child: Text(AppLocale.retryFE.getString(context), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
                 ),
               ],
 
@@ -1090,11 +964,7 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFinalSummary({
-    required Map<String, Map<String, double>> taxSummary,
-    required double grandTotal,
-    required BuildContext context,
-  }) {
+  Widget _buildFinalSummary({required Map<String, Map<String, double>> taxSummary, required double grandTotal, required BuildContext context}) {
     final double totalNeto = taxSummary.values.map((e) => e['net']!).reduce((a, b) => a + b);
     final double totalImpuesto = taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b);
 
@@ -1104,17 +974,9 @@ class OrderDetailPage extends StatelessWidget {
         Text(AppLocale.finalSummary.getString(context), style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: CustomSpacer.small),
         Text("${AppLocale.grossTotal.getString(context)} \$${totalNeto.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
-        ...taxSummary.entries.map(
-          (entry) => Text("${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
-        ),
-        Text(
-          "${AppLocale.taxTotal.getString(context)} \$${totalImpuesto.toStringAsFixed(2)}",
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        Text(
-          "${AppLocale.finalTotal.getString(context)} \$${grandTotal.toStringAsFixed(2)}",
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        ...taxSummary.entries.map((entry) => Text("${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium)),
+        Text("${AppLocale.taxTotal.getString(context)} \$${totalImpuesto.toStringAsFixed(2)}", style: Theme.of(context).textTheme.titleMedium),
+        Text("${AppLocale.finalTotal.getString(context)} \$${grandTotal.toStringAsFixed(2)}", style: Theme.of(context).textTheme.titleMedium),
       ],
     );
   }
