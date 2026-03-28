@@ -79,27 +79,24 @@ class _OrderListPageState extends State<OrderListPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Theme.of(context).cardColor,
-        title: const Column(
+        title: Column(
           children: [
             Icon(Icons.warning_amber_rounded, size: 45, color: Colors.redAccent),
             SizedBox(height: 10),
-            //TODO Traducir
             Text(
-              'Confirmar Nota de Crédito',
+              AppLocale.confirmCreditNoteTitle.getString(context),
               textAlign: TextAlign.center,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            //TODO Traducir
-            Text('¿Seguro que quiere convertir a nota de crédito?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+            Text(AppLocale.confirmCreditNoteBody.getString(context), textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
             SizedBox(height: 12),
-            //TODO Traducir
             Text(
-              'Recuerde que esta acción no se puede deshacer.',
+              AppLocale.cannotUndoWarning.getString(context),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.red, // Texto en rojo
@@ -125,20 +122,18 @@ class _OrderListPageState extends State<OrderListPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Theme.of(context).cardColor,
-        title: const Column(
+        title: Column(
           children: [
             Icon(Icons.check, size: 45, color: Colors.green),
             SizedBox(height: 10),
-            //TODO Traducir
             Text(
-              'Completar Orden',
+              AppLocale.completeOrderTitle.getString(context),
               textAlign: TextAlign.center,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
-        //TODO Traducir
-        content: const Text('¿Seguro que desea completar esta orden?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+        content: Text(AppLocale.completeOrderBody.getString(context), textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
@@ -212,8 +207,7 @@ class _OrderListPageState extends State<OrderListPage> {
         break;
       case 'convert':
         if (POS.docTypesComplete.isEmpty) {
-          //TODO Traducir
-          ToastMessage.show(context: context, message: 'No hay tipos de documento disponibles para convertir.', type: ToastType.help);
+          ToastMessage.show(context: context, message: AppLocale.noDocTypesAvailable.getString(context), type: ToastType.help);
           return;
         }
 
@@ -228,8 +222,7 @@ class _OrderListPageState extends State<OrderListPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    //TODO Traducir
-                    Text('Tipo de documento', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(AppLocale.documentType.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     const Divider(),
                     ...POS.docTypesComplete.map((doc) {
@@ -544,8 +537,7 @@ class _OrderListPageState extends State<OrderListPage> {
                           children: [
                             Icon(Icons.transform_outlined, color: Colors.purple.shade400),
                             const SizedBox(width: 8),
-                            //TODO Traducir
-                            const Text('Copiar a nuevo documento'),
+                            Text(AppLocale.copyToNewDocument.getString(context)),
                           ],
                         ),
                       ),
