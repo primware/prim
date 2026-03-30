@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../Widgets/GlassDesign.dart';
 
 enum ChartType { line, bar, pie }
 
@@ -250,7 +251,7 @@ class _MetricCardState extends State<MetricCard> {
         PieChartData(
           pieTouchData: PieTouchData(
             touchCallback: (FlTouchEvent event, pieTouchResponse) {
-              if (!mounted) return; // 👇 DEFENSA DE ESTADO: Evita error al destruir el widget
+              if (!mounted) return;
               setState(() {
                 if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
                   _touchedPieIndex = -1;
@@ -275,27 +276,29 @@ class _MetricCardState extends State<MetricCard> {
           getTouchedSpotIndicator: (barData, spotIndexes) => spotIndexes
               .map(
                 (index) => TouchedSpotIndicatorData(
-                  FlLine(color: secondaryColor.withOpacity(0.5), strokeWidth: 2, dashArray: [4, 4]),
+                  FlLine(color: Theme.of(context).dividerColor.withOpacity(0.5), strokeWidth: 1.5, dashArray: [4, 4]),
                   FlDotData(
                     show: true,
-                    getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(radius: 6, color: primaryColor, strokeWidth: 2, strokeColor: Colors.white),
+                    getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(radius: 5, color: Theme.of(context).colorScheme.surface, strokeWidth: 3, strokeColor: primaryColor),
                   ),
                 ),
               )
               .toList(),
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (spot) => tooltipBgColor,
+            getTooltipColor: (spot) => const Color(0xFF1A1A1A),
+            tooltipPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            tooltipBorderRadius: BorderRadius.circular(12),
             fitInsideHorizontally: true,
             fitInsideVertically: true,
             getTooltipItems: (touchedSpots) => touchedSpots
                 .map(
                   (spot) => LineTooltipItem(
                     '${dataKeys[spot.x.toInt()]}\n',
-                    TextStyle(color: tooltipTextColor.withOpacity(0.8), fontSize: 12),
+                    const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
                     children: [
                       TextSpan(
                         text: _formatMoneyFull(spot.y),
-                        style: TextStyle(color: tooltipTextColor, fontWeight: FontWeight.bold, fontSize: 14),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ],
                   ),
@@ -307,7 +310,7 @@ class _MetricCardState extends State<MetricCard> {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: _gridInterval(),
-          getDrawingHorizontalLine: (value) => FlLine(color: gridColor, strokeWidth: 1, dashArray: [5, 5]),
+          getDrawingHorizontalLine: (value) => FlLine(color: gridColor.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5]),
         ),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
@@ -341,9 +344,9 @@ class _MetricCardState extends State<MetricCard> {
         ),
         borderData: FlBorderData(show: false),
         minX: 0,
-        maxX: linePoints.length > 1 ? linePoints.length.toDouble() - 1 : 1, // 👇 DEFENSA MATEMÁTICA (Evita min == max)
+        maxX: linePoints.length > 1 ? linePoints.length.toDouble() - 1 : 1,
         minY: 0,
-        maxY: max(1.0, _maxYWithPadding()), // 👇 DEFENSA MATEMÁTICA
+        maxY: max(1.0, _maxYWithPadding()),
         lineBarsData: [
           LineChartBarData(
             spots: linePoints,
@@ -353,10 +356,10 @@ class _MetricCardState extends State<MetricCard> {
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
             gradient: LinearGradient(colors: [primaryColor, secondaryColor], begin: Alignment.centerLeft, end: Alignment.centerRight),
-            shadow: Shadow(color: primaryColor.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 5)),
+            shadow: const Shadow(color: Colors.black26, blurRadius: 12, offset: Offset(0, 6)),
             belowBarData: BarAreaData(
               show: true,
-              gradient: LinearGradient(colors: [primaryColor.withOpacity(0.3), secondaryColor.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+              gradient: LinearGradient(colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
             ),
           ),
         ],
@@ -366,28 +369,27 @@ class _MetricCardState extends State<MetricCard> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
+    // 👇 USAMOS TU CONTENEDOR GLASS ULTRA PREMIUM OFICIAL
+    return GlassContainer(
+      padding: const EdgeInsets.all(20),
+      borderRadius: BorderRadius.circular(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // 👇 Estructura apilada y centrada que construimos
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: Text(
-                  widget.titleBuilder(context),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Text(
+                widget.titleBuilder(context),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 16),
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildTypeToggle(ChartType.line, Icons.show_chart),
@@ -399,14 +401,14 @@ class _MetricCardState extends State<MetricCard> {
             ],
           ),
 
-          const SizedBox(height: CustomSpacer.medium),
+          const SizedBox(height: CustomSpacer.large),
 
           SizedBox(
             height: _currentChartType == ChartType.pie ? 260 : 240,
             child: isLoading
                 ? Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
+                    baseColor: Colors.grey[300]!.withOpacity(0.5),
+                    highlightColor: Colors.grey[100]!.withOpacity(0.5),
                     child: Container(
                       width: double.infinity,
                       height: double.infinity,
@@ -415,7 +417,7 @@ class _MetricCardState extends State<MetricCard> {
                   )
                 : (dataKeys.isEmpty)
                 ? Center(
-                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+                    child: Text("No hay datos", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
                   )
                 : SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -444,23 +446,5 @@ class _MetricCardState extends State<MetricCard> {
         ],
       ),
     );
-  }
-}
-
-class DashboardCharts extends StatelessWidget {
-  final List<Widget> children;
-  const DashboardCharts({super.key, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> columnChildren = [];
-    for (int i = 0; i < children.length; i++) {
-      if (i > 0) {
-        columnChildren.add(const SizedBox(height: 24));
-      }
-      columnChildren.add(children[i]);
-    }
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: columnChildren);
   }
 }

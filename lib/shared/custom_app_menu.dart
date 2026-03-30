@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:primware/Widgets/GlassDesign.dart';
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
 import 'package:flutter/material.dart';
@@ -195,142 +196,139 @@ class _MenuDrawerState extends State<MenuDrawer> {
         width: MediaQuery.of(context).size.width * 0.85,
         child: Material(
           color: Colors.transparent,
-          child: Container(
-            height: MediaQuery.of(context).size.height,
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.4 : 0.1), // Sombra más suave en modo claro
-                  blurRadius: 20,
-                  offset: const Offset(5, 0),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(topRight: Radius.circular(30), bottomRight: Radius.circular(30)),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0), // Desenfoque cristalino
-                child: Container(
-                  // Magia adaptativa: Oscuro para Dark Mode, Blanco translúcido para Light Mode
-                  color: isDark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.65),
-                  child: Column(
-                    children: [
-                      // --- CABECERA ---
-                      _buildHeader(context, isDark),
+          child: LightAccentBackground(
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              decoration: BoxDecoration(
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.4 : 0.1), blurRadius: 20, offset: const Offset(5, 0))],
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(topRight: Radius.circular(30), bottomRight: Radius.circular(30)),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0), // Desenfoque cristalino
+                  child: Container(
+                    // 👇 Ajustamos la opacidad del cristal para que los orbes morados resalten por debajo
+                    color: isDark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.4),
+                    child: Column(
+                      children: [
+                        // --- CABECERA ---
+                        _buildHeader(context, isDark),
 
-                      // --- LISTA DE MENÚ ---
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
-                          physics: const BouncingScrollPhysics(),
-                          children: [
-                            _buildPillMenu(
-                              context,
-                              icon: Icons.dashboard_outlined,
-                              title: AppLocale.dashboard.getString(context),
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardPage())),
-                            ),
-
-                            const SizedBox(height: 15),
-                            Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                            _buildSectionTitle('OPERACIONES COMERCIALES', isDark),
-
-                            if (POS.docTypesComplete.isEmpty)
+                        // --- LISTA DE MENÚ ---
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
+                            physics: const BouncingScrollPhysics(),
+                            children: [
                               _buildPillMenu(
                                 context,
-                                icon: Icons.add_circle_outline,
-                                title: AppLocale.newOrder.getString(context),
-                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderNewPage())),
+                                icon: Icons.dashboard_outlined,
+                                title: AppLocale.dashboard.getString(context),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardPage())),
                               ),
 
-                            if (POS.docTypesComplete.isNotEmpty)
-                              ...POS.docTypesComplete.map((doc) {
-                                final dynamic rawId = doc['id'];
-                                final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
-                                final bool isRefund = doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID;
-                                return _buildPillMenu(
-                                  context,
-                                  icon: isRefund ? Icons.assignment_return_outlined : Icons.add_circle_outline,
-                                  title: (doc['name'] ?? doc['Name'] ?? 'Documento').toString(),
-                                  iconColor: isRefund ? Colors.redAccent : null,
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => OrderNewPage(doctypeID: docTypeId, orderName: doc['name'], isRefund: isRefund),
-                                    ),
-                                  ),
-                                );
-                              }),
-
-                            _buildPillMenu(
-                              context,
-                              icon: Icons.receipt_long_outlined,
-                              title: AppLocale.myOrders.getString(context),
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListPage())),
-                            ),
-
-                            if (POS.isPOS) ...[
                               const SizedBox(height: 15),
                               Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                              _buildSectionTitle('PUNTO DE VENTA', isDark),
-                              _buildPillMenu(context, icon: Icons.point_of_sale_outlined, title: AppLocale.closeCash.getString(context), isLoading: _isCreatingCloseCash, onTap: _isCreatingCloseCash ? null : _handleCloseCashLogic),
+                              _buildSectionTitle('OPERACIONES COMERCIALES', isDark),
+
+                              if (POS.docTypesComplete.isEmpty)
+                                _buildPillMenu(
+                                  context,
+                                  icon: Icons.add_circle_outline,
+                                  title: AppLocale.newOrder.getString(context),
+                                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderNewPage())),
+                                ),
+
+                              if (POS.docTypesComplete.isNotEmpty)
+                                ...POS.docTypesComplete.map((doc) {
+                                  final dynamic rawId = doc['id'];
+                                  final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+                                  final bool isRefund = doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID;
+                                  return _buildPillMenu(
+                                    context,
+                                    icon: isRefund ? Icons.assignment_return_outlined : Icons.add_circle_outline,
+                                    title: (doc['name'] ?? doc['Name'] ?? 'Documento').toString(),
+                                    iconColor: isRefund ? Colors.redAccent : null,
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => OrderNewPage(doctypeID: docTypeId, orderName: doc['name'], isRefund: isRefund),
+                                      ),
+                                    ),
+                                  );
+                                }),
+
                               _buildPillMenu(
                                 context,
-                                icon: Icons.history_outlined,
-                                title: AppLocale.mycloseCashs.getString(context),
-                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CloseCashPage())),
+                                icon: Icons.receipt_long_outlined,
+                                title: AppLocale.myOrders.getString(context),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListPage())),
                               ),
+
+                              if (POS.isPOS) ...[
+                                const SizedBox(height: 15),
+                                Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                                _buildSectionTitle('PUNTO DE VENTA', isDark),
+                                _buildPillMenu(context, icon: Icons.point_of_sale_outlined, title: AppLocale.closeCash.getString(context), isLoading: _isCreatingCloseCash, onTap: _isCreatingCloseCash ? null : _handleCloseCashLogic),
+                                _buildPillMenu(
+                                  context,
+                                  icon: Icons.history_outlined,
+                                  title: AppLocale.mycloseCashs.getString(context),
+                                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CloseCashPage())),
+                                ),
+                              ],
+
+                              const SizedBox(height: 15),
+                              Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                              _buildSectionTitle('CATÁLOGOS', isDark),
+                              _buildPillMenu(
+                                context,
+                                icon: Icons.inventory_2_outlined,
+                                title: AppLocale.products.getString(context),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductListPage())),
+                              ),
+                              _buildPillMenu(
+                                context,
+                                icon: Icons.people_alt_outlined,
+                                title: AppLocale.customers.getString(context),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BPartnerListPage())),
+                              ),
+
+                              const SizedBox(height: 15),
+                              Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                              _buildSectionTitle('SISTEMA', isDark),
+
+                              // 👇 BOTÓN MODO OSCURO INTACTO Y EN SU LUGAR
+                              //! BOTÓN MODO OSCURO INTACTO
+                              // _buildPillMenu(
+                              //   context,
+                              //   icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
+                              //   title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+                              //   onTap: () {
+                              //     ThemeManager.themeNotifier.toggleTheme();
+                              //     _loadTheme();
+                              //   },
+                              // ),
+                              _buildPillMenu(context, icon: Icons.manage_accounts_outlined, title: 'Cambiar Rol', onTap: _handleChangeRole),
+                              if (!Base.prod)
+                                _buildPillMenu(
+                                  context,
+                                  icon: Icons.settings_outlined,
+                                  title: AppLocale.settings.getString(context),
+                                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DebugPage())),
+                                ),
                             ],
-
-                            const SizedBox(height: 15),
-                            Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                            _buildSectionTitle('CATÁLOGOS', isDark),
-                            _buildPillMenu(
-                              context,
-                              icon: Icons.inventory_2_outlined,
-                              title: AppLocale.products.getString(context),
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductListPage())),
-                            ),
-                            _buildPillMenu(
-                              context,
-                              icon: Icons.people_alt_outlined,
-                              title: AppLocale.customers.getString(context),
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BPartnerListPage())),
-                            ),
-
-                            const SizedBox(height: 15),
-                            Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                            _buildSectionTitle('SISTEMA', isDark),
-
-                            //! BOTÓN MODO OSCURO INTACTO
-                            // _buildPillMenu(
-                            //   context,
-                            //   icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
-                            //   title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-                            //   onTap: () {
-                            //     ThemeManager.themeNotifier.toggleTheme();
-                            //     _loadTheme();
-                            //   },
-                            // ),
-                            _buildPillMenu(context, icon: Icons.manage_accounts_outlined, title: 'Cambiar Rol', onTap: _handleChangeRole),
-                            if (!Base.prod)
-                              _buildPillMenu(
-                                context,
-                                icon: Icons.settings_outlined,
-                                title: AppLocale.settings.getString(context),
-                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DebugPage())),
-                              ),
-                          ],
+                          ),
                         ),
-                      ),
 
-                      // --- FOOTER ---
-                      Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
-                        child: _buildPillMenu(context, icon: Icons.logout_rounded, title: AppLocale.logout.getString(context), iconColor: Colors.redAccent, textColor: Colors.redAccent, onTap: _handleLogout),
-                      ),
-                    ],
+                        // --- FOOTER ---
+                        Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
+                          child: _buildPillMenu(context, icon: Icons.logout_rounded, title: AppLocale.logout.getString(context), iconColor: Colors.redAccent, textColor: Colors.redAccent, onTap: _handleLogout),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

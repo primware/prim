@@ -7,10 +7,11 @@ import '../../../API/user.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/footer.dart';
-import '../../Auth/login_view.dart';
+import '../../Auth/login_view.dart' hide GlassContainer, LiquidBackground;
 import 'dashboard_graph.dart';
 import 'dashboard_funtions.dart';
 import '../../../localization/app_locale.dart';
+import '../../../Widgets/GlassDesign.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -21,27 +22,18 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   DateTime? lastBackPressed;
+
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 700
-        ? true
-        : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 700 ? true : false;
 
     return WillPopScope(
       onWillPop: () async {
         final now = DateTime.now();
 
-        if (lastBackPressed == null ||
-            now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
+        if (lastBackPressed == null || now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
           lastBackPressed = now;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocale.pressAgainToLogout.getString(context)),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
           return false;
         }
 
@@ -51,72 +43,75 @@ class _DashboardPageState extends State<DashboardPage> {
         UserData.rolName = null;
         UserData.imageBytes = null;
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
 
         return false;
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(AppLocale.dashboard.getString(context)),
-          actions: [
-            !isMobile
-                ? Padding(
-                    padding: const EdgeInsets.only(right: CustomSpacer.medium),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          CustomSpacer.medium,
+      child: LightAccentBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBodyBehindAppBar: true,
+
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: const GlassContainer(
+              borderRadius: BorderRadius.zero, // Sin curvas arriba
+              padding: EdgeInsets.zero,
+              child: SizedBox.expand(),
+            ),
+            title: Text(AppLocale.dashboard.getString(context), style: const TextStyle(fontWeight: FontWeight.bold)),
+            actions: [
+              !isMobile
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: CustomSpacer.medium),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Theme.of(context).colorScheme.surface.withOpacity(0.5)),
+                        padding: EdgeInsets.all(CustomSpacer.small),
+                        child: Logo(width: 60),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ],
+          ),
+          bottomNavigationBar: CustomFooter(),
+          drawer: MenuDrawer(),
+          body: SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Center(
+                child: CustomContainer(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: DashboardCharts(
+                          children: [
+                            MetricCard(
+                              titleBuilder: (ctx) => AppLocale.salesYTDMonthly.getString(context),
+                              dataLoader: ({required context}) => fetchSalesYTDData(context: context),
+                              chartType: ChartType.line,
+                            ),
+                          ],
                         ),
-                        color: Colors.white,
                       ),
-                      padding: EdgeInsets.all(CustomSpacer.small),
-                      child: Logo(width: 60),
-                    ),
-                  )
-                : SizedBox.shrink(),
-          ],
-        ),
-        bottomNavigationBar: CustomFooter(),
-        drawer: MenuDrawer(),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: CustomContainer(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DashboardCharts(
-                        children: [
-                          MetricCard(
-                            titleBuilder: (ctx) =>
-                                AppLocale.salesYTDMonthly.getString(context),
-                            dataLoader: ({required context}) =>
-                                fetchSalesYTDData(context: context),
-                            chartType: ChartType.line,
-                          ),
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        child: DashboardCharts(
+                          children: [
+                            MetricCard(
+                              titleBuilder: (ctx) => AppLocale.salesPerDay.getString(context),
+                              dataLoader: ({required context}) => fetchSalesPerDay(context: context),
+                              chartType: ChartType.bar,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DashboardCharts(
-                        children: [
-                          MetricCard(
-                            titleBuilder: (ctx) =>
-                                AppLocale.salesPerDay.getString(context),
-                            dataLoader: ({required context}) =>
-                                fetchSalesPerDay(context: context),
-                            chartType: ChartType.bar,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -124,5 +119,23 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
     );
+  }
+}
+
+class DashboardCharts extends StatelessWidget {
+  final List<Widget> children;
+  const DashboardCharts({super.key, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> columnChildren = [];
+    for (int i = 0; i < children.length; i++) {
+      if (i > 0) {
+        columnChildren.add(const SizedBox(height: 24));
+      }
+      columnChildren.add(children[i]);
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: columnChildren);
   }
 }
