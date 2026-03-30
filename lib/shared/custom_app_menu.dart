@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:primware/Widgets/GlassDesign.dart';
+import 'package:primware/main.dart';
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
 import 'package:flutter/material.dart';
@@ -298,17 +299,16 @@ class _MenuDrawerState extends State<MenuDrawer> {
                               Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
                               _buildSectionTitle('SISTEMA', isDark),
 
-                              // 👇 BOTÓN MODO OSCURO INTACTO Y EN SU LUGAR
-                              //! BOTÓN MODO OSCURO INTACTO
-                              // _buildPillMenu(
-                              //   context,
-                              //   icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
-                              //   title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-                              //   onTap: () {
-                              //     ThemeManager.themeNotifier.toggleTheme();
-                              //     _loadTheme();
-                              //   },
-                              // ),
+                              //BOTÓN MODO OSCURO
+                              //_buildPillMenu(
+                              //  context,
+                              //icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
+                              // title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+                              //onTap: () {
+                              //ThemeManager.themeNotifier.toggleTheme();
+                              //_loadTheme();
+                              //},
+                              //),
                               _buildPillMenu(context, icon: Icons.manage_accounts_outlined, title: 'Cambiar Rol', onTap: _handleChangeRole),
                               if (!Base.prod)
                                 _buildPillMenu(
