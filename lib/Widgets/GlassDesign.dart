@@ -245,3 +245,125 @@ class LightAccentBackground extends StatelessWidget {
     );
   }
 }
+
+//INTERRUPTOR DE CRISTAL
+class GlassSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const GlassSwitch({super.key, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        width: 56,
+        height: 32,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          // Fondo del carril del switch: morado translúcido si está activo
+          color: value ? primary.withOpacity(0.3) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+          border: Border.all(color: value ? primary.withOpacity(0.6) : (isDark ? Colors.white30 : Colors.black12), width: 1.5),
+          boxShadow: [if (value) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)],
+        ),
+        child: Stack(
+          children: [
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              top: 2,
+              bottom: 2,
+              // Animación de la canica de izquierda a derecha
+              left: value ? 26 : 2,
+              right: value ? 2 : 26,
+              child: ClipOval(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8), // El desenfoque del cristal de la canica
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      // La canica: morado sólido con brillo si está activo, blanca si no
+                      color: value ? primary.withOpacity(0.8) : (isDark ? Colors.white70 : Colors.white),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.5), // Brillo en el borde
+                        width: 1,
+                      ),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+//BOTÓN DE SELECCIÓN DE MENÚ DE CRISTAL
+class GlassMenuButton extends StatelessWidget {
+  final String label;
+  final String currentValue;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const GlassMenuButton({super.key, required this.label, required this.currentValue, this.icon = Icons.category_outlined, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 55, // Armonía visual con el buscador
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: isDark ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+          border: Border.all(color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.06), width: 1.5),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: primary.withOpacity(0.15), shape: BoxShape.circle),
+                        child: Icon(icon, color: primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      // El texto de la selección
+                      Text(
+                        currentValue.isEmpty ? label : currentValue,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: currentValue.isEmpty ? FontWeight.w500 : FontWeight.bold, color: currentValue.isEmpty ? Colors.grey.shade600 : (isDark ? Colors.white : Colors.black87)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                  // Flecha de despliegue
+                  Icon(Icons.expand_more, color: isDark ? Colors.white60 : Colors.grey.shade600, size: 22),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
