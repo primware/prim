@@ -187,8 +187,10 @@ class AppLocale {
   static const String noDocTypesAvailable = 'noDocTypesAvailable';
   static const String documentType = 'documentType';
   static const String copyToNewDocument = 'copyToNewDocument';
+  static const String confirmCreateProduct = 'confirmCreateProduct';
 
   static const Map<String, dynamic> en = {
+    confirmCreateProduct: 'Are you sure you want to create the product?',
     copyToNewDocument: 'Copy to new document',
     documentType: 'Document Type',
     noDocTypesAvailable: 'No document types available to convert.',
@@ -377,6 +379,7 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    confirmCreateProduct: '¿Está seguro de que desea crear el producto?',
     copyToNewDocument: 'Copiar a nuevo documento',
     documentType: 'Tipo de documento',
     noDocTypesAvailable: 'No hay tipos de documento disponibles para convertir.',

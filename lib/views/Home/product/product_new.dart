@@ -80,7 +80,14 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   void _isFormValid() {
     setState(() {
-      isValid = nameController.text.isNotEmpty && priceController.text.isNotEmpty && selectedCategoryID != null && selectedTaxID != null && selectedProductType != null && !_taxError;
+      String rawPrice = priceController.text.trim().replaceAll(',', '.');
+      bool isPriceValid = rawPrice.isNotEmpty && double.tryParse(rawPrice) != null;
+
+      print('--- VALIDACIÓN ---');
+      print('Nombre: ${nameController.text.isNotEmpty} | Precio: $isPriceValid (Raw: "$rawPrice")');
+      print('Cat: ${selectedCategoryID != null} | Tax: ${selectedTaxID != null} | Tipo: ${selectedProductType != null} | SinErrorTax: ${!_taxError}');
+
+      isValid = nameController.text.isNotEmpty && isPriceValid && selectedCategoryID != null && selectedTaxID != null && selectedProductType != null && !_taxError;
     });
   }
 
@@ -171,7 +178,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
           title: Text(AppLocale.newProduct.getString(context)),
-          content: Text('¿Está seguro de que desea crear el producto?'),
+          content: Text(AppLocale.confirmCreateProduct.getString(context)),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
@@ -187,7 +194,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     setState(() => isLoading = true);
 
-    final result = await postProduct(name: nameController.text, sku: skuController.text, upc: upcController.text, taxID: selectedTaxID!, categoryID: selectedCategoryID!, price: priceController.text, productType: selectedProductType!, context: context);
+    String finalPrice = priceController.text.trim().replaceAll(',', '.');
+
+    final result = await postProduct(name: nameController.text, sku: skuController.text, upc: upcController.text, taxID: selectedTaxID!, categoryID: selectedCategoryID!, price: finalPrice, productType: selectedProductType!, context: context);
 
     if (!mounted) return;
 
@@ -254,7 +263,19 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           onChanged: (String val) {
                             setState(() {
                               categorySearchTerm = val;
-                              selectedCategoryID = null;
+                              bool matchFound = false;
+                              for (var cat in categories) {
+                                String catName = (cat['name'] ?? cat['Name'] ?? '').toString();
+                                if (catName == val) {
+                                  selectedCategoryID = cat['id'];
+                                  matchFound = true;
+                                  break;
+                                }
+                              }
+                              if (!matchFound) {
+                                selectedCategoryID = null;
+                              }
+
                               _isFormValid();
                             });
                           },
@@ -284,7 +305,16 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           },
                         ),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(controlador: priceController, texto: '${AppLocale.price.getString(context)}*', colorEmpty: priceController.text.isEmpty, inputType: TextInputType.number, inputFormatters: [NumericTextFormatterWithDecimal()]),
+                  TextfieldTheme(
+                    controlador: priceController,
+                    texto: '${AppLocale.price.getString(context)}*',
+                    colorEmpty: priceController.text.isEmpty,
+                    inputType: TextInputType.text,
+                    inputFormatters: [NumericTextFormatterWithDecimal()],
+                    onChanged: (value) {
+                      _isFormValid();
+                    },
+                  ),
                   const SizedBox(height: CustomSpacer.xlarge),
                   if (!isLoading) ...[
                     ButtonSecondary(
