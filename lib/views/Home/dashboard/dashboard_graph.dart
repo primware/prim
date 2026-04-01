@@ -371,7 +371,6 @@ class _MetricCardState extends State<MetricCard> {
   @override
   @override
   Widget build(BuildContext context) {
-    // 👇 USAMOS TU CONTENEDOR GLASS ULTRA PREMIUM OFICIAL
     return GlassContainer(
       padding: const EdgeInsets.all(20),
       borderRadius: BorderRadius.circular(20),
