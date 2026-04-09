@@ -85,9 +85,17 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
       print('--- VALIDACIÓN ---');
       print('Nombre: ${nameController.text.isNotEmpty} | Precio: $isPriceValid (Raw: "$rawPrice")');
-      print('Cat: ${selectedCategoryID != null} | Tax: ${selectedTaxID != null} | Tipo: ${selectedProductType != null} | SinErrorTax: ${!_taxError}');
+      print(
+        'Cat: ${selectedCategoryID != null} | Tax: ${selectedTaxID != null} | Tipo: ${selectedProductType != null} | SinErrorTax: ${!_taxError}',
+      );
 
-      isValid = nameController.text.isNotEmpty && isPriceValid && selectedCategoryID != null && selectedTaxID != null && selectedProductType != null && !_taxError;
+      isValid =
+          nameController.text.isNotEmpty &&
+          isPriceValid &&
+          selectedCategoryID != null &&
+          selectedTaxID != null &&
+          selectedProductType != null &&
+          !_taxError;
     });
   }
 
@@ -121,7 +129,11 @@ class _ProductNewPageState extends State<ProductNewPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextfieldTheme(controlador: catNameController, texto: '${AppLocale.name.getString(context)}*', inputType: TextInputType.text),
+                    TextfieldTheme(
+                      controlador: catNameController,
+                      texto: '${AppLocale.name.getString(context)}*',
+                      inputType: TextInputType.text,
+                    ),
                     const SizedBox(height: CustomSpacer.medium),
                     TextfieldTheme(controlador: catValueController, texto: 'Código (Valor)', inputType: TextInputType.text),
                     const SizedBox(height: CustomSpacer.medium),
@@ -131,7 +143,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
               ),
               actionsAlignment: MainAxisAlignment.center,
               actions: [
-                if (!isCreating) TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
+                if (!isCreating)
+                  TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
                 if (!isCreating)
                   ElevatedButton(
                     onPressed: () async {
@@ -139,7 +152,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
                       setModalState(() => isCreating = true);
 
-                      final result = await postProductCategory(name: catNameController.text, value: catValueController.text, description: catDescController.text, context: context);
+                      final result = await postProductCategory(name: catNameController.text, context: context);
 
                       if (!mounted) return;
 
@@ -154,10 +167,16 @@ class _ProductNewPageState extends State<ProductNewPage> {
                         });
 
                         Navigator.pop(dialogContext);
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Categoría creada con éxito'), backgroundColor: ColorTheme.success));
+                        //TODO cambiar a Toast
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text('Categoría creada con éxito'), backgroundColor: ColorTheme.success));
                       } else {
                         setModalState(() => isCreating = false);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Error al crear'), backgroundColor: ColorTheme.error));
+                        //TODO cambiar a Toast
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Error al crear'), backgroundColor: ColorTheme.error));
                       }
                     },
                     child: Text(AppLocale.save.getString(context)),
@@ -183,7 +202,10 @@ class _ProductNewPageState extends State<ProductNewPage> {
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(AppLocale.save.getString(context), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface)),
+              child: Text(
+                AppLocale.save.getString(context),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
+              ),
             ),
           ],
         );
@@ -196,7 +218,16 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     String finalPrice = priceController.text.trim().replaceAll(',', '.');
 
-    final result = await postProduct(name: nameController.text, sku: skuController.text, upc: upcController.text, taxID: selectedTaxID!, categoryID: selectedCategoryID!, price: finalPrice, productType: selectedProductType!, context: context);
+    final result = await postProduct(
+      name: nameController.text,
+      sku: skuController.text,
+      upc: upcController.text,
+      taxID: selectedTaxID!,
+      categoryID: selectedCategoryID!,
+      price: finalPrice,
+      productType: selectedProductType!,
+      context: context,
+    );
 
     if (!mounted) return;
 
@@ -204,6 +235,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     if (result['success'] == true) {
       Navigator.pop(context, {'created': true, 'product': result['product']});
+      //TODO cambiar a Toast
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(child: Text(AppLocale.productCreatedSuccessfully.getString(context))),
@@ -211,6 +243,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
         ),
       );
     } else {
+      //TODO cambiar a Toast
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Center(child: Text(AppLocale.errorCreatingProduct.getString(context))),
@@ -233,7 +266,12 @@ class _ProductNewPageState extends State<ProductNewPage> {
                 children: [
                   TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(controlador: nameController, texto: '${AppLocale.name.getString(context)}*', colorEmpty: nameController.text.isEmpty, inputType: TextInputType.text),
+                  TextfieldTheme(
+                    controlador: nameController,
+                    texto: '${AppLocale.name.getString(context)}*',
+                    colorEmpty: nameController.text.isEmpty,
+                    inputType: TextInputType.text,
+                  ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(controlador: upcController, texto: AppLocale.upc.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
