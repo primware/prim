@@ -250,7 +250,7 @@ class _MetricCardState extends State<MetricCard> {
         PieChartData(
           pieTouchData: PieTouchData(
             touchCallback: (FlTouchEvent event, pieTouchResponse) {
-              if (!mounted) return; // 👇 DEFENSA DE ESTADO: Evita error al destruir el widget
+              if (!mounted) return; // 👇 DEFENSA DE ESTADO
               setState(() {
                 if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
                   _touchedPieIndex = -1;
@@ -341,9 +341,9 @@ class _MetricCardState extends State<MetricCard> {
         ),
         borderData: FlBorderData(show: false),
         minX: 0,
-        maxX: linePoints.length > 1 ? linePoints.length.toDouble() - 1 : 1, // 👇 DEFENSA MATEMÁTICA (Evita min == max)
+        maxX: linePoints.length > 1 ? linePoints.length.toDouble() - 1 : 1,
         minY: 0,
-        maxY: max(1.0, _maxYWithPadding()), // 👇 DEFENSA MATEMÁTICA
+        maxY: max(1.0, _maxYWithPadding()),
         lineBarsData: [
           LineChartBarData(
             spots: linePoints,
@@ -375,38 +375,32 @@ class _MetricCardState extends State<MetricCard> {
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Text(
+            widget.titleBuilder(context),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Text(
-                  widget.titleBuilder(context),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildTypeToggle(ChartType.line, Icons.show_chart),
-                  _buildTypeToggle(ChartType.bar, Icons.bar_chart),
-                  _buildTypeToggle(ChartType.pie, Icons.pie_chart),
-                  if (widget.showRefresh) ...[const SizedBox(width: 8), IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload)],
-                ],
-              ),
+              _buildTypeToggle(ChartType.line, Icons.show_chart),
+              _buildTypeToggle(ChartType.bar, Icons.bar_chart),
+              _buildTypeToggle(ChartType.pie, Icons.pie_chart),
+              if (widget.showRefresh) ...[const SizedBox(width: 8), IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload)],
             ],
           ),
 
-          const SizedBox(height: CustomSpacer.medium),
-
+          const SizedBox(height: CustomSpacer.large),
           SizedBox(
             height: _currentChartType == ChartType.pie ? 260 : 240,
             child: isLoading
                 ? Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
+                    baseColor: Colors.grey[300]!.withOpacity(0.5),
+                    highlightColor: Colors.grey[100]!.withOpacity(0.5),
                     child: Container(
                       width: double.infinity,
                       height: double.infinity,
@@ -444,23 +438,5 @@ class _MetricCardState extends State<MetricCard> {
         ],
       ),
     );
-  }
-}
-
-class DashboardCharts extends StatelessWidget {
-  final List<Widget> children;
-  const DashboardCharts({super.key, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> columnChildren = [];
-    for (int i = 0; i < children.length; i++) {
-      if (i > 0) {
-        columnChildren.add(const SizedBox(height: 24));
-      }
-      columnChildren.add(children[i]);
-    }
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: columnChildren);
   }
 }

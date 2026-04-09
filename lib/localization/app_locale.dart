@@ -191,8 +191,8 @@ class AppLocale {
 
   static const Map<String, dynamic> en = {
     confirmCreateProduct: 'Are you sure you want to create the product?',
-    copyToNewDocument: 'Copy to new document',
-    documentType: 'Document Type',
+    copyToNewDocument: 'Copy to new operation',
+    documentType: 'Commercial Operation Type',
     noDocTypesAvailable: 'No document types available to convert.',
     invoiceSentSuccess: 'Invoice sent successfully',
     invoiceSendError: 'Error sending invoice',
@@ -380,8 +380,8 @@ class AppLocale {
 
   static const Map<String, dynamic> es = {
     confirmCreateProduct: '¿Está seguro de que desea crear el producto?',
-    copyToNewDocument: 'Copiar a nuevo documento',
-    documentType: 'Tipo de documento',
+    copyToNewDocument: 'Copiar a nueva operación',
+    documentType: 'Tipo de operación comercial',
     noDocTypesAvailable: 'No hay tipos de documento disponibles para convertir.',
     invoiceSentSuccess: 'Factura enviada con éxito',
     invoiceSendError: 'Error al enviar la factura',

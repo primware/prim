@@ -21,10 +21,9 @@ class EndPoints {
 
   static String adUserRoles = '${Base.baseURL}/api/v1/models/AD_User_Roles';
 
-  static String salesRep =
-      '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
+  static String salesRep = '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
 
-  static String getOrganizationsAfterLogin = '${Base.baseURL}/api/v1/models/AD_Org';
+  static String getOrganizationsAfterLogin = '${Base.baseURL}/api/v1/models/AD_Org?\$filter=AD_Org_ID ne 0';
 
   static String cCurrency = '${Base.baseURL}/api/v1/models/C_Currency';
 
@@ -89,8 +88,7 @@ class GetCustomerData {
 
   GetCustomerData({required this.id});
 
-  String get endPoint =>
-      '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=EMail,Phone,Phone2,Comments,Birthday,AD_Image_ID)&\$select=Value,Name,Name2,TaxID,Description,SalesRep_ID&\$filter=Value eq \'$id\' or TaxID eq \'$id\'';
+  String get endPoint => '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=EMail,Phone,Phone2,Comments,Birthday,AD_Image_ID)&\$select=Value,Name,Name2,TaxID,Description,SalesRep_ID&\$filter=Value eq \'$id\' or TaxID eq \'$id\'';
 }
 
 class GetAttachmentProduct {
@@ -139,8 +137,7 @@ class GetProductInPriceList {
 
   GetProductInPriceList({required this.mPriceListID});
 
-  String get endPoint =>
-      '${Base.baseURL}/api/v1/models/M_PriceList_Version?\$filter=M_PriceList_ID eq $mPriceListID&\$select=ValidFrom&\$expand=M_ProductPrice(\$select=M_Product_ID)&\$orderby=ValidFrom desc';
+  String get endPoint => '${Base.baseURL}/api/v1/models/M_PriceList_Version?\$filter=M_PriceList_ID eq $mPriceListID&\$select=ValidFrom&\$expand=M_ProductPrice(\$select=M_Product_ID)&\$orderby=ValidFrom desc';
 }
 
 class GetDocumentActions {
@@ -149,8 +146,7 @@ class GetDocumentActions {
 
   GetDocumentActions({required this.roleID, required this.docTypeID});
 
-  String get endPoint =>
-      '${Base.baseURL}/api/v1/models/AD_Document_Action_Access?\$filter=AD_Role_ID eq $roleID AND C_DocType_ID eq $docTypeID&\$select=AD_Ref_List_ID';
+  String get endPoint => '${Base.baseURL}/api/v1/models/AD_Document_Action_Access?\$filter=AD_Role_ID eq $roleID AND C_DocType_ID eq $docTypeID&\$select=AD_Ref_List_ID';
 }
 
 class Processes {

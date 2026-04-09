@@ -81,9 +81,7 @@ class _ConfigPageState extends State<ConfigPage> {
             _onRoleSelected(selectedRoleId);
           }
 
-          final selectClient = clients.firstWhere(
-            (client) => client['id'] == clientId,
-          );
+          final selectClient = clients.firstWhere((client) => client['id'] == clientId);
           UserData.clientName = selectClient['name'];
         });
       }
@@ -127,13 +125,11 @@ class _ConfigPageState extends State<ConfigPage> {
     });
 
     if (roleId != null) {
-      final fetchedOrganizations = await getOrganizations(
-        selectedClientId!,
-        roleId,
-        context,
-      );
+      final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
       if (fetchedOrganizations != null) {
         setState(() {
+          fetchedOrganizations.removeWhere((org) => org['id'] == 0);
+
           organizations = fetchedOrganizations;
         });
       }
@@ -154,9 +150,7 @@ class _ConfigPageState extends State<ConfigPage> {
   }
 
   Future<void> _onContinue() async {
-    if (selectedClientId != null &&
-        selectedRoleId != null &&
-        selectedOrganizationId != null) {
+    if (selectedClientId != null && selectedRoleId != null && selectedOrganizationId != null) {
       Token.client = selectedClientId!;
       Token.rol = selectedRoleId;
       Token.organitation = selectedOrganizationId!;
@@ -190,10 +184,7 @@ class _ConfigPageState extends State<ConfigPage> {
           String usuario = usuarioController.text.trim();
           await prefs.setInt('clientId_$usuario', selectedClientId!);
           await prefs.setInt('roleId_$usuario', selectedRoleId!);
-          await prefs.setInt(
-            'organizationId_$usuario',
-            selectedOrganizationId!,
-          );
+          await prefs.setInt('organizationId_$usuario', selectedOrganizationId!);
           await prefs.setString('roleName_$usuario', UserData.rolName!);
         }
 
@@ -202,13 +193,7 @@ class _ConfigPageState extends State<ConfigPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => POS.isPOS
-                ? OrderNewPage(
-                    doctypeID: POS.docTypeID,
-                    orderName: POS.docTypeName,
-                    isRefund: POS.docSubType == 'RM',
-                  )
-                : DashboardPage(),
+            builder: (context) => POS.isPOS ? OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM') : DashboardPage(),
           ),
           (Route<dynamic> route) => false,
         );
@@ -222,19 +207,13 @@ class _ConfigPageState extends State<ConfigPage> {
         });
       }
     } else {
-      ToastMessage.show(
-        context: context,
-        message: AppLocale.selectCompanyRoleOrganization.getString(context),
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: AppLocale.selectCompanyRoleOrganization.getString(context), type: ToastType.failure);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 750
-        ? true
-        : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -246,36 +225,13 @@ class _ConfigPageState extends State<ConfigPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Center(
-                  child: Text(
-                    AppLocale.selectRole.getString(context),
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                ),
+                Center(child: Text(AppLocale.selectRole.getString(context), style: Theme.of(context).textTheme.headlineSmall)),
                 const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(
-                  value: selectedClientId,
-                  options: clients,
-                  showSearchBox: false,
-                  labelText: AppLocale.company.getString(context),
-                  onChanged: _onClientSelected,
-                ),
+                SearchableDropdown<int>(value: selectedClientId, options: clients, showSearchBox: false, labelText: AppLocale.company.getString(context), onChanged: _onClientSelected),
                 const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(
-                  value: selectedRoleId,
-                  options: roles,
-                  showSearchBox: false,
-                  labelText: AppLocale.role.getString(context),
-                  onChanged: _onRoleSelected,
-                ),
+                SearchableDropdown<int>(value: selectedRoleId, options: roles, showSearchBox: false, labelText: AppLocale.role.getString(context), onChanged: _onRoleSelected),
                 const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(
-                  value: selectedOrganizationId,
-                  options: organizations,
-                  showSearchBox: false,
-                  labelText: AppLocale.organization.getString(context),
-                  onChanged: _onOrganizationSelected,
-                ),
+                SearchableDropdown<int>(value: selectedOrganizationId, options: organizations, showSearchBox: false, labelText: AppLocale.organization.getString(context), onChanged: _onOrganizationSelected),
                 const SizedBox(height: CustomSpacer.medium),
                 CustomCheckbox(
                   value: rememberConfig,
@@ -288,13 +244,7 @@ class _ConfigPageState extends State<ConfigPage> {
                 ),
                 const SizedBox(height: CustomSpacer.xlarge),
                 Container(
-                  child: isLoading
-                      ? ButtonLoading(fullWidth: true)
-                      : ButtonPrimary(
-                          texto: AppLocale.continueKey.getString(context),
-                          fullWidth: true,
-                          onPressed: _onContinue,
-                        ),
+                  child: isLoading ? ButtonLoading(fullWidth: true) : ButtonPrimary(texto: AppLocale.continueKey.getString(context), fullWidth: true, onPressed: _onContinue),
                 ),
                 const SizedBox(height: 12),
                 ButtonSecondary(
