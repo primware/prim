@@ -27,11 +27,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   final TextEditingController upcController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
 
-  bool isValid = false,
-      isLoading = false,
-      _isCategoryLoading = true,
-      _isTaxiesLoading = true,
-      _taxError = false;
+  bool isValid = false, isLoading = false, _isCategoryLoading = true, _isTaxiesLoading = true, _taxError = false;
 
   int? selectedCategoryID;
   int? selectedTaxID;
@@ -97,7 +93,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   void _isFormValid() {
     setState(() {
-      isValid = nameController.text.isNotEmpty &&
+      isValid =
+          nameController.text.isNotEmpty &&
           priceController.text.isNotEmpty &&
           selectedCategoryID != null &&
           selectedTaxID != null &&
@@ -122,18 +119,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           title: Text(AppLocale.updateProduct.getString(context)),
           content: Text(AppLocale.confirmDeleteProduct.getString(context)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(AppLocale.cancel.getString(context)),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 AppLocale.updateProduct.getString(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
               ),
             ),
           ],
@@ -161,19 +152,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
     if (result['success'] == true) {
       Navigator.pop(context, true);
+      //TODO cambiar a Toast
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Center(
-              child: Text(
-                  AppLocale.productUpdatedSuccessfully.getString(context))),
+          content: Center(child: Text(AppLocale.productUpdatedSuccessfully.getString(context))),
           backgroundColor: ColorTheme.success,
         ),
       );
     } else {
+      //TODO cambiar a Toast
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Center(
-              child: Text(AppLocale.errorUpdatingProduct.getString(context))),
+          content: Center(child: Text(AppLocale.errorUpdatingProduct.getString(context))),
           backgroundColor: ColorTheme.error,
         ),
       );
@@ -183,19 +173,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text(AppLocale.productDetail.getString(context))),
-        bottomNavigationBar: CustomFooter(),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: CustomContainer(
-                  child: Column(
+      appBar: AppBar(title: Text(AppLocale.productDetail.getString(context))),
+      bottomNavigationBar: CustomFooter(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
+            child: CustomContainer(
+              child: Column(
                 children: [
-                  TextfieldTheme(
-                    controlador: skuController,
-                    texto: AppLocale.code.getString(context),
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: nameController,
@@ -204,20 +190,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: upcController,
-                    texto: AppLocale.upc.getString(context),
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: upcController, texto: AppLocale.upc.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
                   SearchableDropdown<String>(
                     value: selectedProductType,
-                    options: productTypes
-                        .map((type) => {
-                              'id': type['value'],
-                              'name': type['label'],
-                            })
-                        .toList(),
+                    options: productTypes.map((type) => {'id': type['value'], 'name': type['label']}).toList(),
                     labelText: '${AppLocale.productType.getString(context)} *',
                     showSearchBox: false,
                     onChanged: (String? newValue) {
@@ -236,8 +213,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           value: selectedCategoryID,
                           options: categories,
                           showSearchBox: true,
-                          labelText:
-                              '${AppLocale.productCategory.getString(context)} *',
+                          labelText: '${AppLocale.productCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedCategoryID = newValue;
@@ -252,8 +228,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           value: selectedTaxID,
                           options: taxies,
                           showSearchBox: true,
-                          labelText:
-                              '${AppLocale.taxCategory.getString(context)} *',
+                          labelText: '${AppLocale.taxCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxID = newValue;
@@ -278,23 +253,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         Navigator.pop(context);
                       },
                     ),
-                    const SizedBox(height: CustomSpacer.medium)
+                    const SizedBox(height: CustomSpacer.medium),
                   ],
                   Container(
                     child: isValid
                         ? isLoading
-                            ? ButtonLoading(fullWidth: true)
-                            : ButtonPrimary(
-                                fullWidth: true,
-                                texto: AppLocale.save.getString(context),
-                                onPressed: _updateProduct,
-                              )
+                              ? ButtonLoading(fullWidth: true)
+                              : ButtonPrimary(fullWidth: true, texto: AppLocale.save.getString(context), onPressed: _updateProduct)
                         : null,
-                  )
+                  ),
                 ],
-              )),
+              ),
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

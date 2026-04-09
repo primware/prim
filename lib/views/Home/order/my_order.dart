@@ -115,7 +115,6 @@ class _OrderListPageState extends State<OrderListPage> {
     );
   }
 
-  // Confirmación para Completar la Orden
   Future<bool?> _completeConfirmation(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -152,7 +151,10 @@ class _OrderListPageState extends State<OrderListPage> {
 
         try {
           final printers = await Printing.listPrinters();
-          final defaultPrinter = printers.firstWhere((p) => p.isDefault, orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'));
+          final defaultPrinter = printers.firstWhere(
+            (p) => p.isDefault,
+            orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
+          );
 
           await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
         } catch (e) {
@@ -201,7 +203,12 @@ class _OrderListPageState extends State<OrderListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
+            builder: (_) => OrderNewPage(
+              isRefund: false,
+              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
+              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
+              sourceOrderId: order['id'],
+            ),
           ),
         );
         break;
@@ -222,7 +229,10 @@ class _OrderListPageState extends State<OrderListPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(AppLocale.documentType.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      AppLocale.documentType.getString(context),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 8),
                     const Divider(),
                     ...POS.docTypesComplete.map((doc) {
@@ -230,7 +240,6 @@ class _OrderListPageState extends State<OrderListPage> {
                       final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
                       final String docName = (doc['name'] ?? doc['Name'] ?? 'Documento').toString();
 
-                      // Excluir devoluciones y el mismo tipo de documento
                       if (doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID || docTypeId == order['doctypetarget']?['id']) {
                         return const SizedBox.shrink();
                       }
@@ -248,7 +257,8 @@ class _OrderListPageState extends State<OrderListPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
+                              builder: (_) =>
+                                  OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
                             ),
                           ).then((value) {
                             if (value == true) _fetchOrders(showLoadingIndicator: true);
@@ -273,7 +283,12 @@ class _OrderListPageState extends State<OrderListPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OrderNewPage(isRefund: true, doctypeID: POS.docTypeRefundID, orderName: POS.docTypeRefundName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
+              builder: (_) => OrderNewPage(
+                isRefund: true,
+                doctypeID: POS.docTypeRefundID,
+                orderName: POS.docTypeRefundName,
+                sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
+              ),
             ),
           );
         }
@@ -282,7 +297,12 @@ class _OrderListPageState extends State<OrderListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(isRefund: false, doctypeID: POS.docTypeID, orderName: POS.docTypeName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
+            builder: (_) => OrderNewPage(
+              isRefund: false,
+              doctypeID: POS.docTypeID,
+              orderName: POS.docTypeName,
+              sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
+            ),
           ),
         );
         break;
@@ -373,14 +393,14 @@ class _OrderListPageState extends State<OrderListPage> {
     );
   }
 
-  // Pill que muestra el estado del documento (DocStatus) en español
   Widget _buildDocStatusPill(Map<String, dynamic> order) {
     final String? statusCode = order['DocStatus'] as String?;
     if (statusCode == null) {
       return const SizedBox.shrink();
     }
 
-    final meta = _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+    final meta =
+        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = meta['color'] as Color;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -414,7 +434,12 @@ class _OrderListPageState extends State<OrderListPage> {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
+            builder: (_) => OrderNewPage(
+              isRefund: false,
+              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
+              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
+              sourceOrderId: order['id'],
+            ),
           ),
         );
         // Si se guardó con éxito, recargamos la lista de órdenes en automático
@@ -449,7 +474,6 @@ class _OrderListPageState extends State<OrderListPage> {
     final bool isComplete = (order['DocStatus'] == 'CO');
     final bool isReturn = (order['doctypetarget']?['id'] == POS.docTypeRefundID);
 
-    // --- REVISAR SI YA EXISTE NOTA DE CRÉDITO ---
     final List invoices = order['C_Invoice'] ?? [];
     final bool hasCreditNote = invoices.any((inv) {
       return inv['RelatedInvoice_ID'] != null;
@@ -474,11 +498,9 @@ class _OrderListPageState extends State<OrderListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cliente y Menú de Opciones
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icono del cliente
                 Container(
                   height: 40,
                   width: 40,
@@ -487,7 +509,6 @@ class _OrderListPageState extends State<OrderListPage> {
                 ),
                 const SizedBox(width: 12),
 
-                // Nombre del cliente y Tipo de Documento
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +520,10 @@ class _OrderListPageState extends State<OrderListPage> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Text('${order['doctypetarget']['name']} #${order['DocumentNo']}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
+                      Text(
+                        '${order['doctypetarget']['name']} #${order['DocumentNo']}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                      ),
                     ],
                   ),
                 ),
@@ -599,7 +623,9 @@ class _OrderListPageState extends State<OrderListPage> {
                     const SizedBox(width: 6),
                     Text(
                       order['GrandTotal'].toString(),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800),
                     ),
                   ],
                 ),
@@ -653,7 +679,8 @@ class _OrderListPageState extends State<OrderListPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM'),
+                      builder: (context) =>
+                          OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM'),
                     ),
                   );
                 },
@@ -716,7 +743,10 @@ class _OrderListPageState extends State<OrderListPage> {
                         ? ShimmerList(separation: CustomSpacer.medium)
                         : _getFilteredOrders().isEmpty
                         ? Center(
-                            child: Text(AppLocale.errorNoOrders.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
+                            child: Text(
+                              AppLocale.errorNoOrders.getString(context),
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                            ),
                           )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),

@@ -58,7 +58,10 @@ Future<Map<String, dynamic>?> preAuth(String usuario, String clave, BuildContext
 
 Future<List<Map<String, dynamic>>?> getRoles(int clientId, BuildContext context) async {
   try {
-    final response = await get(Uri.parse(GetRol(clientID: clientId).endPoint), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.preAuth!});
+    final response = await get(
+      Uri.parse(GetRol(clientID: clientId).endPoint),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.preAuth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(utf8.decode(response.bodyBytes));
@@ -85,7 +88,9 @@ Future<List<Map<String, dynamic>>?> getOrganizations(int clientId, int roleId, B
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
-      List<Map<String, dynamic>> organizations = (responseData['organizations'] as List).map((organization) => {'id': organization['id'], 'name': organization['name']}).toList();
+      List<Map<String, dynamic>> organizations = (responseData['organizations'] as List)
+          .map((organization) => {'id': organization['id'], 'name': organization['name']})
+          .toList();
       return organizations;
     } else {
       CurrentLogMessage.add('getOrganizations Error: ${response.statusCode}, ${response.body}', level: 'ERROR', tag: 'getOrganizations');
@@ -132,7 +137,13 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
     final Map<String, dynamic> data = {
       "userName": usuarioController.text.trim(),
       "password": claveController.text.trim(),
-      "parameters": {"clientId": Token.client, "roleId": Token.rol, "organizationId": Token.organitation, "warehouseId": Token.warehouseID ?? 0, "language": "en_US"},
+      "parameters": {
+        "clientId": Token.client,
+        "roleId": Token.rol,
+        "organizationId": Token.organitation,
+        "warehouseId": Token.warehouseID ?? 0,
+        "language": "en_US",
+      },
     };
 
     final response = await post(Uri.parse(EndPoints.postUserAuth), headers: {'Content-Type': 'application/json'}, body: jsonEncode(data));
@@ -143,6 +154,7 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
       bool success = await _loadUserData(context);
       await _loadPOSData(context);
       await _loadPOSPrinterData();
+      await _loadChartIDs();
       POSTenderType.isMultiPayment = await _posTenderExists();
       await _loadAppVersion();
       return success;
@@ -157,7 +169,10 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
 
 Future<bool> _loadUserData(BuildContext context) async {
   try {
-    final response = await get(Uri.parse(GetUserData(adUserID: UserData.id!).endPoint), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse(GetUserData(adUserID: UserData.id!).endPoint),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final userData = json.decode(utf8.decode(response.bodyBytes))['records'][0];
@@ -171,7 +186,11 @@ Future<bool> _loadUserData(BuildContext context) async {
       }
       return true;
     } else {
-      CurrentLogMessage.add('Error al cargar loadUserData, codigo: ${response.statusCode}, detalle: ${response.body}', level: 'ERROR', tag: '_loadUserData');
+      CurrentLogMessage.add(
+        'Error al cargar loadUserData, codigo: ${response.statusCode}, detalle: ${response.body}',
+        level: 'ERROR',
+        tag: '_loadUserData',
+      );
     }
   } catch (e) {
     CurrentLogMessage.add('Excepción en _loadUserData: $e', level: 'ERROR', tag: '_loadUserData');
@@ -182,13 +201,17 @@ Future<bool> _loadUserData(BuildContext context) async {
 
 Future<bool> _loadPOSPrinterData() async {
   try {
-    final response = await get(Uri.parse('${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}&\$expand=C_Location_ID'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse('${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}&\$expand=C_Location_ID'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final record = json.decode(utf8.decode(response.bodyBytes))['records'][0];
 
       POSPrinter.headerName = record['AD_Client_ID']?['identifier'];
-      POSPrinter.headerAddress = '${record['C_Location_ID']['Address1'] ?? ''}${record['C_Location_ID']['Address2'] != null ? ', ${record['C_Location_ID']['Address2']}' : ''}${record['C_Location_ID']['Address3'] != null ? ', ${record['C_Location_ID']['Address3']}' : ''}${record['C_Location_ID']['Address4'] != null ? ', ${record['C_Location_ID']['Address4']}' : ''}';
+      POSPrinter.headerAddress =
+          '${record['C_Location_ID']['Address1'] ?? ''}${record['C_Location_ID']['Address2'] != null ? ', ${record['C_Location_ID']['Address2']}' : ''}${record['C_Location_ID']['Address3'] != null ? ', ${record['C_Location_ID']['Address3']}' : ''}${record['C_Location_ID']['Address4'] != null ? ', ${record['C_Location_ID']['Address4']}' : ''}';
       POSPrinter.headerPhone = record['Phone'];
       POSPrinter.headerTaxID = record['TaxID'];
       POSPrinter.headerDV = record['dv'];
@@ -203,7 +226,11 @@ Future<bool> _loadPOSPrinterData() async {
       }
       return true;
     } else {
-      CurrentLogMessage.add('Error al cargar _loadPOSPrinterData, codigo: ${response.statusCode}, detalle: ${response.body}', level: 'ERROR', tag: '_loadPOSPrinterData');
+      CurrentLogMessage.add(
+        'Error al cargar _loadPOSPrinterData, codigo: ${response.statusCode}, detalle: ${response.body}',
+        level: 'ERROR',
+        tag: '_loadPOSPrinterData',
+      );
     }
   } catch (e) {
     CurrentLogMessage.add('Excepción en _loadPOSPrinterData: $e', level: 'ERROR', tag: '_loadPOSPrinterData');
@@ -216,7 +243,10 @@ Future<void> _loadPOSData(BuildContext context) async {
   try {
     final String filter = 'C_POS_ID eq ${POS.cPosID}';
 
-    final response = await get(Uri.parse('${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID,C_DocTypeRefund_ID'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse('${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID,C_DocTypeRefund_ID'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final decoded = json.decode(utf8.decode(response.bodyBytes));
@@ -268,10 +298,15 @@ Future<void> _loadPOSData(BuildContext context) async {
       // Cargamos los tipos de documentos disponibles para el POS
       POS.docTypesComplete = [
         {'id': POS.docTypeID.toString(), 'name': POS.docTypeName ?? '', 'DocSubTypeSO': POS.docSubType ?? ''},
-        if (POS.docTypeRefundID != null) {'id': POS.docTypeRefundID.toString(), 'name': POS.docTypeRefundName ?? '', 'DocSubTypeSO': POS.docSubTypeRefund ?? ''},
+        if (POS.docTypeRefundID != null)
+          {'id': POS.docTypeRefundID.toString(), 'name': POS.docTypeRefundName ?? '', 'DocSubTypeSO': POS.docSubTypeRefund ?? ''},
       ];
     } else {
-      CurrentLogMessage.add('Error al cargar loadPOSData, código: ${response.statusCode}, detalle: ${response.body}', level: 'ERROR', tag: '_loadPOSData');
+      CurrentLogMessage.add(
+        'Error al cargar loadPOSData, código: ${response.statusCode}, detalle: ${response.body}',
+        level: 'ERROR',
+        tag: '_loadPOSData',
+      );
     }
   } catch (e) {
     CurrentLogMessage.add('Excepción en loadPOSData: $e', level: 'ERROR', tag: '_loadPOSData');
@@ -282,20 +317,32 @@ Future<void> _loadPOSData(BuildContext context) async {
 }
 
 Future<bool> _posTenderExists() async {
-  final response = await get(Uri.parse(EndPoints.cPOSTenderType), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+  final response = await get(
+    Uri.parse(EndPoints.cPOSTenderType),
+    headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+  );
 
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
     return data['row-count'] > 0;
   } else {
-    CurrentLogMessage.add('Error al verificar existencia de PosTenderExists: ${response.statusCode}, ${response.body}', level: 'ERROR', tag: '_posTenderExists');
+    CurrentLogMessage.add(
+      'Error al verificar existencia de PosTenderExists: ${response.statusCode}, ${response.body}',
+      level: 'ERROR',
+      tag: '_posTenderExists',
+    );
     return false;
   }
 }
 
 Future<void> _getYappyKeys() async {
   try {
-    final response = await get(Uri.parse('${EndPoints.cdsYappyGroup}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,Value,CDS_API_Key,CDS_Secret_Key'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse(
+        '${EndPoints.cdsYappyGroup}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,Value,CDS_API_Key,CDS_Secret_Key',
+      ),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
@@ -313,7 +360,12 @@ Future<void> _getYappyKeys() async {
 
 Future<void> _getYappyEndPoint() async {
   try {
-    final response = await get(Uri.parse('${EndPoints.cdsYappyConf}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,CDS_YappyEndPoint,CDS_IsYappyTest'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse(
+        '${EndPoints.cdsYappyConf}?\$filter=CDS_YappyConf_ID eq ${Yappy.yappyConfigID}&\$select=Name,CDS_YappyEndPoint,CDS_IsYappyTest',
+      ),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
@@ -323,7 +375,11 @@ Future<void> _getYappyEndPoint() async {
 
       Yappy.isTest = record['CDS_IsYappyTest'] ?? false;
     } else {
-      CurrentLogMessage.add('Error en _getYappyEndPoint: ${response.statusCode}, ${response.body}', level: 'ERROR', tag: '_getYappyEndPoint');
+      CurrentLogMessage.add(
+        'Error en _getYappyEndPoint: ${response.statusCode}, ${response.body}',
+        level: 'ERROR',
+        tag: '_getYappyEndPoint',
+      );
     }
   } catch (e) {
     CurrentLogMessage.add('Error en _getYappyEndPoint: $e', level: 'ERROR', tag: '_getYappyEndPoint');
@@ -332,7 +388,10 @@ Future<void> _getYappyEndPoint() async {
 
 Future<int?> _getMPriceListID() async {
   try {
-    final response = await get(Uri.parse('${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse('${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true'),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
@@ -350,7 +409,10 @@ Future<int?> _getMPriceListID() async {
 
 Future<int?> getMPriceListVersion(int id) async {
   try {
-    final response = await get(Uri.parse('${EndPoints.mPriceList}?\$filter=M_PriceList_ID eq $id&\$expand=M_PriceList_Version'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse('${EndPoints.mPriceList}?\$filter=M_PriceList_ID eq $id&\$expand=M_PriceList_Version'),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
@@ -361,7 +423,11 @@ Future<int?> getMPriceListVersion(int id) async {
         return latestVersion['id'];
       }
     } else {
-      CurrentLogMessage.add('Error en _getMPriceListVersion: ${response.statusCode}, ${response.body}', level: 'ERROR', tag: '_getMPriceListVersion');
+      CurrentLogMessage.add(
+        'Error en _getMPriceListVersion: ${response.statusCode}, ${response.body}',
+        level: 'ERROR',
+        tag: '_getMPriceListVersion',
+      );
     }
   } catch (e) {
     CurrentLogMessage.add('Error en _getMPriceListVersion: $e', level: 'ERROR', tag: '_getMPriceListVersion');
@@ -371,14 +437,23 @@ Future<int?> getMPriceListVersion(int id) async {
 
 Future<int?> _getCDocTypeComplete() async {
   try {
-    final response = await get(Uri.parse('${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name,DocSubTypeSO'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse('${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name,DocSubTypeSO'),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       final records = responseData['records'] as List;
-      POS.docTypesComplete = records.map((r) => {'id': r['id'].toString(), 'name': r['Name'] ?? '', 'DocSubTypeSO': r['DocSubTypeSO']['id'] ?? ''}).toList();
+      POS.docTypesComplete = records
+          .map((r) => {'id': r['id'].toString(), 'name': r['Name'] ?? '', 'DocSubTypeSO': r['DocSubTypeSO']['id'] ?? ''})
+          .toList();
     } else {
-      CurrentLogMessage.add('Error en _getCDocTypeComplete: ${response.statusCode}, ${response.body}', level: 'ERROR', tag: '_getCDocTypeComplete');
+      CurrentLogMessage.add(
+        'Error en _getCDocTypeComplete: ${response.statusCode}, ${response.body}',
+        level: 'ERROR',
+        tag: '_getCDocTypeComplete',
+      );
     }
   } catch (e) {
     CurrentLogMessage.add('Error en _getCDocTypeComplete: $e', level: 'ERROR', tag: '_getCDocTypeComplete');
@@ -388,7 +463,12 @@ Future<int?> _getCDocTypeComplete() async {
 
 Future<int?> _getCDocType() async {
   try {
-    final response = await get(Uri.parse('${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\' AND IsDefault eq true OR DocSubTypeSO eq \'OB\'&\$orderby=IsDefault desc'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse(
+        '${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\' AND IsDefault eq true OR DocSubTypeSO eq \'OB\'&\$orderby=IsDefault desc',
+      ),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
@@ -402,18 +482,63 @@ Future<int?> _getCDocType() async {
   return null;
 }
 
+Future<int?> _getChartIDByName(String chartName) async {
+  try {
+    final response = await get(
+      Uri.parse("${EndPoints.adChart}?\$filter=Name eq '$chartName'"),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(utf8.decode(response.bodyBytes));
+      final records = responseData['records'] as List?;
+
+      if (records != null && records.isNotEmpty) {
+        return records.first['id'];
+      }
+
+      return null;
+    } else {
+      CurrentLogMessage.add(
+        'Error en _getChartIDByName para $chartName: ${response.statusCode}, ${response.body}',
+        level: 'ERROR',
+        tag: '_getChartIDByName',
+      );
+    }
+  } catch (e) {
+    CurrentLogMessage.add('Error en _getChartIDByName para $chartName: $e', level: 'ERROR', tag: '_getChartIDByName');
+  }
+
+  return null;
+}
+
+Future<void> _loadChartIDs() async {
+  Charts.salesYTDID = await _getChartIDByName('Sales YTD');
+  Charts.salesPerDayID = await _getChartIDByName('Sales Per Day');
+  Charts.salesYTDBySalesRepID = await _getChartIDByName('Sales YTD By SalesRep');
+}
+
 Future<List<Map<String, dynamic>>?> getOrganizationsAfterLogin(BuildContext context) async {
   try {
-    final response = await get(Uri.parse(EndPoints.getOrganizationsAfterLogin), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse(EndPoints.getOrganizationsAfterLogin),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
-      List<Map<String, dynamic>> organizations = (responseData['records'] as List).map((organization) => {'id': organization['id'], 'name': organization['Name']}).toList();
+      List<Map<String, dynamic>> organizations = (responseData['records'] as List)
+          .map((organization) => {'id': organization['id'], 'name': organization['Name']})
+          .toList();
       return organizations;
     } else if (response.statusCode == 401) {
       handle401(context);
     } else {
-      CurrentLogMessage.add('Error getOrganizationsAfterLogin: ${response.statusCode}, ${response.body}', level: 'ERROR', tag: 'getOrganizationsAfterLogin');
+      CurrentLogMessage.add(
+        'Error getOrganizationsAfterLogin: ${response.statusCode}, ${response.body}',
+        level: 'ERROR',
+        tag: 'getOrganizationsAfterLogin',
+      );
     }
   } catch (e) {
     CurrentLogMessage.add('Error general getOrganizationsAfterLogin: $e', level: 'ERROR', tag: 'getOrganizationsAfterLogin');
@@ -446,12 +571,23 @@ Future<String> fetchAppVersion() async {
 
 Future<void> fetchTaxs() async {
   try {
-    final response = await get(Uri.parse(EndPoints.cTax), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse(EndPoints.cTax),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
       POS.principalTaxs = {
-        for (var record in jsonResponse['records']) record['C_TaxCategory_ID']['id']: {'id': record['id'], 'name': record['Name'], 'rate': record['Rate'], 'istaxexempt': record['IsTaxExempt'], 'issalestax': record['IsSalesTax'], 'isdefault': record['IsDefault']},
+        for (var record in jsonResponse['records'])
+          record['C_TaxCategory_ID']['id']: {
+            'id': record['id'],
+            'name': record['Name'],
+            'rate': record['Rate'],
+            'istaxexempt': record['IsTaxExempt'],
+            'issalestax': record['IsSalesTax'],
+            'isdefault': record['IsDefault'],
+          },
       };
     } else {
       throw Exception('Error al cargar los impuestos: ${response.statusCode}');

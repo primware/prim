@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/logo.dart';
+import '../../../API/endpoint.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/custom_app_menu.dart';
@@ -31,8 +32,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
         if (lastBackPressed == null || now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
           lastBackPressed = now;
-
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
+          //TODO cambiar a Toast
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
 
           return false;
         }
@@ -73,15 +76,21 @@ class _DashboardPageState extends State<DashboardPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: DashboardCharts(
                     children: [
-                      MetricCard(
-                        titleBuilder: (ctx) => AppLocale.salesYTDMonthly.getString(context),
-                        dataLoader: ({required context}) => fetchSalesYTDData(context: context),
-                        chartType: ChartType.line,
-                      ),
-                      MetricCard(
-                        titleBuilder: (ctx) => AppLocale.salesPerDay.getString(context),
-                        dataLoader: ({required context}) => fetchSalesPerDay(context: context),
-                        chartType: ChartType.bar,
+                      DashboardCharts(
+                        children: [
+                          if (Charts.salesYTDBySalesRep != null)
+                            GraphicBarMetricCard(
+                              titleBuilder: (ctx) => AppLocale.salesYTDBySalesRep.getString(context),
+                              dataLoader: ({required context}) => fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: -2),
+                              showTotal: true,
+                            ),
+
+                          if (Charts.salesPerDay != null)
+                            GraphicBarMetricCard(
+                              titleBuilder: (ctx) => AppLocale.salesPerDay.getString(context),
+                              dataLoader: ({required context}) => fetchSalesPerDay(context: context, monthOffset: -2),
+                            ),
+                        ],
                       ),
                     ],
                   ),

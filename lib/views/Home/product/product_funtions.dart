@@ -5,7 +5,16 @@ import '../../../API/endpoint.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 
-Future<Map<String, dynamic>> postProduct({required String name, String? sku, String? upc, required int categoryID, required int taxID, required String price, required String productType, required BuildContext context}) async {
+Future<Map<String, dynamic>> postProduct({
+  required String name,
+  String? sku,
+  String? upc,
+  required int categoryID,
+  required int taxID,
+  required String price,
+  required String productType,
+  required BuildContext context,
+}) async {
   try {
     await usuarioAuth(context: context);
 
@@ -19,9 +28,23 @@ Future<Map<String, dynamic>> postProduct({required String name, String? sku, Str
     }
 
     //? Crear el producto
-    final Map<String, dynamic> productData = {"Name": name, "C_UOM_ID": 100, "M_Product_Category_ID": categoryID, "C_TaxCategory_ID": taxID, if (sku != null && sku.isNotEmpty) "SKU": sku, if (upc != null && upc.isNotEmpty) "UPC": upc, "Value": (sku != null && sku.isNotEmpty) ? sku : name, "IsSold": true, "ProductType": productType};
+    final Map<String, dynamic> productData = {
+      "Name": name,
+      "C_UOM_ID": 100,
+      "M_Product_Category_ID": categoryID,
+      "C_TaxCategory_ID": taxID,
+      if (sku != null && sku.isNotEmpty) "SKU": sku,
+      if (upc != null && upc.isNotEmpty) "UPC": upc,
+      "Value": (sku != null && sku.isNotEmpty) ? sku : name,
+      "IsSold": true,
+      "ProductType": productType,
+    };
 
-    final productResponse = await post(Uri.parse(EndPoints.mProduct), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(productData));
+    final productResponse = await post(
+      Uri.parse(EndPoints.mProduct),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+      body: jsonEncode(productData),
+    );
 
     if (productResponse.statusCode != 201) {
       print('Error al crear el producto: ${productResponse.statusCode}');
@@ -41,9 +64,19 @@ Future<Map<String, dynamic>> postProduct({required String name, String? sku, Str
 
     //? Precio del producto
 
-    final Map<String, dynamic> priceData = {"M_Product_ID": productID, "M_PriceList_Version_ID": priceListVersionID, "PriceStd": double.parse(price), "PriceLimit": double.parse(price), "PriceList": double.parse(price)};
+    final Map<String, dynamic> priceData = {
+      "M_Product_ID": productID,
+      "M_PriceList_Version_ID": priceListVersionID,
+      "PriceStd": double.parse(price),
+      "PriceLimit": double.parse(price),
+      "PriceList": double.parse(price),
+    };
 
-    final priceResponse = await post(Uri.parse(EndPoints.mProductPrice), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(priceData));
+    final priceResponse = await post(
+      Uri.parse(EndPoints.mProductPrice),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+      body: jsonEncode(priceData),
+    );
 
     if (priceResponse.statusCode != 201) {
       print('Error al crear precio: ${priceResponse.statusCode}');
@@ -59,7 +92,10 @@ Future<Map<String, dynamic>> postProduct({required String name, String? sku, Str
 }
 
 Future<bool> productSKUExists(String sku) async {
-  final response = await get(Uri.parse("${EndPoints.mProduct}?\$filter=SKU eq '$sku'"), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+  final response = await get(
+    Uri.parse("${EndPoints.mProduct}?\$filter=SKU eq '$sku'"),
+    headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+  );
 
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
@@ -72,7 +108,10 @@ Future<bool> productSKUExists(String sku) async {
 
 Future<int?> getMPriceListVersionID() async {
   try {
-    final response = await get(Uri.parse('${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true&\$expand=M_PriceList_Version'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse('${EndPoints.mPriceList}?\$filter=IsSOPriceList eq true AND IsDefault eq true&\$expand=M_PriceList_Version'),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
@@ -90,7 +129,10 @@ Future<List<Map<String, dynamic>>?> getMProductCategoryID(BuildContext context) 
   try {
     await usuarioAuth(context: context);
 
-    final response = await get(Uri.parse(EndPoints.mProductCategory), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse(EndPoints.mProductCategory),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(utf8.decode(response.bodyBytes));
@@ -117,7 +159,10 @@ Future<List<Map<String, dynamic>>?> getCTaxCategoryID(BuildContext context) asyn
   try {
     await usuarioAuth(context: context);
 
-    final response = await get(Uri.parse(EndPoints.cTaxCategory), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse(EndPoints.cTaxCategory),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final responseData = json.decode(utf8.decode(response.bodyBytes));
@@ -142,7 +187,10 @@ Future<List<Map<String, dynamic>>?> getCTaxCategoryID(BuildContext context) asyn
 
 Future<int?> getMProductPriceID(int productID) async {
   try {
-    final response = await get(Uri.parse("${EndPoints.mProductPrice}?\$filter=M_Product_ID eq $productID"), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse("${EndPoints.mProductPrice}?\$filter=M_Product_ID eq $productID"),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -158,7 +206,17 @@ Future<int?> getMProductPriceID(int productID) async {
   return null;
 }
 
-Future<Map<String, dynamic>> putProduct({required int id, required String name, String? sku, String? upc, required int taxID, required int categoryID, required String price, required String productType, required BuildContext context}) async {
+Future<Map<String, dynamic>> putProduct({
+  required int id,
+  required String name,
+  String? sku,
+  String? upc,
+  required int taxID,
+  required int categoryID,
+  required String price,
+  required String productType,
+  required BuildContext context,
+}) async {
   try {
     await usuarioAuth(context: context);
 
@@ -172,7 +230,11 @@ Future<Map<String, dynamic>> putProduct({required int id, required String name, 
       "ProductType": productType,
     };
 
-    final response = await put(Uri.parse("${EndPoints.mProduct}/$id"), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!}, body: jsonEncode(productData));
+    final response = await put(
+      Uri.parse("${EndPoints.mProduct}/$id"),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+      body: jsonEncode(productData),
+    );
 
     if (response.statusCode != 200) {
       print("Error actualizando producto: ${response.body}");
@@ -185,9 +247,17 @@ Future<Map<String, dynamic>> putProduct({required int id, required String name, 
       return {"success": false, "message": "No se encontró M_ProductPrice para este producto."};
     }
 
-    final Map<String, dynamic> priceData = {"PriceStd": double.tryParse(price) ?? 0, "PriceLimit": double.tryParse(price) ?? 0, "PriceList": double.tryParse(price) ?? 0};
+    final Map<String, dynamic> priceData = {
+      "PriceStd": double.tryParse(price) ?? 0,
+      "PriceLimit": double.tryParse(price) ?? 0,
+      "PriceList": double.tryParse(price) ?? 0,
+    };
 
-    final priceResponse = await put(Uri.parse("${EndPoints.mProductPrice}/$productPriceID"), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(priceData));
+    final priceResponse = await put(
+      Uri.parse("${EndPoints.mProductPrice}/$productPriceID"),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+      body: jsonEncode(priceData),
+    );
 
     if (priceResponse.statusCode != 200) {
       print("Error actualizando precio: ${priceResponse.body}");
@@ -201,18 +271,17 @@ Future<Map<String, dynamic>> putProduct({required int id, required String name, 
   }
 }
 
-Future<Map<String, dynamic>> postProductCategory({
-  required String name,
-  String? value, // <-- AHORA ES OPCIONAL
-  String? description,
-  required BuildContext context,
-}) async {
+Future<Map<String, dynamic>> postProductCategory({required String name, required BuildContext context}) async {
   try {
     await usuarioAuth(context: context);
 
-    final Map<String, dynamic> categoryData = {"Name": name, if (value != null && value.isNotEmpty) "Value": value, if (description != null && description.isNotEmpty) "Description": description};
+    final Map<String, dynamic> categoryData = {"Name": name, "Value": name};
 
-    final response = await post(Uri.parse(EndPoints.mProductCategory), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(categoryData));
+    final response = await post(
+      Uri.parse(EndPoints.mProductCategory),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+      body: jsonEncode(categoryData),
+    );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       final createdCategory = json.decode(response.body);

@@ -13,7 +13,7 @@ class AppLocale {
   static const String dec = 'dec';
   static const String login = 'login';
   static const String syncFe = 'syncFe';
-
+  static const String salesYTDBySalesRep = 'salesYTDBySalesRep';
   static const String products = 'products';
   static const String searchProducts = 'searchProducts';
   static const String productCode = 'productCode';
@@ -296,7 +296,7 @@ class AppLocale {
     noDataForFilter: 'No data available for the selected filter.',
     pressAgainToLogout: 'Press again to log out',
     myOrders: 'My orders',
-    searchOrder: 'Search order',
+    searchOrder: 'Search order or Customer',
     errorNoOrders: 'No orders found.',
     orderHash: 'Order #',
     exportPdf: 'Export PDF',
@@ -305,6 +305,7 @@ class AppLocale {
     price: 'Price',
     subtotal: 'Subtotal',
     total: 'Total',
+    salesYTDBySalesRep: 'Sales YTD by Sales Rep',
     noName: 'No name',
     finalSummary: 'Final summary:',
     grossTotal: 'Gross total:',
@@ -401,6 +402,7 @@ class AppLocale {
     searchProducts: 'Buscar productos',
     productCode: 'Código',
     productName: 'Nombre',
+    salesYTDBySalesRep: 'Ventas del año por vendedor',
     productPrice: 'Precio',
     productStock: 'Stock',
     noProductsFound: 'No se encontraron productos.',
@@ -457,7 +459,7 @@ class AppLocale {
     customerDetail: 'Detalle cliente',
     update: 'Actualizar',
     errorUpdateCustomer: 'Error al actualizar cliente',
-    dashboard: 'Panel',
+    dashboard: 'Dashboard',
     salesYTDMonthly: 'Total vendido por mes',
     days: 'Días',
     closeCash: 'Cerrar Caja',
@@ -468,7 +470,7 @@ class AppLocale {
     pressAgainToLogout: 'Presione nuevamente para cerrar sesión',
     myOrders: 'Mis órdenes',
     salesPerDay: 'Ventas por día',
-    searchOrder: 'Buscar orden',
+    searchOrder: 'Buscar orden o cliente',
     errorNoOrders: 'No se encontraron órdenes.',
     orderHash: 'Orden #',
     exportPdf: 'Exportar PDF',
