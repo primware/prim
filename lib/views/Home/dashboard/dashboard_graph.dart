@@ -7,6 +7,8 @@ import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_spacer.dart';
 import 'package:graphic/graphic.dart';
+import '../order/my_order.dart';
+import '../order/my_order_new.dart';
 
 typedef ChartDataLoader = Future<Map<String, double>> Function({required BuildContext context});
 
@@ -16,13 +18,7 @@ class GraphicBarMetricCard extends StatefulWidget {
   final bool showRefresh;
   final bool showTotal;
 
-  const GraphicBarMetricCard({
-    super.key,
-    required this.titleBuilder,
-    required this.dataLoader,
-    this.showRefresh = true,
-    this.showTotal = false,
-  });
+  const GraphicBarMetricCard({super.key, required this.titleBuilder, required this.dataLoader, this.showRefresh = true, this.showTotal = false});
 
   @override
   State<GraphicBarMetricCard> createState() => _GraphicBarMetricCardState();
@@ -90,8 +86,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
-              if (widget.showRefresh)
-                IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload),
+              if (widget.showRefresh) IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload),
             ],
           ),
           if (widget.showTotal)
@@ -117,10 +112,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                   )
                 : rawChartData.isEmpty
                 ? Center(
-                    child: Text(
-                      AppLocale.noDataForFilter.getString(context),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
-                    ),
+                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
                   )
                 : SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -196,16 +188,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
   @override
   Widget build(BuildContext context) {
     final rows = _chartRows();
-    final colors = <Color>[
-      Theme.of(context).colorScheme.primary,
-      Theme.of(context).colorScheme.secondary,
-      Theme.of(context).colorScheme.tertiary,
-      Colors.orange,
-      Colors.teal,
-      Colors.purple,
-      Colors.redAccent,
-      Colors.indigo,
-    ];
+    final colors = <Color>[Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.tertiary, Colors.orange, Colors.teal, Colors.purple, Colors.redAccent, Colors.indigo];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -226,9 +209,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
           if (widget.showRefresh)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload),
-              ],
+              children: [IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload)],
             ),
           const SizedBox(height: CustomSpacer.large),
           SizedBox(
@@ -245,10 +226,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                   )
                 : rows.isEmpty
                 ? Center(
-                    child: Text(
-                      AppLocale.noDataForFilter.getString(context),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
-                    ),
+                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
                   )
                 : Column(
                     children: [
@@ -303,6 +281,106 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class EmptyMetricState extends StatelessWidget {
+  final bool showActions;
+  const EmptyMetricState({super.key, this.showActions = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.query_stats_rounded, size: 80, color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
+                    const SizedBox(height: 24),
+
+                    Text(
+                      "No hay ventas registradas",
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+
+                    Text(
+                      "¿Listo para realizar tu primera orden?",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    if (showActions) ...[
+                      const SizedBox(height: 40),
+
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 320), // Límite de ancho para pantallas grandes
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch, // Se estiran, pero solo hasta 320px
+                            children: [
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                icon: Icon(Icons.add_shopping_cart, size: 20, color: Theme.of(context).colorScheme.primary),
+                                label: Text(
+                                  AppLocale.newOrder.getString(context),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderNewPage()));
+                                },
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                icon: Icon(Icons.list_alt, size: 20, color: Theme.of(context).colorScheme.secondary),
+                                label: Text(
+                                  AppLocale.myOrders.getString(context),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderListPage()));
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

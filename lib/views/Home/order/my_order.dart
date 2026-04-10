@@ -17,6 +17,7 @@ import '../../../localization/app_locale.dart';
 import '../../../shared/custom_checkbox.dart';
 import '../../../shared/footer.dart';
 import 'my_order_print_generator.dart';
+import 'dart:ui';
 
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
@@ -151,10 +152,7 @@ class _OrderListPageState extends State<OrderListPage> {
 
         try {
           final printers = await Printing.listPrinters();
-          final defaultPrinter = printers.firstWhere(
-            (p) => p.isDefault,
-            orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
-          );
+          final defaultPrinter = printers.firstWhere((p) => p.isDefault, orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'));
 
           await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
         } catch (e) {
@@ -203,12 +201,7 @@ class _OrderListPageState extends State<OrderListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(
-              isRefund: false,
-              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
-              sourceOrderId: order['id'],
-            ),
+            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
           ),
         );
         break;
@@ -229,10 +222,7 @@ class _OrderListPageState extends State<OrderListPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      AppLocale.documentType.getString(context),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    ),
+                    Text(AppLocale.documentType.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     const Divider(),
                     ...POS.docTypesComplete.map((doc) {
@@ -257,8 +247,7 @@ class _OrderListPageState extends State<OrderListPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
+                              builder: (_) => OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
                             ),
                           ).then((value) {
                             if (value == true) _fetchOrders(showLoadingIndicator: true);
@@ -283,12 +272,7 @@ class _OrderListPageState extends State<OrderListPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OrderNewPage(
-                isRefund: true,
-                doctypeID: POS.docTypeRefundID,
-                orderName: POS.docTypeRefundName,
-                sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
-              ),
+              builder: (_) => OrderNewPage(isRefund: true, doctypeID: POS.docTypeRefundID, orderName: POS.docTypeRefundName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
             ),
           );
         }
@@ -297,12 +281,7 @@ class _OrderListPageState extends State<OrderListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(
-              isRefund: false,
-              doctypeID: POS.docTypeID,
-              orderName: POS.docTypeName,
-              sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
-            ),
+            builder: (_) => OrderNewPage(isRefund: false, doctypeID: POS.docTypeID, orderName: POS.docTypeName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
           ),
         );
         break;
@@ -399,8 +378,7 @@ class _OrderListPageState extends State<OrderListPage> {
       return const SizedBox.shrink();
     }
 
-    final meta =
-        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+    final meta = _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = meta['color'] as Color;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -434,12 +412,7 @@ class _OrderListPageState extends State<OrderListPage> {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderNewPage(
-              isRefund: false,
-              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
-              sourceOrderId: order['id'],
-            ),
+            builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
           ),
         );
         // Si se guardó con éxito, recargamos la lista de órdenes en automático
@@ -520,10 +493,7 @@ class _OrderListPageState extends State<OrderListPage> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        '${order['doctypetarget']['name']} #${order['DocumentNo']}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-                      ),
+                      Text('${order['doctypetarget']['name']} #${order['DocumentNo']}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
                     ],
                   ),
                 ),
@@ -623,9 +593,7 @@ class _OrderListPageState extends State<OrderListPage> {
                     const SizedBox(width: 6),
                     Text(
                       order['GrandTotal'].toString(),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800),
                     ),
                   ],
                 ),
@@ -679,8 +647,7 @@ class _OrderListPageState extends State<OrderListPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM'),
+                      builder: (context) => OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM'),
                     ),
                   );
                 },
@@ -723,15 +690,38 @@ class _OrderListPageState extends State<OrderListPage> {
 
                   const SizedBox(height: 8),
 
-                  CustomCheckbox(
-                    value: onlyMyOrders,
-                    text: AppLocale.onlyMyOrders.getString(context),
-                    onChanged: (newValue) {
-                      setState(() {
-                        onlyMyOrders = newValue;
-                        _fetchOrders(showLoadingIndicator: true);
-                      });
-                    },
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Más padding para que respire
+                    margin: const EdgeInsets.symmetric(vertical: 8), // Margen para separar de la barra de búsqueda
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withOpacity(0.2) : Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Envía el switch al extremo derecho
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.receipt, size: 22, color: onlyMyOrders ? Theme.of(context).primaryColor : Colors.grey.shade600), // Icono más grande
+                            const SizedBox(width: 12),
+                            Text(
+                              AppLocale.onlyMyOrders.getString(context),
+                              style: TextStyle(fontSize: 16, fontWeight: onlyMyOrders ? FontWeight.bold : FontWeight.w500, color: onlyMyOrders ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87) : Colors.grey.shade600),
+                            ),
+                          ],
+                        ),
+                        GlassSwitch(
+                          value: onlyMyOrders,
+                          onChanged: (newValue) {
+                            setState(() {
+                              onlyMyOrders = newValue;
+                              _fetchOrders(showLoadingIndicator: true);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ),
 
                   if (isSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
@@ -743,10 +733,7 @@ class _OrderListPageState extends State<OrderListPage> {
                         ? ShimmerList(separation: CustomSpacer.medium)
                         : _getFilteredOrders().isEmpty
                         ? Center(
-                            child: Text(
-                              AppLocale.errorNoOrders.getString(context),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-                            ),
+                            child: Text(AppLocale.errorNoOrders.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
                           )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),
@@ -761,6 +748,60 @@ class _OrderListPageState extends State<OrderListPage> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class GlassSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const GlassSwitch({super.key, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        width: 56,
+        height: 32,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: value ? primary.withOpacity(0.3) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+          border: Border.all(color: value ? primary.withOpacity(0.6) : (isDark ? Colors.white30 : Colors.black12), width: 1.5),
+          boxShadow: [if (value) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)],
+        ),
+        child: Stack(
+          children: [
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              top: 2,
+              bottom: 2,
+              left: value ? 26 : 2,
+              right: value ? 2 : 26,
+              child: ClipOval(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: value ? primary.withOpacity(0.8) : (isDark ? Colors.white70 : Colors.white),
+                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
