@@ -9,6 +9,7 @@ import '../../../shared/custom_spacer.dart';
 import 'package:graphic/graphic.dart';
 import '../order/my_order.dart';
 import '../order/my_order_new.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 typedef ChartDataLoader = Future<Map<String, double>> Function({required BuildContext context});
 
@@ -27,6 +28,7 @@ class GraphicBarMetricCard extends StatefulWidget {
 class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
   Map<String, double> rawChartData = {};
   bool isLoading = true;
+  int touchedIndex = -1;
 
   @override
   void initState() {
@@ -41,65 +43,68 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
     setState(() => isLoading = false);
   }
 
-  void _reload() {
-    _load();
-  }
+  void _reload() => _load();
 
   double _totalValue() {
     if (rawChartData.isEmpty) return 0;
     return rawChartData.values.fold(0.0, (sum, value) => sum + value);
   }
 
-  List<Map<String, Object>> _chartRows() {
-    return rawChartData.entries.map((entry) => {'category': entry.key, 'value': entry.value}).toList();
-  }
-
-  double _computeChartWidth(BuildContext context) {
-    if (rawChartData.isEmpty) return 260;
-    final desired = (rawChartData.length * 78.0) + 24.0;
-    return desired < 260 ? 260 : desired;
-  }
-
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
-    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final secondaryColor = Theme.of(context).colorScheme.secondary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final totalFmt = NumberFormat('#,##0.00', 'en_US');
-    final rows = _chartRows();
+
+    final entries = rawChartData.entries.toList();
+    final double maxY = rawChartData.isEmpty ? 100 : rawChartData.values.reduce((a, b) => a > b ? a : b) * 1.2;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center, // 👇 1. Centramos los elementos de la columna
         children: [
           Row(
             children: [
+              if (widget.showRefresh) const SizedBox(width: 48),
+
               Expanded(
                 child: Text(
                   widget.titleBuilder(context),
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.center, // 👇 2. Centramos el texto del título
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
-              if (widget.showRefresh) IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload),
+
+              if (widget.showRefresh)
+                SizedBox(
+                  width: 48,
+                  child: IconButton(
+                    tooltip: 'Refrescar',
+                    icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500),
+                    onPressed: isLoading ? null : _reload,
+                  ),
+                ),
             ],
           ),
           if (widget.showTotal)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 4, bottom: 8),
               child: Text(
                 'Total: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: onSurface.withOpacity(0.85)),
+                textAlign: TextAlign.center, // 👇 3. Centramos el texto del Total
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: primaryColor),
               ),
             ),
           const SizedBox(height: CustomSpacer.large),
           SizedBox(
-            height: 320,
+            height: 300,
             child: isLoading
                 ? Shimmer.fromColors(
                     baseColor: Colors.grey[300]!.withOpacity(0.5),
@@ -114,32 +119,106 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                 ? Center(
                     child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
                   )
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: SizedBox(
-                      width: _computeChartWidth(context),
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Chart(
-                          data: rows,
-                          variables: {
-                            'category': Variable(accessor: (Map map) => map['category'] as String),
-                            'value': Variable(accessor: (Map map) => map['value'] as num),
+                : Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: BarChart(
+                      BarChartData(
+                        alignment: BarChartAlignment.spaceAround,
+                        maxY: maxY,
+                        barTouchData: BarTouchData(
+                          enabled: true,
+                          touchTooltipData: BarTouchTooltipData(
+                            getTooltipColor: (group) => isDark ? Colors.grey.shade800 : Colors.blueGrey.shade900,
+                            tooltipRoundedRadius: 8,
+                            tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            tooltipMargin: 8,
+                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                              return BarTooltipItem(
+                                '${entries[group.x].key}\n',
+                                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                children: <TextSpan>[
+                                  TextSpan(
+                                    text: '${POS.currencySymbol} ${totalFmt.format(rod.toY)}',
+                                    style: TextStyle(color: secondaryColor, fontWeight: FontWeight.w600, fontSize: 14),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          touchCallback: (FlTouchEvent event, barTouchResponse) {
+                            setState(() {
+                              if (!event.isInterestedForInteractions || barTouchResponse == null || barTouchResponse.spot == null) {
+                                touchedIndex = -1;
+                                return;
+                              }
+                              touchedIndex = barTouchResponse.spot!.touchedBarGroupIndex;
+                            });
                           },
-                          marks: [
-                            IntervalMark(
-                              position: Varset('category') * Varset('value'),
-                              color: ColorEncode(value: primaryColor),
-                            ),
-                          ],
-                          axes: [Defaults.horizontalAxis, Defaults.verticalAxis],
-                          selections: {
-                            'tap': PointSelection(on: {GestureType.tap, GestureType.hover}),
-                          },
-                          tooltip: TooltipGuide(),
                         ),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 32,
+                              getTitlesWidget: (value, meta) {
+                                if (value.toInt() >= 0 && value.toInt() < entries.length) {
+                                  bool showLabel = entries.length < 10 || value.toInt() % (entries.length ~/ 6 + 1) == 0;
+                                  return SideTitleWidget(
+                                    axisSide: meta.axisSide,
+                                    child: Text(
+                                      showLabel ? entries[value.toInt()].key : '',
+                                      style: TextStyle(color: Colors.grey.shade600, fontSize: 10, fontWeight: FontWeight.w500),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 48,
+                              getTitlesWidget: (value, meta) {
+                                if (value == 0 || value == maxY) return const SizedBox.shrink();
+                                return SideTitleWidget(
+                                  axisSide: meta.axisSide,
+                                  child: Text(NumberFormat.compact().format(value), style: TextStyle(color: Colors.grey.shade500, fontSize: 10)),
+                                );
+                              },
+                            ),
+                          ),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: maxY / 5 > 0 ? maxY / 5 : 1, // Previene divisiones entre 0
+                          getDrawingHorizontalLine: (value) {
+                            return FlLine(color: Theme.of(context).dividerColor.withOpacity(0.1), strokeWidth: 1, dashArray: [4, 4]);
+                          },
+                        ),
+                        borderData: FlBorderData(show: false),
+                        barGroups: List.generate(entries.length, (index) {
+                          final isTouched = index == touchedIndex;
+                          return BarChartGroupData(
+                            x: index,
+                            barRods: [
+                              BarChartRodData(
+                                toY: entries[index].value,
+                                width: isTouched ? 22 : 16,
+                                gradient: LinearGradient(colors: isTouched ? [secondaryColor, secondaryColor.withOpacity(0.7)] : [primaryColor, primaryColor.withOpacity(0.6)], begin: Alignment.bottomCenter, end: Alignment.topCenter),
+                                borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
+                                backDrawRodData: BackgroundBarChartRodData(show: true, toY: maxY, color: Theme.of(context).dividerColor.withOpacity(0.05)),
+                              ),
+                            ],
+                          );
+                        }),
                       ),
+                      swapAnimationDuration: const Duration(milliseconds: 350),
+                      swapAnimationCurve: Curves.easeInOut,
                     ),
                   ),
           ),
