@@ -30,6 +30,7 @@ dependencies:
   flutter_native_splash: ^2.4.6
   fluttertoast: ^9.0.0
   graphic: ^2.7.0
+  fl_chart: ^0.68.0
 
 flutter_launcher_icons:
   web:

@@ -402,7 +402,7 @@ class AppLocale {
     searchProducts: 'Buscar productos',
     productCode: 'Código',
     productName: 'Nombre',
-    salesYTDBySalesRep: 'Ventas del año por vendedor',
+    salesYTDBySalesRep: 'Ventas del mes por vendedor',
     productPrice: 'Precio',
     productStock: 'Stock',
     noProductsFound: 'No se encontraron productos.',

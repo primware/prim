@@ -14,7 +14,6 @@ import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
-import '../../../shared/custom_checkbox.dart';
 import '../../../shared/footer.dart';
 import 'my_order_print_generator.dart';
 import 'dart:ui';
