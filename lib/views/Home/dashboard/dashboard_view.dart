@@ -25,32 +25,57 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isLoading = true;
   bool _hasData = false;
 
+  Map<String, double> _salesYTDBySalesRepData = {};
+  Map<String, double> _salesPerDayData = {};
+
+  late final ChartDataLoader _salesYTDBySalesRepLoader;
+  late final ChartDataLoader _salesPerDayLoader;
+
   @override
   void initState() {
     super.initState();
+
+    _salesYTDBySalesRepLoader = ({required context}) => fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: 0);
+    _salesPerDayLoader = ({required context}) => fetchSalesPerDay(context: context, monthOffset: 0);
     _checkDashboardData();
   }
 
   Future<void> _checkDashboardData() async {
     setState(() => _isLoading = true);
 
-    Map<String, double> ytdData = {};
-    Map<String, double> dailyData = {};
+    Map<String, double> ytdData = _salesYTDBySalesRepData;
+    Map<String, double> dailyData = _salesPerDayData;
 
-    if (Charts.salesYTDBySalesRep != null) {
-      ytdData = await fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: -2);
+    final List<Future<void>> futures = [];
+
+    if (Charts.salesYTDBySalesRep != null && ytdData.isEmpty) {
+      futures.add(
+        _salesYTDBySalesRepLoader(context: context).then((value) {
+          ytdData = value;
+        }),
+      );
     }
 
-    if (Charts.salesPerDay != null) {
-      dailyData = await fetchSalesPerDay(context: context, monthOffset: -2);
+    if (Charts.salesPerDay != null && dailyData.isEmpty) {
+      futures.add(
+        _salesPerDayLoader(context: context).then((value) {
+          dailyData = value;
+        }),
+      );
     }
 
-    if (mounted) {
-      setState(() {
-        _hasData = ytdData.isNotEmpty || dailyData.isNotEmpty;
-        _isLoading = false;
-      });
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
     }
+
+    if (!mounted) return;
+
+    setState(() {
+      _salesYTDBySalesRepData = ytdData;
+      _salesPerDayData = dailyData;
+      _hasData = ytdData.isNotEmpty || dailyData.isNotEmpty;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -63,8 +88,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
         if (lastBackPressed == null || now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
           lastBackPressed = now;
-          //TODO cambiar a Toast
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
 
           return false;
         }
@@ -99,16 +125,13 @@ class _DashboardPageState extends State<DashboardPage> {
         drawer: const MenuDrawer(),
         body: SafeArea(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator()) // Si está cargando, muestra el icono de carga
+              ? const Center(child: CircularProgressIndicator())
               : !_hasData
               ? const Padding(
                   padding: EdgeInsets.all(16.0),
-                  child: Center(
-                    child: EmptyMetricState(showActions: true), // Si no hay datos, muestra el nuevo dashboard
-                  ),
+                  child: Center(child: EmptyMetricState(showActions: true)),
                 )
               : SingleChildScrollView(
-                  // Si sí hay datos, muestra los gráficos
                   child: Center(
                     child: CustomContainer(
                       child: Padding(
@@ -120,14 +143,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                 if (Charts.salesYTDBySalesRep != null)
                                   GraphicBarMetricCard(
                                     titleBuilder: (ctx) => AppLocale.salesYTDBySalesRep.getString(context),
-                                    dataLoader: ({required context}) => fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: -2),
+                                    initialData: _salesYTDBySalesRepData,
+                                    dataLoader: _salesYTDBySalesRepLoader,
                                     showTotal: true,
                                   ),
-
                                 if (Charts.salesPerDay != null)
                                   GraphicBarMetricCard(
                                     titleBuilder: (ctx) => AppLocale.salesPerDay.getString(context),
-                                    dataLoader: ({required context}) => fetchSalesPerDay(context: context, monthOffset: -2),
+                                    initialData: _salesPerDayData,
+                                    dataLoader: _salesPerDayLoader,
                                   ),
                               ],
                             ),

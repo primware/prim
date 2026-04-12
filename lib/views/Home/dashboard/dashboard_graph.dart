@@ -7,6 +7,7 @@ import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_spacer.dart';
 import 'package:graphic/graphic.dart';
+import '../../../shared/toast_message.dart';
 import '../order/my_order.dart';
 import '../order/my_order_new.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -18,8 +19,16 @@ class GraphicBarMetricCard extends StatefulWidget {
   final ChartDataLoader dataLoader;
   final bool showRefresh;
   final bool showTotal;
+  final Map<String, double> initialData;
 
-  const GraphicBarMetricCard({super.key, required this.titleBuilder, required this.dataLoader, this.showRefresh = true, this.showTotal = false});
+  const GraphicBarMetricCard({
+    super.key,
+    required this.titleBuilder,
+    required this.dataLoader,
+    this.showRefresh = true,
+    this.showTotal = false,
+    this.initialData = const {},
+  });
 
   @override
   State<GraphicBarMetricCard> createState() => _GraphicBarMetricCardState();
@@ -33,7 +42,25 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
   @override
   void initState() {
     super.initState();
-    _load();
+
+    if (widget.initialData.isNotEmpty) {
+      rawChartData = Map<String, double>.from(widget.initialData);
+      isLoading = false;
+    } else {
+      _load();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant GraphicBarMetricCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.initialData != widget.initialData && widget.initialData.isNotEmpty) {
+      setState(() {
+        rawChartData = Map<String, double>.from(widget.initialData);
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _load() async {
@@ -65,7 +92,13 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center, // 👇 1. Centramos los elementos de la columna
@@ -117,7 +150,10 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                   )
                 : rawChartData.isEmpty
                 ? Center(
-                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+                    child: Text(
+                      AppLocale.noDataForFilter.getString(context),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
+                    ),
                   )
                 : Padding(
                     padding: const EdgeInsets.only(top: 16.0),
@@ -184,7 +220,10 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                                 if (value == 0 || value == maxY) return const SizedBox.shrink();
                                 return SideTitleWidget(
                                   axisSide: meta.axisSide,
-                                  child: Text(NumberFormat.compact().format(value), style: TextStyle(color: Colors.grey.shade500, fontSize: 10)),
+                                  child: Text(
+                                    NumberFormat.compact().format(value),
+                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
+                                  ),
                                 );
                               },
                             ),
@@ -209,9 +248,19 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                               BarChartRodData(
                                 toY: entries[index].value,
                                 width: isTouched ? 22 : 16,
-                                gradient: LinearGradient(colors: isTouched ? [secondaryColor, secondaryColor.withOpacity(0.7)] : [primaryColor, primaryColor.withOpacity(0.6)], begin: Alignment.bottomCenter, end: Alignment.topCenter),
+                                gradient: LinearGradient(
+                                  colors: isTouched
+                                      ? [secondaryColor, secondaryColor.withOpacity(0.7)]
+                                      : [primaryColor, primaryColor.withOpacity(0.6)],
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                ),
                                 borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
-                                backDrawRodData: BackgroundBarChartRodData(show: true, toY: maxY, color: Theme.of(context).dividerColor.withOpacity(0.05)),
+                                backDrawRodData: BackgroundBarChartRodData(
+                                  show: true,
+                                  toY: maxY,
+                                  color: Theme.of(context).dividerColor.withOpacity(0.05),
+                                ),
                               ),
                             ],
                           );
@@ -267,7 +316,16 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
   @override
   Widget build(BuildContext context) {
     final rows = _chartRows();
-    final colors = <Color>[Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.tertiary, Colors.orange, Colors.teal, Colors.purple, Colors.redAccent, Colors.indigo];
+    final colors = <Color>[
+      Theme.of(context).colorScheme.primary,
+      Theme.of(context).colorScheme.secondary,
+      Theme.of(context).colorScheme.tertiary,
+      Colors.orange,
+      Colors.teal,
+      Colors.purple,
+      Colors.redAccent,
+      Colors.indigo,
+    ];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -288,7 +346,9 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
           if (widget.showRefresh)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload)],
+              children: [
+                IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload),
+              ],
             ),
           const SizedBox(height: CustomSpacer.large),
           SizedBox(
@@ -305,7 +365,10 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                   )
                 : rows.isEmpty
                 ? Center(
-                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+                    child: Text(
+                      AppLocale.noDataForFilter.getString(context),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
+                    ),
                   )
                 : Column(
                     children: [
@@ -372,7 +435,8 @@ class EmptyMetricState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
+      width: 440,
+      height: 440,
       padding: const EdgeInsets.all(24.0),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -392,7 +456,7 @@ class EmptyMetricState extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     Text(
-                      "No hay ventas registradas",
+                      "Sin ordenes registradas",
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
                       textAlign: TextAlign.center,
                     ),
@@ -409,10 +473,10 @@ class EmptyMetricState extends StatelessWidget {
 
                       Center(
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 320), // Límite de ancho para pantallas grandes
+                          constraints: const BoxConstraints(maxWidth: 320),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch, // Se estiran, pero solo hasta 320px
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
@@ -427,7 +491,86 @@ class EmptyMetricState extends StatelessWidget {
                                   style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                                 onPressed: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderNewPage()));
+                                  if (POS.docTypesComplete.isEmpty) {
+                                    ToastMessage.show(
+                                      context: context,
+                                      message: AppLocale.noDocTypesAvailable.getString(context),
+                                      type: ToastType.help,
+                                    );
+                                    return;
+                                  }
+
+                                  showModalBottomSheet(
+                                    context: context,
+                                    backgroundColor: Theme.of(context).cardColor,
+                                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                                    builder: (BuildContext modalContext) {
+                                      final availableDocs = POS.docTypesComplete.where((doc) {
+                                        final dynamic rawId = doc['id'];
+                                        final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+
+                                        return doc['DocSubTypeSO'] != 'RM' && docTypeId != POS.docTypeRefundID;
+                                      }).toList();
+
+                                      if (availableDocs.isEmpty) {
+                                        return SafeArea(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(20.0),
+                                            child: Text(
+                                              AppLocale.noDocTypesAvailable.getString(context),
+                                              textAlign: TextAlign.center,
+                                              style: Theme.of(context).textTheme.bodyLarge,
+                                            ),
+                                          ),
+                                        );
+                                      }
+
+                                      return SafeArea(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                AppLocale.documentType.getString(context),
+                                                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              const Divider(),
+                                              ...availableDocs.map((doc) {
+                                                final dynamic rawId = doc['id'];
+                                                final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+                                                final String docName = (doc['name'] ?? doc['Name'] ?? 'Documento').toString();
+
+                                                return ListTile(
+                                                  leading: Container(
+                                                    padding: const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: Icon(Icons.transform_outlined, color: Theme.of(context).primaryColor),
+                                                  ),
+                                                  title: Text(docName, style: Theme.of(context).textTheme.bodyLarge),
+                                                  trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                                                  onTap: () {
+                                                    Navigator.pop(modalContext);
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              }),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
                                 },
                               ),
 
@@ -443,7 +586,11 @@ class EmptyMetricState extends StatelessWidget {
                                 icon: Icon(Icons.list_alt, size: 20, color: Theme.of(context).colorScheme.secondary),
                                 label: Text(
                                   AppLocale.myOrders.getString(context),
-                                  style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.secondary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                                 onPressed: () {
                                   Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderListPage()));
