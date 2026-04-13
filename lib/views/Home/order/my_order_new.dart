@@ -79,7 +79,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   Map<int, TextEditingController> paymentControllers = {};
   bool isPaymentMethodsLoading = true;
   bool isFormValid = false;
-  bool _isInvoiceValid = false;
+  bool _isInvoiceValid = false, hasLocationBPartner = false;
 
   int? selectedBPartnerID, docNoSequenceID, selectedSalesRepID, bpartnerPriceListID;
   String? selectedDocActionCode, yappyTransactionId, docNoSequenceNumber;
@@ -1328,6 +1328,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         setState(() {
                                           clienteController.text = result['bpartner']['Name'];
                                           selectedBPartnerID = result['bpartner']['id'];
+                                          hasLocationBPartner = true;
                                         });
                                         _loadBPartner(showLoadingIndicator: true);
                                       }
@@ -1388,6 +1389,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       setState(() {
                                         bpartnerPriceListID = item['M_PriceList_ID'];
                                         selectedBPartnerID = item['id'];
+                                        hasLocationBPartner = item['C_BPartner_Location_ID'] != null;
                                         if (POS.priceListID != bpartnerPriceListID) {
                                           _loadProduct(showLoadingIndicator: true);
                                         }
@@ -1485,8 +1487,28 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 16),
                                     const SizedBox(width: 4),
                                     Expanded(
+                                      //TODO traducir este texto
                                       child: Text(
                                         'Seleccione un cliente',
+                                        style: TextStyle(color: Colors.red.shade400, fontSize: 13, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            if (hasLocationBPartner == false && selectedBPartnerID != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 16),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      //TODO traducir este texto
+                                      child: Text(
+                                        'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
                                         style: TextStyle(color: Colors.red.shade400, fontSize: 13, fontWeight: FontWeight.bold),
                                       ),
                                     ),
@@ -1502,7 +1524,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       // --- ANIMACIÓN PARA PRODUCTOS ---
                       AnimatedCrossFade(
                         duration: const Duration(milliseconds: 400),
-                        crossFadeState: selectedBPartnerID == null ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                        crossFadeState: (selectedBPartnerID == null || hasLocationBPartner == false)
+                            ? CrossFadeState.showFirst
+                            : CrossFadeState.showSecond,
                         firstChild: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),
@@ -1515,8 +1539,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             children: [
                               Icon(Icons.shopping_cart_outlined, size: 48, color: Colors.grey.withOpacity(0.6)),
                               const SizedBox(height: 12),
+                              //TODO traducir este texto
                               Text(
-                                'Seleccione un cliente para poder agregar productos a la orden.',
+                                'Seleccione un cliente valido para poder agregar productos a la orden.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                               ),
