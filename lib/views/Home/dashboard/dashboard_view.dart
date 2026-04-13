@@ -127,7 +127,7 @@ class _DashboardPageState extends State<DashboardPage> {
         body: SafeArea(
           child: _isLoading
               ? const DashboardSkeleton()
-              : _hasData
+              : !_hasData
               ? const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Center(child: EmptyMetricState(showActions: true)),
