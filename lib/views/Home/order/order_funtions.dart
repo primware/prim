@@ -60,7 +60,8 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
       return [];
     }
 
-    if (priceListID != null) {
+    //? solo si no es modo POS y el tercero tiene un lista de precios asignada, se busca la versión de lista de precios para ese tercero, de lo contrario se asume que es la misma que la del POS o la estándar
+    if (priceListID != null && POS.isPOS == false) {
       bpartnerPriceListVersionID = await getMPriceListVersion(priceListID);
     }
 

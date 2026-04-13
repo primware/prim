@@ -478,8 +478,8 @@ class EmptyMetricState extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                                   elevation: 0,
@@ -549,7 +549,7 @@ class EmptyMetricState extends StatelessWidget {
                                                       color: Theme.of(context).primaryColor.withOpacity(0.1),
                                                       shape: BoxShape.circle,
                                                     ),
-                                                    child: Icon(Icons.transform_outlined, color: Theme.of(context).primaryColor),
+                                                    child: Icon(Icons.add_shopping_cart, color: Theme.of(context).primaryColor),
                                                   ),
                                                   title: Text(docName, style: Theme.of(context).textTheme.bodyLarge),
                                                   trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
@@ -576,8 +576,8 @@ class EmptyMetricState extends StatelessWidget {
 
                               const SizedBox(height: 12),
 
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
                                   elevation: 0,
