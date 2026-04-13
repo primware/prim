@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/logo.dart';
+import 'package:primware/views/Home/dashboard/dashboard_skeleton.dart';
 import '../../../API/endpoint.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
@@ -125,8 +126,8 @@ class _DashboardPageState extends State<DashboardPage> {
         drawer: const MenuDrawer(),
         body: SafeArea(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : !_hasData
+              ? const DashboardSkeleton()
+              : _hasData
               ? const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Center(child: EmptyMetricState(showActions: true)),
@@ -136,25 +137,22 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: CustomContainer(
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: DashboardCharts(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            DashboardCharts(
-                              children: [
-                                if (Charts.salesYTDBySalesRep != null)
-                                  GraphicBarMetricCard(
-                                    titleBuilder: (ctx) => AppLocale.salesYTDBySalesRep.getString(context),
-                                    initialData: _salesYTDBySalesRepData,
-                                    dataLoader: _salesYTDBySalesRepLoader,
-                                    showTotal: true,
-                                  ),
-                                if (Charts.salesPerDay != null)
-                                  GraphicBarMetricCard(
-                                    titleBuilder: (ctx) => AppLocale.salesPerDay.getString(context),
-                                    initialData: _salesPerDayData,
-                                    dataLoader: _salesPerDayLoader,
-                                  ),
-                              ],
-                            ),
+                            if (Charts.salesYTDBySalesRep != null)
+                              GraphicBarMetricCard(
+                                titleBuilder: (ctx) => AppLocale.salesYTDBySalesRep.getString(context),
+                                initialData: _salesYTDBySalesRepData,
+                                dataLoader: _salesYTDBySalesRepLoader,
+                                showTotal: true,
+                              ),
+                            if (Charts.salesPerDay != null)
+                              GraphicBarMetricCard(
+                                titleBuilder: (ctx) => AppLocale.salesPerDay.getString(context),
+                                initialData: _salesPerDayData,
+                                dataLoader: _salesPerDayLoader,
+                              ),
                           ],
                         ),
                       ),
@@ -164,23 +162,5 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
     );
-  }
-}
-
-class DashboardCharts extends StatelessWidget {
-  final List<Widget> children;
-  const DashboardCharts({super.key, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> columnChildren = [];
-    for (int i = 0; i < children.length; i++) {
-      if (i > 0) {
-        columnChildren.add(const SizedBox(height: 24));
-      }
-      columnChildren.add(children[i]);
-    }
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: columnChildren);
   }
 }
