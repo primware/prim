@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_spacer.dart';
-import 'package:graphic/graphic.dart';
 import '../../../shared/toast_message.dart';
 import '../order/my_order.dart';
 import '../order/my_order_new.dart';
