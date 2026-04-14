@@ -228,7 +228,6 @@ Future<Map<String, dynamic>> postInvoice({
         "PriceEntered": line['Price'],
         "C_Tax_ID": {"id": line['C_Tax_ID']},
         "Description": line['Description'] ?? '',
-        // if (line['Discount'] != null) "Discount": line['Discount'],
       };
     }).toList();
 
@@ -253,7 +252,11 @@ Future<Map<String, dynamic>> postInvoice({
       "InvoiceRule": "I",
       "PriorityRule": "5",
       "FreightCostRule": "I",
-      "PaymentRule": POSTenderType.isMultiPayment ? "M" : "B",
+      "PaymentRule": POSTenderType.isMultiPayment
+          ? "M" //? Múltiples Medios de Pago
+          : POS.isPOS
+          ? "B" //? Caja de Punto de Venta
+          : "P", //? Con Término de Pago
       "M_PriceList_ID": priceListID != null ? {"id": priceListID} : (POS.priceListID ?? {"identifier": "Standard"}),
       "IsSOTrx": true,
       "order-line": orderLines,
