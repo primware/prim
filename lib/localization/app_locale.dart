@@ -188,8 +188,12 @@ class AppLocale {
   static const String documentType = 'documentType';
   static const String copyToNewDocument = 'copyToNewDocument';
   static const String confirmCreateProduct = 'confirmCreateProduct';
+  static const String console = 'console';
+  static const String changeRole = 'changeRole';
 
   static const Map<String, dynamic> en = {
+    changeRole: 'Change Role',
+    console: 'Console',
     confirmCreateProduct: 'Are you sure you want to create the product?',
     copyToNewDocument: 'Copy to new operation',
     documentType: 'Commercial Operation Type',
@@ -380,6 +384,8 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    changeRole: 'Cambiar Rol',
+    console: 'Consola',
     confirmCreateProduct: '¿Está seguro de que desea crear el producto?',
     copyToNewDocument: 'Copiar a nueva operación',
     documentType: 'Tipo de operación comercial',

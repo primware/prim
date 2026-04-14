@@ -291,12 +291,13 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 //     _loadTheme();
                 //   },
                 // ),
-                _buildMenuItem(context, icon: Icons.manage_accounts_outlined, title: 'Cambiar Rol', onTap: _handleChangeRole),
+                _buildMenuItem(context, icon: Icons.manage_accounts_outlined, title: AppLocale.changeRole.getString(context), onTap: _handleChangeRole),
+
                 if (!Base.prod)
                   _buildMenuItem(
                     context,
-                    icon: Icons.settings_outlined,
-                    title: AppLocale.settings.getString(context),
+                    icon: Icons.terminal,
+                    title: AppLocale.console.getString(context),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DebugPage())),
                   ),
               ],
