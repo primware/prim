@@ -89,9 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
         if (lastBackPressed == null || now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
           lastBackPressed = now;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
 
           return false;
         }
@@ -140,24 +138,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (Charts.salesYTDBySalesRep != null)
-                              GraphicBarMetricCard(
-                                titleBuilder: (ctx) => AppLocale.salesYTDBySalesRep.getString(context),
-                                initialData: _salesYTDBySalesRepData,
-                                dataLoader: _salesYTDBySalesRepLoader,
-                                showTotal: true,
-                              ),
+                            if (Charts.salesYTDBySalesRep != null) GraphicBarMetricCard(titleBuilder: (ctx) => AppLocale.salesYTDBySalesRep.getString(context), initialData: _salesYTDBySalesRepData, dataLoader: _salesYTDBySalesRepLoader, showTotal: true),
 
-                            if (Charts.salesPerDayByProductCategory != null) ...[
-                              const SizedBox(height: CustomSpacer.medium),
-                              GraphicPieMetricCard(
-                                //TODO traducir título
-                                titleBuilder: (ctx) => 'Ventas de hoy por categoría',
-                                initialData: _salesPerDayByProductCategoryData,
-                                dataLoader: _salesPerDayByProductCategoryLoader,
-                                showTotal: true,
-                              ),
-                            ],
+                            if (Charts.salesPerDayByProductCategory != null) ...[const SizedBox(height: CustomSpacer.medium), GraphicPieMetricCard(titleBuilder: (ctx) => AppLocale.todaySalesByCategory.getString(ctx), initialData: _salesPerDayByProductCategoryData, dataLoader: _salesPerDayByProductCategoryLoader, showTotal: true)],
                           ],
                         ),
                       ),

@@ -192,8 +192,16 @@ class AppLocale {
   static const String changeRole = 'changeRole';
   static const String newCategory = 'newCategory';
   static const String confirmCreateCategory = 'confirmCreateCategory';
+  static const String todaySalesByCategory = 'todaySalesByCategory';
+  static const String selectCustomer = 'selectCustomer';
+  static const String customerNoAddressError = 'customerNoAddressError';
+  static const String selectValidCustomerForProducts = 'selectValidCustomerForProducts';
 
   static const Map<String, dynamic> en = {
+    selectValidCustomerForProducts: 'Please select a valid customer to add products to the order.',
+    selectCustomer: 'Please select a customer',
+    customerNoAddressError: 'This customer does not have a valid address. Please edit the customer to add an address before continuing.',
+    todaySalesByCategory: 'Today\'s Sales by Category',
     confirmCreateCategory: 'Are you sure you want to create this product category?',
     newCategory: 'New Category',
     changeRole: 'Change Role',
@@ -388,6 +396,10 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    selectValidCustomerForProducts: 'Seleccione un cliente válido para poder agregar productos a la orden.',
+    selectCustomer: 'Seleccione un cliente',
+    customerNoAddressError: 'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
+    todaySalesByCategory: 'Ventas de hoy por categoría',
     confirmCreateCategory: '¿Seguro que desea crear esta categoría de producto?',
     newCategory: 'Nueva Categoría',
     changeRole: 'Cambiar Rol',
