@@ -12,6 +12,7 @@ import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../theme/colors.dart';
 import '../../../shared/custom_searchfield.dart';
+import '../../../shared/toast_message.dart';
 
 class ProductNewPage extends StatefulWidget {
   final String? productName;
@@ -85,17 +86,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
       print('--- VALIDACIÓN ---');
       print('Nombre: ${nameController.text.isNotEmpty} | Precio: $isPriceValid (Raw: "$rawPrice")');
-      print(
-        'Cat: ${selectedCategoryID != null} | Tax: ${selectedTaxID != null} | Tipo: ${selectedProductType != null} | SinErrorTax: ${!_taxError}',
-      );
+      print('Cat: ${selectedCategoryID != null} | Tax: ${selectedTaxID != null} | Tipo: ${selectedProductType != null} | SinErrorTax: ${!_taxError}');
 
-      isValid =
-          nameController.text.isNotEmpty &&
-          isPriceValid &&
-          selectedCategoryID != null &&
-          selectedTaxID != null &&
-          selectedProductType != null &&
-          !_taxError;
+      isValid = nameController.text.isNotEmpty && isPriceValid && selectedCategoryID != null && selectedTaxID != null && selectedProductType != null && !_taxError;
     });
   }
 
@@ -109,9 +102,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   Future<void> _showCreateCategoryDialog(String initialName) async {
     final TextEditingController catNameController = TextEditingController(text: initialName);
-    final TextEditingController catValueController = TextEditingController();
-    final TextEditingController catDescController = TextEditingController();
     bool isCreating = false;
+    bool isCatNameValid = initialName.trim().isNotEmpty;
 
     await showDialog(
       context: context,
@@ -123,7 +115,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
               backgroundColor: Theme.of(context).cardColor,
               insetPadding: const EdgeInsets.all(16.0),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('Nueva Categoría', style: Theme.of(context).textTheme.bodyMedium),
+              title: Text(AppLocale.newCategory.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
               content: SizedBox(
                 width: 400,
                 child: Column(
@@ -132,53 +124,79 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     TextfieldTheme(
                       controlador: catNameController,
                       texto: '${AppLocale.name.getString(context)}*',
+                      colorEmpty: catNameController.text.trim().isEmpty,
                       inputType: TextInputType.text,
+                      onChanged: (value) {
+                        setModalState(() {
+                          isCatNameValid = value.trim().isNotEmpty;
+                        });
+                      },
                     ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(controlador: catValueController, texto: 'Código (Valor)', inputType: TextInputType.text),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(controlador: catDescController, texto: 'Descripción (Opcional)', inputType: TextInputType.text),
                   ],
                 ),
               ),
               actionsAlignment: MainAxisAlignment.center,
               actions: [
-                if (!isCreating)
-                  TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
+                if (!isCreating) TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
                 if (!isCreating)
                   ElevatedButton(
-                    onPressed: () async {
-                      if (catNameController.text.isEmpty) return;
+                    onPressed: isCatNameValid
+                        ? () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                backgroundColor: Theme.of(context).cardColor,
+                                title: const Column(
+                                  children: [
+                                    Icon(Icons.help_outline, size: 45, color: Colors.blueAccent),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      'Crear Categoría',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                    ),
+                                  ],
+                                ),
+                                content: Text(AppLocale.confirmCreateCategory.getString(context), textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+                                actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white),
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: Text(AppLocale.yes.getString(context)),
+                                  ),
+                                ],
+                              ),
+                            );
 
-                      setModalState(() => isCreating = true);
+                            if (confirm != true) return;
 
-                      final result = await postProductCategory(name: catNameController.text, context: context);
+                            setModalState(() => isCreating = true);
 
-                      if (!mounted) return;
+                            final result = await postProductCategory(name: catNameController.text, context: context);
 
-                      if (result['success'] == true) {
-                        final newCat = result['category'];
-                        setState(() {
-                          categories.add({'id': newCat['id'], 'name': newCat['Name'] ?? newCat['name'] ?? catNameController.text});
-                          categoryController.text = catNameController.text;
-                          selectedCategoryID = newCat['id'];
-                          categorySearchTerm = catNameController.text;
-                          _isFormValid();
-                        });
+                            if (!mounted) return;
 
-                        Navigator.pop(dialogContext);
-                        //TODO cambiar a Toast
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(const SnackBar(content: Text('Categoría creada con éxito'), backgroundColor: ColorTheme.success));
-                      } else {
-                        setModalState(() => isCreating = false);
-                        //TODO cambiar a Toast
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Error al crear'), backgroundColor: ColorTheme.error));
-                      }
-                    },
+                            if (result['success'] == true) {
+                              final newCat = result['category'];
+                              setState(() {
+                                categories.add({'id': newCat['id'], 'name': newCat['Name'] ?? newCat['name'] ?? catNameController.text});
+                                categoryController.text = catNameController.text;
+                                selectedCategoryID = newCat['id'];
+                                categorySearchTerm = catNameController.text;
+                                _isFormValid();
+                              });
+
+                              Navigator.pop(dialogContext);
+                              ToastMessage.show(context: context, message: 'Categoría creada con éxito', type: ToastType.success);
+                            } else {
+                              setModalState(() => isCreating = false);
+                              ToastMessage.show(context: context, message: result['message'] ?? 'Error al crear', type: ToastType.failure);
+                            }
+                          }
+                        : null,
                     child: Text(AppLocale.save.getString(context)),
                   ),
                 if (isCreating) const CircularProgressIndicator(),
@@ -202,10 +220,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                AppLocale.save.getString(context),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
-              ),
+              child: Text(AppLocale.save.getString(context), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface)),
             ),
           ],
         );
@@ -218,16 +233,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     String finalPrice = priceController.text.trim().replaceAll(',', '.');
 
-    final result = await postProduct(
-      name: nameController.text,
-      sku: skuController.text,
-      upc: upcController.text,
-      taxID: selectedTaxID!,
-      categoryID: selectedCategoryID!,
-      price: finalPrice,
-      productType: selectedProductType!,
-      context: context,
-    );
+    final result = await postProduct(name: nameController.text, sku: skuController.text, upc: upcController.text, taxID: selectedTaxID!, categoryID: selectedCategoryID!, price: finalPrice, productType: selectedProductType!, context: context);
 
     if (!mounted) return;
 
@@ -266,12 +272,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                 children: [
                   TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: nameController,
-                    texto: '${AppLocale.name.getString(context)}*',
-                    colorEmpty: nameController.text.isEmpty,
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: nameController, texto: '${AppLocale.name.getString(context)}*', colorEmpty: nameController.text.isEmpty, inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(controlador: upcController, texto: AppLocale.upc.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),

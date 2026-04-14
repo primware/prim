@@ -190,8 +190,12 @@ class AppLocale {
   static const String confirmCreateProduct = 'confirmCreateProduct';
   static const String console = 'console';
   static const String changeRole = 'changeRole';
+  static const String newCategory = 'newCategory';
+  static const String confirmCreateCategory = 'confirmCreateCategory';
 
   static const Map<String, dynamic> en = {
+    confirmCreateCategory: 'Are you sure you want to create this product category?',
+    newCategory: 'New Category',
     changeRole: 'Change Role',
     console: 'Console',
     confirmCreateProduct: 'Are you sure you want to create the product?',
@@ -384,6 +388,8 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    confirmCreateCategory: '¿Seguro que desea crear esta categoría de producto?',
+    newCategory: 'Nueva Categoría',
     changeRole: 'Cambiar Rol',
     console: 'Consola',
     confirmCreateProduct: '¿Está seguro de que desea crear el producto?',
