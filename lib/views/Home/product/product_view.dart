@@ -306,6 +306,7 @@ class _ProductListPageState extends State<ProductListPage> {
               backgroundColor: Theme.of(context).cardColor,
               insetPadding: const EdgeInsets.all(16.0),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              //TODO Traducir 'Nueva Categoría'
               title: Text('Nueva Categoría', style: Theme.of(context).textTheme.bodyMedium),
               content: SizedBox(
                 width: 400,
@@ -325,6 +326,7 @@ class _ProductListPageState extends State<ProductListPage> {
                 if (!isCreating)
                   TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
                 if (!isCreating)
+                  //TODO agregar un dialogo de confirmacion, para evitar crear categorias por error
                   ElevatedButton(
                     onPressed: () async {
                       if (catNameController.text.isEmpty) return;
@@ -400,9 +402,10 @@ class _ProductListPageState extends State<ProductListPage> {
                       const SizedBox(height: 10),
                       FloatingActionButton.extended(
                         heroTag: 'prodBtn',
-                        onPressed: () {
+                        onPressed: () async {
                           setState(() => _isFabExpanded = false);
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductNewPage()));
+                          final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductNewPage()));
+                          if (result['created'] == true) _loadProduct(showLoadingIndicator: true);
                         },
                         icon: const Icon(Icons.inventory_2),
                         label: const Text('Crear Producto'),

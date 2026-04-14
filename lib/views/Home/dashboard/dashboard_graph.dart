@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_spacer.dart';
-import 'package:graphic/graphic.dart';
 import '../../../shared/toast_message.dart';
 import '../order/my_order.dart';
 import '../order/my_order_new.dart';
@@ -19,6 +18,7 @@ class GraphicBarMetricCard extends StatefulWidget {
   final ChartDataLoader dataLoader;
   final bool showRefresh;
   final bool showTotal;
+  final String? subtitle;
   final Map<String, double> initialData;
 
   const GraphicBarMetricCard({
@@ -27,6 +27,7 @@ class GraphicBarMetricCard extends StatefulWidget {
     required this.dataLoader,
     this.showRefresh = true,
     this.showTotal = false,
+    this.subtitle,
     this.initialData = const {},
   });
 
@@ -101,17 +102,30 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // 👇 1. Centramos los elementos de la columna
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
             children: [
               if (widget.showRefresh) const SizedBox(width: 48),
 
               Expanded(
-                child: Text(
-                  widget.titleBuilder(context),
-                  textAlign: TextAlign.center, // 👇 2. Centramos el texto del título
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                child: Column(
+                  children: [
+                    Text(
+                      widget.titleBuilder(context),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    if (widget.subtitle != null && widget.subtitle!.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          widget.subtitle!,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                        ),
+                      ),
+                  ],
                 ),
               ),
 
@@ -131,7 +145,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
               padding: const EdgeInsets.only(top: 4, bottom: 8),
               child: Text(
                 'Total: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
-                textAlign: TextAlign.center, // 👇 3. Centramos el texto del Total
+                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: primaryColor),
               ),
             ),
@@ -171,11 +185,13 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                             getTooltipItem: (group, groupIndex, rod, rodIndex) {
                               return BarTooltipItem(
                                 '${entries[group.x].key}\n',
-                                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white70, fontWeight: FontWeight.bold),
                                 children: <TextSpan>[
                                   TextSpan(
                                     text: '${POS.currencySymbol} ${totalFmt.format(rod.toY)}',
-                                    style: TextStyle(color: secondaryColor, fontWeight: FontWeight.w600, fontSize: 14),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontWeight: FontWeight.w500),
                                   ),
                                 ],
                               );
@@ -266,7 +282,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                           );
                         }),
                       ),
-                      swapAnimationDuration: const Duration(milliseconds: 350),
+                      swapAnimationDuration: const Duration(milliseconds: 150),
                       swapAnimationCurve: Curves.easeInOut,
                     ),
                   ),
@@ -281,8 +297,19 @@ class GraphicPieMetricCard extends StatefulWidget {
   final String Function(BuildContext) titleBuilder;
   final ChartDataLoader dataLoader;
   final bool showRefresh;
+  final bool showTotal;
+  final String? subtitle;
+  final Map<String, double> initialData;
 
-  const GraphicPieMetricCard({super.key, required this.titleBuilder, required this.dataLoader, this.showRefresh = true});
+  const GraphicPieMetricCard({
+    super.key,
+    required this.titleBuilder,
+    required this.dataLoader,
+    this.showRefresh = true,
+    this.showTotal = false,
+    this.subtitle,
+    this.initialData = const {},
+  });
 
   @override
   State<GraphicPieMetricCard> createState() => _GraphicPieMetricCardState();
@@ -291,11 +318,18 @@ class GraphicPieMetricCard extends StatefulWidget {
 class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
   Map<String, double> rawChartData = {};
   bool isLoading = true;
+  int touchedIndex = -1;
 
   @override
   void initState() {
     super.initState();
-    _load();
+
+    if (widget.initialData.isNotEmpty) {
+      rawChartData = Map<String, double>.from(widget.initialData);
+      isLoading = false;
+    } else {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -309,8 +343,25 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
     _load();
   }
 
+  @override
+  void didUpdateWidget(covariant GraphicPieMetricCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.initialData != widget.initialData && widget.initialData.isNotEmpty) {
+      setState(() {
+        rawChartData = Map<String, double>.from(widget.initialData);
+        isLoading = false;
+      });
+    }
+  }
+
   List<Map<String, Object>> _chartRows() {
     return rawChartData.entries.where((entry) => entry.value > 0).map((entry) => {'category': entry.key, 'value': entry.value}).toList();
+  }
+
+  double _totalValue() {
+    if (rawChartData.isEmpty) return 0;
+    return rawChartData.values.fold(0.0, (sum, value) => sum + value);
   }
 
   @override
@@ -326,6 +377,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
       Colors.redAccent,
       Colors.indigo,
     ];
+    final totalFmt = NumberFormat('#,##0.00', 'en_US');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -337,18 +389,52 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            widget.titleBuilder(context),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              if (widget.showRefresh) const SizedBox(width: 48),
+
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      widget.titleBuilder(context),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    if (widget.subtitle != null && widget.subtitle!.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          widget.subtitle!,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              if (widget.showRefresh)
+                SizedBox(
+                  width: 48,
+                  child: IconButton(
+                    tooltip: 'Refrescar',
+                    icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500),
+                    onPressed: isLoading ? null : _reload,
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 16),
-          if (widget.showRefresh)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(tooltip: 'Refrescar', icon: const Icon(Icons.refresh, size: 20), onPressed: isLoading ? null : _reload),
-              ],
+          if (widget.showTotal)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 8),
+              child: Text(
+                'Total: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary),
+              ),
             ),
           const SizedBox(height: CustomSpacer.large),
           SizedBox(
@@ -373,28 +459,105 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                 : Column(
                     children: [
                       Expanded(
-                        child: Chart(
-                          data: rows,
-                          variables: {
-                            'category': Variable(accessor: (Map map) => map['category'] as String),
-                            'value': Variable(accessor: (Map map) => map['value'] as num),
-                          },
-                          transforms: [Proportion(variable: 'value', as: 'percent')],
-                          marks: [
-                            IntervalMark(
-                              position: Varset('percent') / Varset('category'),
-                              color: ColorEncode(variable: 'category', values: colors),
-                              label: LabelEncode(
-                                encoder: (tuple) => Label(
-                                  tuple['category']?.toString(),
-                                  LabelStyle(
-                                    textStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            PieChart(
+                              PieChartData(
+                                centerSpaceRadius: 44,
+                                sectionsSpace: 2,
+                                pieTouchData: PieTouchData(
+                                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                    setState(() {
+                                      if (!event.isInterestedForInteractions ||
+                                          pieTouchResponse == null ||
+                                          pieTouchResponse.touchedSection == null) {
+                                        touchedIndex = -1;
+                                        return;
+                                      }
+
+                                      touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                                    });
+                                  },
+                                ),
+                                sections: List.generate(rows.length, (index) {
+                                  final row = rows[index];
+                                  final color = colors[index % colors.length];
+                                  final value = (row['value'] as num).toDouble();
+                                  final total = _totalValue();
+                                  final percent = total > 0 ? (value / total) * 100 : 0.0;
+                                  final isTouched = index == touchedIndex;
+
+                                  return PieChartSectionData(
+                                    color: color,
+                                    value: value,
+                                    radius: isTouched ? 112 : 98,
+                                    title: '${percent.toStringAsFixed(0)}%',
+                                    titleStyle: TextStyle(fontSize: isTouched ? 14 : 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                  );
+                                }),
+                              ),
+                              swapAnimationDuration: const Duration(milliseconds: 180),
+                              swapAnimationCurve: Curves.easeInOut,
+                            ),
+                            if (touchedIndex >= 0 && touchedIndex < rows.length)
+                              Positioned(
+                                top: 20,
+                                child: IgnorePointer(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey.shade800
+                                          : Colors.blueGrey.shade900,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Builder(
+                                      builder: (context) {
+                                        final row = rows[touchedIndex];
+                                        final value = (row['value'] as num).toDouble();
+                                        final percent = _totalValue() > 0 ? (value / _totalValue()) * 100 : 0.0;
+
+                                        return Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              row['category'].toString(),
+                                              textAlign: TextAlign.center,
+                                              style:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontWeight: FontWeight.bold) ??
+                                                  const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${POS.currencySymbol} ${totalFmt.format(value)}',
+                                              textAlign: TextAlign.center,
+                                              style:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700) ??
+                                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${percent.toStringAsFixed(1)}%',
+                                              textAlign: TextAlign.center,
+                                              style:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall?.copyWith(color: Colors.white70, fontWeight: FontWeight.w500) ??
+                                                  const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
                           ],
-                          coord: PolarCoord(transposed: true, dimCount: 1, startRadius: 0.25),
                         ),
                       ),
                       const SizedBox(height: 12),
