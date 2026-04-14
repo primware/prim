@@ -29,15 +29,17 @@ class _DebugPageState extends State<DebugPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12),
-            ),
+            flex: 1,
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
           ),
           Expanded(
-            flex: 3, // Toma el 60% del espacio para el valor
-            child: SelectableText(value, style: const TextStyle(fontSize: 12, fontFamily: 'Courier')),
+            flex: 3,
+            child: SelectableText(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primaryContainer),
+            ),
           ),
         ],
       ),
@@ -47,8 +49,6 @@ class _DebugPageState extends State<DebugPage> {
   @override
   Widget build(BuildContext context) {
     final isProd = Base.prod;
-    final primaryColor = Theme.of(context).colorScheme.primary;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       drawer: const MenuDrawer(),
@@ -59,7 +59,6 @@ class _DebugPageState extends State<DebugPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- BLOQUE 1: TARJETA DE ESTADO DEL SERVIDOR ---
             Container(
               decoration: BoxDecoration(
                 color: isProd ? Colors.green.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
@@ -77,8 +76,14 @@ class _DebugPageState extends State<DebugPage> {
                       Icon(isProd ? Icons.cloud_done : Icons.dns, color: isProd ? Colors.green : Colors.blue),
                       const SizedBox(width: 10),
                       Text(
-                        isProd ? 'ENTORNO DE PRODUCCIÓN' : 'ENTORNO DE DESARROLLO',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: isProd ? Colors.green : Colors.blue, letterSpacing: 1.1, fontSize: 13),
+                        //TODO traducir
+                        'Parametros del Sistema',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isProd ? Colors.green : Colors.blue,
+                          letterSpacing: 1.1,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -91,30 +96,41 @@ class _DebugPageState extends State<DebugPage> {
                   children: [
                     const Divider(),
                     const SizedBox(height: 8),
-
+                    //TODO Traducir todos estos textos
                     _buildInfoRow('Producción:', '${Base.prod}'),
-                    _buildInfoRow('URL Base:', '${Base.baseURL}'),
-                    const SizedBox(height: 12),
+                    _buildInfoRow('Instancia:', '${Base.baseURL}'),
+                    const SizedBox(height: CustomSpacer.medium),
 
+                    _buildInfoRow('Es punto de Venta:', '${POS.isPOS}'),
                     _buildInfoRow('POS priceListID:', '${POS.priceListID}'),
                     _buildInfoRow('POS versionID:', '${POS.priceListVersionID}'),
                     _buildInfoRow('POS docTypeID:', '${POS.docTypeID}'),
-                    _buildInfoRow('POS templateID:', '${POS.templatePartnerID}'),
-                    _buildInfoRow('POS isPOS:', '${POS.isPOS}'),
-                    const SizedBox(height: 12),
+                    _buildInfoRow('POS docTypeName:', '${POS.docTypeName}'),
+                    _buildInfoRow('POS docTypeRefundID:', '${POS.docTypeRefundID}'),
+                    _buildInfoRow('POS docTypeRefundName:', '${POS.docTypeRefundName}'),
+                    _buildInfoRow('POS templatePartnerID:', '${POS.templatePartnerID}'),
+                    _buildInfoRow('POS templatePartnerName:', '${POS.templatePartnerName}'),
+                    const SizedBox(height: CustomSpacer.medium),
 
-                    _buildInfoRow('User ID:', '${UserData.id}'),
-                    _buildInfoRow('User Rol:', '${UserData.rolName}'),
-                    _buildInfoRow('User Client:', '${UserData.clientName}'),
-                    _buildInfoRow('User Name:', '${UserData.name}'),
-                    _buildInfoRow('User Email:', '${UserData.email}'),
-                    const SizedBox(height: 12),
+                    _buildInfoRow('User_ID:', '${UserData.id}'),
+                    _buildInfoRow('Nombre:', '${UserData.name}'),
+                    _buildInfoRow('Correo:', '${UserData.email}'),
+                    const SizedBox(height: CustomSpacer.medium),
 
-                    _buildInfoRow('Token Auth:', Token.auth ?? 'Sin Token Activo'),
-                    _buildInfoRow('Token Client:', '${Token.client}'),
-                    _buildInfoRow('Token Rol:', '${Token.rol}'),
-                    _buildInfoRow('Token Org:', '${Token.organitation}'),
-                    _buildInfoRow('Token WH ID:', '${Token.warehouseID}'),
+                    _buildInfoRow('Empresa:', '${UserData.clientName}'),
+                    _buildInfoRow('Empresa_ID:', '${Token.client}'),
+                    _buildInfoRow('Rol:', '${UserData.rolName}'),
+                    _buildInfoRow('Rol_ID:', '${Token.rol}'),
+                    _buildInfoRow('Org_ID:', '${Token.organitation}'),
+                    _buildInfoRow('Almacen_ID:', '${Token.warehouseID}'),
+
+                    const SizedBox(height: CustomSpacer.medium),
+                    _buildInfoRow('Printer headerName:', '${POSPrinter.headerName}'),
+                    _buildInfoRow('Printer headerAddress:', '${POSPrinter.headerAddress}'),
+                    _buildInfoRow('Printer headerTaxID:', '${POSPrinter.headerTaxID}'),
+                    _buildInfoRow('Printer headerDV:', '${POSPrinter.headerDV}'),
+                    _buildInfoRow('Printer headerPhone:', '${POSPrinter.headerPhone}'),
+                    _buildInfoRow('Printer headerEmail:', '${POSPrinter.headerEmail}'),
                   ],
                 ),
               ),
@@ -122,7 +138,6 @@ class _DebugPageState extends State<DebugPage> {
 
             const SizedBox(height: 24),
 
-            // --- BLOQUE 2: CABECERA DE LA TERMINAL ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -133,18 +148,21 @@ class _DebugPageState extends State<DebugPage> {
                     Text('Logs del Sistema', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   ],
                 ),
-                TextButton.icon(onPressed: () => setState(() => CurrentLogMessage.log.clear()), icon: const Icon(Icons.delete_sweep_outlined, size: 20), label: const Text('Limpiar')),
+                TextButton.icon(
+                  onPressed: () => setState(() => CurrentLogMessage.log.clear()),
+                  icon: const Icon(Icons.delete_sweep_outlined, size: 20),
+                  label: const Text('Limpiar'),
+                ),
               ],
             ),
 
             const SizedBox(height: 12),
 
-            // --- BLOQUE 3: TERMINAL ---
             Container(
               height: MediaQuery.of(context).size.height * 0.55,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E), // Fondo oscuro de consola real
+                color: const Color(0xFF1E1E1E),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
               ),

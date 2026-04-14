@@ -237,6 +237,84 @@ Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({required BuildC
   }
 }
 
+Future<Map<String, double>> fetchSalesPerDayByProductCategory({required BuildContext context, int dayOffset = 0}) async {
+  try {
+    await usuarioAuth(context: context);
+
+    final chartUrl = Charts.salesPerDayByProductCategory;
+    if (chartUrl == null) {
+      return {};
+    }
+
+    final response = await get(
+      Uri.parse(chartUrl),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
+
+    if (response.statusCode != 200) {
+      CurrentLogMessage.add(
+        'Error fetchSalesPerDayByProductCategory: ${response.statusCode}, ${response.body}',
+        level: 'ERROR',
+        tag: 'fetchSalesPerDayByProductCategory',
+      );
+      debugPrint(
+        'Error al obtener datos del gráfico Sales Per Day By Product Category '
+        '(status ${response.statusCode}): ${response.body}',
+      );
+      return {};
+    }
+
+    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+    final List data = (jsonResponse['data'] as List?) ?? [];
+
+    final now = DateTime.now();
+    final targetDate = DateTime(now.year, now.month, now.day).add(Duration(days: dayOffset));
+
+    final Map<String, double> salesByCategory = {};
+
+    for (final item in data) {
+      final String? categoryName = item['row']?.toString();
+      final String? columnDate = item['column']?.toString();
+      final dynamic rawValue = item['value'];
+
+      if (categoryName == null || categoryName.trim().isEmpty || columnDate == null || columnDate.trim().isEmpty || rawValue == null) {
+        continue;
+      }
+
+      final num? value = rawValue is num ? rawValue : num.tryParse(rawValue.toString());
+      if (value == null) continue;
+
+      DateTime? parsedDate;
+      try {
+        parsedDate = DateTime.parse(columnDate.replaceFirst(' ', 'T'));
+      } catch (_) {
+        try {
+          parsedDate = DateTime.parse(columnDate.split('').first);
+        } catch (e) {
+          debugPrint('No se pudo parsear fecha column="$columnDate": $e');
+          continue;
+        }
+      }
+
+      final itemDate = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+
+      if (itemDate.year != targetDate.year || itemDate.month != targetDate.month || itemDate.day != targetDate.day) {
+        continue;
+      }
+
+      salesByCategory[categoryName] = (salesByCategory[categoryName] ?? 0) + value.toDouble();
+    }
+
+    final orderedEntries = salesByCategory.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    return {for (final entry in orderedEntries) entry.key: entry.value};
+  } catch (e) {
+    CurrentLogMessage.add('Excepción en fetchSalesPerDayByProductCategory: $e', level: 'ERROR', tag: 'fetchSalesPerDayByProductCategory');
+    debugPrint('Error en fetchSalesPerDayByProductCategory: $e');
+    return {};
+  }
+}
+
 Future<bool> updateOrgLogo(Uint8List fileBytes, BuildContext context) async {
   try {
     final getResp = await get(

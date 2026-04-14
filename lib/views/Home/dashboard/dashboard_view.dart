@@ -27,17 +27,17 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _hasData = false;
 
   Map<String, double> _salesYTDBySalesRepData = {};
-  Map<String, double> _salesPerDayData = {};
+  Map<String, double> _salesPerDayByProductCategoryData = {};
 
   late final ChartDataLoader _salesYTDBySalesRepLoader;
-  late final ChartDataLoader _salesPerDayLoader;
+  late final ChartDataLoader _salesPerDayByProductCategoryLoader;
 
   @override
   void initState() {
     super.initState();
 
     _salesYTDBySalesRepLoader = ({required context}) => fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: 0);
-    _salesPerDayLoader = ({required context}) => fetchSalesPerDay(context: context, monthOffset: 0);
+    _salesPerDayByProductCategoryLoader = ({required context}) => fetchSalesPerDayByProductCategory(context: context, dayOffset: 0);
     _checkDashboardData();
   }
 
@@ -45,7 +45,7 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() => _isLoading = true);
 
     Map<String, double> ytdData = _salesYTDBySalesRepData;
-    Map<String, double> dailyData = _salesPerDayData;
+    Map<String, double> productCategoryData = _salesPerDayByProductCategoryData;
 
     final List<Future<void>> futures = [];
 
@@ -57,10 +57,10 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
-    if (Charts.salesPerDay != null && dailyData.isEmpty) {
+    if (Charts.salesPerDayByProductCategory != null && productCategoryData.isEmpty) {
       futures.add(
-        _salesPerDayLoader(context: context).then((value) {
-          dailyData = value;
+        _salesPerDayByProductCategoryLoader(context: context).then((value) {
+          productCategoryData = value;
         }),
       );
     }
@@ -73,8 +73,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
     setState(() {
       _salesYTDBySalesRepData = ytdData;
-      _salesPerDayData = dailyData;
-      _hasData = ytdData.isNotEmpty || dailyData.isNotEmpty;
+      _salesPerDayByProductCategoryData = productCategoryData;
+      _hasData = ytdData.isNotEmpty || productCategoryData.isNotEmpty;
       _isLoading = false;
     });
   }
@@ -147,12 +147,17 @@ class _DashboardPageState extends State<DashboardPage> {
                                 dataLoader: _salesYTDBySalesRepLoader,
                                 showTotal: true,
                               ),
-                            if (Charts.salesPerDay != null)
-                              GraphicBarMetricCard(
-                                titleBuilder: (ctx) => AppLocale.salesPerDay.getString(context),
-                                initialData: _salesPerDayData,
-                                dataLoader: _salesPerDayLoader,
+
+                            if (Charts.salesPerDayByProductCategory != null) ...[
+                              const SizedBox(height: CustomSpacer.medium),
+                              GraphicPieMetricCard(
+                                //TODO traducir título
+                                titleBuilder: (ctx) => 'Ventas de hoy por categoría',
+                                initialData: _salesPerDayByProductCategoryData,
+                                dataLoader: _salesPerDayByProductCategoryLoader,
+                                showTotal: true,
                               ),
+                            ],
                           ],
                         ),
                       ),

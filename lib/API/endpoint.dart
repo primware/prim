@@ -160,8 +160,11 @@ class Charts {
   static int? salesYTDID;
   static int? salesPerDayID;
   static int? salesYTDBySalesRepID;
+  static int? salesPerDayByProductCategoryID;
 
   static String? get salesYTD => salesYTDID != null ? '${Base.baseURL}/api/v1/charts/$salesYTDID/data' : null;
   static String? get salesPerDay => salesPerDayID != null ? '${Base.baseURL}/api/v1/charts/$salesPerDayID/data' : null;
   static String? get salesYTDBySalesRep => salesYTDBySalesRepID != null ? '${Base.baseURL}/api/v1/charts/$salesYTDBySalesRepID/data' : null;
+  static String? get salesPerDayByProductCategory =>
+      salesPerDayByProductCategoryID != null ? '${Base.baseURL}/api/v1/charts/$salesPerDayByProductCategoryID/data' : null;
 }

@@ -253,12 +253,7 @@ Future<void> _loadPOSData(BuildContext context) async {
       final records = decoded['records'] as List?;
 
       if (records == null || records.isEmpty) {
-        // CurrentLogMessage.add(
-        //   'No hay Terminal PDV configurado para este usuario, obteniendo datos por defecto del priceList',
-        //   level: 'ERROR',
-        //   tag: '_loadPOSData',
-        // );
-        debugPrint('No hay Terminal PDV configurado para este usuario, obteniendo datos por defecto del priceList');
+        //? No hay Terminal PDV configurado para este usuario, obteniendo datos por defecto del priceList
         POS.priceListID ??= await _getMPriceListID();
         POS.priceListVersionID = await getMPriceListVersion(POS.priceListID ?? 0);
         await fetchTaxs();
@@ -516,6 +511,7 @@ Future<void> _loadChartIDs() async {
   Charts.salesYTDID = await _getChartIDByName('Sales YTD');
   Charts.salesPerDayID = await _getChartIDByName('Sales Per Day');
   Charts.salesYTDBySalesRepID = await _getChartIDByName('Sales YTD By SalesRep');
+  Charts.salesPerDayByProductCategoryID = await _getChartIDByName('Sales Per Day By Product Category');
 }
 
 Future<List<Map<String, dynamic>>?> getOrganizationsAfterLogin(BuildContext context) async {
