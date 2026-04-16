@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/API/endpoint.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/API/token.api.dart';
 import 'package:primware/API/user.api.dart';
+import 'package:primware/localization/app_locale.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/footer.dart';
@@ -36,9 +38,7 @@ class _DebugPageState extends State<DebugPage> {
             flex: 3,
             child: SelectableText(
               value,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primaryContainer),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primaryContainer),
             ),
           ),
         ],
@@ -76,32 +76,25 @@ class _DebugPageState extends State<DebugPage> {
                       Icon(isProd ? Icons.cloud_done : Icons.dns, color: isProd ? Colors.green : Colors.blue),
                       const SizedBox(width: 10),
                       Text(
-                        //TODO traducir
-                        'Parametros del Sistema',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isProd ? Colors.green : Colors.blue,
-                          letterSpacing: 1.1,
-                          fontSize: 13,
-                        ),
+                        AppLocale.systemParameters.getString(context),
+                        style: TextStyle(fontWeight: FontWeight.bold, color: isProd ? Colors.green : Colors.blue, letterSpacing: 1.1, fontSize: 13),
                       ),
                     ],
                   ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 6.0),
-                    child: Text(Base.baseURL ?? 'URL no disponible', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    child: Text(Base.baseURL ?? AppLocale.urlNotAvailable.getString(context), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   ),
                   childrenPadding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
                   expandedCrossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Divider(),
                     const SizedBox(height: 8),
-                    //TODO Traducir todos estos textos
-                    _buildInfoRow('Producción:', '${Base.prod}'),
-                    _buildInfoRow('Instancia:', '${Base.baseURL}'),
+                    _buildInfoRow(AppLocale.production.getString(context), '${Base.prod}'),
+                    _buildInfoRow(AppLocale.instance.getString(context), '${Base.baseURL}'),
                     const SizedBox(height: CustomSpacer.medium),
 
-                    _buildInfoRow('Es punto de Venta:', '${POS.isPOS}'),
+                    _buildInfoRow(AppLocale.isPointOfSale.getString(context), '${POS.isPOS}'),
                     _buildInfoRow('POS priceListID:', '${POS.priceListID}'),
                     _buildInfoRow('POS versionID:', '${POS.priceListVersionID}'),
                     _buildInfoRow('POS docTypeID:', '${POS.docTypeID}'),
@@ -113,13 +106,13 @@ class _DebugPageState extends State<DebugPage> {
                     const SizedBox(height: CustomSpacer.medium),
 
                     _buildInfoRow('User_ID:', '${UserData.id}'),
-                    _buildInfoRow('Nombre:', '${UserData.name}'),
-                    _buildInfoRow('Correo:', '${UserData.email}'),
+                    _buildInfoRow(AppLocale.name.getString(context), '${UserData.name}'),
+                    _buildInfoRow(AppLocale.email.getString(context), '${UserData.email}'),
                     const SizedBox(height: CustomSpacer.medium),
 
-                    _buildInfoRow('Empresa:', '${UserData.clientName}'),
+                    _buildInfoRow(AppLocale.company.getString(context), '${UserData.clientName}'),
                     _buildInfoRow('Empresa_ID:', '${Token.client}'),
-                    _buildInfoRow('Rol:', '${UserData.rolName}'),
+                    _buildInfoRow(AppLocale.role.getString(context), '${UserData.rolName}'),
                     _buildInfoRow('Rol_ID:', '${Token.rol}'),
                     _buildInfoRow('Org_ID:', '${Token.organitation}'),
                     _buildInfoRow('Almacen_ID:', '${Token.warehouseID}'),
@@ -148,11 +141,7 @@ class _DebugPageState extends State<DebugPage> {
                     Text('Logs del Sistema', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   ],
                 ),
-                TextButton.icon(
-                  onPressed: () => setState(() => CurrentLogMessage.log.clear()),
-                  icon: const Icon(Icons.delete_sweep_outlined, size: 20),
-                  label: const Text('Limpiar'),
-                ),
+                TextButton.icon(onPressed: () => setState(() => CurrentLogMessage.log.clear()), icon: const Icon(Icons.delete_sweep_outlined, size: 20), label: const Text('Limpiar')),
               ],
             ),
 

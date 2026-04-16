@@ -241,21 +241,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     if (result['success'] == true) {
       Navigator.pop(context, {'created': true, 'product': result['product']});
-      //TODO cambiar a Toast
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(child: Text(AppLocale.productCreatedSuccessfully.getString(context))),
-          backgroundColor: ColorTheme.success,
-        ),
-      );
+      ToastMessage.show(context: context, message: AppLocale.productCreatedSuccessfully.getString(context), type: ToastType.success);
     } else {
-      //TODO cambiar a Toast
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(child: Text(AppLocale.errorCreatingProduct.getString(context))),
-          backgroundColor: ColorTheme.error,
-        ),
-      );
+      ToastMessage.show(context: context, message: AppLocale.errorCreatingProduct.getString(context), type: ToastType.failure);
     }
   }
 

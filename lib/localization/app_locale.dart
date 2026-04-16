@@ -196,8 +196,18 @@ class AppLocale {
   static const String selectCustomer = 'selectCustomer';
   static const String customerNoAddressError = 'customerNoAddressError';
   static const String selectValidCustomerForProducts = 'selectValidCustomerForProducts';
+  static const String systemParameters = 'systemParameters';
+  static const String urlNotAvailable = 'urlNotAvailable';
+  static const String production = 'production';
+  static const String instance = 'instance';
+  static const String isPointOfSale = 'isPointOfSale';
 
   static const Map<String, dynamic> en = {
+    systemParameters: 'Parámetros del Sistema',
+    urlNotAvailable: 'URL no disponible',
+    production: 'Producción:',
+    instance: 'Instancia:',
+    isPointOfSale: 'Es Punto de Venta:',
     selectValidCustomerForProducts: 'Please select a valid customer to add products to the order.',
     selectCustomer: 'Please select a customer',
     customerNoAddressError: 'This customer does not have a valid address. Please edit the customer to add an address before continuing.',
