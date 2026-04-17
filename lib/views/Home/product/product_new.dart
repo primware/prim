@@ -10,7 +10,6 @@ import '../../../shared/custom_dropdown.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
-import '../../../theme/colors.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/toast_message.dart';
 
@@ -86,9 +85,17 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
       print('--- VALIDACIÓN ---');
       print('Nombre: ${nameController.text.isNotEmpty} | Precio: $isPriceValid (Raw: "$rawPrice")');
-      print('Cat: ${selectedCategoryID != null} | Tax: ${selectedTaxID != null} | Tipo: ${selectedProductType != null} | SinErrorTax: ${!_taxError}');
+      print(
+        'Cat: ${selectedCategoryID != null} | Tax: ${selectedTaxID != null} | Tipo: ${selectedProductType != null} | SinErrorTax: ${!_taxError}',
+      );
 
-      isValid = nameController.text.isNotEmpty && isPriceValid && selectedCategoryID != null && selectedTaxID != null && selectedProductType != null && !_taxError;
+      isValid =
+          nameController.text.isNotEmpty &&
+          isPriceValid &&
+          selectedCategoryID != null &&
+          selectedTaxID != null &&
+          selectedProductType != null &&
+          !_taxError;
     });
   }
 
@@ -115,7 +122,10 @@ class _ProductNewPageState extends State<ProductNewPage> {
               backgroundColor: Theme.of(context).cardColor,
               insetPadding: const EdgeInsets.all(16.0),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text(AppLocale.newCategory.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+              title: Text(
+                AppLocale.newCategory.getString(context),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
               content: SizedBox(
                 width: 400,
                 child: Column(
@@ -137,7 +147,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
               ),
               actionsAlignment: MainAxisAlignment.center,
               actions: [
-                if (!isCreating) TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
+                if (!isCreating)
+                  TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
                 if (!isCreating)
                   ElevatedButton(
                     onPressed: isCatNameValid
@@ -158,12 +169,19 @@ class _ProductNewPageState extends State<ProductNewPage> {
                                     ),
                                   ],
                                 ),
-                                content: Text(AppLocale.confirmCreateCategory.getString(context), textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+                                content: Text(
+                                  AppLocale.confirmCreateCategory.getString(context),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
                                 actionsAlignment: MainAxisAlignment.spaceEvenly,
                                 actions: [
                                   TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
                                   ElevatedButton(
-                                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Colors.white,
+                                    ),
                                     onPressed: () => Navigator.pop(ctx, true),
                                     child: Text(AppLocale.yes.getString(context)),
                                   ),
@@ -220,7 +238,10 @@ class _ProductNewPageState extends State<ProductNewPage> {
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(AppLocale.save.getString(context), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface)),
+              child: Text(
+                AppLocale.save.getString(context),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
+              ),
             ),
           ],
         );
@@ -233,7 +254,16 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     String finalPrice = priceController.text.trim().replaceAll(',', '.');
 
-    final result = await postProduct(name: nameController.text, sku: skuController.text, upc: upcController.text, taxID: selectedTaxID!, categoryID: selectedCategoryID!, price: finalPrice, productType: selectedProductType!, context: context);
+    final result = await postProduct(
+      name: nameController.text,
+      sku: skuController.text,
+      upc: upcController.text,
+      taxID: selectedTaxID!,
+      categoryID: selectedCategoryID!,
+      price: finalPrice,
+      productType: selectedProductType!,
+      context: context,
+    );
 
     if (!mounted) return;
 
@@ -260,7 +290,12 @@ class _ProductNewPageState extends State<ProductNewPage> {
                 children: [
                   TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(controlador: nameController, texto: '${AppLocale.name.getString(context)}*', colorEmpty: nameController.text.isEmpty, inputType: TextInputType.text),
+                  TextfieldTheme(
+                    controlador: nameController,
+                    texto: '${AppLocale.name.getString(context)}*',
+                    colorEmpty: nameController.text.isEmpty,
+                    inputType: TextInputType.text,
+                  ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(controlador: upcController, texto: AppLocale.upc.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),

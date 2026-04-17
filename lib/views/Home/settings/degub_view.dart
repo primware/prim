@@ -31,14 +31,16 @@ class _DebugPageState extends State<DebugPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            flex: 1,
+            flex: 4,
             child: Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
           ),
           Expanded(
-            flex: 3,
+            flex: 4,
             child: SelectableText(
               value,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primaryContainer),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primaryContainer),
             ),
           ),
         ],
@@ -77,13 +79,21 @@ class _DebugPageState extends State<DebugPage> {
                       const SizedBox(width: 10),
                       Text(
                         AppLocale.systemParameters.getString(context),
-                        style: TextStyle(fontWeight: FontWeight.bold, color: isProd ? Colors.green : Colors.blue, letterSpacing: 1.1, fontSize: 13),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isProd ? Colors.green : Colors.blue,
+                          letterSpacing: 1.1,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 6.0),
-                    child: Text(Base.baseURL ?? AppLocale.urlNotAvailable.getString(context), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    child: Text(
+                      Base.baseURL ?? AppLocale.urlNotAvailable.getString(context),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
                   ),
                   childrenPadding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
                   expandedCrossAxisAlignment: CrossAxisAlignment.start,
@@ -141,7 +151,11 @@ class _DebugPageState extends State<DebugPage> {
                     Text('Logs del Sistema', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   ],
                 ),
-                TextButton.icon(onPressed: () => setState(() => CurrentLogMessage.log.clear()), icon: const Icon(Icons.delete_sweep_outlined, size: 20), label: const Text('Limpiar')),
+                TextButton.icon(
+                  onPressed: () => setState(() => CurrentLogMessage.log.clear()),
+                  icon: const Icon(Icons.delete_sweep_outlined, size: 20),
+                  label: const Text('Limpiar'),
+                ),
               ],
             ),
 

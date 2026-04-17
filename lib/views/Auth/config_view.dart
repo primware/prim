@@ -92,6 +92,44 @@ class _ConfigPageState extends State<ConfigPage> {
     });
   }
 
+  Future<void> _onRoleSelected(int? roleId) async {
+    setState(() {
+      selectedRoleId = roleId;
+      organizations = [];
+      selectedOrganizationId = null;
+      isLoading = true;
+    });
+
+    if (roleId != null) {
+      final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
+      if (fetchedOrganizations != null) {
+        setState(() {
+          fetchedOrganizations.removeWhere((org) => org['id'] == 0);
+
+          organizations = fetchedOrganizations;
+
+          if (organizations.length == 1) {
+            selectedOrganizationId = organizations[0]['id'];
+            _onOrganizationSelected(selectedOrganizationId);
+          }
+        });
+      }
+    }
+
+    final selectedRole = roles.firstWhere((role) => role['id'] == roleId);
+    UserData.rolName = selectedRole['name'];
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  void _onOrganizationSelected(int? organizationId) {
+    setState(() {
+      selectedOrganizationId = organizationId;
+    });
+  }
+
   Future<void> _loadRememberedConfig() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String usuario = usuarioController.text.trim();
@@ -114,39 +152,6 @@ class _ConfigPageState extends State<ConfigPage> {
       await _onRoleSelected(roleId);
       _onOrganizationSelected(organizationId);
     }
-  }
-
-  Future<void> _onRoleSelected(int? roleId) async {
-    setState(() {
-      selectedRoleId = roleId;
-      organizations = [];
-      selectedOrganizationId = null;
-      isLoading = true;
-    });
-
-    if (roleId != null) {
-      final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
-      if (fetchedOrganizations != null) {
-        setState(() {
-          fetchedOrganizations.removeWhere((org) => org['id'] == 0);
-
-          organizations = fetchedOrganizations;
-        });
-      }
-    }
-
-    final selectedRole = roles.firstWhere((role) => role['id'] == roleId);
-    UserData.rolName = selectedRole['name'];
-
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  void _onOrganizationSelected(int? organizationId) {
-    setState(() {
-      selectedOrganizationId = organizationId;
-    });
   }
 
   Future<void> _onContinue() async {
@@ -193,7 +198,9 @@ class _ConfigPageState extends State<ConfigPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => POS.isPOS ? OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM') : DashboardPage(),
+            builder: (context) => POS.isPOS
+                ? OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM')
+                : DashboardPage(),
           ),
           (Route<dynamic> route) => false,
         );
@@ -227,11 +234,29 @@ class _ConfigPageState extends State<ConfigPage> {
               children: [
                 Center(child: Text(AppLocale.selectRole.getString(context), style: Theme.of(context).textTheme.headlineSmall)),
                 const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(value: selectedClientId, options: clients, showSearchBox: false, labelText: AppLocale.company.getString(context), onChanged: _onClientSelected),
+                SearchableDropdown<int>(
+                  value: selectedClientId,
+                  options: clients,
+                  showSearchBox: false,
+                  labelText: AppLocale.company.getString(context),
+                  onChanged: _onClientSelected,
+                ),
                 const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(value: selectedRoleId, options: roles, showSearchBox: false, labelText: AppLocale.role.getString(context), onChanged: _onRoleSelected),
+                SearchableDropdown<int>(
+                  value: selectedRoleId,
+                  options: roles,
+                  showSearchBox: false,
+                  labelText: AppLocale.role.getString(context),
+                  onChanged: _onRoleSelected,
+                ),
                 const SizedBox(height: CustomSpacer.medium),
-                SearchableDropdown<int>(value: selectedOrganizationId, options: organizations, showSearchBox: false, labelText: AppLocale.organization.getString(context), onChanged: _onOrganizationSelected),
+                SearchableDropdown<int>(
+                  value: selectedOrganizationId,
+                  options: organizations,
+                  showSearchBox: false,
+                  labelText: AppLocale.organization.getString(context),
+                  onChanged: _onOrganizationSelected,
+                ),
                 const SizedBox(height: CustomSpacer.medium),
                 CustomCheckbox(
                   value: rememberConfig,
@@ -244,7 +269,9 @@ class _ConfigPageState extends State<ConfigPage> {
                 ),
                 const SizedBox(height: CustomSpacer.xlarge),
                 Container(
-                  child: isLoading ? ButtonLoading(fullWidth: true) : ButtonPrimary(texto: AppLocale.continueKey.getString(context), fullWidth: true, onPressed: _onContinue),
+                  child: isLoading
+                      ? ButtonLoading(fullWidth: true)
+                      : ButtonPrimary(texto: AppLocale.continueKey.getString(context), fullWidth: true, onPressed: _onContinue),
                 ),
                 const SizedBox(height: 12),
                 ButtonSecondary(
