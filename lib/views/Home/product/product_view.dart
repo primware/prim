@@ -12,7 +12,6 @@ import '../dashboard/dashboard_view.dart';
 import '../order/order_funtions.dart';
 import 'product_new.dart';
 import 'product_details.dart';
-import '../../../theme/colors.dart';
 import 'product_funtions.dart';
 import '../../../shared/toast_message.dart';
 
@@ -63,7 +62,11 @@ class _ProductListPageState extends State<ProductListPage> {
         isProductSearchLoading = true;
       });
     }
-    final product = await fetchProductInPriceList(context: context, categoryID: selectedCategories.isNotEmpty ? selectedCategories.toList() : null, searchTerm: productController.text.trim());
+    final product = await fetchProductInPriceList(
+      context: context,
+      categoryID: selectedCategories.isNotEmpty ? selectedCategories.toList() : null,
+      searchTerm: productController.text.trim(),
+    );
     setState(() {
       _products = product;
       isProductSearchLoading = false;
@@ -113,8 +116,14 @@ class _ProductListPageState extends State<ProductListPage> {
                   if (record['sku'] != null && record['sku'].toString().isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: Theme.of(context).dividerColor.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                      child: Text('SKU: ${record['sku']}', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11, fontWeight: FontWeight.w600)),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'SKU: ${record['sku']}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
                     ),
                   const SizedBox(height: 8),
                   Row(
@@ -122,7 +131,9 @@ class _ProductListPageState extends State<ProductListPage> {
                       Icon(Icons.attach_money_rounded, color: Theme.of(context).colorScheme.secondary, size: 18),
                       Text(
                         record['price'].toString(),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -199,7 +210,10 @@ class _ProductListPageState extends State<ProductListPage> {
                             decoration: BoxDecoration(
                               color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Theme.of(context).cardColor,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: isSelected ? Theme.of(context).primaryColor : Colors.grey.withOpacity(0.2), width: isSelected ? 1.5 : 1.0),
+                              border: Border.all(
+                                color: isSelected ? Theme.of(context).primaryColor : Colors.grey.withOpacity(0.2),
+                                width: isSelected ? 1.5 : 1.0,
+                              ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -207,10 +221,17 @@ class _ProductListPageState extends State<ProductListPage> {
                                 Expanded(
                                   child: Text(
                                     cat['name'],
-                                    style: TextStyle(fontSize: 16, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, color: isSelected ? Theme.of(context).primaryColor : null),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                      color: isSelected ? Theme.of(context).primaryColor : null,
+                                    ),
                                   ),
                                 ),
-                                if (isSelected) Icon(Icons.check_circle, color: Theme.of(context).primaryColor) else Icon(Icons.circle_outlined, color: Colors.grey.withOpacity(0.4)),
+                                if (isSelected)
+                                  Icon(Icons.check_circle, color: Theme.of(context).primaryColor)
+                                else
+                                  Icon(Icons.circle_outlined, color: Colors.grey.withOpacity(0.4)),
                               ],
                             ),
                           ),
@@ -307,7 +328,8 @@ class _ProductListPageState extends State<ProductListPage> {
               ),
               actionsAlignment: MainAxisAlignment.center,
               actions: [
-                if (!isCreating) TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
+                if (!isCreating)
+                  TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
                 if (!isCreating)
                   ElevatedButton(
                     onPressed: isCatNameValid
@@ -328,12 +350,19 @@ class _ProductListPageState extends State<ProductListPage> {
                                     ),
                                   ],
                                 ),
-                                content: Text(AppLocale.confirmCreateCategory.getString(context), textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+                                content: Text(
+                                  AppLocale.confirmCreateCategory.getString(context),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
                                 actionsAlignment: MainAxisAlignment.spaceEvenly,
                                 actions: [
                                   TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
                                   ElevatedButton(
-                                    style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Colors.white,
+                                    ),
                                     onPressed: () => Navigator.pop(ctx, true),
                                     child: Text(AppLocale.yes.getString(context)),
                                   ),
@@ -435,7 +464,12 @@ class _ProductListPageState extends State<ProductListPage> {
                   _isFabExpanded = !_isFabExpanded;
                 });
               },
-              child: AnimatedRotation(turns: _isFabExpanded ? 0.125 : 0.0, duration: const Duration(milliseconds: 250), curve: Curves.easeOutBack, child: const Icon(Icons.add)),
+              child: AnimatedRotation(
+                turns: _isFabExpanded ? 0.125 : 0.0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutBack,
+                child: const Icon(Icons.add),
+              ),
             ),
           ],
         ),
@@ -448,7 +482,11 @@ class _ProductListPageState extends State<ProductListPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: TextfieldTheme(texto: AppLocale.searchProducts.getString(context), controlador: productController, onSubmitted: (_) => _loadProduct(showLoadingIndicator: true)),
+                        child: TextfieldTheme(
+                          texto: AppLocale.searchProducts.getString(context),
+                          controlador: productController,
+                          onSubmitted: (_) => _loadProduct(showLoadingIndicator: true),
+                        ),
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       Container(
@@ -476,7 +514,9 @@ class _ProductListPageState extends State<ProductListPage> {
                           avatar: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSecondary, size: 18),
                           label: Text(
                             AppLocale.categories.getString(context),
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSecondary, fontWeight: FontWeight.bold),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSecondary, fontWeight: FontWeight.bold),
                           ),
                           backgroundColor: Theme.of(context).colorScheme.secondary,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -518,7 +558,10 @@ class _ProductListPageState extends State<ProductListPage> {
                         ? ShimmerList(separation: CustomSpacer.medium)
                         : _getFilteredOrders().isEmpty
                         ? Center(
-                            child: Text(AppLocale.noProductsFound.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
+                            child: Text(
+                              AppLocale.noProductsFound.getString(context),
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                            ),
                           )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),

@@ -10,7 +10,6 @@ import '../../../shared/custom_dropdown.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
-import '../../../theme/colors.dart';
 import '../../../shared/toast_message.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -94,7 +93,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   void _isFormValid() {
     setState(() {
-      isValid = nameController.text.isNotEmpty && priceController.text.isNotEmpty && selectedCategoryID != null && selectedTaxID != null && selectedProductType != null && !_taxError;
+      isValid =
+          nameController.text.isNotEmpty &&
+          priceController.text.isNotEmpty &&
+          selectedCategoryID != null &&
+          selectedTaxID != null &&
+          selectedProductType != null &&
+          !_taxError;
     });
   }
 
@@ -117,7 +122,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(AppLocale.updateProduct.getString(context), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface)),
+              child: Text(
+                AppLocale.updateProduct.getString(context),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
+              ),
             ),
           ],
         );
@@ -128,7 +136,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
     setState(() => isLoading = true);
 
-    final result = await putProduct(id: widget.product['id'], name: nameController.text, sku: skuController.text, upc: upcController.text, taxID: selectedTaxID!, categoryID: selectedCategoryID!, price: priceController.text, productType: selectedProductType!, context: context);
+    final result = await putProduct(
+      id: widget.product['id'],
+      name: nameController.text,
+      sku: skuController.text,
+      upc: upcController.text,
+      taxID: selectedTaxID!,
+      categoryID: selectedCategoryID!,
+      price: priceController.text,
+      productType: selectedProductType!,
+      context: context,
+    );
 
     setState(() => isLoading = false);
 
@@ -153,7 +171,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 children: [
                   TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(controlador: nameController, texto: '${AppLocale.name.getString(context)}*', colorEmpty: nameController.text.isEmpty, inputType: TextInputType.text),
+                  TextfieldTheme(
+                    controlador: nameController,
+                    texto: '${AppLocale.name.getString(context)}*',
+                    colorEmpty: nameController.text.isEmpty,
+                    inputType: TextInputType.text,
+                  ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(controlador: upcController, texto: AppLocale.upc.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
@@ -202,7 +225,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           },
                         ),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(controlador: priceController, texto: '${AppLocale.price.getString(context)}*', colorEmpty: priceController.text.isEmpty, inputType: TextInputType.number, inputFormatters: [NumericTextFormatterWithDecimal()]),
+                  TextfieldTheme(
+                    controlador: priceController,
+                    texto: '${AppLocale.price.getString(context)}*',
+                    colorEmpty: priceController.text.isEmpty,
+                    inputType: TextInputType.number,
+                    inputFormatters: [NumericTextFormatterWithDecimal()],
+                  ),
                   const SizedBox(height: CustomSpacer.xlarge),
                   if (!isLoading) ...[
                     ButtonSecondary(
