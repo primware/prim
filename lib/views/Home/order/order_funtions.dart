@@ -22,7 +22,6 @@ Future<List<Map<String, dynamic>>> fetchBPartner({required BuildContext context,
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
       final records = jsonResponse['records'] as List;
       return records.map((record) {
-        print('Trae lista de precios: ${record['M_PriceList_ID']?['id']}');
         return {
           'id': record['id'],
           'name': record['Name'],
@@ -252,6 +251,7 @@ Future<Map<String, dynamic>> postInvoice({
       "InvoiceRule": "I",
       "PriorityRule": "5",
       "FreightCostRule": "I",
+      "C_PaymentTerm_ID": POS.cPaymentTermID,
       "PaymentRule": POSTenderType.isMultiPayment
           ? "M" //? Múltiples Medios de Pago
           : POS.isPOS
@@ -280,6 +280,7 @@ Future<Map<String, dynamic>> postInvoice({
         body: jsonEncode(orderData),
       );
     }
+    print(orderData);
 
     // iDempiere devuelve 201 al crear (POST) y 200 al actualizar (PUT)
     if (orderResponse.statusCode != 201 && orderResponse.statusCode != 200) {

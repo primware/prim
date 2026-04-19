@@ -113,6 +113,7 @@ class _DebugPageState extends State<DebugPage> {
                     _buildInfoRow('POS docTypeRefundName:', '${POS.docTypeRefundName}'),
                     _buildInfoRow('POS templatePartnerID:', '${POS.templatePartnerID}'),
                     _buildInfoRow('POS templatePartnerName:', '${POS.templatePartnerName}'),
+                    _buildInfoRow('POS cPaymentTermID:', '${POS.cPaymentTermID}'),
                     const SizedBox(height: CustomSpacer.medium),
 
                     _buildInfoRow('User_ID:', '${UserData.id}'),

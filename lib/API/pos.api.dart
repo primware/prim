@@ -3,6 +3,7 @@ import 'dart:typed_data';
 class POS {
   static int? cPosID;
   static int? priceListID;
+  static int? cPaymentTermID;
   static int? priceListVersionID;
   static int? docTypeID;
   static String? docTypeName;

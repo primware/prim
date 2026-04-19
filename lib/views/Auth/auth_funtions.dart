@@ -256,6 +256,7 @@ Future<void> _loadPOSData(BuildContext context) async {
         //? No hay Terminal PDV configurado para este usuario, obteniendo datos por defecto del priceList
         POS.priceListID ??= await _getMPriceListID();
         POS.priceListVersionID = await getMPriceListVersion(POS.priceListID ?? 0);
+        POS.cPaymentTermID = await _getcPaymentTermID();
         await fetchTaxs();
         await _getCDocTypeComplete();
 
@@ -426,6 +427,31 @@ Future<int?> getMPriceListVersion(int id) async {
     }
   } catch (e) {
     CurrentLogMessage.add('Error en _getMPriceListVersion: $e', level: 'ERROR', tag: '_getMPriceListVersion');
+  }
+  return null;
+}
+
+Future<int?> _getcPaymentTermID() async {
+  try {
+    final response = await get(
+      Uri.parse('${EndPoints.cPaymentTermID}?\$filter=IsDefault eq true'),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final record = responseData['records'][0];
+
+      return responseData['records'][0]['id'];
+    } else {
+      CurrentLogMessage.add(
+        'Error en _getcPaymentTermID: ${response.statusCode}, ${response.body}',
+        level: 'ERROR',
+        tag: '_getcPaymentTermID',
+      );
+    }
+  } catch (e) {
+    CurrentLogMessage.add('Error en _getcPaymentTermID: $e', level: 'ERROR', tag: '_getcPaymentTermID');
   }
   return null;
 }
