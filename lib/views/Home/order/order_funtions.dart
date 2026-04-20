@@ -281,7 +281,6 @@ Future<Map<String, dynamic>> postInvoice({
         body: jsonEncode(orderData),
       );
     }
-    print(orderData);
 
     // iDempiere devuelve 201 al crear (POST) y 200 al actualizar (PUT)
     if (orderResponse.statusCode != 201 && orderResponse.statusCode != 200) {

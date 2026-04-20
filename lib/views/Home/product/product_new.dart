@@ -357,7 +357,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                       : SearchableDropdown<int>(
                           value: selectedTaxID,
                           options: taxies,
-                          showSearchBox: true,
+                          showSearchBox: false,
                           labelText: '${AppLocale.taxCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../API/endpoint.dart';
 import '../../API/pos.api.dart';
 import '../../API/token.api.dart';
@@ -17,8 +18,8 @@ Future<void> handle401(BuildContext context) async {
   Token.auth = null;
   UserData.rolName = null;
   UserData.imageBytes = null;
-  // usuarioController.clear();
   claveController.clear();
+  await _clearLastTokenGeneratedAt();
 
   Navigator.push(context, MaterialPageRoute(builder: (context) => MainApp()));
   ToastMessage.show(context: context, message: "Por su seguridad la sesión a expirado", type: ToastType.warning);
@@ -27,6 +28,44 @@ Future<void> handle401(BuildContext context) async {
 Future<void> _loadAppVersion() async {
   final info = await PackageInfo.fromPlatform();
   AppInfo.appVersion = '${info.version}+${info.buildNumber}';
+}
+
+const String _lastTokenGeneratedAtKey = 'last_token_generated_at';
+const int _tokenReuseWindowMinutes = 40;
+
+Future<void> _saveLastTokenGeneratedAt() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_lastTokenGeneratedAtKey, DateTime.now().toIso8601String());
+}
+
+Future<DateTime?> _getLastTokenGeneratedAt() async {
+  final prefs = await SharedPreferences.getInstance();
+  final rawValue = prefs.getString(_lastTokenGeneratedAtKey);
+
+  if (rawValue == null || rawValue.isEmpty) {
+    return null;
+  }
+
+  return DateTime.tryParse(rawValue);
+}
+
+Future<bool> _canReuseCurrentToken() async {
+  if (Token.auth == null || Token.auth!.trim().isEmpty) {
+    return false;
+  }
+
+  final lastGeneratedAt = await _getLastTokenGeneratedAt();
+  if (lastGeneratedAt == null) {
+    return false;
+  }
+
+  final minutesSinceLastToken = DateTime.now().difference(lastGeneratedAt).inMinutes;
+  return minutesSinceLastToken < _tokenReuseWindowMinutes;
+}
+
+Future<void> _clearLastTokenGeneratedAt() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove(_lastTokenGeneratedAtKey);
 }
 
 Future<Map<String, dynamic>?> preAuth(String usuario, String clave, BuildContext context) async {
@@ -130,6 +169,11 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
       return false;
     }
 
+    //? Si han pasado 40 mins o mas, se solicita un nuevo token
+    if (await _canReuseCurrentToken()) {
+      return true;
+    }
+
     if (Token.warehouseID == null) {
       await getWarehouse(clientId: Token.client!, roleId: Token.rol!, organitaionId: Token.organitation!, context: context);
     }
@@ -151,6 +195,7 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
     if (response.statusCode == 200) {
       Token.auth = '${Token.tokenType} ${json.decode(response.body)["token"]}';
       UserData.id = json.decode(response.body)["userId"];
+      await _saveLastTokenGeneratedAt();
       bool success = await _loadUserData(context);
       await _loadPOSData(context);
       await _loadPOSPrinterData();
@@ -159,9 +204,11 @@ Future<bool> usuarioAuth({required BuildContext context}) async {
       await _loadAppVersion();
       return success;
     } else {
+      await _clearLastTokenGeneratedAt();
       CurrentLogMessage.add('usuarioAuth Error: ${response.statusCode}, ${response.body}', level: 'ERROR', tag: 'usuarioAuth');
     }
   } catch (e) {
+    await _clearLastTokenGeneratedAt();
     CurrentLogMessage.add('Excepción en usuarioAuth: $e', level: 'ERROR', tag: 'usuarioAuth');
   }
   return false;
