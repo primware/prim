@@ -142,18 +142,20 @@ class _DashboardPageState extends State<DashboardPage> {
                           children: [
                             if (Charts.salesYTDBySalesRep != null)
                               GraphicBarMetricCard(
-                                titleBuilder: (ctx) => AppLocale.salesYTDBySalesRep.getString(context),
+                                titleBuilder: (ctx) => AppLocale.thisMonth.getString(context),
                                 initialData: _salesYTDBySalesRepData,
                                 dataLoader: _salesYTDBySalesRepLoader,
+                                subtitle: AppLocale.salesYTDBySalesRepDescription.getString(context),
                                 showTotal: true,
                               ),
 
                             if (Charts.salesPerDayByProductCategory != null) ...[
                               const SizedBox(height: CustomSpacer.medium),
                               GraphicPieMetricCard(
-                                titleBuilder: (ctx) => AppLocale.todaySalesByCategory.getString(ctx),
+                                titleBuilder: (ctx) => AppLocale.today.getString(ctx),
                                 initialData: _salesPerDayByProductCategoryData,
                                 dataLoader: _salesPerDayByProductCategoryLoader,
+                                subtitle: AppLocale.todaySalesByCategoryDescription.getString(context),
                                 showTotal: true,
                               ),
                             ],

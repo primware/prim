@@ -426,51 +426,44 @@ class _OrderListPageState extends State<OrderListPage> {
     );
   }
 
-  Widget _buildEditPill(BuildContext context, Map<String, dynamic> order) {
-    return InkWell(
-      onTap: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OrderNewPage(
-              isRefund: false,
-              doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-              orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
-              sourceOrderId: order['id'],
+  Widget _buildAmountItem({required String label, required String value, required IconData icon, bool highlight = false}) {
+    final Color accentColor = highlight ? Theme.of(context).colorScheme.secondary : Theme.of(context).primaryColor;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: accentColor),
+        const SizedBox(width: 6),
+        Flexible(
+          child: RichText(
+            overflow: TextOverflow.ellipsis,
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                ),
+                TextSpan(
+                  text: value,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: highlight ? accentColor : Theme.of(context).textTheme.bodyMedium?.color,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
-        );
-        // Si se guardó con éxito, recargamos la lista de órdenes en automático
-        if (result == true) {
-          _fetchOrders(showLoadingIndicator: true);
-        }
-      },
-      borderRadius: BorderRadius.circular(50),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.amberAccent.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(50),
-          border: Border.all(color: Colors.amber.shade700, width: 1),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.edit_document, size: 14, color: Colors.amber.shade800),
-            const SizedBox(width: 6),
-            Text(
-              AppLocale.edit.getString(context),
-              style: TextStyle(fontSize: 12, color: Colors.amber.shade800, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final bool isComplete = (order['DocStatus'] == 'CO');
     final bool isReturn = (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+    final double totalLines = double.tryParse(order['TotalLines']?.toString() ?? '0') ?? 0;
+    final double grandTotal = double.tryParse(order['GrandTotal']?.toString() ?? '0') ?? 0;
+    final double taxAmount = grandTotal - totalLines;
 
     final List invoices = order['C_Invoice'] ?? [];
     final bool hasCreditNote = invoices.any((inv) {
@@ -611,31 +604,46 @@ class _OrderListPageState extends State<OrderListPage> {
 
             const SizedBox(height: 16),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Total
-                Row(
-                  children: [
-                    Icon(Icons.payments_outlined, color: Theme.of(context).colorScheme.secondary, size: 18),
-                    const SizedBox(width: 6),
-                    Text(
-                      order['GrandTotal'].toString(),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-                // Fecha
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today_outlined, color: Colors.grey.shade500, size: 16),
-                    const SizedBox(width: 6),
-                    Text(order['DateOrdered'], style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
-                  ],
-                ),
-              ],
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.12)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.payments_outlined, color: Theme.of(context).colorScheme.secondary, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        AppLocale.summary.getString(context),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w700),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.calendar_today_outlined, color: Colors.grey.shade500, size: 16),
+                      const SizedBox(width: 6),
+                      Text(order['DateOrdered'], style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 14,
+                    runSpacing: 8,
+                    children: [
+                      //TODO traducir, creo que ya existen las traducciones para estos campos
+                      _buildAmountItem(label: 'Subtotal', value: totalLines.toStringAsFixed(2), icon: Icons.receipt_long_outlined),
+                      _buildAmountItem(label: 'Impuesto', value: taxAmount.toStringAsFixed(2), icon: Icons.account_balance_wallet_outlined),
+                      _buildAmountItem(label: 'Total', value: grandTotal.toStringAsFixed(2), icon: Icons.payments_rounded, highlight: true),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
             const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, thickness: 0.5)),
@@ -643,17 +651,7 @@ class _OrderListPageState extends State<OrderListPage> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: [
-                _buildSubtypePill(order),
-                _buildDocStatusPill(order),
-
-                // Píldora de Editar (Solo si es Borrador)
-                //if (order['DocStatus'] == 'DR')
-                //_buildEditPill(context, order),
-
-                // Píldora de Nota de Crédito
-                if (hasCreditNote) _buildCreditMemoPill(),
-              ],
+              children: [_buildSubtypePill(order), _buildDocStatusPill(order), if (hasCreditNote) _buildCreditMemoPill()],
             ),
           ],
         ),
@@ -722,8 +720,8 @@ class _OrderListPageState extends State<OrderListPage> {
                   const SizedBox(height: 8),
 
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Más padding para que respire
-                    margin: const EdgeInsets.symmetric(vertical: 8), // Margen para separar de la barra de búsqueda
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark
                           ? Colors.black.withOpacity(0.2)
@@ -732,7 +730,7 @@ class _OrderListPageState extends State<OrderListPage> {
                       border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Envía el switch al extremo derecho
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [

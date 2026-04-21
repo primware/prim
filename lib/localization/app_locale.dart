@@ -13,7 +13,8 @@ class AppLocale {
   static const String dec = 'dec';
   static const String login = 'login';
   static const String syncFe = 'syncFe';
-  static const String salesYTDBySalesRep = 'salesYTDBySalesRep';
+  static const String thisMonth = 'thisMonth';
+  static const String salesYTDBySalesRepDescription = 'salesYTDBySalesRep';
   static const String products = 'products';
   static const String searchProducts = 'searchProducts';
   static const String productCode = 'productCode';
@@ -192,7 +193,8 @@ class AppLocale {
   static const String changeRole = 'changeRole';
   static const String newCategory = 'newCategory';
   static const String confirmCreateCategory = 'confirmCreateCategory';
-  static const String todaySalesByCategory = 'todaySalesByCategory';
+  static const String todaySalesByCategoryDescription = 'todaySalesByCategoryDescription';
+  static const String today = 'today';
   static const String selectCustomer = 'selectCustomer';
   static const String customerNoAddressError = 'customerNoAddressError';
   static const String selectValidCustomerForProducts = 'selectValidCustomerForProducts';
@@ -215,7 +217,9 @@ class AppLocale {
     selectValidCustomerForProducts: 'Please select a valid customer to add products to the order.',
     selectCustomer: 'Please select a customer',
     customerNoAddressError: 'This customer does not have a valid address. Please edit the customer to add an address before continuing.',
-    todaySalesByCategory: 'Today\'s Sales by Category',
+    today: 'Today',
+    todaySalesByCategoryDescription:
+        'You can view your sales invoiced today grouped by product category. The amount does not include taxes. If you tap the chart you can see the details of sales by category.',
     confirmCreateCategory: 'Are you sure you want to create this product category?',
     newCategory: 'New Category',
     changeRole: 'Change Role',
@@ -223,6 +227,7 @@ class AppLocale {
     confirmCreateProduct: 'Are you sure you want to create the product?',
     copyToNewDocument: 'Copy to new operation',
     documentType: 'Commercial Operation Type',
+    thisMonth: 'This month',
     noDocTypesAvailable: 'No document types available to convert.',
     invoiceSentSuccess: 'Invoice sent successfully',
     invoiceSendError: 'Error sending invoice',
@@ -335,7 +340,8 @@ class AppLocale {
     price: 'Price',
     subtotal: 'Subtotal',
     total: 'Total',
-    salesYTDBySalesRep: 'Sales YTD by Sales Rep',
+    salesYTDBySalesRepDescription:
+        'Shows the total invoiced in the current month by each sales representative. The amount does not include taxes. If you tap the chart you can see the details of sales by representative. Does not include documents without invoice',
     noName: 'No name',
     finalSummary: 'Final summary:',
     grossTotal: 'Gross total:',
@@ -414,11 +420,15 @@ class AppLocale {
     readyForFirstOrder: '¿Listo para realizar tu primera orden?',
     selectValidCustomerForProducts: 'Seleccione un cliente válido para poder agregar productos a la orden.',
     selectCustomer: 'Seleccione un cliente',
-    customerNoAddressError: 'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
-    todaySalesByCategory: 'Ventas de hoy por categoría',
+    customerNoAddressError:
+        'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
+    today: 'Hoy',
+    todaySalesByCategoryDescription:
+        'Puedes visualizar las ventas facturadas del día agrupadas por categoría de producto. El monto no incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por categoría.',
     confirmCreateCategory: '¿Seguro que desea crear esta categoría de producto?',
     newCategory: 'Nueva Categoría',
     changeRole: 'Cambiar Rol',
+    thisMonth: 'Este mes',
     console: 'Consola',
     confirmCreateProduct: '¿Está seguro de que desea crear el producto?',
     copyToNewDocument: 'Copiar a nueva operación',
@@ -442,7 +452,8 @@ class AppLocale {
     searchProducts: 'Buscar productos',
     productCode: 'Código',
     productName: 'Nombre',
-    salesYTDBySalesRep: 'Ventas del mes por vendedor',
+    salesYTDBySalesRepDescription:
+        'Muestra el total facturado en el mes actual por cada representante de ventas. No incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por representante. No incluye documentos sin factura',
     productPrice: 'Precio',
     productStock: 'Stock',
     noProductsFound: 'No se encontraron productos.',
