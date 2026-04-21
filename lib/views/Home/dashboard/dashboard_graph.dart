@@ -21,15 +21,7 @@ class GraphicBarMetricCard extends StatefulWidget {
   final String? subtitle;
   final Map<String, double> initialData;
 
-  const GraphicBarMetricCard({
-    super.key,
-    required this.titleBuilder,
-    required this.dataLoader,
-    this.showRefresh = true,
-    this.showTotal = false,
-    this.subtitle,
-    this.initialData = const {},
-  });
+  const GraphicBarMetricCard({super.key, required this.titleBuilder, required this.dataLoader, this.showRefresh = true, this.showTotal = false, this.subtitle, this.initialData = const {}});
 
   @override
   State<GraphicBarMetricCard> createState() => _GraphicBarMetricCardState();
@@ -93,13 +85,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -133,7 +119,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                 SizedBox(
                   width: 48,
                   child: IconButton(
-                    tooltip: 'Refrescar',
+                    tooltip: AppLocale.refresh.getString(context),
                     icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500),
                     onPressed: isLoading ? null : _reload,
                   ),
@@ -144,7 +130,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
             Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 8),
               child: Text(
-                'Total: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
+                '${AppLocale.total.getString(context)}: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: primaryColor),
               ),
@@ -164,10 +150,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                   )
                 : rawChartData.isEmpty
                 ? Center(
-                    child: Text(
-                      AppLocale.noDataForFilter.getString(context),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
-                    ),
+                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
                   )
                 : Padding(
                     padding: const EdgeInsets.only(top: 16.0),
@@ -189,9 +172,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                                 children: <TextSpan>[
                                   TextSpan(
                                     text: '${POS.currencySymbol} ${totalFmt.format(rod.toY)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontWeight: FontWeight.w500),
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontWeight: FontWeight.w500),
                                   ),
                                 ],
                               );
@@ -236,10 +217,7 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                                 if (value == 0 || value == maxY) return const SizedBox.shrink();
                                 return SideTitleWidget(
                                   axisSide: meta.axisSide,
-                                  child: Text(
-                                    NumberFormat.compact().format(value),
-                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
-                                  ),
+                                  child: Text(NumberFormat.compact().format(value), style: TextStyle(color: Colors.grey.shade500, fontSize: 10)),
                                 );
                               },
                             ),
@@ -264,19 +242,9 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                               BarChartRodData(
                                 toY: entries[index].value,
                                 width: isTouched ? 22 : 16,
-                                gradient: LinearGradient(
-                                  colors: isTouched
-                                      ? [secondaryColor, secondaryColor.withOpacity(0.7)]
-                                      : [primaryColor, primaryColor.withOpacity(0.6)],
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                ),
+                                gradient: LinearGradient(colors: isTouched ? [secondaryColor, secondaryColor.withOpacity(0.7)] : [primaryColor, primaryColor.withOpacity(0.6)], begin: Alignment.bottomCenter, end: Alignment.topCenter),
                                 borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
-                                backDrawRodData: BackgroundBarChartRodData(
-                                  show: true,
-                                  toY: maxY,
-                                  color: Theme.of(context).dividerColor.withOpacity(0.05),
-                                ),
+                                backDrawRodData: BackgroundBarChartRodData(show: true, toY: maxY, color: Theme.of(context).dividerColor.withOpacity(0.05)),
                               ),
                             ],
                           );
@@ -301,15 +269,7 @@ class GraphicPieMetricCard extends StatefulWidget {
   final String? subtitle;
   final Map<String, double> initialData;
 
-  const GraphicPieMetricCard({
-    super.key,
-    required this.titleBuilder,
-    required this.dataLoader,
-    this.showRefresh = true,
-    this.showTotal = false,
-    this.subtitle,
-    this.initialData = const {},
-  });
+  const GraphicPieMetricCard({super.key, required this.titleBuilder, required this.dataLoader, this.showRefresh = true, this.showTotal = false, this.subtitle, this.initialData = const {}});
 
   @override
   State<GraphicPieMetricCard> createState() => _GraphicPieMetricCardState();
@@ -323,7 +283,6 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
   @override
   void initState() {
     super.initState();
-
     if (widget.initialData.isNotEmpty) {
       rawChartData = Map<String, double>.from(widget.initialData);
       isLoading = false;
@@ -339,14 +298,11 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
     setState(() => isLoading = false);
   }
 
-  void _reload() {
-    _load();
-  }
+  void _reload() => _load();
 
   @override
   void didUpdateWidget(covariant GraphicPieMetricCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.initialData != widget.initialData && widget.initialData.isNotEmpty) {
       setState(() {
         rawChartData = Map<String, double>.from(widget.initialData);
@@ -367,24 +323,16 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
   @override
   Widget build(BuildContext context) {
     final rows = _chartRows();
-    final colors = <Color>[
-      Theme.of(context).colorScheme.primary,
-      Theme.of(context).colorScheme.secondary,
-      Theme.of(context).colorScheme.tertiary,
-      Colors.orange,
-      Colors.teal,
-      Colors.purple,
-      Colors.redAccent,
-      Colors.indigo,
-    ];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = <Color>[Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.tertiary, Colors.orangeAccent, Colors.tealAccent.shade700, Colors.deepPurpleAccent, Colors.pinkAccent, Colors.indigoAccent];
     final totalFmt = NumberFormat('#,##0.00', 'en_US');
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -392,7 +340,6 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
           Row(
             children: [
               if (widget.showRefresh) const SizedBox(width: 48),
-
               Expanded(
                 child: Column(
                   children: [
@@ -413,12 +360,11 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                   ],
                 ),
               ),
-
               if (widget.showRefresh)
                 SizedBox(
                   width: 48,
                   child: IconButton(
-                    tooltip: 'Refrescar',
+                    tooltip: AppLocale.refresh.getString(context),
                     icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500),
                     onPressed: isLoading ? null : _reload,
                   ),
@@ -429,16 +375,14 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
             Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 8),
               child: Text(
-                'Total: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
+                '${AppLocale.total.getString(context)}: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
                 textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary),
               ),
             ),
           const SizedBox(height: CustomSpacer.large),
           SizedBox(
-            height: 320,
+            height: 340,
             child: isLoading
                 ? Shimmer.fromColors(
                     baseColor: Colors.grey[300]!.withOpacity(0.5),
@@ -451,10 +395,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                   )
                 : rows.isEmpty
                 ? Center(
-                    child: Text(
-                      AppLocale.noDataForFilter.getString(context),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
-                    ),
+                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
                   )
                 : Column(
                     children: [
@@ -462,20 +403,28 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: 220,
+                              height: 220,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [if (touchedIndex >= 0 && touchedIndex < rows.length) BoxShadow(color: colors[touchedIndex % colors.length].withOpacity(0.55), blurRadius: 40, spreadRadius: 8) else BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, spreadRadius: 2)],
+                              ),
+                            ),
+
+                            // Gráfico de Pastel
                             PieChart(
                               PieChartData(
-                                centerSpaceRadius: 44,
-                                sectionsSpace: 2,
+                                centerSpaceRadius: 45,
+                                sectionsSpace: rows.length == 1 ? 0 : 5,
                                 pieTouchData: PieTouchData(
                                   touchCallback: (FlTouchEvent event, pieTouchResponse) {
                                     setState(() {
-                                      if (!event.isInterestedForInteractions ||
-                                          pieTouchResponse == null ||
-                                          pieTouchResponse.touchedSection == null) {
+                                      if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
                                         touchedIndex = -1;
                                         return;
                                       }
-
                                       touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
                                     });
                                   },
@@ -486,81 +435,88 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                                   final value = (row['value'] as num).toDouble();
                                   final total = _totalValue();
                                   final percent = total > 0 ? (value / total) * 100 : 0.0;
-                                  final isTouched = index == touchedIndex;
+                                  final isTouched = index == touchedIndex || rows.length == 1;
 
                                   return PieChartSectionData(
                                     color: color,
                                     value: value,
-                                    radius: isTouched ? 112 : 98,
-                                    title: '${percent.toStringAsFixed(0)}%',
-                                    titleStyle: TextStyle(fontSize: isTouched ? 14 : 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                    radius: isTouched ? 115 : 100,
+                                    title: percent > 4 ? '${percent.toStringAsFixed(0)}%' : '',
+                                    titleStyle: TextStyle(
+                                      fontSize: isTouched ? 16 : 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      shadows: const [BoxShadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 2))],
+                                    ),
                                   );
                                 }),
                               ),
-                              swapAnimationDuration: const Duration(milliseconds: 180),
-                              swapAnimationCurve: Curves.easeInOut,
+                              swapAnimationDuration: const Duration(milliseconds: 250),
+                              swapAnimationCurve: Curves.easeOutBack,
                             ),
-                            if (touchedIndex >= 0 && touchedIndex < rows.length)
-                              Positioned(
-                                top: 20,
-                                child: IgnorePointer(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).brightness == Brightness.dark
-                                          ? Colors.grey.shade800
-                                          : Colors.blueGrey.shade900,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Builder(
-                                      builder: (context) {
-                                        final row = rows[touchedIndex];
-                                        final value = (row['value'] as num).toDouble();
-                                        final percent = _totalValue() > 0 ? (value / _totalValue()) * 100 : 0.0;
 
-                                        return Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              row['category'].toString(),
-                                              textAlign: TextAlign.center,
-                                              style:
-                                                  Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontWeight: FontWeight.bold) ??
-                                                  const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                            IgnorePointer(
+                              child: Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.15), blurRadius: 15, spreadRadius: -5)],
+                                ),
+                              ),
+                            ),
+
+                            if (touchedIndex >= 0 && touchedIndex < rows.length || rows.length == 1)
+                              IgnorePointer(
+                                child: Builder(
+                                  builder: (context) {
+                                    final displayIndex = (touchedIndex >= 0 && touchedIndex < rows.length) ? touchedIndex : 0;
+                                    final row = rows[displayIndex];
+                                    final value = (row['value'] as num).toDouble();
+                                    final percent = _totalValue() > 0 ? (value / _totalValue()) * 100 : 0.0;
+
+                                    return Container(
+                                      width: 120,
+                                      height: 120,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
+                                        shape: BoxShape.circle,
+                                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 12, spreadRadius: 2)],
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            row['category'].toString(),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 10),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          FittedBox(
+                                            child: Text(
+                                              '${POS.currencySymbol}${totalFmt.format(value)}',
+                                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w900),
                                             ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              '${POS.currencySymbol} ${totalFmt.format(value)}',
-                                              textAlign: TextAlign.center,
-                                              style:
-                                                  Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700) ??
-                                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                                            ),
-                                            const SizedBox(height: 2),
+                                          ),
+                                          if (rows.length > 1)
                                             Text(
                                               '${percent.toStringAsFixed(1)}%',
-                                              textAlign: TextAlign.center,
-                                              style:
-                                                  Theme.of(
-                                                    context,
-                                                  ).textTheme.bodySmall?.copyWith(color: Colors.white70, fontWeight: FontWeight.w500) ??
-                                                  const TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 10),
                                             ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                  ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 20),
+
                       Wrap(
                         spacing: 12,
                         runSpacing: 8,
@@ -568,17 +524,30 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                         children: List.generate(rows.length, (index) {
                           final row = rows[index];
                           final color = colors[index % colors.length];
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(999)),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(row['category'].toString(), style: Theme.of(context).textTheme.bodySmall),
-                            ],
+                          final isTouched = index == touchedIndex || rows.length == 1;
+
+                          return AnimatedOpacity(
+                            duration: const Duration(milliseconds: 200),
+                            opacity: touchedIndex == -1 || isTouched ? 1.0 : 0.35,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    boxShadow: isTouched ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 6)] : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  row['category'].toString(),
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: isTouched ? FontWeight.bold : FontWeight.w500, color: isTouched ? Theme.of(context).colorScheme.primary : Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
                           );
                         }),
                       ),
@@ -619,15 +588,14 @@ class EmptyMetricState extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     Text(
-                      "Sin ordenes registradas",
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                      AppLocale.noOrdersRegistered.getString(context),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -0.5),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
-
+                    const SizedBox(height: 10),
                     Text(
-                      "¿Listo para realizar tu primera orden?",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
+                      AppLocale.readyForFirstOrder.getString(context),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                       textAlign: TextAlign.center,
                     ),
 
@@ -655,11 +623,7 @@ class EmptyMetricState extends StatelessWidget {
                                 ),
                                 onPressed: () {
                                   if (POS.docTypesComplete.isEmpty) {
-                                    ToastMessage.show(
-                                      context: context,
-                                      message: AppLocale.noDocTypesAvailable.getString(context),
-                                      type: ToastType.help,
-                                    );
+                                    ToastMessage.show(context: context, message: AppLocale.noDocTypesAvailable.getString(context), type: ToastType.help);
                                     return;
                                   }
 
@@ -679,11 +643,7 @@ class EmptyMetricState extends StatelessWidget {
                                         return SafeArea(
                                           child: Padding(
                                             padding: const EdgeInsets.all(20.0),
-                                            child: Text(
-                                              AppLocale.noDocTypesAvailable.getString(context),
-                                              textAlign: TextAlign.center,
-                                              style: Theme.of(context).textTheme.bodyLarge,
-                                            ),
+                                            child: Text(AppLocale.noDocTypesAvailable.getString(context), textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
                                           ),
                                         );
                                       }
@@ -694,10 +654,7 @@ class EmptyMetricState extends StatelessWidget {
                                           child: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(
-                                                AppLocale.documentType.getString(context),
-                                                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                                              ),
+                                              Text(AppLocale.documentType.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                                               const SizedBox(height: 8),
                                               const Divider(),
                                               ...availableDocs.map((doc) {
@@ -708,10 +665,7 @@ class EmptyMetricState extends StatelessWidget {
                                                 return ListTile(
                                                   leading: Container(
                                                     padding: const EdgeInsets.all(8),
-                                                    decoration: BoxDecoration(
-                                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                                                      shape: BoxShape.circle,
-                                                    ),
+                                                    decoration: BoxDecoration(color: Theme.of(context).primaryColor.withOpacity(0.1), shape: BoxShape.circle),
                                                     child: Icon(Icons.add_shopping_cart, color: Theme.of(context).primaryColor),
                                                   ),
                                                   title: Text(docName, style: Theme.of(context).textTheme.bodyLarge),
@@ -721,8 +675,7 @@ class EmptyMetricState extends StatelessWidget {
                                                     Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                        builder: (_) =>
-                                                            OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName),
+                                                        builder: (_) => OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName),
                                                       ),
                                                     );
                                                   },
@@ -749,11 +702,7 @@ class EmptyMetricState extends StatelessWidget {
                                 icon: Icon(Icons.list_alt, size: 20, color: Theme.of(context).colorScheme.secondary),
                                 label: Text(
                                   AppLocale.myOrders.getString(context),
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.secondary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                                 onPressed: () {
                                   Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderListPage()));

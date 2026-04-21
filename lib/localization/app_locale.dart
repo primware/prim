@@ -201,8 +201,12 @@ class AppLocale {
   static const String production = 'production';
   static const String instance = 'instance';
   static const String isPointOfSale = 'isPointOfSale';
+  static const String noOrdersRegistered = 'noOrdersRegistered';
+  static const String readyForFirstOrder = 'readyForFirstOrder';
 
   static const Map<String, dynamic> en = {
+    noOrdersRegistered: 'No orders registered',
+    readyForFirstOrder: 'Ready to place your first order?',
     systemParameters: 'Parámetros del Sistema',
     urlNotAvailable: 'URL no disponible',
     production: 'Producción:',
@@ -406,6 +410,8 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    noOrdersRegistered: 'Sin órdenes registradas',
+    readyForFirstOrder: '¿Listo para realizar tu primera orden?',
     selectValidCustomerForProducts: 'Seleccione un cliente válido para poder agregar productos a la orden.',
     selectCustomer: 'Seleccione un cliente',
     customerNoAddressError: 'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',

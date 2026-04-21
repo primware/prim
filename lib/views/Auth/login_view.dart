@@ -7,7 +7,6 @@ import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../API/endpoint.dart';
 import '../../shared/button.widget.dart';
-import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
 import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
@@ -17,6 +16,7 @@ import '../../shared/toast_message.dart';
 import '../../theme/colors.dart';
 import 'auth_funtions.dart';
 import 'config_view.dart';
+import 'dart:ui';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -237,14 +237,37 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                       const SizedBox(height: CustomSpacer.small),
-                      CustomCheckbox(
-                        value: rememberUser,
-                        text: AppLocale.rememberMe.getString(context),
-                        onChanged: (newValue) {
-                          setState(() {
-                            rememberUser = newValue;
-                          });
-                        },
+                      // 👇 Tarjeta Premium para "Recuérdame"
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withOpacity(0.2) : Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.verified_user_outlined, size: 22, color: rememberUser ? Theme.of(context).primaryColor : Colors.grey.shade600),
+                                const SizedBox(width: 12),
+                                Text(
+                                  AppLocale.rememberMe.getString(context),
+                                  style: TextStyle(fontSize: 15, fontWeight: rememberUser ? FontWeight.bold : FontWeight.w500, color: rememberUser ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87) : Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
+                            GlassSwitch(
+                              value: rememberUser,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  rememberUser = newValue;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: CustomSpacer.medium),
                       Container(
@@ -284,6 +307,60 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class GlassSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const GlassSwitch({super.key, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        width: 56,
+        height: 32,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: value ? primary.withOpacity(0.3) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+          border: Border.all(color: value ? primary.withOpacity(0.6) : (isDark ? Colors.white30 : Colors.black12), width: 1.5),
+          boxShadow: [if (value) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)],
+        ),
+        child: Stack(
+          children: [
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              top: 2,
+              bottom: 2,
+              left: value ? 26 : 2,
+              right: value ? 2 : 26,
+              child: ClipOval(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: value ? primary.withOpacity(0.8) : (isDark ? Colors.white70 : Colors.white),
+                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
