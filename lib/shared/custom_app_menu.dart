@@ -28,6 +28,7 @@ import '../views/Home/dashboard/dashboard_funtions.dart';
 import '../views/Home/order/my_order.dart';
 import '../views/Home/report/close_cash_detail.dart';
 import '../views/Home/report/report_funtions.dart';
+import 'package:primware/views/Home/settings/settings_view.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
 
@@ -131,7 +132,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
     _loadTheme();
   }
 
-  // Lógica de carga de tema original
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -139,7 +139,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
     });
   }
 
-  // Lógica de confirmación de salida original
   Future<bool?> _showLogoutConfirmation(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -291,6 +290,17 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 //     _loadTheme();
                 //   },
                 // ),
+                //TODO TRADUCIR
+                _buildMenuItem(
+                  context,
+                  icon: Icons.settings_outlined,
+                  title: 'Configuración',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
+                  },
+                ),
+
                 _buildMenuItem(context, icon: Icons.manage_accounts_outlined, title: AppLocale.changeRole.getString(context), onTap: _handleChangeRole),
 
                 if (!Base.prod)
