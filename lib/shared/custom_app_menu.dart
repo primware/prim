@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'dart:typed_data';
-
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
 import 'package:flutter/material.dart';
@@ -17,14 +16,12 @@ import 'package:primware/views/Home/report/close_cash_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../shared/toast_message.dart';
-import '../shared/file_picker_helper.dart';
 import '../API/endpoint.dart';
 import '../API/pos.api.dart';
 import '../API/user.api.dart';
 import '../localization/app_locale.dart';
 import '../theme/colors.dart';
 import '../views/Home/bpartner/bpartner_view.dart';
-import '../views/Home/dashboard/dashboard_funtions.dart';
 import '../views/Home/order/my_order.dart';
 import '../views/Home/report/close_cash_detail.dart';
 import '../views/Home/report/report_funtions.dart';
@@ -335,17 +332,14 @@ class _MenuDrawerState extends State<MenuDrawer> {
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: _updateLogo,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
-              child: CircleAvatar(
-                radius: 35,
-                backgroundColor: Colors.white,
-                backgroundImage: POSPrinter.logo != null ? MemoryImage(POSPrinter.logo!) : null,
-                child: POSPrinter.logo == null ? Icon(Icons.business, color: Theme.of(context).primaryColor, size: 35) : null,
-              ),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+            child: CircleAvatar(
+              radius: 35,
+              backgroundColor: Colors.white,
+              backgroundImage: POSPrinter.logo != null ? MemoryImage(POSPrinter.logo!) : null,
+              child: POSPrinter.logo == null ? Icon(Icons.business, color: Theme.of(context).primaryColor, size: 35) : null,
             ),
           ),
           const SizedBox(width: 15),
@@ -397,23 +391,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
         ),
       ),
     );
-  }
-
-  Future<void> _updateLogo() async {
-    final picked = await pickValidFile(context: context, maxUploadMB: 4);
-    if (picked == null) return;
-    final bytes = picked['fileBytes'] as Uint8List;
-    setState(() {
-      POSPrinter.logo = bytes;
-      POSPrinter.isLogoSet = true;
-    });
-    final ok = await updateOrgLogo(bytes, context);
-    if (!mounted) return;
-    if (ok) {
-      ToastMessage.show(context: context, message: 'Logo actualizado correctamente', type: ToastType.success);
-    } else {
-      ToastMessage.show(context: context, message: 'No se pudo actualizar el logo', type: ToastType.failure);
-    }
   }
 
   Future<void> _handleChangeRole() async {
