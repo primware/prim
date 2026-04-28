@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'dart:typed_data';
-
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
 import 'package:flutter/material.dart';
@@ -17,17 +16,16 @@ import 'package:primware/views/Home/report/close_cash_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../shared/toast_message.dart';
-import '../shared/file_picker_helper.dart';
 import '../API/endpoint.dart';
 import '../API/pos.api.dart';
 import '../API/user.api.dart';
 import '../localization/app_locale.dart';
 import '../theme/colors.dart';
 import '../views/Home/bpartner/bpartner_view.dart';
-import '../views/Home/dashboard/dashboard_funtions.dart';
 import '../views/Home/order/my_order.dart';
 import '../views/Home/report/close_cash_detail.dart';
 import '../views/Home/report/report_funtions.dart';
+import 'package:primware/views/Home/settings/settings_view.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
 
@@ -122,7 +120,6 @@ class MenuDrawer extends StatefulWidget {
 }
 
 class _MenuDrawerState extends State<MenuDrawer> {
-  // Variables de estado originales
   bool _isDarkMode = false, _isCreatingCloseCash = false;
 
   @override
@@ -131,7 +128,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
     _loadTheme();
   }
 
-  // Lógica de carga de tema original
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -139,7 +135,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
     });
   }
 
-  // Lógica de confirmación de salida original
   Future<bool?> _showLogoutConfirmation(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -291,6 +286,17 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 //     _loadTheme();
                 //   },
                 // ),
+                //TODO TRADUCIR
+                _buildMenuItem(
+                  context,
+                  icon: Icons.settings_outlined,
+                  title: 'Configuración',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
+                  },
+                ),
+
                 _buildMenuItem(context, icon: Icons.manage_accounts_outlined, title: AppLocale.changeRole.getString(context), onTap: _handleChangeRole),
 
                 if (!Base.prod)
@@ -325,17 +331,14 @@ class _MenuDrawerState extends State<MenuDrawer> {
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: _updateLogo,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
-              child: CircleAvatar(
-                radius: 35,
-                backgroundColor: Colors.white,
-                backgroundImage: POSPrinter.logo != null ? MemoryImage(POSPrinter.logo!) : null,
-                child: POSPrinter.logo == null ? Icon(Icons.business, color: Theme.of(context).primaryColor, size: 35) : null,
-              ),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+            child: CircleAvatar(
+              radius: 35,
+              backgroundColor: Colors.white,
+              backgroundImage: POSPrinter.logo != null ? MemoryImage(POSPrinter.logo!) : null,
+              child: POSPrinter.logo == null ? Icon(Icons.business, color: Theme.of(context).primaryColor, size: 35) : null,
             ),
           ),
           const SizedBox(width: 15),
@@ -387,23 +390,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
         ),
       ),
     );
-  }
-
-  Future<void> _updateLogo() async {
-    final picked = await pickValidFile(context: context, maxUploadMB: 4);
-    if (picked == null) return;
-    final bytes = picked['fileBytes'] as Uint8List;
-    setState(() {
-      POSPrinter.logo = bytes;
-      POSPrinter.isLogoSet = true;
-    });
-    final ok = await updateOrgLogo(bytes, context);
-    if (!mounted) return;
-    if (ok) {
-      ToastMessage.show(context: context, message: 'Logo actualizado correctamente', type: ToastType.success);
-    } else {
-      ToastMessage.show(context: context, message: 'No se pudo actualizar el logo', type: ToastType.failure);
-    }
   }
 
   Future<void> _handleChangeRole() async {

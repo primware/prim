@@ -6,6 +6,7 @@ import '../../../API/endpoint.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
+import '../../../shared/toast_message.dart';
 
 Future<Map<String, double>> fetchSalesYTDData({required BuildContext context}) async {
   try {
@@ -16,10 +17,7 @@ Future<Map<String, double>> fetchSalesYTDData({required BuildContext context}) a
       return {};
     }
 
-    final response = await get(
-      Uri.parse(chartUrl),
-      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
-    );
+    final response = await get(Uri.parse(chartUrl), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
     if (response.statusCode != 200) {
       debugPrint('Error al obtener datos del gráfico mensual (status ${response.statusCode}): ${response.body}');
@@ -88,10 +86,7 @@ Future<Map<String, double>> fetchSalesPerDay({required BuildContext context, int
       return {};
     }
 
-    final response = await get(
-      Uri.parse(chartUrl),
-      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
-    );
+    final response = await get(Uri.parse(chartUrl), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
     if (response.statusCode != 200) {
       debugPrint('Error al obtener datos del gráfico por día (status ${response.statusCode}): ${response.body}');
@@ -179,10 +174,7 @@ Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({required BuildC
       return {};
     }
 
-    final response = await get(
-      Uri.parse(chartUrl),
-      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
-    );
+    final response = await get(Uri.parse(chartUrl), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
     if (response.statusCode != 200) {
       debugPrint('Error al obtener datos del gráfico Sales YTD By SalesRep (status ${response.statusCode}): ${response.body}');
@@ -246,17 +238,10 @@ Future<Map<String, double>> fetchSalesPerDayByProductCategory({required BuildCon
       return {};
     }
 
-    final response = await get(
-      Uri.parse(chartUrl),
-      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
-    );
+    final response = await get(Uri.parse(chartUrl), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
     if (response.statusCode != 200) {
-      CurrentLogMessage.add(
-        'Error fetchSalesPerDayByProductCategory: ${response.statusCode}, ${response.body}',
-        level: 'ERROR',
-        tag: 'fetchSalesPerDayByProductCategory',
-      );
+      CurrentLogMessage.add('Error fetchSalesPerDayByProductCategory: ${response.statusCode}, ${response.body}', level: 'ERROR', tag: 'fetchSalesPerDayByProductCategory');
       debugPrint(
         'Error al obtener datos del gráfico Sales Per Day By Product Category '
         '(status ${response.statusCode}): ${response.body}',
@@ -317,10 +302,15 @@ Future<Map<String, double>> fetchSalesPerDayByProductCategory({required BuildCon
 
 Future<bool> updateOrgLogo(Uint8List fileBytes, BuildContext context) async {
   try {
-    final getResp = await get(
-      Uri.parse('${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}'),
-      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
-    );
+    // 👇 BARRERA DE SEGURIDAD AÑADIDA 👇
+    // Evita el Error 400 verificando que no estemos en la Org 0 (*) o que el Hot Reload haya borrado el Token
+    if (Token.organitation == null || Token.organitation == 0) {
+      CurrentLogMessage.add('updateOrgLogo: Intento de guardar en Org 0 o Token nulo', level: 'ERROR', tag: 'updateOrgLogo');
+      ToastMessage.show(context: context, message: 'No se puede cambiar el logo en la Organización * (0). Reinicia la app o cambia de sucursal.', type: ToastType.warning);
+      return false;
+    }
+
+    final getResp = await get(Uri.parse('${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
     if (getResp.statusCode != 200) {
       CurrentLogMessage.add('updateOrgLogo GET OrgInfo: ${getResp.statusCode}, ${getResp.body}', level: 'ERROR', tag: 'updateOrgLogo');
       return false;
@@ -337,11 +327,7 @@ Future<bool> updateOrgLogo(Uint8List fileBytes, BuildContext context) async {
     final body = jsonEncode({
       'Logo_ID': {'data': b64},
     });
-    final putResp = await put(
-      Uri.parse('${EndPoints.adOrgInfo}/$orgInfoId'),
-      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
-      body: body,
-    );
+    final putResp = await put(Uri.parse('${EndPoints.adOrgInfo}/$orgInfoId'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!}, body: body);
     if (putResp.statusCode == 200 || putResp.statusCode == 204) {
       POSPrinter.isLogoSet = true;
       return true;
