@@ -84,6 +84,7 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
     }
   }
 
+  //TODO traducir
   String get _strengthText {
     if (newPasswordController.text.isEmpty) return 'Seguridad';
     switch (_passwordStrength) {
@@ -167,6 +168,7 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
     );
   }
 
+  //TODO Traducir
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

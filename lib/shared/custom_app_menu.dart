@@ -120,7 +120,6 @@ class MenuDrawer extends StatefulWidget {
 }
 
 class _MenuDrawerState extends State<MenuDrawer> {
-  // Variables de estado originales
   bool _isDarkMode = false, _isCreatingCloseCash = false;
 
   @override
