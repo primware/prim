@@ -205,8 +205,52 @@ class AppLocale {
   static const String isPointOfSale = 'isPointOfSale';
   static const String noOrdersRegistered = 'noOrdersRegistered';
   static const String readyForFirstOrder = 'readyForFirstOrder';
+  static const String orgProfileTitle = 'orgProfileTitle';
+  static const String adjustLogo = 'adjustLogo';
+  static const String done = 'done';
+  static const String orgName = 'orgName';
+  static const String identificationNumber = 'identificationNumber';
+  static const String mobilePhone = 'mobilePhone';
+  static const String locationLabel = 'locationLabel';
+  static const String editAddress = 'editAddress';
+  static const String country = 'country';
+  static const String regionState = 'regionState';
+  static const String city = 'city';
+  static const String zipCode = 'zipCode';
+  static const String address1 = 'address1';
+  static const String address2 = 'address2';
+  static const String address3 = 'address3';
+  static const String address4 = 'address4';
+  static const String unknown = 'unknown';
+  static const String addressUpdated = 'addressUpdated';
+  static const String accept = 'accept';
+  static const String errorUploadingLogo = 'errorUploadingLogo';
+  static const String settingsSavedSuccess = 'settingsSavedSuccess';
+  static const String settingsSaveError = 'settingsSaveError';
 
   static const Map<String, dynamic> en = {
+    orgProfileTitle: 'Organization\nProfile',
+    adjustLogo: 'Adjust Logo',
+    done: 'Done',
+    orgName: 'Organization Name',
+    identificationNumber: 'Identification Number',
+    mobilePhone: 'Mobile Phone',
+    locationLabel: 'Address / Location',
+    editAddress: 'Edit Address',
+    country: 'Country',
+    regionState: 'Region / State',
+    city: 'City',
+    zipCode: 'Zip Code / Postal Code',
+    address1: 'Address 1',
+    address2: 'Address 2',
+    address3: 'Address 3',
+    address4: 'Address 4',
+    unknown: 'Unknown',
+    addressUpdated: 'Address updated',
+    accept: 'Accept',
+    errorUploadingLogo: 'Error uploading logo',
+    settingsSavedSuccess: 'Settings saved successfully',
+    settingsSaveError: 'An error occurred while saving. Check the console.',
     noOrdersRegistered: 'No orders registered',
     readyForFirstOrder: 'Ready to place your first order?',
     systemParameters: 'Parámetros del Sistema',
@@ -218,8 +262,7 @@ class AppLocale {
     selectCustomer: 'Please select a customer',
     customerNoAddressError: 'This customer does not have a valid address. Please edit the customer to add an address before continuing.',
     today: 'Today',
-    todaySalesByCategoryDescription:
-        'You can view your sales invoiced today grouped by product category. The amount does not include taxes. If you tap the chart you can see the details of sales by category.',
+    todaySalesByCategoryDescription: 'You can view your sales invoiced today grouped by product category. The amount does not include taxes. If you tap the chart you can see the details of sales by category.',
     confirmCreateCategory: 'Are you sure you want to create this product category?',
     newCategory: 'New Category',
     changeRole: 'Change Role',
@@ -340,8 +383,7 @@ class AppLocale {
     price: 'Price',
     subtotal: 'Subtotal',
     total: 'Total',
-    salesYTDBySalesRepDescription:
-        'Shows the total invoiced in the current month by each sales representative. The amount does not include taxes. If you tap the chart you can see the details of sales by representative. Does not include documents without invoice',
+    salesYTDBySalesRepDescription: 'Shows the total invoiced in the current month by each sales representative. The amount does not include taxes. If you tap the chart you can see the details of sales by representative. Does not include documents without invoice',
     noName: 'No name',
     finalSummary: 'Final summary:',
     grossTotal: 'Gross total:',
@@ -416,15 +458,35 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    orgProfileTitle: 'Perfil de la\nOrganización',
+    adjustLogo: 'Ajustar Logo',
+    done: 'Listo',
+    orgName: 'Nombre de la Organización',
+    identificationNumber: 'Número de Identificación',
+    mobilePhone: 'Teléfono Móvil',
+    locationLabel: 'Dirección / Localización',
+    editAddress: 'Editar Dirección',
+    country: 'País',
+    regionState: 'Región / Estado',
+    city: 'Ciudad',
+    zipCode: 'Código Postal / ZIP',
+    address1: 'Dirección 1',
+    address2: 'Dirección 2',
+    address3: 'Dirección 3',
+    address4: 'Dirección 4',
+    unknown: 'Desconocido',
+    addressUpdated: 'Dirección actualizada',
+    accept: 'Aceptar',
+    errorUploadingLogo: 'Error al subir el logo',
+    settingsSavedSuccess: 'Ajustes guardados exitosamente',
+    settingsSaveError: 'Ocurrió un error al guardar. Revisa la consola.',
     noOrdersRegistered: 'Sin órdenes registradas',
     readyForFirstOrder: '¿Listo para realizar tu primera orden?',
     selectValidCustomerForProducts: 'Seleccione un cliente válido para poder agregar productos a la orden.',
     selectCustomer: 'Seleccione un cliente',
-    customerNoAddressError:
-        'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
+    customerNoAddressError: 'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
     today: 'Hoy',
-    todaySalesByCategoryDescription:
-        'Puedes visualizar las ventas facturadas del día agrupadas por categoría de producto. El monto no incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por categoría.',
+    todaySalesByCategoryDescription: 'Puedes visualizar las ventas facturadas del día agrupadas por categoría de producto. El monto no incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por categoría.',
     confirmCreateCategory: '¿Seguro que desea crear esta categoría de producto?',
     newCategory: 'Nueva Categoría',
     changeRole: 'Cambiar Rol',
@@ -452,8 +514,7 @@ class AppLocale {
     searchProducts: 'Buscar productos',
     productCode: 'Código',
     productName: 'Nombre',
-    salesYTDBySalesRepDescription:
-        'Muestra el total facturado en el mes actual por cada representante de ventas. No incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por representante. No incluye documentos sin factura',
+    salesYTDBySalesRepDescription: 'Muestra el total facturado en el mes actual por cada representante de ventas. No incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por representante. No incluye documentos sin factura',
     productPrice: 'Precio',
     productStock: 'Stock',
     noProductsFound: 'No se encontraron productos.',

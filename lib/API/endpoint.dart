@@ -78,6 +78,10 @@ class EndPoints {
   static String yappyQRGeneratorDYN = '${Base.yappyURL}/qr/generate/DYN';
 
   static String yappyTransaction = '${Base.yappyURL}/transaction';
+
+  static String model(String tableName) {
+    return '${Base.baseURL}/api/v1/models/$tableName';
+  }
 }
 
 class GetCustomerData {
