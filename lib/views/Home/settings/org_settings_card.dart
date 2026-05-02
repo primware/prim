@@ -279,7 +279,7 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                         child: DropdownButton<int>(
                           isExpanded: true,
                           hint: Text(AppLocale.country.getString(context)),
-                          value: _selectedCountryId,
+                          value: _countries.any((c) => c['id'] == _selectedCountryId) ? _selectedCountryId : null,
                           items: _countries.map((country) {
                             return DropdownMenuItem<int>(value: country['id'], child: Text(country['Name'] ?? country['identifier'] ?? AppLocale.unknown.getString(context)));
                           }).toList(),
@@ -290,7 +290,7 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                               _currentCityName = '';
                               _cities = [];
                             });
-                            setState(() => _hasUnsavedChanges = true);
+                            this.setState(() => _hasUnsavedChanges = true);
                             if (newValue != null) {
                               _loadCities(newValue).then((_) => setStateDialog(() {}));
                             }
@@ -311,7 +311,7 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                         child: DropdownButton<int>(
                           isExpanded: true,
                           hint: Text(AppLocale.city.getString(context)),
-                          value: _selectedCityId,
+                          value: _cities.any((c) => c['id'] == _selectedCityId) ? _selectedCityId : null,
                           items: _cities.map((city) {
                             return DropdownMenuItem<int>(value: city['id'], child: Text(city['Name'] ?? city['identifier'] ?? AppLocale.unknown.getString(context)));
                           }).toList(),
@@ -329,7 +329,7 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                                 _currentCityName = cityObj['Name']?.toString() ?? cityObj['identifier']?.toString() ?? '';
                               }
                             });
-                            setState(() => _hasUnsavedChanges = true);
+                            this.setState(() => _hasUnsavedChanges = true);
                           },
                         ),
                       ),
@@ -347,7 +347,6 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                     ),
                     const SizedBox(height: 16),
 
-                    // LÍNEAS DE DIRECCIÓN 1 A 4
                     TextField(
                       controller: addressController,
                       decoration: InputDecoration(
