@@ -18,7 +18,6 @@ import '../../../shared/toast_message.dart';
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
 
-  // Mapa de estados de documento (DocStatus) a nombre en español, color e icono
   static const Map<String, Map<String, Object>> _docStatusMap = {
     'DR': {'label': 'Borrador', 'color': Colors.grey, 'icon': Icons.edit_note},
     'CO': {'label': 'Completado', 'color': Colors.green, 'icon': Icons.check_circle_outline},
@@ -240,6 +239,31 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
+  Widget _buildDashedDivider({Color color = Colors.grey}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final boxWidth = constraints.constrainWidth();
+          const dashWidth = 5.0;
+          const dashHeight = 1.0;
+          final dashCount = (boxWidth / (2 * dashWidth)).floor();
+          return Flex(
+            children: List.generate(dashCount, (_) {
+              return SizedBox(
+                width: dashWidth,
+                height: dashHeight,
+                child: DecoratedBox(decoration: BoxDecoration(color: color.withOpacity(0.5))),
+              );
+            }),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            direction: Axis.horizontal,
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lines = (order['C_OrderLine'] as List?) ?? [];
@@ -247,7 +271,6 @@ class OrderDetailPage extends StatelessWidget {
     final int? orderId = (order['id'] as int?);
     final Future<Map<String, dynamic>?> feFuture = orderId != null ? fetchElectronicInvoiceInfo(orderId: orderId) : Future.value(null);
 
-    // Detectar si es devolución (RM)
     final dynamic subField = order['doctypetarget']?['subtype'];
     final String? subId = (subField is Map) ? subField['id'] : subField;
     final bool isReturn = subId == 'RM';
@@ -262,10 +285,17 @@ class OrderDetailPage extends StatelessWidget {
     // Obtener métodos de pago
     final List<dynamic> payments = (order['C_POSPayment'] ?? order['payments'] ?? []) as List<dynamic>;
 
+    // Colores para el "Ticket"
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color ticketBgColor = isDark ? const Color(0xFF1E1E2C) : Colors.white;
+    final Color textColor = isDark ? Colors.grey.shade300 : Colors.black87;
+
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF0F2F5), // Fondo de la app (gris claro/oscuro)
       appBar: AppBar(
-        backgroundColor: (isReturn) ? Colors.red : null,
-        foregroundColor: (isReturn) ? Colors.white : null,
+        backgroundColor: (isReturn) ? Colors.red : Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
         title: Text('${order['doctypetarget']['name']} #${order['DocumentNo']}'),
         actions: [
           Builder(
@@ -281,23 +311,14 @@ class OrderDetailPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => OrderNewPage(
-                      isRefund: false,
-                      doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-                      orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
-                      sourceOrderId: order['id'],
-                    ),
+                    builder: (_) => OrderNewPage(isRefund: false, doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID, orderName: order['doctypetarget']?['name'] ?? POS.docTypeName, sourceOrderId: order['id']),
                   ),
                 );
               }
 
               void actionConvert() {
                 if (POS.docTypesComplete.isEmpty) {
-                  ToastMessage.show(
-                    context: context,
-                    message: 'No hay tipos de documento disponibles para convertir.',
-                    type: ToastType.failure,
-                  );
+                  ToastMessage.show(context: context, message: 'No hay tipos de documento disponibles para convertir.', type: ToastType.failure);
                   return;
                 }
 
@@ -312,10 +333,7 @@ class OrderDetailPage extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'Convertir documento a...',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                            ),
+                            Text('Convertir documento a...', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             const Divider(),
                             ...POS.docTypesComplete.map((doc) {
@@ -324,9 +342,7 @@ class OrderDetailPage extends StatelessWidget {
                               final String docName = (doc['name'] ?? doc['Name'] ?? 'Documento').toString();
 
                               // Excluir notas de crédito (RM) y el MISMO tipo de documento actual
-                              if (doc['DocSubTypeSO'] == 'RM' ||
-                                  docTypeId == POS.docTypeRefundID ||
-                                  docTypeId == order['doctypetarget']?['id']) {
+                              if (doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID || docTypeId == order['doctypetarget']?['id']) {
                                 return const SizedBox.shrink();
                               }
 
@@ -343,12 +359,7 @@ class OrderDetailPage extends StatelessWidget {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => OrderNewPage(
-                                        isRefund: false,
-                                        doctypeID: docTypeId,
-                                        orderName: docName,
-                                        sourceOrderId: order['id'],
-                                      ),
+                                      builder: (_) => OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
                                     ),
                                   );
                                 },
@@ -361,7 +372,6 @@ class OrderDetailPage extends StatelessWidget {
                   },
                 );
               }
-              // 👆 FIN NUEVA FUNCIÓN 👆
 
               void actionRefund() async {
                 final bool? confirm = await _refundConfirmation(context);
@@ -369,12 +379,7 @@ class OrderDetailPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => OrderNewPage(
-                        isRefund: true,
-                        doctypeID: POS.docTypeRefundID,
-                        orderName: POS.docTypeRefundName,
-                        sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
-                      ),
+                      builder: (_) => OrderNewPage(isRefund: true, doctypeID: POS.docTypeRefundID, orderName: POS.docTypeRefundName, sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id']),
                     ),
                   );
                 }
@@ -397,16 +402,8 @@ class OrderDetailPage extends StatelessWidget {
                     final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order) : await generateOrderTicket(order);
                     try {
                       final printers = await Printing.listPrinters();
-                      final defaultPrinter = printers.firstWhere(
-                        (p) => p.isDefault,
-                        orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
-                      );
-                      await Printing.directPrintPdf(
-                        printer: defaultPrinter,
-                        usePrinterSettings: true,
-                        dynamicLayout: true,
-                        onLayout: (_) => pdfBytes,
-                      );
+                      final defaultPrinter = printers.firstWhere((p) => p.isDefault, orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'));
+                      await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
                     } catch (e) {
                       await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
                     }
@@ -425,20 +422,12 @@ class OrderDetailPage extends StatelessWidget {
                   final Map<String, dynamic> completeResult = await docComplete(cOrderID: order['id']);
                   if (completeResult['success'] == true && completeResult['isError'] != true) {
                     if (context.mounted) {
-                      ToastMessage.show(
-                        context: context,
-                        message: completeResult['summary'] ?? 'Orden completada con éxito',
-                        type: ToastType.success,
-                      );
+                      ToastMessage.show(context: context, message: completeResult['summary'] ?? 'Orden completada con éxito', type: ToastType.success);
                       Navigator.pop(context, true);
                     }
                   } else {
                     if (context.mounted) {
-                      ToastMessage.show(
-                        context: context,
-                        message: completeResult['summary'] ?? 'Error al completar la orden',
-                        type: ToastType.failure,
-                      );
+                      ToastMessage.show(context: context, message: completeResult['summary'] ?? 'Error al completar la orden', type: ToastType.failure);
                     }
                   }
                 }
@@ -506,7 +495,6 @@ class OrderDetailPage extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         PopupMenuItem<String>(
                           value: 'convert',
                           child: Row(
@@ -597,11 +585,7 @@ class OrderDetailPage extends StatelessWidget {
 
                     Padding(
                       padding: const EdgeInsets.only(right: 8.0),
-                      child: IconButton(
-                        icon: const Icon(Icons.print_rounded),
-                        tooltip: AppLocale.printTicket.getString(context),
-                        onPressed: actionPrint,
-                      ),
+                      child: IconButton(icon: const Icon(Icons.print_rounded), tooltip: AppLocale.printTicket.getString(context), onPressed: actionPrint),
                     ),
                   ],
                 );
@@ -611,250 +595,159 @@ class OrderDetailPage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: CustomFooter(),
-      body: Center(
-        child: CustomContainer(
-          child: OrientationBuilder(
-            builder: (context, orientation) {
-              if (orientation == Orientation.portrait) {
-                return Column(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          physics: const BouncingScrollPhysics(),
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 600), // Ancho máximo para que parezca ticket en Desktop/Tablet
+              decoration: BoxDecoration(
+                color: ticketBgColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 5))],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildHeader(order: order, context: context, feFuture: feFuture, hasCreditNote: hasCreditNote),
-                    const SizedBox(height: CustomSpacer.large),
-                    Text(AppLocale.productSummary.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                    const SizedBox(height: CustomSpacer.small),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: lines.length,
-                        itemBuilder: (context, index) {
-                          final line = lines[index];
-                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}')
-                              .split('_')
-                              .skip(1)
-                              .join(' ');
-                          final double qty = (line['QtyOrdered'] as num).toDouble();
-                          final double price = (line['PriceActual'] as num).toDouble();
-                          final double net = (line['LineNetAmt'] as num).toDouble();
-                          final double rate = (line['C_Tax_ID']['Rate'] as num).toDouble();
-                          final double tax = net * (rate / 100);
-                          final double total = net + tax;
-
-                          // Precio original (PriceList) y descuento
-                          final double priceList = (line['PriceList'] as num?)?.toDouble() ?? price;
-                          final double discountPct =
-                              (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
-
-                          return Container(
-                            margin: EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ListTile(
-                              tileColor: Colors.transparent,
-                              title: Text(name, style: Theme.of(context).textTheme.bodyMedium),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("${AppLocale.quantity.getString(context)}: $qty", style: Theme.of(context).textTheme.bodySmall),
-                                  Text(
-                                    [
-                                      "${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}",
-                                      if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%",
-                                      "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
-                                    ].join(" | "),
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    "${line['C_Tax_ID']['Name']} ($rate%)",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
-                                  Text(
-                                    "${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
-                                  Text(
-                                    "${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                    // --- CABECERA DEL TICKET ---
+                    Center(
+                      child: Column(
+                        children: [
+                          if (POSPrinter.logo != null) ...[Image.memory(POSPrinter.logo!, height: 60, fit: BoxFit.contain), const SizedBox(height: 12)],
+                          Text(
+                            POSPrinter.headerName ?? order['doctypetarget']['name'] ?? 'Documento',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: textColor),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (POSPrinter.headerTaxID != null) Text('RUC: ${POSPrinter.headerTaxID}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                          const SizedBox(height: 16),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: CustomSpacer.large),
-                    Text(AppLocale.paymentMethods.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                    const SizedBox(height: CustomSpacer.small),
-                    if (payments.isEmpty)
-                      Text(AppLocale.noData.getString(context), style: Theme.of(context).textTheme.bodySmall)
-                    else
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: payments.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 6),
-                        itemBuilder: (context, index) {
-                          final p = payments[index] as Map<String, dynamic>;
-                          final dynamic tenderField = p['C_POSTenderType_ID'];
-                          final String tenderName = (tenderField is Map)
-                              ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString()
-                              : tenderField?.toString() ?? '---';
-                          final double payAmt = ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(tenderName, style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
-                                ),
-                                const SizedBox(width: 12),
-                                Text("\$${payAmt.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
-                              ],
-                            ),
-                          );
-                        },
+
+                    _buildHeader(order: order, context: context, feFuture: feFuture, hasCreditNote: hasCreditNote, textColor: textColor),
+
+                    _buildDashedDivider(),
+
+                    Text(
+                      AppLocale.productSummary.getString(context).toUpperCase(),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade600, letterSpacing: 1.2, fontSize: 12),
+                    ),
+                    const SizedBox(height: 12),
+
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: lines.length,
+                      separatorBuilder: (_, __) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Divider(color: Colors.grey.shade200, height: 1),
                       ),
-                    const Divider(),
-                    _buildFinalSummary(taxSummary: taxSummary, grandTotal: (order['GrandTotal'] as num).toDouble(), context: context),
-                  ],
-                );
-              } else {
-                // VISTA HORIZONTAL (Sin Expanded, con SingleChildScrollView)
+                      itemBuilder: (context, index) {
+                        final line = lines[index];
+                        final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}').split('_').skip(1).join(' ');
+                        final double qty = (line['QtyOrdered'] as num).toDouble();
+                        final double price = (line['PriceActual'] as num).toDouble();
+                        final double net = (line['LineNetAmt'] as num).toDouble();
+                        final double rate = (line['C_Tax_ID']['Rate'] as num).toDouble();
+                        final double tax = net * (rate / 100);
+                        final double total = net + tax;
 
-                return SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildHeader(order: order, context: context, feFuture: feFuture, hasCreditNote: hasCreditNote),
-                      const SizedBox(height: CustomSpacer.large),
-                      Text(AppLocale.productSummary.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                      const SizedBox(height: CustomSpacer.small),
+                        final double priceList = (line['PriceList'] as num?)?.toDouble() ?? price;
+                        final double discountPct = (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
 
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: lines.length,
-                        itemBuilder: (context, index) {
-                          final line = lines[index];
-                          final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}')
-                              .split('_')
-                              .skip(1)
-                              .join(' ');
-                          final double qty = (line['QtyOrdered'] as num).toDouble();
-                          final double price = (line['PriceActual'] as num).toDouble();
-                          final double net = (line['LineNetAmt'] as num).toDouble();
-                          final double rate = (line['C_Tax_ID']['Rate'] as num).toDouble();
-                          final double tax = net * (rate / 100);
-                          final double total = net + tax;
-
-                          final double priceList = (line['PriceList'] as num?)?.toDouble() ?? price;
-                          final double discountPct =
-                              (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
-
-                          return Container(
-                            margin: EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ListTile(
-                              tileColor: Colors.transparent,
-                              title: Text(name, style: Theme.of(context).textTheme.bodyMedium),
-                              subtitle: Column(
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("${AppLocale.quantity.getString(context)}: $qty", style: Theme.of(context).textTheme.bodySmall),
                                   Text(
-                                    [
-                                      "${AppLocale.priceList.getString(context)}: \$${priceList.toStringAsFixed(2)}",
-                                      if (discountPct > 0.0) "${AppLocale.discount.getString(context)}: ${discountPct.toStringAsFixed(0)}%",
-                                      "${AppLocale.price.getString(context)}: \$${price.toStringAsFixed(2)}",
-                                    ].join(" | "),
-                                    style: Theme.of(context).textTheme.bodySmall,
+                                    name,
+                                    style: TextStyle(fontWeight: FontWeight.w600, color: textColor),
                                   ),
+                                  const SizedBox(height: 4),
+                                  Text("${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)} x \$${price.toStringAsFixed(2)}", style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                                  if (discountPct > 0.0)
+                                    Text(
+                                      "Desc: ${discountPct.toStringAsFixed(0)}%",
+                                      style: TextStyle(color: Colors.red.shade400, fontSize: 12, fontStyle: FontStyle.italic),
+                                    ),
                                 ],
                               ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    "${line['C_Tax_ID']['Name']} ($rate%)",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
+                                    "\$${total.toStringAsFixed(2)}",
+                                    style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
                                   ),
-                                  Text(
-                                    "${AppLocale.subtotal.getString(context)}: \$${net.toStringAsFixed(2)}",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
-                                  Text(
-                                    "${AppLocale.total.getString(context)}: \$${total.toStringAsFixed(2)}",
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12),
-                                  ),
+                                  const SizedBox(height: 4),
+                                  Text("${line['C_Tax_ID']['Name']} (${rate.toStringAsFixed(0)}%)", style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
                                 ],
                               ),
                             ),
-                          );
-                        },
+                          ],
+                        );
+                      },
+                    ),
+
+                    _buildDashedDivider(),
+
+                    Text(
+                      AppLocale.paymentMethods.getString(context).toUpperCase(),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade600, letterSpacing: 1.2, fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    if (payments.isEmpty)
+                      Text(
+                        AppLocale.noData.getString(context),
+                        style: TextStyle(color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                      )
+                    else
+                      ...payments.map((p) {
+                        final dynamic tenderField = p['C_POSTenderType_ID'];
+                        final String tenderName = (tenderField is Map) ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString() : tenderField?.toString() ?? '---';
+                        final double payAmt = ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(tenderName, style: TextStyle(color: textColor)),
+                              Text(
+                                "\$${payAmt.toStringAsFixed(2)}",
+                                style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+
+                    _buildDashedDivider(),
+
+                    _buildFinalSummary(taxSummary: taxSummary, grandTotal: (order['GrandTotal'] as num).toDouble(), context: context, textColor: textColor),
+
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Text(
+                        "",
+                        style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: CustomSpacer.large),
-                      Text(AppLocale.paymentMethods.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                      const SizedBox(height: CustomSpacer.small),
-                      if (payments.isEmpty)
-                        Text(AppLocale.noData.getString(context), style: Theme.of(context).textTheme.bodySmall)
-                      else
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: payments.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 6),
-                          itemBuilder: (context, index) {
-                            final p = payments[index] as Map<String, dynamic>;
-                            final dynamic tenderField = p['C_POSTenderType_ID'];
-                            final String tenderName = (tenderField is Map)
-                                ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString()
-                                : tenderField?.toString() ?? '---';
-                            final double payAmt = ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(tenderName, style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text("\$${payAmt.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      const Divider(),
-                      _buildFinalSummary(taxSummary: taxSummary, grandTotal: (order['GrandTotal'] as num).toDouble(), context: context),
-                    ],
-                  ),
-                );
-              }
-            },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -867,8 +760,7 @@ class OrderDetailPage extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final meta =
-        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+    final meta = _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = (meta['color'] as Color?) ?? Theme.of(context).colorScheme.primary;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -923,36 +815,19 @@ class OrderDetailPage extends StatelessWidget {
     return taxSummary;
   }
 
-  Widget _buildHeader({
-    required Map<String, dynamic> order,
-    required BuildContext context,
-    required Future<Map<String, dynamic>?> feFuture,
-    required bool hasCreditNote,
-  }) {
+  Widget _buildHeader({required Map<String, dynamic> order, required BuildContext context, required Future<Map<String, dynamic>?> feFuture, required bool hasCreditNote, required Color textColor}) {
     void syncFE({required int cInvoiceID}) async {
       final bool? confirmComplete = await _syncFEConfirmation(context);
       if (confirmComplete == true) {
         final Map<String, dynamic> syncResult = await syncFEProcess(cInvoiceID: cInvoiceID);
         if (syncResult['success'] == true && syncResult['isError'] != true) {
           if (context.mounted) {
-            Fluttertoast.showToast(
-              msg: syncResult['summary'] ?? AppLocale.invoiceSentSuccess.getString(context),
-              backgroundColor: Colors.green,
-              textColor: Colors.white,
-              gravity: ToastGravity.BOTTOM,
-              toastLength: Toast.LENGTH_LONG,
-            );
+            Fluttertoast.showToast(msg: syncResult['summary'] ?? AppLocale.invoiceSentSuccess.getString(context), backgroundColor: Colors.green, textColor: Colors.white, gravity: ToastGravity.BOTTOM, toastLength: Toast.LENGTH_LONG);
             Navigator.pop(context, true);
           }
         } else {
           if (context.mounted) {
-            Fluttertoast.showToast(
-              msg: syncResult['summary'] ?? AppLocale.invoiceSendError.getString(context),
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-              gravity: ToastGravity.BOTTOM,
-              toastLength: Toast.LENGTH_LONG,
-            );
+            Fluttertoast.showToast(msg: syncResult['summary'] ?? AppLocale.invoiceSendError.getString(context), backgroundColor: Colors.red, textColor: Colors.white, gravity: ToastGravity.BOTTOM, toastLength: Toast.LENGTH_LONG);
           }
         }
       }
@@ -971,25 +846,13 @@ class OrderDetailPage extends StatelessWidget {
               order['bpartner']['name'],
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
             ),
-            Text(
-              order['DateOrdered'],
-              style: isMobile ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.headlineSmall,
-            ),
-
             const SizedBox(height: 4),
-            // MOSTRAR TODOS LOS CHIPS JUNTOS ORDENADOS
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                _buildSubtypePill(context, order),
-                _buildDocStatusPill(context, order),
-                //if (order['DocStatus'] == 'DR') _buildEditPill(context, order),
-                if (hasCreditNote) _buildCreditMemoPill(),
-              ],
-            ),
+            Text(order['DateOrdered'], style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 4, children: [_buildSubtypePill(context, order), _buildDocStatusPill(context, order), if (hasCreditNote) _buildCreditMemoPill()]),
           ],
         );
 
@@ -999,10 +862,10 @@ class OrderDetailPage extends StatelessWidget {
           right = Column(
             crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.end,
             children: [
-              Text(AppLocale.electronicBill.getString(context), style: Theme.of(context).textTheme.bodySmall),
+              Text(AppLocale.electronicBill.getString(context), style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
               const SizedBox(height: 6),
               if (fe['responseCode'] != null && fe['responseCode']!.isNotEmpty && fe['responseCode'] != '200') ...[
-                Text(fe['responseMessage']!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.red)),
+                Text(fe['responseMessage']!, style: const TextStyle(fontSize: 10, color: Colors.red)),
                 const SizedBox(height: 6),
                 ElevatedButton(
                   onPressed: () => syncFE(cInvoiceID: fe['cInvoiceID']),
@@ -1011,10 +874,7 @@ class OrderDetailPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
-                  child: Text(
-                    AppLocale.retryFE.getString(context),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white),
-                  ),
+                  child: Text(AppLocale.retryFE.getString(context), style: const TextStyle(fontSize: 10, color: Colors.white)),
                 ),
               ],
 
@@ -1022,28 +882,32 @@ class OrderDetailPage extends StatelessWidget {
                 onTap: () {
                   launchUrl(Uri.parse(qrUrlData));
                 },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: SizedBox(width: 120, height: 120, child: QrImageView(data: qrUrlData)),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: QrImageView(data: qrUrlData, size: 80),
                 ),
               ),
             ],
           );
         }
 
-        // Responsive: columna en móvil, fila en escritorio
         if (isMobile) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               left,
-              if (right != null) ...[const SizedBox(height: 12), right],
+              if (right != null) ...[const SizedBox(height: 16), Center(child: right)],
             ],
           );
         }
 
         return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(child: left),
@@ -1055,30 +919,71 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFinalSummary({
-    required Map<String, Map<String, double>> taxSummary,
-    required double grandTotal,
-    required BuildContext context,
-  }) {
+  Widget _buildFinalSummary({required Map<String, Map<String, double>> taxSummary, required double grandTotal, required BuildContext context, required Color textColor}) {
     final double totalNeto = taxSummary.values.map((e) => e['net']!).reduce((a, b) => a + b);
     final double totalImpuesto = taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppLocale.finalSummary.getString(context), style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: CustomSpacer.small),
-        Text("${AppLocale.grossTotal.getString(context)} \$${totalNeto.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(AppLocale.grossTotal.getString(context), style: TextStyle(color: Colors.grey.shade600)),
+            Text(
+              "\$${totalNeto.toStringAsFixed(2)}",
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
         ...taxSummary.entries.map(
-          (entry) => Text("${entry.key}: \$${entry.value['tax']!.toStringAsFixed(2)}", style: Theme.of(context).textTheme.bodyMedium),
+          (entry) => Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(entry.key, style: TextStyle(color: Colors.grey.shade600)),
+                Text(
+                  "\$${entry.value['tax']!.toStringAsFixed(2)}",
+                  style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
         ),
-        Text(
-          "${AppLocale.taxTotal.getString(context)} \$${totalImpuesto.toStringAsFixed(2)}",
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        Text(
-          "${AppLocale.finalTotal.getString(context)} \$${grandTotal.toStringAsFixed(2)}",
-          style: Theme.of(context).textTheme.titleMedium,
+        if (taxSummary.isEmpty)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(AppLocale.taxTotal.getString(context), style: TextStyle(color: Colors.grey.shade600)),
+              Text(
+                "\$${totalImpuesto.toStringAsFixed(2)}",
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                AppLocale.finalTotal.getString(context).toUpperCase(),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).primaryColor),
+              ),
+              Text(
+                "\$${grandTotal.toStringAsFixed(2)}",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Theme.of(context).primaryColor),
+              ),
+            ],
+          ),
         ),
       ],
     );
