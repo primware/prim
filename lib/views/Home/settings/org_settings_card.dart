@@ -1,19 +1,38 @@
-import 'dart:convert';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:http/http.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-import '../../../API/endpoint.dart';
-import '../../../API/token.api.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../../../API/pos.api.dart';
-import '../dashboard/dashboard_funtions.dart';
+import '../../../localization/app_locale.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_container.dart';
+import '../../../shared/custom_dropdown.dart';
 import '../../../shared/custom_textfield.dart';
+import '../../../shared/footer.dart';
 import '../../../shared/toast_message.dart';
-import '../../../localization/app_locale.dart';
+import 'settings_funtions.dart';
+
+class OrgSettingsPage extends StatelessWidget {
+  const OrgSettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(AppLocale.orgProfileTitle.getString(context).replaceAll('\n', ' '))),
+      body: const SafeArea(
+        child: SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
+          child: Center(
+            child: Padding(padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16), child: OrgSettingsCard()),
+          ),
+        ),
+      ),
+      bottomNavigationBar: const CustomFooter(),
+    );
+  }
+}
 
 class OrgSettingsCard extends StatefulWidget {
   const OrgSettingsCard({super.key});
@@ -24,224 +43,179 @@ class OrgSettingsCard extends StatefulWidget {
 
 class _OrgSettingsCardState extends State<OrgSettingsCard> {
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController descController = TextEditingController();
-  final TextEditingController codeController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
-
   final TextEditingController taxIdController = TextEditingController();
   final TextEditingController dvController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController addressController = TextEditingController();
-  final TextEditingController address2Controller = TextEditingController();
-  final TextEditingController address3Controller = TextEditingController();
-  final TextEditingController address4Controller = TextEditingController();
-  final TextEditingController zipController = TextEditingController();
 
-  List<dynamic> _countries = [];
-  List<dynamic> _cities = [];
+  List<Map<String, dynamic>> _countries = [];
+  List<Map<String, dynamic>> _cities = [];
   int? _selectedCountryId;
   int? _selectedCityId;
   String _currentCityName = '';
 
-  String? selectedWarehouse;
-
-  bool isLoading = false;
-  bool isImageLoading = false;
+  bool isLoading = true;
   bool _hasUnsavedChanges = false;
   Uint8List? _localLogoBytes;
 
   double _logoScale = 1.0;
   double _saveScale = 1.0;
-  double _undoScale = 1.0;
 
   int? _adOrgId;
   int? _cLocationId;
+
+  bool get _isRucValid => taxIdController.text.trim().isNotEmpty;
+  bool get _canSave => !isLoading && _hasUnsavedChanges && _isRucValid;
 
   @override
   void initState() {
     super.initState();
     _localLogoBytes = POSPrinter.logo;
-
-    _loadOrganizationData();
-    _loadCountries();
-
-    nameController.addListener(_onFieldChanged);
-    descController.addListener(_onFieldChanged);
-    codeController.addListener(_onFieldChanged);
-
-    taxIdController.addListener(_onFieldChanged);
-    dvController.addListener(_onFieldChanged);
-    phoneController.addListener(_onFieldChanged);
-    emailController.addListener(_onFieldChanged);
-
-    addressController.addListener(_onFieldChanged);
-    address2Controller.addListener(_onFieldChanged);
-    address3Controller.addListener(_onFieldChanged);
-    address4Controller.addListener(_onFieldChanged);
-    zipController.addListener(_onFieldChanged);
+    _addFieldListeners();
+    _loadInitialData();
   }
 
-  Future<void> _loadCountries() async {
-    try {
-      final url = EndPoints.model('C_Country');
-      final resp = await get(Uri.parse(url), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
-      if (resp.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(resp.bodyBytes));
-        setState(() => _countries = data['records'] ?? []);
-      }
-    } catch (e) {
-      print("Error cargando países: $e");
+  void _addFieldListeners() {
+    for (final controller in [nameController, taxIdController, dvController, phoneController, emailController, addressController]) {
+      controller.addListener(_onFieldChanged);
     }
   }
 
-  Future<void> _loadCities(int countryId) async {
-    try {
-      final url = EndPoints.model('C_City');
-      final resp = await get(Uri.parse('$url?\$filter=C_Country_ID eq $countryId'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
-      if (resp.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(resp.bodyBytes));
-        setState(() => _cities = data['records'] ?? []);
-      }
-    } catch (e) {
-      print("Error cargando ciudades: $e");
-    }
-  }
-
-  Future<void> _loadOrganizationData() async {
+  Future<void> _loadInitialData() async {
     setState(() => isLoading = true);
 
-    try {
-      print("========== INICIO CARGA DE ORGANIZACIÓN ==========");
-      final orgUrl = EndPoints.model('AD_Org');
+    final countries = await fetchCountries(context: context);
+    if (!mounted) return;
+    _countries = countries;
 
-      final orgResp = await get(Uri.parse('$orgUrl?\$filter=AD_Org_ID eq ${Token.organitation}'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+    final settings = await fetchOrganizationSettings(context: context);
+    if (!mounted) return;
 
-      if (orgResp.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(orgResp.bodyBytes));
-        if (data['records'] != null && data['records'].isNotEmpty) {
-          final record = data['records'][0];
-          _adOrgId = record['id'];
-
-          setState(() {
-            nameController.text = record['Name'] ?? '';
-            codeController.text = record['Value'] ?? '';
-            descController.text = record['Description'] ?? '';
-          });
-        }
-      }
-
-      final infoResp = await get(Uri.parse('${EndPoints.adOrgInfo}?\$filter=AD_Org_ID eq ${Token.organitation}'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
-
-      if (infoResp.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(infoResp.bodyBytes));
-        if (data['records'] != null && data['records'].isNotEmpty) {
-          final record = data['records'][0];
-
-          setState(() {
-            taxIdController.text = record['TaxID']?.toString() ?? '';
-            dvController.text = record['dv']?.toString() ?? '';
-            phoneController.text = record['Phone2']?.toString() ?? '';
-            emailController.text = record['EMail']?.toString() ?? '';
-          });
-
-          if (record['C_Location_ID'] != null) {
-            _cLocationId = record['C_Location_ID']['id'];
-
-            final locUrl = EndPoints.model('C_Location');
-            final locResp = await get(Uri.parse('$locUrl/$_cLocationId'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
-
-            if (locResp.statusCode == 200) {
-              final locData = jsonDecode(utf8.decode(locResp.bodyBytes));
-
-              setState(() {
-                _selectedCountryId = locData['C_Country_ID']?['id'];
-                if (_selectedCountryId != null) {
-                  _loadCities(_selectedCountryId!);
-                }
-
-                _selectedCityId = locData['C_City_ID']?['id'];
-                _currentCityName = locData['City']?.toString() ?? '';
-
-                addressController.text = locData['Address1']?.toString() ?? '';
-                address2Controller.text = locData['Address2']?.toString() ?? '';
-                address3Controller.text = locData['Address3']?.toString() ?? '';
-                address4Controller.text = locData['Address4']?.toString() ?? '';
-                zipController.text = locData['Postal']?.toString() ?? '';
-
-                String visualAddress = locData['identifier'] ?? '';
-                if (visualAddress.trim().replaceAll(',', '').isEmpty) {
-                  visualAddress = addressController.text.trim();
-                }
-                locationController.text = visualAddress;
-              });
-            }
-          }
-        }
-      }
-      print("========== FIN CARGA DE ORGANIZACIÓN ==========");
-    } catch (e) {
-      print("Excepción cargando organización: $e");
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-          _hasUnsavedChanges = false;
-        });
+    if (settings != null) {
+      _applyOrganizationSettings(settings);
+      if (_selectedCountryId != null) {
+        _cities = await fetchCities(context: context, countryId: _selectedCountryId!);
+        if (!mounted) return;
       }
     }
+
+    setState(() {
+      isLoading = false;
+      _hasUnsavedChanges = false;
+    });
+  }
+
+  void _applyOrganizationSettings(Map<String, dynamic> settings) {
+    _adOrgId = settings['adOrgId'] as int?;
+    _cLocationId = settings['cLocationId'] as int?;
+    _selectedCountryId = settings['countryId'] as int?;
+    _selectedCityId = settings['cityId'] as int?;
+    _currentCityName = settings['cityName']?.toString() ?? '';
+
+    nameController.text = settings['name']?.toString() ?? '';
+    taxIdController.text = settings['taxId']?.toString() ?? '';
+    dvController.text = settings['dv']?.toString() ?? '';
+    phoneController.text = settings['phone']?.toString() ?? '';
+    emailController.text = settings['email']?.toString() ?? '';
+    addressController.text = settings['address1']?.toString() ?? '';
+    locationController.text = settings['visualAddress']?.toString() ?? '';
   }
 
   void _onFieldChanged() {
-    if (!_hasUnsavedChanges && !isLoading) {
-      setState(() => _hasUnsavedChanges = true);
-    }
-  }
-
-  void _undoChanges() {
-    setState(() {
-      _localLogoBytes = POSPrinter.logo;
-      _hasUnsavedChanges = false;
-    });
-    _loadOrganizationData();
+    if (isLoading) return;
+    setState(() => _hasUnsavedChanges = true);
   }
 
   @override
   void dispose() {
     nameController.dispose();
-    descController.dispose();
-    codeController.dispose();
     locationController.dispose();
     taxIdController.dispose();
     dvController.dispose();
     phoneController.dispose();
     emailController.dispose();
-
     addressController.dispose();
-    address2Controller.dispose();
-    address3Controller.dispose();
-    address4Controller.dispose();
-    zipController.dispose();
     super.dispose();
   }
 
+  bool get _canCropImage {
+    if (kIsWeb) return true;
+    return defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  Future<ImageSource?> _resolveLogoImageSource() async {
+    if (kIsWeb || defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+      return showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (context) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: Text(AppLocale.logoTakePhoto.getString(context)),
+                  onTap: () => Navigator.pop(context, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: Text(AppLocale.logoSelectImage.getString(context)),
+                  onTap: () => Navigator.pop(context, ImageSource.gallery),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
+    return ImageSource.gallery;
+  }
+
   Future<void> _pickAndCropImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final source = await _resolveLogoImageSource();
+    if (source == null) return;
+
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: source, imageQuality: 80);
     if (image == null) return;
 
-    CroppedFile? croppedFile = await ImageCropper().cropImage(
+    if (!_canCropImage) {
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _localLogoBytes = bytes;
+        _hasUnsavedChanges = true;
+      });
+      return;
+    }
+
+    final croppedFile = await ImageCropper().cropImage(
       sourcePath: image.path,
-      aspectRatioPresets: [CropAspectRatioPreset.square],
+      aspectRatio: const CropAspectRatio(ratioX: 3, ratioY: 1),
+      aspectRatioPresets: [CropAspectRatioPreset.ratio16x9, CropAspectRatioPreset.ratio4x3],
       uiSettings: [
-        AndroidUiSettings(toolbarTitle: AppLocale.adjustLogo.getString(context), toolbarColor: Theme.of(context).primaryColor, toolbarWidgetColor: Colors.white, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
-        IOSUiSettings(title: AppLocale.adjustLogo.getString(context), aspectRatioLockEnabled: true, doneButtonTitle: AppLocale.done.getString(context), cancelButtonTitle: AppLocale.cancel.getString(context)),
+        AndroidUiSettings(
+          toolbarTitle: AppLocale.adjustLogo.getString(context),
+          toolbarColor: Theme.of(context).primaryColor,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.ratio16x9,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: AppLocale.adjustLogo.getString(context),
+          aspectRatioLockEnabled: true,
+          doneButtonTitle: AppLocale.done.getString(context),
+          cancelButtonTitle: AppLocale.cancel.getString(context),
+        ),
       ],
     );
 
     if (croppedFile == null) return;
-    final Uint8List bytes = await croppedFile.readAsBytes();
+    final bytes = await croppedFile.readAsBytes();
+    if (!mounted) return;
 
     setState(() {
       _localLogoBytes = bytes;
@@ -250,9 +224,9 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
   }
 
   void _showLocationDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
@@ -268,126 +242,58 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // DROPDOWN PAÍS
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          isExpanded: true,
-                          hint: Text(AppLocale.country.getString(context)),
-                          value: _countries.any((c) => c['id'] == _selectedCountryId) ? _selectedCountryId : null,
-                          items: _countries.map((country) {
-                            return DropdownMenuItem<int>(value: country['id'], child: Text(country['Name'] ?? country['identifier'] ?? AppLocale.unknown.getString(context)));
-                          }).toList(),
-                          onChanged: (newValue) {
-                            setStateDialog(() {
-                              _selectedCountryId = newValue;
-                              _selectedCityId = null;
-                              _currentCityName = '';
-                              _cities = [];
-                            });
-                            this.setState(() => _hasUnsavedChanges = true);
-                            if (newValue != null) {
-                              _loadCities(newValue).then((_) => setStateDialog(() {}));
+                    SearchableDropdown<int>(
+                      value: _selectedCountryId,
+                      options: _countries,
+                      labelText: AppLocale.country.getString(context),
+                      onChanged: (newValue) async {
+                        setStateDialog(() {
+                          _selectedCountryId = newValue;
+                          _selectedCityId = null;
+                          _currentCityName = '';
+                          _cities = [];
+                        });
+                        setState(() => _hasUnsavedChanges = true);
+                        if (newValue != null) {
+                          final cities = await fetchCities(context: this.context, countryId: newValue);
+                          if (!mounted) return;
+                          setState(() => _cities = cities);
+                          setStateDialog(() {});
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    SearchableDropdown<int>(
+                      value: _selectedCityId,
+                      options: _cities,
+                      labelText: AppLocale.city.getString(context),
+                      onChanged: (newValue) {
+                        setStateDialog(() {
+                          _selectedCityId = newValue;
+                          Map<String, dynamic>? selectedCity;
+                          for (final city in _cities) {
+                            if (city['id'] == newValue) {
+                              selectedCity = city;
+                              break;
                             }
-                          },
-                        ),
-                      ),
+                          }
+                          _currentCityName = selectedCity?['name']?.toString() ?? '';
+                        });
+                        setState(() => _hasUnsavedChanges = true);
+                      },
                     ),
                     const SizedBox(height: 16),
-
-                    // DROPDOWN CIUDAD
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          isExpanded: true,
-                          hint: Text(AppLocale.city.getString(context)),
-                          value: _cities.any((c) => c['id'] == _selectedCityId) ? _selectedCityId : null,
-                          items: _cities.map((city) {
-                            return DropdownMenuItem<int>(value: city['id'], child: Text(city['Name'] ?? city['identifier'] ?? AppLocale.unknown.getString(context)));
-                          }).toList(),
-                          onChanged: (newValue) {
-                            setStateDialog(() {
-                              _selectedCityId = newValue;
-                              var cityObj;
-                              for (var c in _cities) {
-                                if (c['id'] == newValue) {
-                                  cityObj = c;
-                                  break;
-                                }
-                              }
-                              if (cityObj != null) {
-                                _currentCityName = cityObj['Name']?.toString() ?? cityObj['identifier']?.toString() ?? '';
-                              }
-                            });
-                            this.setState(() => _hasUnsavedChanges = true);
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // CÓDIGO POSTAL
-                    TextField(
-                      controller: zipController,
-                      decoration: InputDecoration(
-                        labelText: AppLocale.zipCode.getString(context),
-                        prefixIcon: const Icon(Icons.markunread_mailbox_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    TextField(
-                      controller: addressController,
-                      decoration: InputDecoration(
-                        labelText: AppLocale.address1.getString(context),
-                        prefixIcon: const Icon(Icons.streetview_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: address2Controller,
-                      decoration: InputDecoration(
-                        labelText: AppLocale.address2.getString(context),
-                        prefixIcon: const Icon(Icons.map_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: address3Controller,
-                      decoration: InputDecoration(
-                        labelText: AppLocale.address3.getString(context),
-                        prefixIcon: const Icon(Icons.map_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: address4Controller,
-                      decoration: InputDecoration(
-                        labelText: AppLocale.address4.getString(context),
-                        prefixIcon: const Icon(Icons.map_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                    TextfieldTheme(
+                      controlador: addressController,
+                      texto: AppLocale.address1.getString(context),
+                      icono: Icons.streetview_outlined,
                     ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
                   child: Text(AppLocale.cancel.getString(context), style: TextStyle(color: Colors.grey.shade600)),
                 ),
                 ElevatedButton(
@@ -397,9 +303,12 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                   ),
                   onPressed: () {
                     setState(() {
-                      locationController.text = addressController.text.isNotEmpty ? addressController.text : AppLocale.addressUpdated.getString(context);
+                      locationController.text = addressController.text.trim().isNotEmpty
+                          ? addressController.text.trim()
+                          : AppLocale.addressUpdated.getString(context);
+                      _hasUnsavedChanges = true;
                     });
-                    Navigator.of(context).pop();
+                    Navigator.of(dialogContext).pop();
                   },
                   child: Text(AppLocale.accept.getString(context), style: const TextStyle(color: Colors.white)),
                 ),
@@ -412,295 +321,275 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
   }
 
   Future<void> _saveOrganization() async {
+    if (!_isRucValid) {
+      ToastMessage.show(
+        context: context,
+        message: '${AppLocale.identificationNumber.getString(context)}: ${AppLocale.requiredField.getString(context)}',
+        type: ToastType.warning,
+      );
+      return;
+    }
+
     setState(() => isLoading = true);
-    bool success = true;
+    var success = true;
 
-    print("========== INICIO GUARDADO ==========");
-
-    if (_localLogoBytes != null && _localLogoBytes != POSPrinter.logo) {
-      final bool logoOk = await updateOrgLogo(_localLogoBytes!, context);
+    final hasLogoChange = _localLogoBytes != null && !listEquals(_localLogoBytes, POSPrinter.logo);
+    if (hasLogoChange) {
+      final logoOk = await updateOrgLogo(fileBytes: _localLogoBytes!, context: context);
+      if (!mounted) return;
       if (logoOk) {
         POSPrinter.logo = _localLogoBytes;
         POSPrinter.isLogoSet = true;
       } else {
         success = false;
-        if (mounted) ToastMessage.show(context: context, message: AppLocale.errorUploadingLogo.getString(context), type: ToastType.failure);
+        ToastMessage.show(context: context, message: AppLocale.errorUploadingLogo.getString(context), type: ToastType.failure);
       }
     }
 
-    if (_adOrgId != null) {
-      final orgUrl = EndPoints.model('AD_Org');
-      final bodyText = jsonEncode({"Name": nameController.text.trim(), "Value": codeController.text.trim(), "Description": descController.text.trim()});
+    final settingsOk = await saveOrganizationSettings(
+      context: context,
+      adOrgId: _adOrgId,
+      cLocationId: _cLocationId,
+      name: nameController.text,
+      taxId: taxIdController.text,
+      dv: dvController.text,
+      phone: phoneController.text,
+      email: emailController.text,
+      countryId: _selectedCountryId,
+      cityId: _selectedCityId,
+      cityName: _currentCityName,
+      address1: addressController.text,
+    );
+    if (!mounted) return;
 
-      try {
-        final putResp = await put(Uri.parse('$orgUrl/$_adOrgId'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: bodyText);
-        if (putResp.statusCode != 200 && putResp.statusCode != 204) success = false;
-      } catch (e) {
-        success = false;
+    success = success && settingsOk;
+
+    if (success) {
+      POSPrinter.headerName = nameController.text.trim();
+      POSPrinter.headerTaxID = taxIdController.text.trim();
+      POSPrinter.headerDV = dvController.text.trim();
+      POSPrinter.headerPhone = phoneController.text.trim();
+      POSPrinter.headerEmail = emailController.text.trim();
+
+      final refreshedSettings = await fetchOrganizationSettings(context: context);
+      if (!mounted) return;
+      if (refreshedSettings != null) {
+        _applyOrganizationSettings(refreshedSettings);
       }
     }
-
-    if (_adOrgId != null) {
-      final bodyInfo = jsonEncode({"TaxID": taxIdController.text.trim(), "dv": dvController.text.trim(), "Phone2": phoneController.text.trim(), "EMail": emailController.text.trim()});
-
-      try {
-        final infoResp = await put(Uri.parse('${EndPoints.adOrgInfo}/$_adOrgId'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: bodyInfo);
-        if (infoResp.statusCode != 200 && infoResp.statusCode != 204) success = false;
-      } catch (e) {
-        success = false;
-      }
-    }
-
-    if (_cLocationId != null) {
-      final locUrl = EndPoints.model('C_Location');
-
-      final bodyLoc = jsonEncode({
-        if (_selectedCountryId != null) "C_Country_ID": {"id": _selectedCountryId},
-        if (_selectedCityId != null) "C_City_ID": {"id": _selectedCityId},
-        "City": _currentCityName.trim(),
-        "Address1": addressController.text.trim(),
-        "Address2": address2Controller.text.trim(),
-        "Address3": address3Controller.text.trim(),
-        "Address4": address4Controller.text.trim(),
-        "Postal": zipController.text.trim(),
-      });
-
-      print("-> Actualizando C_Location PUT: $locUrl/$_cLocationId");
-      try {
-        final locResp = await put(Uri.parse('$locUrl/$_cLocationId'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: bodyLoc);
-        print("<- Status C_Location PUT: ${locResp.statusCode}");
-        if (locResp.statusCode != 200 && locResp.statusCode != 204) {
-          success = false;
-          print("<- Error C_Location: ${locResp.body}");
-        }
-      } catch (e) {
-        success = false;
-        print("<- Excepción en C_Location: $e");
-      }
-    }
-
-    print("========== FIN GUARDADO ==========");
 
     setState(() {
       isLoading = false;
       if (success) _hasUnsavedChanges = false;
     });
 
-    if (mounted) {
-      if (success) {
-        ToastMessage.show(context: context, message: AppLocale.settingsSavedSuccess.getString(context), type: ToastType.success);
-      } else {
-        ToastMessage.show(context: context, message: AppLocale.settingsSaveError.getString(context), type: ToastType.failure);
-      }
-    }
+    ToastMessage.show(
+      context: context,
+      message: success ? AppLocale.settingsSavedSuccess.getString(context) : AppLocale.settingsSaveError.getString(context),
+      type: success ? ToastType.success : ToastType.failure,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return CustomContainer(
-      maxWidthContainer: 500,
-      child: Container(
-        width: double.infinity,
-        clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
-        ),
-        child: Column(
-          children: [
-            if (isLoading) LinearProgressIndicator(minHeight: 3, backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1), valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.secondary)),
-
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Column(
-                    children: [
-                      Icon(Icons.business_outlined, color: Theme.of(context).primaryColor, size: 32),
-                      const SizedBox(height: 8),
-                      Text(
-                        AppLocale.orgProfileTitle.getString(context),
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                    ],
+      maxWidthContainer: 560,
+      padding: 0,
+      child: Column(
+        children: [
+          if (isLoading)
+            SizedBox(
+              width: 550,
+              child: LinearProgressIndicator(
+                minHeight: 3,
+                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.secondary),
+                borderRadius: BorderRadius.circular(50),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    AppLocale.logoSelectImage.getString(context),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // --- LOGO ---
-                  GestureDetector(
-                    onTapDown: isImageLoading ? null : (_) => setState(() => _logoScale = 0.92),
-                    onTapUp: isImageLoading
-                        ? null
-                        : (_) {
-                            Future.delayed(const Duration(milliseconds: 100), () {
-                              if (mounted) setState(() => _logoScale = 1.0);
-                            });
-                          },
-                    onTapCancel: () => setState(() => _logoScale = 1.0),
-                    onTap: isImageLoading ? null : _pickAndCropImage,
-                    child: AnimatedScale(
-                      scale: _logoScale,
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOutCubic,
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTapDown: isLoading ? null : (_) => setState(() => _logoScale = 0.92),
+                  onTapUp: isLoading
+                      ? null
+                      : (_) {
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            if (mounted) setState(() => _logoScale = 1.0);
+                          });
+                        },
+                  onTapCancel: () => setState(() => _logoScale = 1.0),
+                  onTap: isLoading ? null : _pickAndCropImage,
+                  child: AnimatedScale(
+                    scale: _logoScale,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                    child: AspectRatio(
+                      aspectRatio: 3 / 1,
                       child: Stack(
-                        alignment: Alignment.bottomRight,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(4),
+                            width: double.infinity,
+                            clipBehavior: Clip.antiAlias,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.5), width: 2),
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.25), width: 1.5),
                             ),
                             child: Opacity(
-                              opacity: isImageLoading ? 0.3 : 1.0,
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Theme.of(context).cardColor,
-                                backgroundImage: _localLogoBytes != null ? MemoryImage(_localLogoBytes!) : null,
-                                child: _localLogoBytes == null ? Icon(Icons.storefront_rounded, size: 50, color: Theme.of(context).primaryColor.withOpacity(0.5)) : null,
-                              ),
+                              opacity: isLoading ? 0.3 : 1.0,
+                              child: _localLogoBytes == null
+                                  ? Center(
+                                      child: Icon(
+                                        Icons.storefront_rounded,
+                                        size: 56,
+                                        color: Theme.of(context).primaryColor.withOpacity(0.45),
+                                      ),
+                                    )
+                                  : Image.memory(_localLogoBytes!, width: double.infinity, height: double.infinity, fit: BoxFit.contain),
                             ),
                           ),
-                          if (isImageLoading) const Positioned.fill(child: Center(child: CircularProgressIndicator())),
-                          if (!isImageLoading)
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Theme.of(context).colorScheme.surface, width: 3),
+                          if (isLoading) const Positioned.fill(child: Center(child: CircularProgressIndicator())),
+                          if (!isLoading)
+                            Positioned(
+                              right: 12,
+                              bottom: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).primaryColor,
+                                  borderRadius: BorderRadius.circular(999),
+                                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 10, offset: const Offset(0, 4))],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      AppLocale.logoSelectImage.getString(context),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                             ),
                         ],
                       ),
                     ),
                   ),
+                ),
+                const SizedBox(height: 24),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 520;
+                    final children = [
+                      TextfieldTheme(controlador: nameController, texto: AppLocale.orgName.getString(context), icono: Icons.corporate_fare),
+                      TextfieldTheme(
+                        controlador: taxIdController,
+                        texto: '${AppLocale.identificationNumber.getString(context)} *',
+                        icono: Icons.badge_outlined,
+                        colorEmpty: taxIdController.text.trim().isEmpty,
+                      ),
+                    ];
 
-                  const SizedBox(height: 32),
+                    if (!isWide) {
+                      return Column(children: [children[0], const SizedBox(height: 16), children[1]]);
+                    }
 
-                  TextfieldTheme(controlador: nameController, texto: AppLocale.orgName.getString(context), icono: Icons.corporate_fare),
-                  const SizedBox(height: 16),
-                  TextfieldTheme(controlador: descController, texto: AppLocale.description.getString(context), icono: Icons.description_outlined),
-                  const SizedBox(height: 16),
-                  TextfieldTheme(controlador: codeController, texto: AppLocale.code.getString(context), icono: Icons.code_rounded),
+                    return Row(
+                      children: [
+                        Expanded(child: children[0]),
+                        const SizedBox(width: 16),
+                        Expanded(child: children[1]),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 520;
+                    final children = [
+                      TextfieldTheme(controlador: dvController, texto: AppLocale.dv.getString(context), icono: Icons.pin_outlined),
+                      TextfieldTheme(
+                        controlador: phoneController,
+                        texto: AppLocale.mobilePhone.getString(context),
+                        icono: Icons.phone_android_outlined,
+                        inputType: TextInputType.phone,
+                      ),
+                    ];
 
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 24),
+                    if (!isWide) {
+                      return Column(children: [children[0], const SizedBox(height: 16), children[1]]);
+                    }
 
-                  TextfieldTheme(controlador: taxIdController, texto: AppLocale.identificationNumber.getString(context), icono: Icons.badge_outlined),
-                  const SizedBox(height: 16),
-                  TextfieldTheme(controlador: dvController, texto: AppLocale.dv.getString(context), icono: Icons.pin_outlined),
-                  const SizedBox(height: 16),
-                  TextfieldTheme(controlador: phoneController, texto: AppLocale.mobilePhone.getString(context), icono: Icons.phone_android_outlined, inputType: TextInputType.phone),
-                  const SizedBox(height: 16),
-                  TextfieldTheme(controlador: emailController, texto: AppLocale.email.getString(context), icono: Icons.email_outlined, inputType: TextInputType.emailAddress),
-
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 24),
-
-                  GestureDetector(
-                    onTap: _showLocationDialog,
-                    child: AbsorbPointer(
-                      child: TextfieldTheme(controlador: locationController, texto: AppLocale.locationLabel.getString(context), icono: Icons.location_on_outlined, inputType: TextInputType.streetAddress),
+                    return Row(
+                      children: [
+                        Expanded(child: children[0]),
+                        const SizedBox(width: 16),
+                        Expanded(child: children[1]),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextfieldTheme(
+                  controlador: emailController,
+                  texto: AppLocale.email.getString(context),
+                  icono: Icons.email_outlined,
+                  inputType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: isLoading ? null : _showLocationDialog,
+                  child: AbsorbPointer(
+                    child: TextfieldTheme(
+                      controlador: locationController,
+                      texto: AppLocale.locationLabel.getString(context),
+                      icono: Icons.location_on_outlined,
+                      inputType: TextInputType.streetAddress,
                     ),
                   ),
-
-                  const SizedBox(height: 32),
-
-                  Row(
-                    children: [
-                      if (_hasUnsavedChanges && !isLoading) ...[
-                        Expanded(
-                          flex: 1,
-                          child: GestureDetector(
-                            onTapDown: (_) => setState(() => _undoScale = 0.92),
-                            onTapUp: (_) {
-                              Future.delayed(const Duration(milliseconds: 100), () {
-                                if (mounted) setState(() => _undoScale = 1.0);
-                              });
-                            },
-                            onTapCancel: () => setState(() => _undoScale = 1.0),
-                            onTap: _undoChanges,
-                            child: AnimatedScale(
-                              scale: _undoScale,
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeOutCubic,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.red.shade300),
-                                ),
-                                child: Icon(Icons.restore, color: Colors.red.shade400),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-
-                      Expanded(
-                        flex: 3,
-                        child: isLoading
-                            ? const ButtonLoading()
-                            : LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final bool isButtonEnabled = _hasUnsavedChanges;
-                                  final bool isNarrow = constraints.maxWidth < 160;
-                                  final double borderRadius = isNarrow ? 25 : 12;
-
-                                  return GestureDetector(
-                                    onTapDown: isButtonEnabled ? (_) => setState(() => _saveScale = 0.95) : null,
-                                    onTapUp: isButtonEnabled
-                                        ? (_) {
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              if (mounted) setState(() => _saveScale = 1.0);
-                                            });
-                                          }
-                                        : null,
-                                    onTapCancel: () => setState(() => _saveScale = 1.0),
-                                    onTap: isButtonEnabled ? _saveOrganization : null,
-                                    child: AnimatedScale(
-                                      scale: _saveScale,
-                                      duration: const Duration(milliseconds: 200),
-                                      curve: Curves.easeOutCubic,
-                                      child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 300),
-                                        height: 50,
-                                        decoration: BoxDecoration(color: isButtonEnabled ? Theme.of(context).primaryColor : Colors.grey.shade300, borderRadius: BorderRadius.circular(borderRadius)),
-                                        alignment: Alignment.center,
-                                        child: AnimatedCrossFade(
-                                          duration: const Duration(milliseconds: 250),
-                                          firstChild: const Icon(Icons.save_outlined, color: Colors.white, size: 24),
-                                          secondChild: Text(
-                                            AppLocale.saveChanges.getString(context),
-                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                          ),
-                                          crossFadeState: isNarrow ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    onTapDown: _canSave ? (_) => setState(() => _saveScale = 0.95) : null,
+                    onTapUp: _canSave
+                        ? (_) {
+                            Future.delayed(const Duration(milliseconds: 100), () {
+                              if (mounted) {
+                                setState(() => _saveScale = 1.0);
+                              }
+                            });
+                          }
+                        : null,
+                    onTapCancel: () => setState(() => _saveScale = 1.0),
+                    child: AnimatedScale(
+                      scale: _saveScale,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutCubic,
+                      child: ButtonPrimary(texto: AppLocale.saveChanges.getString(context), onPressed: _canSave ? _saveOrganization : null),
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

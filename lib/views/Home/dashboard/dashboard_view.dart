@@ -36,8 +36,10 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
 
-    _salesYTDBySalesRepLoader = ({required context}) => fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: 0);
-    _salesPerDayByProductCategoryLoader = ({required context}) => fetchSalesPerDayByProductCategory(context: context, dayOffset: 0);
+    _salesYTDBySalesRepLoader = ({required context}) =>
+        fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: 0);
+    _salesPerDayByProductCategoryLoader = ({required context}) =>
+        fetchSalesPerDayByProductCategory(context: context, dayOffset: 0);
     _checkDashboardData();
   }
 
@@ -57,7 +59,8 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
-    if (Charts.salesPerDayByProductCategory != null && productCategoryData.isEmpty) {
+    if (Charts.salesPerDayByProductCategory != null &&
+        productCategoryData.isEmpty) {
       futures.add(
         _salesPerDayByProductCategoryLoader(context: context).then((value) {
           productCategoryData = value;
@@ -81,28 +84,38 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 700 ? true : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 700
+        ? true
+        : false;
 
     return WillPopScope(
       onWillPop: () async {
         final now = DateTime.now();
 
-        if (lastBackPressed == null || now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
+        if (lastBackPressed == null ||
+            now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
           lastBackPressed = now;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocale.pressAgainToLogout.getString(context)),
+              duration: const Duration(seconds: 2),
+            ),
+          );
 
           return false;
         }
 
         Token.auth = null;
+        Token.adOrgInfoUU = null;
         usuarioController.clear();
         claveController.clear();
         UserData.rolName = null;
         UserData.imageBytes = null;
 
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
 
         return false;
       },
@@ -114,7 +127,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 ? Padding(
                     padding: const EdgeInsets.only(right: CustomSpacer.medium),
                     child: Container(
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(CustomSpacer.medium), color: Colors.white),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(
+                          CustomSpacer.medium,
+                        ),
+                        color: Colors.white,
+                      ),
                       padding: const EdgeInsets.all(CustomSpacer.small),
                       child: const Logo(width: 60),
                     ),
@@ -142,20 +160,27 @@ class _DashboardPageState extends State<DashboardPage> {
                           children: [
                             if (Charts.salesYTDBySalesRep != null)
                               GraphicBarMetricCard(
-                                titleBuilder: (ctx) => AppLocale.thisMonth.getString(context),
+                                titleBuilder: (ctx) =>
+                                    AppLocale.thisMonth.getString(context),
                                 initialData: _salesYTDBySalesRepData,
                                 dataLoader: _salesYTDBySalesRepLoader,
-                                subtitle: AppLocale.salesYTDBySalesRepDescription.getString(context),
+                                subtitle: AppLocale
+                                    .salesYTDBySalesRepDescription
+                                    .getString(context),
                                 showTotal: true,
                               ),
 
-                            if (Charts.salesPerDayByProductCategory != null) ...[
+                            if (Charts.salesPerDayByProductCategory !=
+                                null) ...[
                               const SizedBox(height: CustomSpacer.medium),
                               GraphicPieMetricCard(
-                                titleBuilder: (ctx) => AppLocale.today.getString(ctx),
+                                titleBuilder: (ctx) =>
+                                    AppLocale.today.getString(ctx),
                                 initialData: _salesPerDayByProductCategoryData,
                                 dataLoader: _salesPerDayByProductCategoryLoader,
-                                subtitle: AppLocale.todaySalesByCategoryDescription.getString(context),
+                                subtitle: AppLocale
+                                    .todaySalesByCategoryDescription
+                                    .getString(context),
                                 showTotal: true,
                               ),
                             ],
