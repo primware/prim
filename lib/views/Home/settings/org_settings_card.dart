@@ -195,7 +195,6 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: image.path,
       aspectRatio: const CropAspectRatio(ratioX: 3, ratioY: 1),
-      aspectRatioPresets: [CropAspectRatioPreset.ratio16x9, CropAspectRatioPreset.ratio4x3],
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: AppLocale.adjustLogo.getString(context),
@@ -203,12 +202,14 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
           toolbarWidgetColor: Colors.white,
           initAspectRatio: CropAspectRatioPreset.ratio16x9,
           lockAspectRatio: true,
+          aspectRatioPresets: const [CropAspectRatioPreset.ratio16x9, CropAspectRatioPreset.ratio4x3],
         ),
         IOSUiSettings(
           title: AppLocale.adjustLogo.getString(context),
           aspectRatioLockEnabled: true,
           doneButtonTitle: AppLocale.done.getString(context),
           cancelButtonTitle: AppLocale.cancel.getString(context),
+          aspectRatioPresets: const [CropAspectRatioPreset.ratio16x9, CropAspectRatioPreset.ratio4x3],
         ),
       ],
     );
