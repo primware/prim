@@ -84,26 +84,11 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
     }
   }
 
-  //TODO traducir
-  String get _strengthText {
-    if (newPasswordController.text.isEmpty) return 'Seguridad';
-    switch (_passwordStrength) {
-      case 0:
-      case 1:
-        return 'Débil';
-      case 2:
-        return 'Medio';
-      case 3:
-        return 'Fuerte';
-      default:
-        return '';
-    }
-  }
-
   void _performLogout() {
     UserData.uu = null;
     UserData.name = null;
     Token.auth = null;
+    Token.adOrgInfoUU = null;
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => const LoginPage()), (Route<dynamic> route) => false);
   }
 
@@ -132,7 +117,11 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
       // JSON plano como descubrimos que iDempiere prefiere
       final Map<String, dynamic> body = {"AD_User_UU": UserData.uu, "Password": newPasswordController.text.trim()};
 
-      final response = await post(Uri.parse(Processes.changePassword), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(body));
+      final response = await post(
+        Uri.parse(Processes.changePassword),
+        headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+        body: jsonEncode(body),
+      );
 
       if (!mounted) return;
 
@@ -182,7 +171,13 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -194,9 +189,21 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
               style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 32),
-            TextfieldTheme(controlador: newPasswordController, texto: 'Nueva Contraseña', icono: Icons.lock_outline, obscure: true, showSubIcon: true),
+            TextfieldTheme(
+              controlador: newPasswordController,
+              texto: 'Nueva Contraseña',
+              icono: Icons.lock_outline,
+              obscure: true,
+              showSubIcon: true,
+            ),
             const SizedBox(height: 16),
-            TextfieldTheme(controlador: confirmPasswordController, texto: 'Confirmar Contraseña', icono: Icons.lock_outline, obscure: true, showSubIcon: true),
+            TextfieldTheme(
+              controlador: confirmPasswordController,
+              texto: 'Confirmar Contraseña',
+              icono: Icons.lock_outline,
+              obscure: true,
+              showSubIcon: true,
+            ),
             const SizedBox(height: 24),
             LinearProgressIndicator(value: newPasswordController.text.isEmpty ? 0 : _passwordStrength / 3, color: _strengthColor),
             const SizedBox(height: 24),
@@ -206,7 +213,9 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
             const SizedBox(height: 28),
             SizedBox(
               width: double.infinity,
-              child: isLoadingPassword ? const ButtonLoading() : ButtonPrimary(texto: 'Actualizar', onPressed: isButtonEnabled ? _confirmUpdate : null),
+              child: isLoadingPassword
+                  ? const ButtonLoading()
+                  : ButtonPrimary(texto: 'Actualizar', onPressed: isButtonEnabled ? _confirmUpdate : null),
             ),
           ],
         ),

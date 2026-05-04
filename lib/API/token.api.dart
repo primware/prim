@@ -6,6 +6,7 @@ class Token {
   static int? rol;
   static int? organitation;
   static int? warehouseID; //? Estandar
+  static String? adOrgInfoUU;
 
   static String tokenType = 'Bearer';
 }

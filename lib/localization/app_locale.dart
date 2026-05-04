@@ -19,6 +19,7 @@ class AppLocale {
   static const String searchProducts = 'searchProducts';
   static const String productCode = 'productCode';
   static const String productName = 'productName';
+  static const String myProfile = 'myProfile';
   static const String productPrice = 'productPrice';
   static const String productStock = 'productStock';
   static const String noProductsFound = 'noProductsFound';
@@ -135,6 +136,13 @@ class AppLocale {
   static const String requiredField = 'requiredField';
   static const String orders = 'orders';
   static const String settings = 'settings';
+  static const String changePassword = 'changePassword';
+  static const String organizationInfo = 'organizationInfo';
+  static const String themeAppearance = 'themeAppearance';
+  static const String createEmployee = 'createEmployee';
+  static const String notAvailableYet = 'notAvailableYet';
+  static const String logoTakePhoto = 'logoTakePhoto';
+  static const String logoSelectImage = 'logoSelectImage';
   static const String logout = 'logout';
   static const String confirmLogout = 'confirmLogout';
   static const String logoutMessage = 'logoutMessage';
@@ -230,16 +238,24 @@ class AppLocale {
 
   static const Map<String, dynamic> en = {
     orgProfileTitle: 'Organization\nProfile',
+    changePassword: 'Change password',
+    organizationInfo: 'Organization information',
+    themeAppearance: 'Light / dark theme',
+    createEmployee: 'Create employee',
+    notAvailableYet: 'Not available yet',
     adjustLogo: 'Adjust Logo',
     done: 'Done',
-    orgName: 'Organization Name',
-    identificationNumber: 'Identification Number',
-    mobilePhone: 'Mobile Phone',
+    orgName: 'Name',
+    myProfile: 'My Profile',
+    identificationNumber: 'RUC',
+    mobilePhone: 'Phone',
+    logoTakePhoto: 'Take photo',
+    logoSelectImage: 'Select image',
     locationLabel: 'Address / Location',
     editAddress: 'Edit Address',
     country: 'Country',
     regionState: 'Region / State',
-    city: 'City',
+    city: 'Township',
     zipCode: 'Zip Code / Postal Code',
     address1: 'Address 1',
     address2: 'Address 2',
@@ -262,7 +278,8 @@ class AppLocale {
     selectCustomer: 'Please select a customer',
     customerNoAddressError: 'This customer does not have a valid address. Please edit the customer to add an address before continuing.',
     today: 'Today',
-    todaySalesByCategoryDescription: 'You can view your sales invoiced today grouped by product category. The amount does not include taxes. If you tap the chart you can see the details of sales by category.',
+    todaySalesByCategoryDescription:
+        'You can view your sales invoiced today grouped by product category. The amount does not include taxes. If you tap the chart you can see the details of sales by category.',
     confirmCreateCategory: 'Are you sure you want to create this product category?',
     newCategory: 'New Category',
     changeRole: 'Change Role',
@@ -383,7 +400,8 @@ class AppLocale {
     price: 'Price',
     subtotal: 'Subtotal',
     total: 'Total',
-    salesYTDBySalesRepDescription: 'Shows the total invoiced in the current month by each sales representative. The amount does not include taxes. If you tap the chart you can see the details of sales by representative. Does not include documents without invoice',
+    salesYTDBySalesRepDescription:
+        'Shows the total invoiced in the current month by each sales representative. The amount does not include taxes. If you tap the chart you can see the details of sales by representative. Does not include documents without invoice',
     noName: 'No name',
     finalSummary: 'Final summary:',
     grossTotal: 'Gross total:',
@@ -459,16 +477,24 @@ class AppLocale {
 
   static const Map<String, dynamic> es = {
     orgProfileTitle: 'Perfil de la\nOrganización',
+    changePassword: 'Cambiar contraseña',
+    organizationInfo: 'Información de la organización',
+    themeAppearance: 'Tema claro / oscuro',
+    createEmployee: 'Crear empleado',
+    notAvailableYet: 'No disponible por el momento',
     adjustLogo: 'Ajustar Logo',
     done: 'Listo',
-    orgName: 'Nombre de la Organización',
-    identificationNumber: 'Número de Identificación',
-    mobilePhone: 'Teléfono Móvil',
+    orgName: 'Nombre',
+    identificationNumber: 'RUC',
+    mobilePhone: 'Teléfono',
+    logoTakePhoto: 'Tomar foto',
+    logoSelectImage: 'Seleccionar imagen',
     locationLabel: 'Dirección / Localización',
     editAddress: 'Editar Dirección',
     country: 'País',
+    myProfile: 'Mi Perfil',
     regionState: 'Región / Estado',
-    city: 'Ciudad',
+    city: 'Corregimiento',
     zipCode: 'Código Postal / ZIP',
     address1: 'Dirección 1',
     address2: 'Dirección 2',
@@ -484,9 +510,11 @@ class AppLocale {
     readyForFirstOrder: '¿Listo para realizar tu primera orden?',
     selectValidCustomerForProducts: 'Seleccione un cliente válido para poder agregar productos a la orden.',
     selectCustomer: 'Seleccione un cliente',
-    customerNoAddressError: 'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
+    customerNoAddressError:
+        'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
     today: 'Hoy',
-    todaySalesByCategoryDescription: 'Puedes visualizar las ventas facturadas del día agrupadas por categoría de producto. El monto no incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por categoría.',
+    todaySalesByCategoryDescription:
+        'Puedes visualizar las ventas facturadas del día agrupadas por categoría de producto. El monto no incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por categoría.',
     confirmCreateCategory: '¿Seguro que desea crear esta categoría de producto?',
     newCategory: 'Nueva Categoría',
     changeRole: 'Cambiar Rol',
@@ -514,7 +542,8 @@ class AppLocale {
     searchProducts: 'Buscar productos',
     productCode: 'Código',
     productName: 'Nombre',
-    salesYTDBySalesRepDescription: 'Muestra el total facturado en el mes actual por cada representante de ventas. No incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por representante. No incluye documentos sin factura',
+    salesYTDBySalesRepDescription:
+        'Muestra el total facturado en el mes actual por cada representante de ventas. No incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por representante. No incluye documentos sin factura',
     productPrice: 'Precio',
     productStock: 'Stock',
     noProductsFound: 'No se encontraron productos.',
