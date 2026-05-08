@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:http/http.dart';
+import '../../../localization/app_locale.dart';
 import '../../../API/endpoint.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
@@ -99,11 +101,11 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('¿Actualizar clave?'),
-          content: const Text('Se cerrará la sesión actual y tendrás que ingresar nuevamente.'),
+          title: Text(AppLocale.updatePassword.getString(context)),
+          content: Text(AppLocale.updatePasswordMsg.getString(context)),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-            ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Sí, actualizar')),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.cancel.getString(context))),
+            ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yesUpdate.getString(context))),
           ],
         );
       },
@@ -128,17 +130,17 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         if (responseData['isError'] == true) {
-          ToastMessage.show(context: context, message: responseData['summary'] ?? 'Error', type: ToastType.failure);
+          ToastMessage.show(context: context, message: responseData['summary'] ?? AppLocale.error.getString(context), type: ToastType.failure);
         } else {
-          ToastMessage.show(context: context, message: 'Contraseña actualizada.', type: ToastType.success);
+          ToastMessage.show(context: context, message: AppLocale.passwordUpdated.getString(context), type: ToastType.success);
           await Future.delayed(const Duration(milliseconds: 1500));
           _performLogout();
         }
       } else {
-        ToastMessage.show(context: context, message: 'Error del servidor', type: ToastType.failure);
+        ToastMessage.show(context: context, message: AppLocale.serverError.getString(context), type: ToastType.failure);
       }
     } catch (e) {
-      ToastMessage.show(context: context, message: 'Error de conexión', type: ToastType.failure);
+      ToastMessage.show(context: context, message: AppLocale.connectionError.getString(context), type: ToastType.failure);
     } finally {
       if (mounted) setState(() => isLoadingPassword = false);
     }
@@ -184,14 +186,14 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
             Icon(Icons.shield_outlined, color: Theme.of(context).primaryColor, size: 32),
             const SizedBox(height: 8),
             Text(
-              'Seguridad de la\nCuenta',
+              AppLocale.accountSecurity.getString(context),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 32),
             TextfieldTheme(
               controlador: newPasswordController,
-              texto: 'Nueva Contraseña',
+              texto: AppLocale.newPassword.getString(context),
               icono: Icons.lock_outline,
               obscure: true,
               showSubIcon: true,
@@ -199,7 +201,7 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
             const SizedBox(height: 16),
             TextfieldTheme(
               controlador: confirmPasswordController,
-              texto: 'Confirmar Contraseña',
+              texto: AppLocale.confirmPassword.getString(context),
               icono: Icons.lock_outline,
               obscure: true,
               showSubIcon: true,
@@ -207,15 +209,15 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
             const SizedBox(height: 24),
             LinearProgressIndicator(value: newPasswordController.text.isEmpty ? 0 : _passwordStrength / 3, color: _strengthColor),
             const SizedBox(height: 24),
-            _buildRequirementRow('Exactamente 8 caracteres', hasMinLength),
-            _buildRequirementRow('Al menos una letra Mayúscula', hasUppercase),
-            _buildRequirementRow('Al menos una letra minúscula', hasLowercase),
+            _buildRequirementRow(AppLocale.exactly8Chars.getString(context), hasMinLength),
+            _buildRequirementRow(AppLocale.atLeastOneUppercase.getString(context), hasUppercase),
+            _buildRequirementRow(AppLocale.atLeastOneLowercase.getString(context), hasLowercase),
             const SizedBox(height: 28),
             SizedBox(
               width: double.infinity,
               child: isLoadingPassword
                   ? const ButtonLoading()
-                  : ButtonPrimary(texto: 'Actualizar', onPressed: isButtonEnabled ? _confirmUpdate : null),
+                  : ButtonPrimary(texto: AppLocale.update.getString(context), onPressed: isButtonEnabled ? _confirmUpdate : null),
             ),
           ],
         ),

@@ -214,7 +214,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         }
       }
 
-      final src = await fetchOrderById(orderId: widget.sourceOrderId!);
+      final src = await fetchOrderById(orderId: widget.sourceOrderId!, context: context);
       if (src == null) return;
 
       // Prefill cliente
@@ -1068,7 +1068,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         );
       }
 
-      final Map<String, dynamic>? order = await fetchOrderById(orderId: int.parse(result['Record_ID'].toString()));
+      final Map<String, dynamic>? order = await fetchOrderById(orderId: int.parse(result['Record_ID'].toString()), context: context);
 
       if (order != null) {
         if (POS.isPOS == true) {
