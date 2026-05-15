@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:primware/Widgets/GlassDesign.dart';
-import 'package:primware/main.dart';
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
 import 'package:flutter/material.dart';

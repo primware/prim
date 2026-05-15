@@ -61,7 +61,7 @@ class LiquidBackground extends StatelessWidget {
   }
 }
 
-// 2. CONTENEDOR GLASS
+// CONTENEDOR GLASS
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final double? width;
@@ -72,8 +72,10 @@ class GlassContainer extends StatelessWidget {
   final double borderOpacity;
   final bool hasShadow;
   final BlurStyle shadowBlurStyle;
+  final double shadowBlur;
+  final Offset shadowOffset;
 
-  const GlassContainer({super.key, required this.child, this.width, this.height, this.blur = 12.0, this.padding, this.borderRadius, this.borderOpacity = 0.2, this.hasShadow = true, this.shadowBlurStyle = BlurStyle.outer});
+  const GlassContainer({super.key, required this.child, this.width, this.height, this.blur = 12.0, this.padding, this.borderRadius, this.borderOpacity = 0.2, this.hasShadow = true, this.shadowBlurStyle = BlurStyle.outer, this.shadowBlur = 30.0, this.shadowOffset = const Offset(0, 10)});
 
   @override
   Widget build(BuildContext context) {
@@ -91,17 +93,7 @@ class GlassContainer extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: br,
-        boxShadow: hasShadow
-            ? [
-                BoxShadow(
-                  color: isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12),
-                  blurRadius: 30, // Desenfoque de la sombra
-                  spreadRadius: 2,
-                  offset: const Offset(0, 10), // Dirección hacia abajo
-                  blurStyle: shadowBlurStyle, // Usa el estilo de desenfoque pasado por parámetro
-                ),
-              ]
-            : null,
+        boxShadow: hasShadow ? [BoxShadow(color: isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12), blurRadius: shadowBlur, spreadRadius: 2, offset: shadowOffset, blurStyle: shadowBlurStyle)] : null,
       ),
       child: ClipRRect(
         borderRadius: br,
@@ -122,7 +114,7 @@ class GlassContainer extends StatelessWidget {
   }
 }
 
-// 3. FONDO OSCURO
+// FONDO OSCURO
 class DeepLiquidBackground extends StatelessWidget {
   final Widget child;
   const DeepLiquidBackground({super.key, required this.child});
@@ -278,16 +270,12 @@ class GlassSwitch extends StatelessWidget {
               right: value ? 2 : 26,
               child: ClipOval(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8), // El desenfoque del cristal de la canica
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      // La canica: morado sólido con brillo si está activo, blanca si no
                       color: value ? primary.withOpacity(0.8) : (isDark ? Colors.white70 : Colors.white),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.5), // Brillo en el borde
-                        width: 1,
-                      ),
+                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
                       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
                     ),
                   ),
@@ -317,7 +305,7 @@ class GlassMenuButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 55, // Armonía visual con el buscador
+        height: 55,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: isDark ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.05),
@@ -341,7 +329,6 @@ class GlassMenuButton extends StatelessWidget {
                         child: Icon(icon, color: primary, size: 20),
                       ),
                       const SizedBox(width: 12),
-                      // El texto de la selección
                       Text(
                         currentValue.isEmpty ? label : currentValue,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: currentValue.isEmpty ? FontWeight.w500 : FontWeight.bold, color: currentValue.isEmpty ? Colors.grey.shade600 : (isDark ? Colors.white : Colors.black87)),
@@ -350,7 +337,6 @@ class GlassMenuButton extends StatelessWidget {
                       ),
                     ],
                   ),
-                  // Flecha de despliegue
                   Icon(Icons.expand_more, color: isDark ? Colors.white60 : Colors.grey.shade600, size: 22),
                 ],
               ),

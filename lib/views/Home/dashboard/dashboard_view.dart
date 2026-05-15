@@ -111,18 +111,17 @@ class _DashboardPageState extends State<DashboardPage> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            iconTheme: const IconThemeData(color: Colors.black87),
-            flexibleSpace: GlassContainer(
-              shadowBlurStyle: BlurStyle.normal,
-              blur: 40.0,
-              borderOpacity: 0.5,
-              borderRadius: BorderRadius.zero,
-              padding: EdgeInsets.zero,
-              child: Container(color: Theme.of(context).primaryColor.withOpacity(0.40), child: const SizedBox.expand()),
-            ),
-            title: Text(
-              AppLocale.dashboard.getString(context),
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+            leadingWidth: 70,
+            leading: const Padding(padding: const EdgeInsets.only(left: 12.0, top: 8.0, bottom: 8.0), child: _PulsingMenuButton()),
+            // 🌟 PÍLDORA TÍTULO SIN SOMBRA 🌟
+            title: GlassContainer(
+              borderRadius: BorderRadius.circular(50),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              hasShadow: false, // ¡Adiós mancha trasera!
+              child: Text(
+                AppLocale.dashboard.getString(context),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 18),
+              ),
             ),
             actions: [
               !isMobile
@@ -161,8 +160,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: GlassContainer(
                           width: isMobile ? MediaQuery.of(context).size.width * 0.95 : 800,
                           padding: const EdgeInsets.all(16.0),
-                          blur: 40.0,
+                          blur: 25.0,
                           borderOpacity: 0.5,
+                          hasShadow: true,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -196,5 +196,46 @@ class DashboardCharts extends StatelessWidget {
     }
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: columnChildren);
+  }
+}
+
+class _PulsingMenuButton extends StatefulWidget {
+  const _PulsingMenuButton();
+
+  @override
+  State<_PulsingMenuButton> createState() => _PulsingMenuButtonState();
+}
+
+class _PulsingMenuButtonState extends State<_PulsingMenuButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2000))..repeat(reverse: true);
+    _scale = Tween<double>(begin: 1.0, end: 1.05).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scale,
+      child: GlassContainer(
+        borderRadius: BorderRadius.circular(50),
+        padding: EdgeInsets.zero,
+        hasShadow: false,
+        child: IconButton(
+          icon: const Icon(Icons.menu, color: Colors.black87),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+    );
   }
 }

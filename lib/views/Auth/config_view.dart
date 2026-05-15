@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:ui'; // NUEVO IMPORT PARA EL CRISTAL
+import 'dart:ui';
 import '../../Widgets/GlassDesign.dart' show GlassSwitch;
 import '../../../API/token.api.dart';
 import '../../API/pos.api.dart';
@@ -11,12 +11,12 @@ import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/localization/app_locale.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
-import '../../shared/custom_spacer.dart'; // Quitamos custom_dropdown.dart porque usaremos BottomSheets
+import '../../shared/custom_spacer.dart';
 import '../../shared/toast_message.dart';
 import '../Home/dashboard/dashboard_view.dart';
 import 'auth_funtions.dart';
 import '../../API/user.api.dart';
-import 'login_view.dart'; // Para reutilizar LiquidBackground y GlassContainer si están allí, o las declaramos abajo.
+import 'login_view.dart';
 
 class LiquidConfigBackground extends StatelessWidget {
   final Widget child;
@@ -143,7 +143,6 @@ class _ConfigPageState extends State<ConfigPage> {
     _loadRememberedConfig();
   }
 
-  // --- LÓGICA ORIGINAL INTACTA ---
   Future<void> _loadClients() async {
     setState(() => isLoading = true);
     clients = widget.clients.map((client) => {'id': client['id'], 'name': client['name']}).toList();
@@ -271,20 +270,16 @@ class _ConfigPageState extends State<ConfigPage> {
     }
   }
 
-  // ------------------------------------------------------------------
-  // NUEVA LÓGICA: MENÚS INFERIORES PREMIUM (Sustituyen al Dropdown)
-  // ------------------------------------------------------------------
   void _showSelectionBottomSheet(String title, List<Map<String, dynamic>> items, int? currentValue, Function(int?) onSelected) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.1), // Sutil oscuridad
+      barrierColor: Colors.black.withOpacity(0.1),
       isScrollControlled: true,
       builder: (BuildContext bc) {
         return GlassConfigContainer(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           child: Container(
-            // Limitamos la altura máxima al 70% de la pantalla para evitar que cubra todo si hay muchos roles
             constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -298,7 +293,6 @@ class _ConfigPageState extends State<ConfigPage> {
                 Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 24),
 
-                // Lista de elementos scrolleable
                 Expanded(
                   child: ListView.builder(
                     shrinkWrap: true,
@@ -349,8 +343,6 @@ class _ConfigPageState extends State<ConfigPage> {
     );
   }
 
-  // Helper para dibujar los botones selectores en pantalla
-  // Helper para dibujar los botones selectores en pantalla (MÁS OSCUROS Y DEFINIDOS)
   Widget _buildSelectorButton(String label, int? selectedValue, List<Map<String, dynamic>> items, Function(int?) onSelected) {
     final String displayText = selectedValue == null ? 'Seleccionar...' : items.firstWhere((element) => element['id'] == selectedValue, orElse: () => {'name': 'Desconocido'})['name'].toString();
 
@@ -372,14 +364,9 @@ class _ConfigPageState extends State<ConfigPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-              // 👇 HEMOS AUMENTADO LA OPACIDAD AQUÍ 👇
-              color: isDisabled ? Colors.grey.withOpacity(0.1) : Theme.of(context).cardColor.withOpacity(0.55), // MÁS OSCURO (antes 0.3)
+              color: isDisabled ? Colors.grey.withOpacity(0.1) : Theme.of(context).cardColor.withOpacity(0.55),
               borderRadius: BorderRadius.circular(12),
-              // 👇 Y HEMOS DEFINIDO MÁS EL BORDE 👇
-              border: Border.all(
-                color: isDisabled ? Colors.transparent : Colors.grey.withOpacity(0.5), // MÁS DEFINIDO (antes 0.3)
-                width: 1.5,
-              ), // LIGERAMENTE MÁS ANCHO
+              border: Border.all(color: isDisabled ? Colors.transparent : Colors.grey.withOpacity(0.5), width: 1.5),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -413,7 +400,6 @@ class _ConfigPageState extends State<ConfigPage> {
       child: Scaffold(
         extendBodyBehindAppBar: true,
 
-        // 1. INYECTAMOS EL FONDO LÍQUIDO
         body: LiquidConfigBackground(
           child: Center(
             child: SingleChildScrollView(
@@ -421,7 +407,6 @@ class _ConfigPageState extends State<ConfigPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 2. CONTENEDOR DE CRISTAL
                   GlassConfigContainer(
                     width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 500,
                     padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 40, vertical: 32),
@@ -434,7 +419,6 @@ class _ConfigPageState extends State<ConfigPage> {
                         ),
                         const SizedBox(height: CustomSpacer.xlarge),
 
-                        // --- MENÚS DESLIZABLES PREMIUM ---
                         _buildSelectorButton(AppLocale.company.getString(context), selectedClientId, clients, _onClientSelected),
                         const SizedBox(height: CustomSpacer.medium),
 
@@ -474,7 +458,6 @@ class _ConfigPageState extends State<ConfigPage> {
                         ),
                         const SizedBox(height: CustomSpacer.xlarge),
 
-                        // Botones de acción intactos
                         Container(
                           child: isLoading ? ButtonLoading(fullWidth: true) : ButtonPrimary(texto: AppLocale.continueKey.getString(context), fullWidth: true, onPressed: _onContinue),
                         ),
