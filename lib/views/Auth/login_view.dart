@@ -6,7 +6,6 @@ import 'package:primware/API/pos.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
-
 import '../../API/endpoint.dart';
 import '../../shared/button.widget.dart';
 import '../../shared/custom_checkbox.dart';
@@ -79,9 +78,6 @@ class LiquidBackground extends StatelessWidget {
   }
 }
 
-// ------------------------------------------------------------------
-// 2. CONTENEDOR GLASS ULTRA PREMIUM (Estilo iOS / Prim)
-// ------------------------------------------------------------------
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final double? width;
@@ -154,7 +150,6 @@ class _LoginPageState extends State<LoginPage> {
     _checkVersion();
   }
 
-  // --- LÓGICA INTACTA ---
   Future<void> _loadRememberedUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool? remember = prefs.getBool('rememberUser');
@@ -375,12 +370,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // ------------------------------------------------------------------
-  // INTERFAZ DE LOGIN
-  // ------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    // Calculamos si es móvil para ajustar el tamaño del cristal
     final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
 
     return WillPopScope(
@@ -394,7 +385,6 @@ class _LoginPageState extends State<LoginPage> {
           child: Icon(Icons.settings, color: Theme.of(context).primaryColor),
         ),
 
-        // 1. INYECTAMOS EL FONDO LÍQUIDO
         body: LiquidBackground(
           child: Center(
             child: SingleChildScrollView(
@@ -402,7 +392,6 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 2. CONTENEDOR DE CRISTAL
                   GlassContainer(
                     width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 500,
                     padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 40, vertical: 32),
@@ -419,7 +408,6 @@ class _LoginPageState extends State<LoginPage> {
                         TextfieldTheme(icono: Icons.lock_outline, texto: AppLocale.pass.getString(context), obscure: true, showSubIcon: true, controlador: claveController, onSubmitted: (_) => _funcionLogin(usuarioController.text.trim(), claveController.text.trim())),
                         const SizedBox(height: CustomSpacer.medium),
 
-                        // NUEVO BOTÓN SELECTOR DE IDIOMA PREMIUM
                         InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () => _showLanguageBottomSheet(context),
@@ -461,10 +449,7 @@ class _LoginPageState extends State<LoginPage> {
                                 children: [
                                   Icon(Icons.verified_user_outlined, size: 22, color: rememberUser ? Theme.of(context).primaryColor : Colors.grey.shade600),
                                   const SizedBox(width: 12),
-                                  Text(
-                                    AppLocale.rememberMe.getString(context),
-                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: rememberUser ? FontWeight.bold : FontWeight.w500),
-                                  ),
+                                  Text(AppLocale.rememberMe.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: rememberUser ? FontWeight.bold : FontWeight.w500)),
                                 ],
                               ),
                               GlassSwitch(

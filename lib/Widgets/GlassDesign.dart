@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Necesario para ImageFilter
+import 'dart:ui';
 
-// 1. FONDO LÍQUIDO PREMIUM
 class LiquidBackground extends StatelessWidget {
   final Widget child;
   const LiquidBackground({super.key, required this.child});
@@ -55,8 +54,6 @@ class LiquidBackground extends StatelessWidget {
               ),
             ),
           ),
-
-          // Contenido principal
           child,
         ],
       ),
@@ -73,8 +70,10 @@ class GlassContainer extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
   final double borderOpacity;
+  final bool hasShadow;
+  final BlurStyle shadowBlurStyle;
 
-  const GlassContainer({super.key, required this.child, this.width, this.height, this.blur = 12.0, this.padding, this.borderRadius, this.borderOpacity = 0.2});
+  const GlassContainer({super.key, required this.child, this.width, this.height, this.blur = 12.0, this.padding, this.borderRadius, this.borderOpacity = 0.2, this.hasShadow = true, this.shadowBlurStyle = BlurStyle.outer});
 
   @override
   Widget build(BuildContext context) {
@@ -92,14 +91,17 @@ class GlassContainer extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: br,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.4 : 0.08), // Sombra más dura en oscuro
-            blurRadius: 24,
-            spreadRadius: -5,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: hasShadow
+            ? [
+                BoxShadow(
+                  color: isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12),
+                  blurRadius: 30, // Desenfoque de la sombra
+                  spreadRadius: 2,
+                  offset: const Offset(0, 10), // Dirección hacia abajo
+                  blurStyle: shadowBlurStyle, // Usa el estilo de desenfoque pasado por parámetro
+                ),
+              ]
+            : null,
       ),
       child: ClipRRect(
         borderRadius: br,
@@ -173,8 +175,6 @@ class DeepLiquidBackground extends StatelessWidget {
               ),
             ),
           ),
-
-          // Contenido principal
           child,
         ],
       ),
@@ -183,14 +183,14 @@ class DeepLiquidBackground extends StatelessWidget {
 }
 
 class LightAccentBackground extends StatelessWidget {
-  final Widget child;
-  const LightAccentBackground({super.key, required this.child});
+  final Widget? child;
+  const LightAccentBackground({super.key, this.child});
 
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).primaryColor;
     final secondary = Theme.of(context).colorScheme.secondary;
-    final bg = Theme.of(context).scaffoldBackgroundColor;
+    final bg = Theme.of(context).colorScheme.surface;
 
     return Container(
       width: double.infinity,
@@ -206,10 +206,7 @@ class LightAccentBackground extends StatelessWidget {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [primary.withOpacity(0.99), Colors.transparent], //opacidad
-                  stops: const [0.1, 1.0],
-                ),
+                gradient: RadialGradient(colors: [primary.withOpacity(0.99), Colors.transparent], stops: const [0.1, 1.0]),
               ),
             ),
           ),
@@ -237,9 +234,7 @@ class LightAccentBackground extends StatelessWidget {
               ),
             ),
           ),
-
-          // Contenido principal
-          child,
+          if (child != null) child!,
         ],
       ),
     );
@@ -267,7 +262,6 @@ class GlassSwitch extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          // Fondo del carril del switch: morado translúcido si está activo
           color: value ? primary.withOpacity(0.3) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
           border: Border.all(color: value ? primary.withOpacity(0.6) : (isDark ? Colors.white30 : Colors.black12), width: 1.5),
           boxShadow: [if (value) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)],

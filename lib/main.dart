@@ -1,5 +1,4 @@
 // main.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
@@ -8,6 +7,7 @@ import 'package:primware/theme/theme.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'API/endpoint.dart';
+import 'package:primware/Widgets/GlassDesign.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +69,18 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, title: Base.title, theme: _isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme, supportedLocales: _localization.supportedLocales, localizationsDelegates: _localization.localizationsDelegates, locale: _localization.currentLocale, home: const LoginPage());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: Base.title,
+      theme: _isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
+      supportedLocales: _localization.supportedLocales,
+      localizationsDelegates: _localization.localizationsDelegates,
+      locale: _localization.currentLocale,
+      builder: (context, child) {
+        return Stack(children: [const LightAccentBackground(), if (child != null) child]);
+      },
+
+      home: const LoginPage(),
+    );
   }
 }
