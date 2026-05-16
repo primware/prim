@@ -99,48 +99,110 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _showBaseURLDialog() async {
-    return showDialog<void>(
+    return showGeneralDialog<void>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.bodyLarge),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextfieldTheme(texto: 'URL', controlador: baseURLController, pista: 'Ej: https://test.idempiere.org'),
-              const SizedBox(height: CustomSpacer.medium),
-              TextfieldTheme(texto: 'POS ID', controlador: cPosController, inputFormatters: [FilteringTextInputFormatter.digitsOnly], inputType: TextInputType.number),
-            ],
-          ),
-          actionsAlignment: MainAxisAlignment.spaceBetween,
-          actions: [
-            IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.cancel_outlined), color: ColorTheme.error, iconSize: 32),
-            IconButton(
-              onPressed: () async {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                await prefs.clear();
-                _saveConfig();
-                Navigator.of(context).pop();
-                _resetDialog();
-              },
-              icon: const Icon(Icons.check_circle_outline),
-              color: ColorTheme.success,
-              iconSize: 32,
+      barrierColor: Colors.black.withOpacity(0.3),
+      barrierDismissible: true,
+      barrierLabel: 'Cerrar',
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack).value,
+          child: Opacity(opacity: anim1.value, child: child),
+        );
+      },
+      pageBuilder: (BuildContext context, _, __) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: GlassContainer(
+            padding: const EdgeInsets.all(24),
+            borderRadius: BorderRadius.circular(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)),
+                const SizedBox(height: CustomSpacer.large),
+                GlassTextField(label: 'URL', controller: baseURLController, hint: 'Ej: https://test.idempiere.org', icon: Icons.link),
+                const SizedBox(height: CustomSpacer.medium),
+                GlassTextField(label: 'POS ID', controller: cPosController, inputFormatters: [FilteringTextInputFormatter.digitsOnly], keyboardType: TextInputType.number, icon: Icons.point_of_sale),
+                const SizedBox(height: CustomSpacer.large),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GlassPressable(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: ColorTheme.error.withOpacity(0.15), shape: BoxShape.circle),
+                        child: const Icon(Icons.cancel_outlined, color: ColorTheme.error, size: 32),
+                      ),
+                    ),
+                    GlassPressable(
+                      onTap: () async {
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                        await prefs.clear();
+                        _saveConfig();
+                        if (!mounted) return;
+                        Navigator.of(context).pop();
+                        _resetDialog();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: ColorTheme.success.withOpacity(0.15), shape: BoxShape.circle),
+                        child: const Icon(Icons.check_circle_outline, color: ColorTheme.success, size: 32),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
   }
 
   Future<void> _resetDialog() async {
-    return showDialog<void>(
+    return showGeneralDialog<void>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.titleMedium),
-          content: Text(AppLocale.serverSaved.getString(context), style: Theme.of(context).textTheme.bodyLarge),
-          actions: [IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.check_circle_outline), color: ColorTheme.success, iconSize: 32)],
+      barrierColor: Colors.black.withOpacity(0.3),
+      barrierDismissible: true,
+      barrierLabel: 'Cerrar',
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack).value,
+          child: Opacity(opacity: anim1.value, child: child),
+        );
+      },
+      pageBuilder: (BuildContext context, _, __) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: GlassContainer(
+            padding: const EdgeInsets.all(24),
+            borderRadius: BorderRadius.circular(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_outline, color: ColorTheme.success, size: 64),
+                const SizedBox(height: CustomSpacer.medium),
+                Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)),
+                const SizedBox(height: CustomSpacer.small),
+                Text(AppLocale.serverSaved.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87), textAlign: TextAlign.center),
+                const SizedBox(height: CustomSpacer.large),
+                GlassPressable(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    decoration: BoxDecoration(color: ColorTheme.success.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                    child: const Text('OK', style: TextStyle(color: ColorTheme.success, fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -190,79 +252,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void _showLanguageBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      barrierColor: Colors.black.withOpacity(0.1),
-
-      builder: (BuildContext bc) {
-        return GlassContainer(
-          borderRadius: const BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.5), borderRadius: BorderRadius.circular(10)),
-              ),
-              const SizedBox(height: 24),
-
-              Text(AppLocale.lang.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 24),
-
-              // Opciones de idioma
-              _buildLanguageOption('es', 'Español'),
-              const SizedBox(height: 12),
-              _buildLanguageOption('en', 'English'),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLanguageOption(String code, String name) {
-    final isSelected = FlutterLocalization.instance.currentLocale?.languageCode == code;
-    final primaryColor = Theme.of(context).primaryColor;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () async {
-        FlutterLocalization.instance.translate(code);
-        if (rememberUser) {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('languageCode', code);
-        }
-
-        setState(() {});
-        if (mounted) Navigator.pop(context);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-        decoration: BoxDecoration(
-          color: isSelected ? primaryColor.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? primaryColor : Colors.grey.withOpacity(0.3), width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                name,
-                style: TextStyle(fontSize: 16, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? primaryColor : Theme.of(context).colorScheme.onSurface),
-              ),
-            ),
-            if (isSelected) Icon(Icons.check_circle, color: primaryColor),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -272,11 +261,14 @@ class _LoginPageState extends State<LoginPage> {
       onWillPop: () async => false,
       child: Scaffold(
         extendBodyBehindAppBar: true,
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showBaseURLDialog,
-          backgroundColor: Theme.of(context).cardColor.withOpacity(0.9),
-          elevation: 4,
-          child: Icon(Icons.settings, color: Theme.of(context).primaryColor),
+        floatingActionButton: GlassPressable(
+          onTap: _showBaseURLDialog,
+          child: GlassContainer(
+            padding: const EdgeInsets.all(14),
+            borderRadius: BorderRadius.circular(20),
+            hasShadow: false,
+            child: Icon(Icons.settings, color: Theme.of(context).primaryColor, size: 28),
+          ),
         ),
 
         body: LiquidBackground(
@@ -302,30 +294,22 @@ class _LoginPageState extends State<LoginPage> {
                         TextfieldTheme(icono: Icons.lock_outline, texto: AppLocale.pass.getString(context), obscure: true, showSubIcon: true, controlador: claveController, onSubmitted: (_) => _funcionLogin(usuarioController.text.trim(), claveController.text.trim())),
                         const SizedBox(height: CustomSpacer.medium),
 
-                        InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => _showLanguageBottomSheet(context),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.language, color: Theme.of(context).primaryColor),
-                                    const SizedBox(width: 12),
-                                    Text(FlutterLocalization.instance.currentLocale?.languageCode == 'en' ? 'English 🇺🇸' : 'Español 🇪🇸', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
-                                  ],
-                                ),
-                                const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey),
-                              ],
-                            ),
-                          ),
+                        GlassDropdown<String>(
+                          label: AppLocale.lang.getString(context),
+                          icon: Icons.language,
+                          currentValue: FlutterLocalization.instance.currentLocale?.languageCode == 'en' ? 'English 🇺🇸' : 'Español 🇪🇸',
+                          items: [
+                            GlassDropdownItem(value: 'es', text: 'Español 🇪🇸'),
+                            GlassDropdownItem(value: 'en', text: 'English 🇺🇸'),
+                          ],
+                          onChanged: (code) async {
+                            FlutterLocalization.instance.translate(code);
+                            if (rememberUser) {
+                              SharedPreferences prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('languageCode', code);
+                            }
+                            setState(() {});
+                          },
                         ),
                         const SizedBox(height: CustomSpacer.small),
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
+import 'package:flutter/services.dart';
+
 class LiquidBackground extends StatelessWidget {
   final Widget child;
   const LiquidBackground({super.key, required this.child});
@@ -61,6 +63,15 @@ class LiquidBackground extends StatelessWidget {
   }
 }
 
+//DROPDOWN DE CRISTAL
+class GlassDropdownItem<T> {
+  final T value;
+  final String text;
+  final IconData? icon;
+
+  GlassDropdownItem({required this.value, required this.text, this.icon});
+}
+
 // CONTENEDOR GLASS
 class GlassContainer extends StatelessWidget {
   final Widget child;
@@ -74,8 +85,9 @@ class GlassContainer extends StatelessWidget {
   final BlurStyle shadowBlurStyle;
   final double shadowBlur;
   final Offset shadowOffset;
+  final Color? customBorderColor;
 
-  const GlassContainer({super.key, required this.child, this.width, this.height, this.blur = 12.0, this.padding, this.borderRadius, this.borderOpacity = 0.2, this.hasShadow = true, this.shadowBlurStyle = BlurStyle.outer, this.shadowBlur = 30.0, this.shadowOffset = const Offset(0, 10)});
+  const GlassContainer({super.key, required this.child, this.width, this.height, this.blur = 12.0, this.padding, this.borderRadius, this.borderOpacity = 0.2, this.hasShadow = true, this.shadowBlurStyle = BlurStyle.outer, this.shadowBlur = 30.0, this.shadowOffset = const Offset(0, 10), this.customBorderColor});
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +98,7 @@ class GlassContainer extends StatelessWidget {
     final glassColor = isDark ? Colors.black : Colors.white;
     final glassOpacityStart = isDark ? 0.15 : 0.1;
     final glassOpacityEnd = isDark ? 0.05 : 0.1;
-    final borderColor = isDark ? Colors.white30 : Colors.white;
+    final borderColor = customBorderColor ?? (isDark ? Colors.white30 : Colors.white);
 
     return Container(
       width: width,
@@ -341,6 +353,398 @@ class GlassMenuButton extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// MENÚ DESPLEGABLE DE CRISTAL (FLOTANTE, CON BUSCADOR INTELIGENTE Y ANIMACIONES FLUIDAS)
+class GlassDropdown<T> extends StatefulWidget {
+  final String label;
+  final String currentValue;
+  final IconData icon;
+  final List<GlassDropdownItem<T>> items;
+  final ValueChanged<T> onChanged;
+
+  const GlassDropdown({super.key, required this.label, required this.currentValue, required this.items, required this.onChanged, this.icon = Icons.category_outlined});
+
+  @override
+  State<GlassDropdown<T>> createState() => _GlassDropdownState<T>();
+}
+
+class _GlassDropdownState<T> extends State<GlassDropdown<T>> with SingleTickerProviderStateMixin {
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  bool _isOpen = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    // 🌟 ANIMACIÓN MÁS RÁPIDA Y LIGERA: 200ms es el estándar premium de UI
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+
+    // 🌟 FADE IN: Aparece suavemente
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+
+    // 🌟 SCALE IN: Pequeño efecto de "zoom" desde el 95% al 100% (cero lag)
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleDropdown() {
+    if (_isOpen) {
+      _closeDropdown();
+    } else {
+      _showDropdown();
+    }
+  }
+
+  Future<void> _closeDropdown() async {
+    if (_isOpen) {
+      setState(() => _isOpen = false);
+      await _animationController.reverse();
+      _overlayEntry?.remove();
+      _overlayEntry = null;
+    }
+  }
+
+  void _showDropdown() {
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+
+    _overlayEntry = _createOverlayEntry(size);
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _isOpen = true);
+    _animationController.forward(from: 0.0);
+  }
+
+  OverlayEntry _createOverlayEntry(Size size) {
+    return OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(onTap: _closeDropdown, behavior: HitTestBehavior.translucent),
+          ),
+          CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: Offset(0.0, size.height + 8.0),
+            // 🌟 NUEVAS ANIMACIONES FLUIDAS EN EL OVERLAY
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                alignment: Alignment.topCenter, // El panel crece desde el botón superior
+                child: _GlassDropdownPanel<T>(
+                  width: size.width,
+                  items: widget.items,
+                  onItemSelected: (value) {
+                    widget.onChanged(value);
+                    _closeDropdown();
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GlassContainer(
+        padding: EdgeInsets.zero,
+        hasShadow: false,
+        child: InkWell(
+          onTap: _toggleDropdown,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 39),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(color: primary.withOpacity(0.15), shape: BoxShape.circle),
+                          child: Icon(widget.icon, color: primary, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              widget.currentValue.isEmpty ? widget.label : widget.currentValue,
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: widget.currentValue.isEmpty ? FontWeight.w500 : FontWeight.bold, color: widget.currentValue.isEmpty ? Colors.grey.shade600 : (isDark ? Colors.white : Colors.black87)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    turns: _isOpen ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200), // Sincronizado con la duración principal
+                    child: Icon(Icons.expand_more, color: isDark ? Colors.white60 : Colors.grey.shade600, size: 22),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// PANEL FLOTANTE INTERNO (CON BUSCADOR Y SCROLL)
+class _GlassDropdownPanel<T> extends StatefulWidget {
+  final double width;
+  final List<GlassDropdownItem<T>> items;
+  final ValueChanged<T> onItemSelected;
+
+  const _GlassDropdownPanel({required this.width, required this.items, required this.onItemSelected});
+
+  @override
+  State<_GlassDropdownPanel<T>> createState() => _GlassDropdownPanelState<T>();
+}
+
+class _GlassDropdownPanelState<T> extends State<_GlassDropdownPanel<T>> {
+  late List<GlassDropdownItem<T>> filteredItems;
+  final TextEditingController searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    filteredItems = widget.items;
+    searchController.addListener(_filterItems);
+  }
+
+  @override
+  void dispose() {
+    searchController.removeListener(_filterItems);
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterItems() {
+    final query = searchController.text.toLowerCase();
+    setState(() {
+      filteredItems = widget.items.where((item) => item.text.toLowerCase().contains(query)).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).primaryColor;
+
+    // REGLA INTELIGENTE: Más de 5 items = Activa buscador y limita la altura
+    final bool showSearch = widget.items.length > 5;
+    final double maxHeight = showSearch ? 300.0 : (widget.items.length * 55.0) + 20.0;
+
+    return Material(
+      color: Colors.transparent,
+      child: SizedBox(
+        width: widget.width,
+        child: GlassContainer(
+          padding: const EdgeInsets.all(8),
+          hasShadow: true,
+          shadowBlur: 40.0, // Sombra profunda para que el panel se despegue mucho del fondo
+          shadowOffset: const Offset(0, 15),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (showSearch) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0, left: 4.0, right: 4.0),
+                    child: TextField(
+                      controller: searchController,
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar...',
+                        hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+                        prefixIcon: Icon(Icons.search, color: isDark ? Colors.white70 : Colors.black54, size: 20),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                        filled: true,
+                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: primary.withOpacity(0.5)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Divider(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4), height: 1),
+                  const SizedBox(height: 4),
+                ],
+                // El scroll se activa automáticamente dentro de Flexible
+                Flexible(
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: filteredItems.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+                      return InkWell(
+                        onTap: () => widget.onItemSelected(item.value),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              if (item.icon != null) ...[Icon(item.icon, size: 20, color: isDark ? Colors.white70 : Colors.black54), const SizedBox(width: 12)],
+                              Expanded(
+                                child: Text(
+                                  item.text,
+                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w500, fontSize: 15),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// EFECTO DE PRESIÓN PARA BOTONES
+class GlassPressable extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final BorderRadius? borderRadius;
+
+  const GlassPressable({super.key, required this.child, this.onTap, this.borderRadius});
+
+  @override
+  State<GlassPressable> createState() => _GlassPressableState();
+}
+
+class _GlassPressableState extends State<GlassPressable> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(scale: _isPressed ? 0.96 : 1.0, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut, child: widget.child),
+    );
+  }
+}
+
+// CAMPO DE TEXTO DE CRISTAL
+class GlassTextField extends StatefulWidget {
+  final String label;
+  final String? hint;
+  final IconData? icon;
+  final TextEditingController? controller;
+  final bool obscureText;
+  final TextInputType keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
+  const GlassTextField({super.key, required this.label, this.hint, this.icon, this.controller, this.obscureText = false, this.keyboardType = TextInputType.text, this.inputFormatters});
+
+  @override
+  State<GlassTextField> createState() => _GlassTextFieldState();
+}
+
+class _GlassTextFieldState extends State<GlassTextField> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).primaryColor;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _isFocused ? [BoxShadow(color: primary.withOpacity(0.3), blurRadius: 15, spreadRadius: 2)] : null,
+      ),
+      child: GlassContainer(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        borderRadius: BorderRadius.circular(16),
+        customBorderColor: _isFocused ? primary : null,
+        borderOpacity: _isFocused ? 0.8 : 0.3,
+        hasShadow: false,
+        child: TextField(
+          controller: widget.controller,
+          focusNode: _focusNode,
+          obscureText: widget.obscureText,
+          keyboardType: widget.keyboardType,
+          inputFormatters: widget.inputFormatters,
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16),
+          cursorColor: primary,
+          decoration: InputDecoration(
+            labelText: widget.label,
+            labelStyle: TextStyle(color: _isFocused ? primary : (isDark ? Colors.white70 : Colors.black54)),
+            hintText: widget.hint,
+            hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38),
+            prefixIcon: widget.icon != null ? Icon(widget.icon, color: _isFocused ? primary : (isDark ? Colors.white70 : Colors.black54)) : null,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
           ),
         ),
       ),

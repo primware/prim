@@ -113,11 +113,10 @@ class _DashboardPageState extends State<DashboardPage> {
             elevation: 0,
             leadingWidth: 70,
             leading: const Padding(padding: const EdgeInsets.only(left: 12.0, top: 8.0, bottom: 8.0), child: _PulsingMenuButton()),
-            // 🌟 PÍLDORA TÍTULO SIN SOMBRA 🌟
             title: GlassContainer(
               borderRadius: BorderRadius.circular(50),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              hasShadow: false, // ¡Adiós mancha trasera!
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+              hasShadow: false,
               child: Text(
                 AppLocale.dashboard.getString(context),
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 18),
@@ -158,8 +157,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: GlassContainer(
-                          width: isMobile ? MediaQuery.of(context).size.width * 0.95 : 800,
-                          padding: const EdgeInsets.all(16.0),
+                          width: isMobile ? MediaQuery.of(context).size.width * 0.95 : 950, // <-- Ajusta este valor (ej. 800 o 950) para cambiar el ancho en escritorio
+                          padding: const EdgeInsets.all(28.0), // <-- Ajusta este valor (ej. 16.0 o 28.0) para el espaciado interno
+
                           blur: 25.0,
                           borderOpacity: 0.5,
                           hasShadow: true,
@@ -228,12 +228,18 @@ class _PulsingMenuButtonState extends State<_PulsingMenuButton> with SingleTicke
     return ScaleTransition(
       scale: _scale,
       child: GlassContainer(
+        width: 55, // <-- Ajusta este valor para cambiar el ancho del botón
+        height: 55, // <-- Ajusta este valor para cambiar el alto del botón
         borderRadius: BorderRadius.circular(50),
         padding: EdgeInsets.zero,
         hasShadow: false,
-        child: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.black87),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+        child: Center(
+          child: IconButton(
+            iconSize: 30, // <-- Ajusta este valor para cambiar el tamaño del icono
+            icon: const Icon(Icons.menu, color: Colors.black87),
+            padding: EdgeInsets.zero,
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
     );

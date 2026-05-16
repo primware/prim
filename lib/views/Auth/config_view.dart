@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
-import '../../Widgets/GlassDesign.dart' show GlassSwitch;
+import '../../Widgets/GlassDesign.dart';
 import '../../../API/token.api.dart';
 import '../../API/pos.api.dart';
 import 'package:flutter_localization/flutter_localization.dart';
@@ -149,6 +149,7 @@ class _ConfigPageState extends State<ConfigPage> {
   }
 
   Future<void> _onClientSelected(int? clientId) async {
+    if (!mounted) return;
     setState(() {
       selectedClientId = clientId;
       roles = [];
@@ -160,6 +161,7 @@ class _ConfigPageState extends State<ConfigPage> {
 
     if (clientId != null) {
       final fetchedRoles = await getRoles(clientId, context);
+      if (!mounted) return;
       if (fetchedRoles != null) {
         setState(() {
           roles = fetchedRoles;
@@ -172,6 +174,7 @@ class _ConfigPageState extends State<ConfigPage> {
         });
       }
     }
+    if (!mounted) return;
     setState(() => isLoading = false);
   }
 
@@ -184,6 +187,7 @@ class _ConfigPageState extends State<ConfigPage> {
     String? roleName = prefs.getString('roleName_$usuario');
 
     if (roleId != null && organizationId != null) {
+      if (!mounted) return;
       setState(() {
         selectedClientId = clientId;
         selectedRoleId = roleId;
@@ -193,12 +197,15 @@ class _ConfigPageState extends State<ConfigPage> {
         Token.rol = selectedRoleId;
       });
       await _onClientSelected(clientId);
+      if (!mounted) return;
       await _onRoleSelected(roleId);
+      if (!mounted) return;
       _onOrganizationSelected(organizationId);
     }
   }
 
   Future<void> _onRoleSelected(int? roleId) async {
+    if (!mounted) return;
     setState(() {
       selectedRoleId = roleId;
       organizations = [];
@@ -208,12 +215,14 @@ class _ConfigPageState extends State<ConfigPage> {
 
     if (roleId != null) {
       final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
+      if (!mounted) return;
       if (fetchedOrganizations != null) {
         setState(() => organizations = fetchedOrganizations);
       }
     }
     final selectedRole = roles.firstWhere((role) => role['id'] == roleId);
     UserData.rolName = selectedRole['name'];
+    if (!mounted) return;
     setState(() => isLoading = false);
   }
 
@@ -269,124 +278,6 @@ class _ConfigPageState extends State<ConfigPage> {
     }
   }
 
-  void _showSelectionBottomSheet(String title, List<Map<String, dynamic>> items, int? currentValue, Function(int?) onSelected) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.1),
-      isScrollControlled: true,
-      builder: (BuildContext bc) {
-        return GlassConfigContainer(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Container(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(color: Colors.grey.withOpacity(0.5), borderRadius: BorderRadius.circular(10)),
-                ),
-                const SizedBox(height: 24),
-                Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 24),
-
-                Expanded(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final item = items[index];
-                      final isSelected = item['id'] == currentValue;
-                      final primaryColor = Theme.of(context).primaryColor;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () {
-                            onSelected(item['id']);
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                            decoration: BoxDecoration(
-                              color: isSelected ? primaryColor.withOpacity(0.15) : Colors.transparent,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: isSelected ? primaryColor : Colors.grey.withOpacity(0.3), width: 1.5),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    item['name'].toString(),
-                                    style: TextStyle(fontSize: 16, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? primaryColor : Theme.of(context).colorScheme.onSurface),
-                                  ),
-                                ),
-                                if (isSelected) Icon(Icons.check_circle, color: primaryColor),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSelectorButton(String label, int? selectedValue, List<Map<String, dynamic>> items, Function(int?) onSelected) {
-    final String displayText = selectedValue == null ? 'Seleccionar...' : items.firstWhere((element) => element['id'] == selectedValue, orElse: () => {'name': 'Desconocido'})['name'].toString();
-
-    final bool isDisabled = items.isEmpty && selectedValue == null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: isDisabled ? Colors.grey : null),
-          ),
-        ),
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: isDisabled ? null : () => _showSelectionBottomSheet(label, items, selectedValue, onSelected),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              color: isDisabled ? Colors.grey.withOpacity(0.1) : Theme.of(context).cardColor.withOpacity(0.55),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDisabled ? Colors.transparent : Colors.grey.withOpacity(0.5), width: 1.5),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    displayText,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: selectedValue != null ? FontWeight.bold : FontWeight.normal, color: isDisabled ? Colors.grey : (selectedValue != null ? Theme.of(context).primaryColor : null)),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(Icons.keyboard_arrow_down_rounded, color: isDisabled ? Colors.grey : Colors.grey.shade600),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
@@ -414,80 +305,98 @@ class _ConfigPageState extends State<ConfigPage> {
                 },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                children: [
-                  GlassConfigContainer(
-                    width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 500,
-                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 40, vertical: 32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Center(
-                          child: Text(AppLocale.selectRole.getString(context), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                        ),
-                        const SizedBox(height: CustomSpacer.xlarge),
-
-                        _buildSelectorButton(AppLocale.company.getString(context), selectedClientId, clients, _onClientSelected),
-                        const SizedBox(height: CustomSpacer.medium),
-
-                        _buildSelectorButton(AppLocale.role.getString(context), selectedRoleId, roles, _onRoleSelected),
-                        const SizedBox(height: CustomSpacer.medium),
-
-                        _buildSelectorButton(AppLocale.organization.getString(context), selectedOrganizationId, organizations, _onOrganizationSelected),
-                        const SizedBox(height: CustomSpacer.large),
-
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
+                  children: [
+                    GlassConfigContainer(
+                      width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 500,
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 40, vertical: 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Center(
+                            child: Text(AppLocale.selectRole.getString(context), style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.save_as_outlined, size: 22, color: rememberConfig ? Theme.of(context).primaryColor : Colors.grey.shade600),
-                                  const SizedBox(width: 12),
-                                  Text(AppLocale.rememberMe.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: rememberConfig ? FontWeight.bold : FontWeight.w500)),
-                                ],
-                              ),
-                              GlassSwitch(
-                                value: rememberConfig,
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    rememberConfig = newValue;
-                                  });
-                                },
-                              ),
-                            ],
+                          const SizedBox(height: CustomSpacer.xlarge),
+
+                          GlassDropdown<int>(
+                            label: AppLocale.company.getString(context),
+                            icon: Icons.business_outlined,
+                            currentValue: selectedClientId == null ? '' : clients.firstWhere((e) => e['id'] == selectedClientId, orElse: () => {'name': ''})['name'].toString(),
+                            items: clients.map((e) => GlassDropdownItem<int>(value: e['id'] as int, text: e['name'].toString())).toList(),
+                            onChanged: _onClientSelected,
                           ),
-                        ),
-                        const SizedBox(height: CustomSpacer.xlarge),
+                          const SizedBox(height: CustomSpacer.medium),
 
-                        Container(
-                          child: isLoading ? ButtonLoading(fullWidth: true) : ButtonPrimary(texto: AppLocale.continueKey.getString(context), fullWidth: true, onPressed: _onContinue),
-                        ),
-                        const SizedBox(height: 12),
+                          GlassDropdown<int>(
+                            label: AppLocale.role.getString(context),
+                            icon: Icons.admin_panel_settings_outlined,
+                            currentValue: selectedRoleId == null ? '' : roles.firstWhere((e) => e['id'] == selectedRoleId, orElse: () => {'name': ''})['name'].toString(),
+                            items: roles.map((e) => GlassDropdownItem<int>(value: e['id'] as int, text: e['name'].toString())).toList(),
+                            onChanged: _onRoleSelected,
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
 
-                        ButtonSecondary(
-                          texto: AppLocale.back.getString(context),
-                          fullWidth: true,
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ],
+                          GlassDropdown<int>(
+                            label: AppLocale.organization.getString(context),
+                            icon: Icons.account_tree_outlined,
+                            currentValue: selectedOrganizationId == null ? '' : organizations.firstWhere((e) => e['id'] == selectedOrganizationId, orElse: () => {'name': ''})['name'].toString(),
+                            items: organizations.map((e) => GlassDropdownItem<int>(value: e['id'] as int, text: e['name'].toString())).toList(),
+                            onChanged: _onOrganizationSelected,
+                          ),
+                          const SizedBox(height: CustomSpacer.large),
+
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.save_as_outlined, size: 22, color: rememberConfig ? Theme.of(context).primaryColor : Colors.grey.shade600),
+                                    const SizedBox(width: 12),
+                                    Text(AppLocale.rememberMe.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: rememberConfig ? FontWeight.bold : FontWeight.w500)),
+                                  ],
+                                ),
+                                GlassSwitch(
+                                  value: rememberConfig,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      rememberConfig = newValue;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: CustomSpacer.xlarge),
+
+                          Container(
+                            child: isLoading ? ButtonLoading(fullWidth: true) : ButtonPrimary(texto: AppLocale.continueKey.getString(context), fullWidth: true, onPressed: _onContinue),
+                          ),
+                          const SizedBox(height: 12),
+
+                          ButtonSecondary(
+                            texto: AppLocale.back.getString(context),
+                            fullWidth: true,
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

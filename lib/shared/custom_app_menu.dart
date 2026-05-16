@@ -398,29 +398,32 @@ class _MenuDrawerState extends State<MenuDrawer> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = Theme.of(context).primaryColor;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.7), width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined, size: 18, color: isDark ? Colors.white70 : primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              AppLocale.themeAppearance.getString(context),
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w600, fontSize: 14),
+    return GlassPressable(
+      onTap: () => ThemeManager.themeNotifier.toggleTheme(),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isDark ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.7), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined, size: 18, color: isDark ? Colors.white70 : primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                AppLocale.themeAppearance.getString(context),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w600, fontSize: 14),
+              ),
             ),
-          ),
-          GlassSwitch(
-            value: isDark,
-            onChanged: (val) => ThemeManager.themeNotifier.toggleTheme(),
-          ),
-        ],
+            GlassSwitch(
+              value: isDark,
+              onChanged: (val) => ThemeManager.themeNotifier.toggleTheme(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -439,7 +442,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = Theme.of(context).primaryColor;
 
-    return GestureDetector(
+    return GlassPressable(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
