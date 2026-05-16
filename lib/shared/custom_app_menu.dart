@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+import 'package:primware/main.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui';
@@ -73,14 +73,14 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: Theme.of(context).colorScheme.error, borderRadius: BorderRadius.circular(20)),
                   child: Text(
-                    'Entorno de pruebas',
+                    AppLocale.testEnvironment.getString(context),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
               const Spacer(),
               CustomFlatButton(
-                text: Token.auth != null ? 'Panel' : 'Acceder',
+                text: Token.auth != null ? AppLocale.panel.getString(context) : AppLocale.access.getString(context),
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => Token.auth != null ? const DashboardPage() : const LoginPage()));
                 },
@@ -209,16 +209,13 @@ class _MenuDrawerState extends State<MenuDrawer> {
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(topRight: Radius.circular(30), bottomRight: Radius.circular(30)),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0), // Desenfoque cristalino
+                  filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
                   child: Container(
-                    // 👇 Ajustamos la opacidad del cristal para que los orbes morados resalten por debajo
                     color: isDark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.4),
                     child: Column(
                       children: [
-                        // --- CABECERA ---
                         _buildHeader(context, isDark),
 
-                        // --- LISTA DE MENÚ ---
                         Expanded(
                           child: ListView(
                             padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
@@ -233,7 +230,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
                               const SizedBox(height: 15),
                               Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                              _buildSectionTitle('OPERACIONES COMERCIALES', isDark),
+                              _buildSectionTitle(AppLocale.commercialOperations.getString(context), isDark),
 
                               if (POS.docTypesComplete.isEmpty)
                                 _buildPillMenu(
@@ -272,7 +269,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                               if (POS.isPOS) ...[
                                 const SizedBox(height: 15),
                                 Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                                _buildSectionTitle('PUNTO DE VENTA', isDark),
+                                _buildSectionTitle(AppLocale.pointOfSale.getString(context), isDark),
                                 _buildPillMenu(context, icon: Icons.point_of_sale_outlined, title: AppLocale.closeCash.getString(context), isLoading: _isCreatingCloseCash, onTap: _isCreatingCloseCash ? null : _handleCloseCashLogic),
                                 _buildPillMenu(
                                   context,
@@ -284,7 +281,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
                               const SizedBox(height: 15),
                               Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                              _buildSectionTitle('CATÁLOGOS', isDark),
+                              _buildSectionTitle(AppLocale.catalogs.getString(context), isDark),
                               _buildPillMenu(
                                 context,
                                 icon: Icons.inventory_2_outlined,
@@ -300,7 +297,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
                               const SizedBox(height: 15),
                               Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
-                              _buildSectionTitle('SISTEMA', isDark),
+                              _buildSectionTitle(AppLocale.system.getString(context), isDark),
 
                               _buildPillMenu(context, icon: Icons.manage_accounts_outlined, title: AppLocale.changeRole.getString(context), onTap: _handleChangeRole),
 
@@ -321,11 +318,11 @@ class _MenuDrawerState extends State<MenuDrawer> {
                                   title: AppLocale.console.getString(context),
                                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DebugPage())),
                                 ),
+                              // _buildThemePill(context),
                             ],
                           ),
                         ),
 
-                        // --- FOOTER ---
                         Divider(color: isDark ? Colors.white24 : Colors.black12, height: 1),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 15, 20, 30),
@@ -343,9 +340,8 @@ class _MenuDrawerState extends State<MenuDrawer> {
     );
   }
 
-  // --- CABECERA ---
   Widget _buildHeader(BuildContext context, bool isDark) {
-    final String name = UserData.name ?? 'Usuario';
+    final String name = UserData.name ?? AppLocale.user.getString(context);
     final String initials = name.isNotEmpty ? name.substring(0, 2).toUpperCase() : 'US';
     final primary = Theme.of(context).primaryColor;
 
@@ -398,6 +394,37 @@ class _MenuDrawerState extends State<MenuDrawer> {
     );
   }
 
+  Widget _buildThemePill(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).primaryColor;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.7), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Icon(isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined, size: 18, color: isDark ? Colors.white70 : primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              AppLocale.themeAppearance.getString(context),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          GlassSwitch(
+            value: isDark,
+            onChanged: (val) => ThemeManager.themeNotifier.toggleTheme(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionTitle(String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -408,7 +435,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
     );
   }
 
-  // --- BOTONES ESTILO PÍLDORAS ---
   Widget _buildPillMenu(BuildContext context, {required IconData icon, required String title, required VoidCallback? onTap, Color? iconColor, Color? textColor, bool isLoading = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = Theme.of(context).primaryColor;
@@ -419,7 +445,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          // Fondo claro/translúcido si es modo claro, fondo oscuro translúcido si es oscuro
           color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.4),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: isDark ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.7), width: 1.5),
@@ -482,12 +507,12 @@ class _MenuDrawerState extends State<MenuDrawer> {
       if (result['success'] == true) {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: result)));
       } else {
-        ToastMessage.show(context: context, message: 'No se pudo crear el cierre de caja', type: ToastType.failure);
+        ToastMessage.show(context: context, message: AppLocale.errorCreatingCloseCash.getString(context), type: ToastType.failure);
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isCreatingCloseCash = false);
-      ToastMessage.show(context: context, message: 'Error al crear el cierre de caja', type: ToastType.failure);
+      ToastMessage.show(context: context, message: AppLocale.errorCloseCash.getString(context), type: ToastType.failure);
     }
   }
 }

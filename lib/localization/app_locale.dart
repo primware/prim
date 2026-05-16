@@ -254,6 +254,15 @@ class AppLocale {
   static const String error = 'error';
   static const String fetchOrderError = 'fetchOrderError';
   static const String fetchOrderNetworkError = 'fetchOrderNetworkError';
+  static const String testEnvironment = 'testEnvironment';
+  static const String panel = 'panel';
+  static const String access = 'access';
+  static const String commercialOperations = 'commercialOperations';
+  static const String pointOfSale = 'pointOfSale';
+  static const String catalogs = 'catalogs';
+  static const String system = 'system';
+  static const String errorCreatingCloseCash = 'errorCreatingCloseCash';
+  static const String errorCloseCash = 'errorCloseCash';
 
   static const Map<String, dynamic> en = {
     orgProfileTitle: 'Organization\nProfile',
@@ -511,6 +520,15 @@ class AppLocale {
     error: 'Error',
     fetchOrderError: 'Error fetching order:',
     fetchOrderNetworkError: 'Network error in fetchOrderById:',
+    testEnvironment: 'Test Environment',
+    panel: 'Panel',
+    access: 'Access',
+    commercialOperations: 'COMMERCIAL OPERATIONS',
+    pointOfSale: 'POINT OF SALE',
+    catalogs: 'CATALOGS',
+    system: 'SYSTEM',
+    errorCreatingCloseCash: 'Could not create close cash',
+    errorCloseCash: 'Error creating close cash',
   };
 
   static const Map<String, dynamic> es = {
@@ -764,5 +782,14 @@ class AppLocale {
     error: 'Error',
     fetchOrderError: 'Error al obtener la orden:',
     fetchOrderNetworkError: 'Error de red en fetchOrderById:',
+    testEnvironment: 'Entorno de pruebas',
+    panel: 'Panel',
+    access: 'Acceder',
+    commercialOperations: 'OPERACIONES COMERCIALES',
+    pointOfSale: 'PUNTO DE VENTA',
+    catalogs: 'CATÁLOGOS',
+    system: 'SISTEMA',
+    errorCreatingCloseCash: 'No se pudo crear el cierre de caja',
+    errorCloseCash: 'Error al crear el cierre de caja',
   };
 }

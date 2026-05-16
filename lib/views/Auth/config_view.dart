@@ -1,6 +1,5 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
@@ -404,8 +403,17 @@ class _ConfigPageState extends State<ConfigPage> {
           child: Center(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Focus(
+                autofocus: true,
+                onKey: (node, event) {
+                  if (event is RawKeyDownEvent && (event.logicalKey == LogicalKeyboardKey.enter || event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                    _onContinue();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                 children: [
                   GlassConfigContainer(
                     width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 500,
@@ -479,6 +487,7 @@ class _ConfigPageState extends State<ConfigPage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
