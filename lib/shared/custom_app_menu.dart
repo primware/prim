@@ -211,7 +211,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
                   child: Container(
-                    color: isDark ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.4),
+                    color: isDark ? Colors.black.withOpacity(0.1) : Colors.white.withOpacity(0.05),
                     child: Column(
                       children: [
                         _buildHeader(context, isDark),
@@ -418,10 +418,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ),
-            GlassSwitch(
-              value: isDark,
-              onChanged: (val) => ThemeManager.themeNotifier.toggleTheme(),
-            ),
+            GlassSwitch(value: isDark, onChanged: (val) => ThemeManager.themeNotifier.toggleTheme()),
           ],
         ),
       ),
