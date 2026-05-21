@@ -263,6 +263,7 @@ class AppLocale {
   static const String system = 'system';
   static const String errorCreatingCloseCash = 'errorCreatingCloseCash';
   static const String errorCloseCash = 'errorCloseCash';
+  static const String sessionExpired = 'sessionExpired';
 
   static const Map<String, dynamic> en = {
     orgProfileTitle: 'Organization\nProfile',
@@ -529,6 +530,7 @@ class AppLocale {
     system: 'SYSTEM',
     errorCreatingCloseCash: 'Could not create close cash',
     errorCloseCash: 'Error creating close cash',
+    sessionExpired: 'For your security the session has expired',
   };
 
   static const Map<String, dynamic> es = {
@@ -791,5 +793,6 @@ class AppLocale {
     system: 'SISTEMA',
     errorCreatingCloseCash: 'No se pudo crear el cierre de caja',
     errorCloseCash: 'Error al crear el cierre de caja',
+    sessionExpired: 'Por su seguridad la sesión ha expirado',
   };
 }

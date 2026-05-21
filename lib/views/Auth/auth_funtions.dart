@@ -13,6 +13,8 @@ import '../../shared/toast_message.dart';
 import 'login_view.dart';
 import '../../API/user.api.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+import '../../localization/app_locale.dart';
 
 Future<void> handle401(BuildContext context) async {
   Token.auth = null;
@@ -25,7 +27,7 @@ Future<void> handle401(BuildContext context) async {
   Navigator.push(context, MaterialPageRoute(builder: (context) => MainApp()));
   ToastMessage.show(
     context: context,
-    message: "Por su seguridad la sesión a expirado",
+    message: AppLocale.sessionExpired.getString(context),
     type: ToastType.warning,
   );
 }
