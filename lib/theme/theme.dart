@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'theme_material.dart';
 
 class AppThemes {
@@ -19,9 +18,7 @@ class AppThemes {
       ),
       drawerTheme: DrawerThemeData(
         backgroundColor: colorScheme.onPrimary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
       textTheme: GoogleFonts.poppinsTextTheme().apply(
         bodyColor: colorScheme.primary,
@@ -46,6 +43,18 @@ class AppThemes {
           ),
         ),
       ),
+      // 🌟 INYECCIÓN DEL TEMA DE CRISTAL (MODO CLARO)
+      extensions: <ThemeExtension<dynamic>>[
+        GlassTheme(
+          blur: 25.0,
+          glassColor: Colors.white,
+          opacityStart: 0.15,
+          opacityEnd: 0.05,
+          borderColor: Colors.white,
+          borderOpacity: 0.4,
+          shadowColor: Colors.black.withOpacity(0.08),
+        ),
+      ],
     );
   }
 
@@ -64,9 +73,7 @@ class AppThemes {
       ),
       drawerTheme: DrawerThemeData(
         backgroundColor: colorScheme.onPrimary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
       textTheme: GoogleFonts.poppinsTextTheme().apply(
         bodyColor: colorScheme.onSurface,
@@ -88,23 +95,81 @@ class AppThemes {
           ),
         ),
       ),
+      // 🌟 INYECCIÓN DEL TEMA DE CRISTAL (MODO OSCURO)
+      extensions: <ThemeExtension<dynamic>>[
+        GlassTheme(
+          blur: 25.0,
+          glassColor: Colors.black,
+          opacityStart: 0.15,
+          opacityEnd: 0.05,
+          borderColor: Colors.white,
+          borderOpacity: 0.15, // Borde más sutil en oscuro
+          shadowColor: Colors.black.withOpacity(
+            0.4,
+          ), // Sombra más fuerte en oscuro
+        ),
+      ],
     );
   }
 }
 
-//? Fuentes
-// | Estilo                           | Tamaño aprox. | Uso común                        |
-// | -------------------------------- | ------------- | -------------------------------- |
-// | `displayLarge`                   | 57.0          | Titulares principales            |
-// | `displayMedium`                  | 45.0          | Titulares secundarios            |
-// | `displaySmall`                   | 36.0          | Titulares grandes                |
-// | `headlineLarge`                  | 32.0          | Encabezado                       |
-// | `headlineMedium`                 | 28.0          | Subtítulo                        |
-// | `headlineSmall`                  | 24.0          | Secciones                        |
-// | `titleLarge`                     | 22.0          | Títulos                          |
-// | `titleMedium`                    | 16.0          | Título más pequeño (como AppBar) |
-// | `titleSmall`                     | 14.0          | Subtítulos menores               |
-// | `bodyLarge`                      | 16.0          | Texto principal                  |
-// | `bodyMedium`                     | 14.0          | Texto normal                     |
-// | `bodySmall`                      | 12.0          | Notas, descripciones             |
-// | `labelLarge`, `labelSmall`, etc. | 11–14.0       | Botones, badges                  |
+// 🌟 EXTENSIÓN PARA EL DESIGN SYSTEM DE CRISTAL
+class GlassTheme extends ThemeExtension<GlassTheme> {
+  final double blur;
+  final Color glassColor;
+  final double opacityStart;
+  final double opacityEnd;
+  final Color borderColor;
+  final double borderOpacity;
+  final Color shadowColor;
+
+  const GlassTheme({
+    required this.blur,
+    required this.glassColor,
+    required this.opacityStart,
+    required this.opacityEnd,
+    required this.borderColor,
+    required this.borderOpacity,
+    required this.shadowColor,
+  });
+
+  @override
+  GlassTheme copyWith({
+    double? blur,
+    Color? glassColor,
+    double? opacityStart,
+    double? opacityEnd,
+    Color? borderColor,
+    double? borderOpacity,
+    Color? shadowColor,
+  }) {
+    return GlassTheme(
+      blur: blur ?? this.blur,
+      glassColor: glassColor ?? this.glassColor,
+      opacityStart: opacityStart ?? this.opacityStart,
+      opacityEnd: opacityEnd ?? this.opacityEnd,
+      borderColor: borderColor ?? this.borderColor,
+      borderOpacity: borderOpacity ?? this.borderOpacity,
+      shadowColor: shadowColor ?? this.shadowColor,
+    );
+  }
+
+  @override
+  GlassTheme lerp(ThemeExtension<GlassTheme>? other, double t) {
+    if (other is! GlassTheme) return this;
+    return GlassTheme(
+      blur: lerpDouble(blur, other.blur, t) ?? blur,
+      glassColor: Color.lerp(glassColor, other.glassColor, t) ?? glassColor,
+      opacityStart:
+          lerpDouble(opacityStart, other.opacityStart, t) ?? opacityStart,
+      opacityEnd: lerpDouble(opacityEnd, other.opacityEnd, t) ?? opacityEnd,
+      borderColor: Color.lerp(borderColor, other.borderColor, t) ?? borderColor,
+      borderOpacity:
+          lerpDouble(borderOpacity, other.borderOpacity, t) ?? borderOpacity,
+      shadowColor: Color.lerp(shadowColor, other.shadowColor, t) ?? shadowColor,
+    );
+  }
+
+  // Helper para facilitar el lerp de doubles
+  double? lerpDouble(double a, double b, double t) => a + (b - a) * t;
+}

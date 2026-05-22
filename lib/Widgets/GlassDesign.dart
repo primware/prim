@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
+import 'package:primware/theme/theme.dart';
 
 class LiquidBackground extends StatelessWidget {
   final Widget child;
@@ -28,7 +29,13 @@ class LiquidBackground extends StatelessWidget {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [primary.withOpacity(isDark ? 0.35 : 0.15), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [
+                    primary.withOpacity(isDark ? 0.35 : 0.15),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -40,7 +47,13 @@ class LiquidBackground extends StatelessWidget {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [secondary.withOpacity(isDark ? 0.35 : 0.15), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [
+                    secondary.withOpacity(isDark ? 0.35 : 0.15),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -52,7 +65,13 @@ class LiquidBackground extends StatelessWidget {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [primary.withOpacity(isDark ? 0.2 : 0.08), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [
+                    primary.withOpacity(isDark ? 0.2 : 0.08),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -72,51 +91,94 @@ class GlassDropdownItem<T> {
   GlassDropdownItem({required this.value, required this.text, this.icon});
 }
 
-// CONTENEDOR GLASS
+// CONTENEDOR GLASS (Conectado al Theme)
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final double? width;
   final double? height;
-  final double blur;
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
-  final double borderOpacity;
   final bool hasShadow;
   final BlurStyle shadowBlurStyle;
   final double shadowBlur;
   final Offset shadowOffset;
   final Color? customBorderColor;
+  final double? borderOpacity;
+  final double? blur;
+  final BoxConstraints? constraints;
+  final Color? customBackgroundColor;
 
-  const GlassContainer({super.key, required this.child, this.width, this.height, this.blur = 12.0, this.padding, this.borderRadius, this.borderOpacity = 0.2, this.hasShadow = true, this.shadowBlurStyle = BlurStyle.outer, this.shadowBlur = 30.0, this.shadowOffset = const Offset(0, 10), this.customBorderColor});
+  const GlassContainer({
+    super.key,
+    required this.child,
+    this.width,
+    this.height,
+    this.padding,
+    this.borderRadius,
+    this.hasShadow = true,
+    this.shadowBlurStyle = BlurStyle.outer,
+    this.shadowBlur = 30.0,
+    this.shadowOffset = const Offset(0, 10),
+    this.customBorderColor,
+    this.borderOpacity,
+    this.blur,
+    this.constraints,
+    this.customBackgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     final br = borderRadius ?? BorderRadius.circular(24);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Colores adaptativos para modo claro/oscuro
-    final glassColor = isDark ? Colors.black : Colors.white;
-    final glassOpacityStart = isDark ? 0.15 : 0.1;
-    final glassOpacityEnd = isDark ? 0.05 : 0.1;
-    final borderColor = customBorderColor ?? (isDark ? Colors.white30 : Colors.white);
+    final glassTheme = Theme.of(context).extension<GlassTheme>()!;
 
     return Container(
       width: width,
       height: height,
+      constraints: constraints,
       decoration: BoxDecoration(
         borderRadius: br,
-        boxShadow: hasShadow ? [BoxShadow(color: isDark ? Colors.black.withOpacity(0.6) : Colors.black.withOpacity(0.12), blurRadius: shadowBlur, spreadRadius: 2, offset: shadowOffset, blurStyle: shadowBlurStyle)] : null,
+        boxShadow: hasShadow
+            ? [
+                BoxShadow(
+                  color: glassTheme.shadowColor,
+                  blurRadius: shadowBlur,
+                  spreadRadius: 2,
+                  offset: shadowOffset,
+                  blurStyle: shadowBlurStyle,
+                ),
+              ]
+            : null,
       ),
       child: ClipRRect(
         borderRadius: br,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          filter: ImageFilter.blur(
+            sigmaX: blur ?? glassTheme.blur,
+            sigmaY: blur ?? glassTheme.blur,
+          ),
           child: Container(
             padding: padding ?? const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: br,
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [glassColor.withOpacity(glassOpacityStart), glassColor.withOpacity(glassOpacityEnd)], stops: const [0.0, 1.0]),
-              border: Border.all(color: borderColor.withOpacity(borderOpacity), width: 1.5),
+              color: customBackgroundColor,
+              gradient: customBackgroundColor == null
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        glassTheme.glassColor.withOpacity(glassTheme.opacityStart),
+                        glassTheme.glassColor.withOpacity(glassTheme.opacityEnd),
+                      ],
+                      stops: const [0.0, 1.0],
+                    )
+                  : null,
+              border: Border.all(
+                color: (customBorderColor ?? glassTheme.borderColor).withOpacity(
+                  borderOpacity ?? glassTheme.borderOpacity,
+                ),
+                width: 1.5,
+              ),
             ),
             child: child,
           ),
@@ -151,7 +213,10 @@ class DeepLiquidBackground extends StatelessWidget {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [primary.withOpacity(0.6), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [primary.withOpacity(0.6), Colors.transparent],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -163,7 +228,10 @@ class DeepLiquidBackground extends StatelessWidget {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [secondary.withOpacity(0.5), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [secondary.withOpacity(0.5), Colors.transparent],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -175,7 +243,10 @@ class DeepLiquidBackground extends StatelessWidget {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [primary.withOpacity(0.4), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [primary.withOpacity(0.4), Colors.transparent],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -210,7 +281,10 @@ class LightAccentBackground extends StatelessWidget {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [primary.withOpacity(0.99), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [primary.withOpacity(0.99), Colors.transparent],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -222,7 +296,10 @@ class LightAccentBackground extends StatelessWidget {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [secondary.withOpacity(0.20), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [secondary.withOpacity(0.20), Colors.transparent],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -234,7 +311,10 @@ class LightAccentBackground extends StatelessWidget {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [primary.withOpacity(0.35), Colors.transparent], stops: const [0.1, 1.0]),
+                gradient: RadialGradient(
+                  colors: [primary.withOpacity(0.35), Colors.transparent],
+                  stops: const [0.1, 1.0],
+                ),
               ),
             ),
           ),
@@ -266,9 +346,25 @@ class GlassSwitch extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: value ? primary.withOpacity(0.3) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
-          border: Border.all(color: value ? primary.withOpacity(0.6) : (isDark ? Colors.white30 : Colors.black12), width: 1.5),
-          boxShadow: [if (value) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)],
+          color: value
+              ? primary.withOpacity(0.3)
+              : (isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05)),
+          border: Border.all(
+            color: value
+                ? primary.withOpacity(0.6)
+                : (isDark ? Colors.white30 : Colors.black12),
+            width: 1.5,
+          ),
+          boxShadow: [
+            if (value)
+              BoxShadow(
+                color: primary.withOpacity(0.2),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+          ],
         ),
         child: Stack(
           children: [
@@ -286,9 +382,20 @@ class GlassSwitch extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: value ? primary.withOpacity(0.8) : (isDark ? Colors.white70 : Colors.white),
-                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                      color: value
+                          ? primary.withOpacity(0.8)
+                          : (isDark ? Colors.white70 : Colors.white),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.5),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -308,7 +415,13 @@ class GlassMenuButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const GlassMenuButton({super.key, required this.label, required this.currentValue, this.icon = Icons.category_outlined, required this.onTap});
+  const GlassMenuButton({
+    super.key,
+    required this.label,
+    required this.currentValue,
+    this.icon = Icons.category_outlined,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).primaryColor;
@@ -320,9 +433,22 @@ class GlassMenuButton extends StatelessWidget {
         height: 55,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: isDark ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.05),
-          border: Border.all(color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.06), width: 1.5),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.04), blurRadius: 10, offset: const Offset(0, 4))],
+          color: isDark
+              ? Colors.black.withOpacity(0.08)
+              : Colors.black.withOpacity(0.05),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.12)
+                : Colors.black.withOpacity(0.06),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
@@ -337,19 +463,33 @@ class GlassMenuButton extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: primary.withOpacity(0.15), shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                          color: primary.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
                         child: Icon(icon, color: primary, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Text(
                         currentValue.isEmpty ? label : currentValue,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: currentValue.isEmpty ? FontWeight.w500 : FontWeight.bold, color: currentValue.isEmpty ? Colors.grey.shade600 : (isDark ? Colors.white : Colors.black87)),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: currentValue.isEmpty
+                              ? FontWeight.w500
+                              : FontWeight.bold,
+                          color: currentValue.isEmpty
+                              ? Colors.grey.shade600
+                              : (isDark ? Colors.white : Colors.black87),
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                  Icon(Icons.expand_more, color: isDark ? Colors.white60 : Colors.grey.shade600, size: 22),
+                  Icon(
+                    Icons.expand_more,
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    size: 22,
+                  ),
                 ],
               ),
             ),
@@ -368,13 +508,21 @@ class GlassDropdown<T> extends StatefulWidget {
   final List<GlassDropdownItem<T>> items;
   final ValueChanged<T> onChanged;
 
-  const GlassDropdown({super.key, required this.label, required this.currentValue, required this.items, required this.onChanged, this.icon = Icons.category_outlined});
+  const GlassDropdown({
+    super.key,
+    required this.label,
+    required this.currentValue,
+    required this.items,
+    required this.onChanged,
+    this.icon = Icons.category_outlined,
+  });
 
   @override
   State<GlassDropdown<T>> createState() => _GlassDropdownState<T>();
 }
 
-class _GlassDropdownState<T> extends State<GlassDropdown<T>> with SingleTickerProviderStateMixin {
+class _GlassDropdownState<T> extends State<GlassDropdown<T>>
+    with SingleTickerProviderStateMixin {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _isOpen = false;
@@ -386,13 +534,20 @@ class _GlassDropdownState<T> extends State<GlassDropdown<T>> with SingleTickerPr
   void initState() {
     super.initState();
     // 🌟 ANIMACIÓN MÁS RÁPIDA Y LIGERA: 200ms es el estándar premium de UI
-    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
 
     // 🌟 FADE IN: Aparece suavemente
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
 
     // 🌟 SCALE IN: Pequeño efecto de "zoom" desde el 95% al 100% (cero lag)
-    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
   }
 
   @override
@@ -433,7 +588,10 @@ class _GlassDropdownState<T> extends State<GlassDropdown<T>> with SingleTickerPr
       builder: (context) => Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(onTap: _closeDropdown, behavior: HitTestBehavior.translucent),
+            child: GestureDetector(
+              onTap: _closeDropdown,
+              behavior: HitTestBehavior.translucent,
+            ),
           ),
           CompositedTransformFollower(
             link: _layerLink,
@@ -444,7 +602,8 @@ class _GlassDropdownState<T> extends State<GlassDropdown<T>> with SingleTickerPr
               opacity: _fadeAnimation,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                alignment: Alignment.topCenter, // El panel crece desde el botón superior
+                alignment: Alignment
+                    .topCenter, // El panel crece desde el botón superior
                 child: _GlassDropdownPanel<T>(
                   width: size.width,
                   items: widget.items,
@@ -486,7 +645,10 @@ class _GlassDropdownState<T> extends State<GlassDropdown<T>> with SingleTickerPr
                       children: [
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: primary.withOpacity(0.15), shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: primary.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
                           child: Icon(widget.icon, color: primary, size: 20),
                         ),
                         const SizedBox(width: 12),
@@ -494,8 +656,20 @@ class _GlassDropdownState<T> extends State<GlassDropdown<T>> with SingleTickerPr
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Text(
-                              widget.currentValue.isEmpty ? widget.label : widget.currentValue,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: widget.currentValue.isEmpty ? FontWeight.w500 : FontWeight.bold, color: widget.currentValue.isEmpty ? Colors.grey.shade600 : (isDark ? Colors.white : Colors.black87)),
+                              widget.currentValue.isEmpty
+                                  ? widget.label
+                                  : widget.currentValue,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
+                                    fontWeight: widget.currentValue.isEmpty
+                                        ? FontWeight.w500
+                                        : FontWeight.bold,
+                                    color: widget.currentValue.isEmpty
+                                        ? Colors.grey.shade600
+                                        : (isDark
+                                              ? Colors.white
+                                              : Colors.black87),
+                                  ),
                             ),
                           ),
                         ),
@@ -505,8 +679,14 @@ class _GlassDropdownState<T> extends State<GlassDropdown<T>> with SingleTickerPr
                   const SizedBox(width: 8),
                   AnimatedRotation(
                     turns: _isOpen ? 0.5 : 0.0,
-                    duration: const Duration(milliseconds: 200), // Sincronizado con la duración principal
-                    child: Icon(Icons.expand_more, color: isDark ? Colors.white60 : Colors.grey.shade600, size: 22),
+                    duration: const Duration(
+                      milliseconds: 200,
+                    ), // Sincronizado con la duración principal
+                    child: Icon(
+                      Icons.expand_more,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                      size: 22,
+                    ),
                   ),
                 ],
               ),
@@ -524,7 +704,11 @@ class _GlassDropdownPanel<T> extends StatefulWidget {
   final List<GlassDropdownItem<T>> items;
   final ValueChanged<T> onItemSelected;
 
-  const _GlassDropdownPanel({required this.width, required this.items, required this.onItemSelected});
+  const _GlassDropdownPanel({
+    required this.width,
+    required this.items,
+    required this.onItemSelected,
+  });
 
   @override
   State<_GlassDropdownPanel<T>> createState() => _GlassDropdownPanelState<T>();
@@ -551,7 +735,9 @@ class _GlassDropdownPanelState<T> extends State<_GlassDropdownPanel<T>> {
   void _filterItems() {
     final query = searchController.text.toLowerCase();
     setState(() {
-      filteredItems = widget.items.where((item) => item.text.toLowerCase().contains(query)).toList();
+      filteredItems = widget.items
+          .where((item) => item.text.toLowerCase().contains(query))
+          .toList();
     });
   }
 
@@ -562,7 +748,9 @@ class _GlassDropdownPanelState<T> extends State<_GlassDropdownPanel<T>> {
 
     // REGLA INTELIGENTE: Más de 5 items = Activa buscador y limita la altura
     final bool showSearch = widget.items.length > 5;
-    final double maxHeight = showSearch ? 300.0 : (widget.items.length * 55.0) + 20.0;
+    final double maxHeight = showSearch
+        ? 300.0
+        : (widget.items.length * 55.0) + 20.0;
 
     return Material(
       color: Colors.transparent,
@@ -571,7 +759,8 @@ class _GlassDropdownPanelState<T> extends State<_GlassDropdownPanel<T>> {
         child: GlassContainer(
           padding: const EdgeInsets.all(8),
           hasShadow: true,
-          shadowBlur: 40.0, // Sombra profunda para que el panel se despegue mucho del fondo
+          shadowBlur:
+              40.0, // Sombra profunda para que el panel se despegue mucho del fondo
           shadowOffset: const Offset(0, 15),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
@@ -580,33 +769,59 @@ class _GlassDropdownPanelState<T> extends State<_GlassDropdownPanel<T>> {
               children: [
                 if (showSearch) ...[
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0, left: 4.0, right: 4.0),
+                    padding: const EdgeInsets.only(
+                      bottom: 8.0,
+                      left: 4.0,
+                      right: 4.0,
+                    ),
                     child: TextField(
                       controller: searchController,
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Buscar...',
-                        hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
-                        prefixIcon: Icon(Icons.search, color: isDark ? Colors.white70 : Colors.black54, size: 20),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                        hintStyle: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                          size: 20,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 0,
+                          horizontal: 16,
+                        ),
                         filled: true,
-                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                        fillColor: isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.black.withOpacity(0.03),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
+                          borderSide: BorderSide(
+                            color: isDark ? Colors.white24 : Colors.black12,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
+                          borderSide: BorderSide(
+                            color: isDark ? Colors.white24 : Colors.black12,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: primary.withOpacity(0.5)),
+                          borderSide: BorderSide(
+                            color: primary.withOpacity(0.5),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  Divider(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4), height: 1),
+                  Divider(
+                    color: Colors.white.withOpacity(isDark ? 0.1 : 0.4),
+                    height: 1,
+                  ),
                   const SizedBox(height: 4),
                 ],
                 // El scroll se activa automáticamente dentro de Flexible
@@ -621,14 +836,32 @@ class _GlassDropdownPanelState<T> extends State<_GlassDropdownPanel<T>> {
                         onTap: () => widget.onItemSelected(item.value),
                         borderRadius: BorderRadius.circular(12),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           child: Row(
                             children: [
-                              if (item.icon != null) ...[Icon(item.icon, size: 20, color: isDark ? Colors.white70 : Colors.black54), const SizedBox(width: 12)],
+                              if (item.icon != null) ...[
+                                Icon(
+                                  item.icon,
+                                  size: 20,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black54,
+                                ),
+                                const SizedBox(width: 12),
+                              ],
                               Expanded(
                                 child: Text(
                                   item.text,
-                                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w500, fontSize: 15),
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.black87,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 15,
+                                  ),
                                 ),
                               ),
                             ],
@@ -653,7 +886,12 @@ class GlassPressable extends StatefulWidget {
   final VoidCallback? onTap;
   final BorderRadius? borderRadius;
 
-  const GlassPressable({super.key, required this.child, this.onTap, this.borderRadius});
+  const GlassPressable({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.borderRadius,
+  });
 
   @override
   State<GlassPressable> createState() => _GlassPressableState();
@@ -669,7 +907,12 @@ class _GlassPressableState extends State<GlassPressable> {
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: widget.onTap,
-      child: AnimatedScale(scale: _isPressed ? 0.96 : 1.0, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut, child: widget.child),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeInOut,
+        child: widget.child,
+      ),
     );
   }
 }
@@ -684,7 +927,16 @@ class GlassTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final List<TextInputFormatter>? inputFormatters;
 
-  const GlassTextField({super.key, required this.label, this.hint, this.icon, this.controller, this.obscureText = false, this.keyboardType = TextInputType.text, this.inputFormatters});
+  const GlassTextField({
+    super.key,
+    required this.label,
+    this.hint,
+    this.icon,
+    this.controller,
+    this.obscureText = false,
+    this.keyboardType = TextInputType.text,
+    this.inputFormatters,
+  });
 
   @override
   State<GlassTextField> createState() => _GlassTextFieldState();
@@ -719,7 +971,15 @@ class _GlassTextFieldState extends State<GlassTextField> {
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: _isFocused ? [BoxShadow(color: primary.withOpacity(0.3), blurRadius: 15, spreadRadius: 2)] : null,
+        boxShadow: _isFocused
+            ? [
+                BoxShadow(
+                  color: primary.withOpacity(0.3),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ]
+            : null,
       ),
       child: GlassContainer(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -733,14 +993,30 @@ class _GlassTextFieldState extends State<GlassTextField> {
           obscureText: widget.obscureText,
           keyboardType: widget.keyboardType,
           inputFormatters: widget.inputFormatters,
-          style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16),
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontSize: 16,
+          ),
           cursorColor: primary,
           decoration: InputDecoration(
             labelText: widget.label,
-            labelStyle: TextStyle(color: _isFocused ? primary : (isDark ? Colors.white70 : Colors.black54)),
+            labelStyle: TextStyle(
+              color: _isFocused
+                  ? primary
+                  : (isDark ? Colors.white70 : Colors.black54),
+            ),
             hintText: widget.hint,
-            hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38),
-            prefixIcon: widget.icon != null ? Icon(widget.icon, color: _isFocused ? primary : (isDark ? Colors.white70 : Colors.black54)) : null,
+            hintStyle: TextStyle(
+              color: isDark ? Colors.white30 : Colors.black38,
+            ),
+            prefixIcon: widget.icon != null
+                ? Icon(
+                    widget.icon,
+                    color: _isFocused
+                        ? primary
+                        : (isDark ? Colors.white70 : Colors.black54),
+                  )
+                : null,
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
