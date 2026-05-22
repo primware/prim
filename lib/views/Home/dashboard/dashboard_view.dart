@@ -160,8 +160,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           width: isMobile ? MediaQuery.of(context).size.width * 0.95 : 950, // <-- Ajusta este valor (ej. 800 o 950) para cambiar el ancho en escritorio
                           padding: const EdgeInsets.all(28.0), // <-- Ajusta este valor (ej. 16.0 o 28.0) para el espaciado interno
 
-                          blur: 25.0,
-                          borderOpacity: 0.5,
                           hasShadow: true,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
