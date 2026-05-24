@@ -158,6 +158,7 @@ class _ProductListPageState extends State<ProductListPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.2),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -180,107 +181,120 @@ class _ProductListPageState extends State<ProductListPage> {
 
                   Text(
                     AppLocale.selectCategories.getString(context),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: categpryOptions.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, idx) {
-                        final cat = categpryOptions[idx];
-                        final isSelected = tempSelected.contains(cat['id']);
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
+                      Expanded(
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: categpryOptions.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
+                          itemBuilder: (context, idx) {
+                            final cat = categpryOptions[idx];
+                            final isSelected = tempSelected.contains(cat['id']);
 
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            setModalState(() {
-                              if (isSelected) {
-                                tempSelected.remove(cat['id']);
-                              } else {
-                                tempSelected.add(cat['id']);
-                              }
-                            });
+                            return GlassPressable(
+                              onTap: () {
+                                setModalState(() {
+                                  if (isSelected) {
+                                    tempSelected.remove(cat['id']);
+                                  } else {
+                                    tempSelected.add(cat['id']);
+                                  }
+                                });
+                              },
+                              child: GlassContainer(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                borderRadius: BorderRadius.circular(12),
+                                hasShadow: false,
+                                customBorderColor: isSelected ? Theme.of(context).primaryColor : null,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        cat['name'],
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          color: isSelected
+                                              ? Theme.of(context).primaryColor
+                                              : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87),
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(Icons.check_circle, color: Theme.of(context).primaryColor)
+                                    else
+                                      Icon(Icons.circle_outlined, color: Colors.grey.withOpacity(0.4)),
+                                  ],
+                                ),
+                              ),
+                            );
                           },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            decoration: BoxDecoration(
-                              color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected ? Theme.of(context).primaryColor : Colors.grey.withOpacity(0.2),
-                                width: isSelected ? 1.5 : 1.0,
+                        ),
+                      ),
+                      GlassContainer(
+                        padding: const EdgeInsets.all(24.0),
+                        borderRadius: BorderRadius.zero,
+                        hasShadow: true,
+                        shadowBlur: 10,
+                        shadowOffset: const Offset(0, -5),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: GlassPressable(
+                                onTap: () => Navigator.pop(context, tempSelected),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).primaryColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    AppLocale.apply.getString(context),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                  ),
+                                ),
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: GlassPressable(
+                                onTap: () => Navigator.pop(context),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  alignment: Alignment.center,
                                   child: Text(
-                                    cat['name'],
+                                    AppLocale.cancel.getString(context),
                                     style: TextStyle(
                                       fontSize: 16,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                      color: isSelected ? Theme.of(context).primaryColor : null,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87,
                                     ),
                                   ),
                                 ),
-                                if (isSelected)
-                                  Icon(Icons.check_circle, color: Theme.of(context).primaryColor)
-                                else
-                                  Icon(Icons.circle_outlined, color: Colors.grey.withOpacity(0.4)),
-                              ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  GlassContainer(
-                    padding: const EdgeInsets.all(24.0),
-                    borderRadius: BorderRadius.zero,
-                    hasShadow: true,
-                    shadowBlur: 10,
-                    shadowOffset: const Offset(0, -5),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              backgroundColor: Theme.of(context).primaryColor,
-                              elevation: 0,
-                            ),
-                            onPressed: () => Navigator.pop(context, tempSelected),
-                            child: Text(
-                              AppLocale.apply.getString(context),
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: TextButton(
-                            style: TextButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(AppLocale.cancel.getString(context), style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
             );
           },
         );
