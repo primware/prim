@@ -319,6 +319,41 @@ class LightAccentBackground extends StatelessWidget {
   }
 }
 
+// FONDO LIMPIO DE CRISTAL
+class CleanGlassBackground extends StatelessWidget {
+  final Widget child;
+  final double blurSigma;
+  final double opacity;
+  final BorderRadius? borderRadius;
+
+  const CleanGlassBackground({
+    super.key,
+    required this.child,
+    this.blurSigma = 25.0,
+    this.opacity = 0.35,
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = Theme.of(context).colorScheme.surface;
+    final br = borderRadius ?? BorderRadius.zero;
+
+    return ClipRRect(
+      borderRadius: br,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: bg.withOpacity(opacity),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 //INTERRUPTOR DE CRISTAL
 class GlassSwitch extends StatelessWidget {
   final bool value;

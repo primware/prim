@@ -200,20 +200,18 @@ class _MenuDrawerState extends State<MenuDrawer> {
         width: MediaQuery.of(context).size.width * 0.85,
         child: Material(
           color: Colors.transparent,
-          child: LightAccentBackground(
-            child: Container(
-              height: MediaQuery.of(context).size.height,
-              decoration: BoxDecoration(
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.4 : 0.1), blurRadius: 20, offset: const Offset(5, 0))],
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(topRight: Radius.circular(30), bottomRight: Radius.circular(30)),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
-                  child: Container(
-                    color: isDark ? Colors.black.withOpacity(0.1) : Colors.white.withOpacity(0.05),
-                    child: Column(
-                      children: [
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.only(topRight: Radius.circular(30), bottomRight: Radius.circular(30)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.4 : 0.1), blurRadius: 20, offset: const Offset(5, 0))],
+            ),
+            child: CleanGlassBackground(
+              borderRadius: const BorderRadius.only(topRight: Radius.circular(30), bottomRight: Radius.circular(30)),
+              opacity: isDark ? 0.25 : 0.40,
+              blurSigma: 30.0,
+              child: Column(
+                children: [
                         _buildHeader(context, isDark),
 
                         Expanded(
@@ -334,9 +332,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 ),
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
