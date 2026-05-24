@@ -96,8 +96,11 @@ class GlassContainer extends StatelessWidget {
   final Widget child;
   final double? width;
   final double? height;
+  final BoxConstraints? constraints;
+  final double? blur;
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
+  final double? borderOpacity;
   final bool hasShadow;
   final BlurStyle shadowBlurStyle;
   final double shadowBlur;
@@ -109,10 +112,11 @@ class GlassContainer extends StatelessWidget {
     required this.child,
     this.width,
     this.height,
-    this.blur = 12.0,
+    this.constraints,
+    this.blur,
     this.padding,
     this.borderRadius,
-    this.borderOpacity = 0.2,
+    this.borderOpacity,
     this.hasShadow = true,
     this.shadowBlurStyle = BlurStyle.outer,
     this.shadowBlur = 30.0,
@@ -159,13 +163,14 @@ class GlassContainer extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  glassColor.withOpacity(glassOpacityStart),
-                  glassColor.withOpacity(glassOpacityEnd),
+                  glassTheme.glassColor.withOpacity(glassTheme.opacityStart),
+                  glassTheme.glassColor.withOpacity(glassTheme.opacityEnd),
                 ],
                 stops: const [0.0, 1.0],
               ),
               border: Border.all(
-                color: borderColor.withOpacity(borderOpacity),
+                color: (customBorderColor ?? glassTheme.borderColor)
+                    .withOpacity(borderOpacity ?? glassTheme.borderOpacity),
                 width: 1.5,
               ),
             ),
