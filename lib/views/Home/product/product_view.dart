@@ -476,19 +476,35 @@ class _ProductListPageState extends State<ProductListPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      FloatingActionButton.extended(
-                        heroTag: 'catBtn',
-                        onPressed: () {
+                      GlassPressable(
+                        onTap: () {
                           setState(() => _isFabExpanded = false);
                           _showCreateCategoryDialog();
                         },
-                        icon: const Icon(Icons.category),
-                        label: const Text('Crear Categoría'),
+                        child: GlassContainer(
+                          padding: EdgeInsets.zero,
+                          borderRadius: BorderRadius.circular(20),
+                          hasShadow: false,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.category, color: Theme.of(context).primaryColor),
+                                const SizedBox(width: 8),
+                                Text('Crear Categoría', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 10),
-                      FloatingActionButton.extended(
-                        heroTag: 'prodBtn',
-                        onPressed: () async {
+                      GlassPressable(
+                        onTap: () async {
                           setState(() => _isFabExpanded = false);
                           final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductNewPage()));
 
@@ -496,8 +512,26 @@ class _ProductListPageState extends State<ProductListPage> {
                             _loadProduct(showLoadingIndicator: true);
                           }
                         },
-                        icon: const Icon(Icons.inventory_2),
-                        label: const Text('Crear Producto'),
+                        child: GlassContainer(
+                          padding: EdgeInsets.zero,
+                          borderRadius: BorderRadius.circular(20),
+                          hasShadow: false,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.inventory_2, color: Theme.of(context).primaryColor),
+                                const SizedBox(width: 8),
+                                Text('Crear Producto', style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 10),
                     ],
@@ -505,18 +539,29 @@ class _ProductListPageState extends State<ProductListPage> {
                 ),
               ),
             ),
-            FloatingActionButton(
-              heroTag: 'mainBtn',
-              onPressed: () {
+            GlassPressable(
+              onTap: () {
                 setState(() {
                   _isFabExpanded = !_isFabExpanded;
                 });
               },
-              child: AnimatedRotation(
-                turns: _isFabExpanded ? 0.125 : 0.0,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutBack,
-                child: const Icon(Icons.add),
+              child: GlassContainer(
+                padding: EdgeInsets.zero,
+                borderRadius: BorderRadius.circular(20),
+                hasShadow: false,
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: AnimatedRotation(
+                    turns: _isFabExpanded ? 0.125 : 0.0,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutBack,
+                    child: Icon(Icons.add, color: Theme.of(context).primaryColor, size: 28),
+                  ),
+                ),
               ),
             ),
           ],
@@ -705,33 +750,39 @@ class _AnimatedSearchButtonState extends State<AnimatedSearchButton> with Ticker
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 55,
-      width: 55,
-      decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
-      child: IconButton(
-        icon: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder: (child, animation) {
-            return ScaleTransition(scale: animation, child: child);
-          },
-          child: _isTyping && !widget.isLoading
-              ? ScaleTransition(
-                  key: const ValueKey('search'),
-                  scale: _pulseAnimation,
-                  child: const Icon(Icons.search, color: Colors.white),
-                )
-              : RotationTransition(
-                  key: const ValueKey('refresh'),
-                  turns: _spinController,
-                  child: const Icon(Icons.refresh, color: Colors.white),
-                ),
+    return GlassPressable(
+      onTap: () {
+        _lastSearchedText = widget.controller.text;
+        widget.onPressed();
+      },
+      child: GlassContainer(
+        padding: EdgeInsets.zero,
+        borderRadius: BorderRadius.circular(20),
+        hasShadow: false,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) {
+              return ScaleTransition(scale: animation, child: child);
+            },
+            child: _isTyping && !widget.isLoading
+                ? ScaleTransition(
+                    key: const ValueKey('search'),
+                    scale: _pulseAnimation,
+                    child: Icon(Icons.search, color: Theme.of(context).primaryColor, size: 28),
+                  )
+                : RotationTransition(
+                    key: const ValueKey('refresh'),
+                    turns: _spinController,
+                    child: Icon(Icons.refresh, color: Theme.of(context).primaryColor, size: 28),
+                  ),
+          ),
         ),
-        tooltip: _isTyping ? 'Buscar' : 'Recargar',
-        onPressed: () {
-          _lastSearchedText = widget.controller.text;
-          widget.onPressed();
-        },
       ),
     );
   }
