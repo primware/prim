@@ -103,27 +103,21 @@ class GlassContainer extends StatelessWidget {
   final double shadowBlur;
   final Offset shadowOffset;
   final Color? customBorderColor;
-  final double? borderOpacity;
-  final double? blur;
-  final BoxConstraints? constraints;
-  final Color? customBackgroundColor;
 
   const GlassContainer({
     super.key,
     required this.child,
     this.width,
     this.height,
+    this.blur = 12.0,
     this.padding,
     this.borderRadius,
+    this.borderOpacity = 0.2,
     this.hasShadow = true,
     this.shadowBlurStyle = BlurStyle.outer,
     this.shadowBlur = 30.0,
     this.shadowOffset = const Offset(0, 10),
     this.customBorderColor,
-    this.borderOpacity,
-    this.blur,
-    this.constraints,
-    this.customBackgroundColor,
   });
 
   @override
@@ -161,22 +155,17 @@ class GlassContainer extends StatelessWidget {
             padding: padding ?? const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: br,
-              color: customBackgroundColor,
-              gradient: customBackgroundColor == null
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        glassTheme.glassColor.withOpacity(glassTheme.opacityStart),
-                        glassTheme.glassColor.withOpacity(glassTheme.opacityEnd),
-                      ],
-                      stops: const [0.0, 1.0],
-                    )
-                  : null,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  glassColor.withOpacity(glassOpacityStart),
+                  glassColor.withOpacity(glassOpacityEnd),
+                ],
+                stops: const [0.0, 1.0],
+              ),
               border: Border.all(
-                color: (customBorderColor ?? glassTheme.borderColor).withOpacity(
-                  borderOpacity ?? glassTheme.borderOpacity,
-                ),
+                color: borderColor.withOpacity(borderOpacity),
                 width: 1.5,
               ),
             ),
