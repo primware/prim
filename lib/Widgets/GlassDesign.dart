@@ -1056,3 +1056,63 @@ class _GlassTextFieldState extends State<GlassTextField> {
     );
   }
 }
+
+class GlassAlertDialog extends StatelessWidget {
+  final Widget? title;
+  final Widget? content;
+  final List<Widget>? actions;
+  final MainAxisAlignment actionsAlignment;
+
+  const GlassAlertDialog({
+    super.key,
+    this.title,
+    this.content,
+    this.actions,
+    this.actionsAlignment = MainAxisAlignment.end,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16.0),
+      elevation: 0,
+      child: GlassContainer(
+        borderRadius: BorderRadius.circular(16),
+        padding: const EdgeInsets.all(24.0),
+        hasShadow: true,
+        shadowBlur: 20.0,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (title != null) ...[
+              DefaultTextStyle(
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                child: title!,
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (content != null) ...[
+              Flexible(
+                child: SingleChildScrollView(
+                  child: DefaultTextStyle(
+                    style: Theme.of(context).textTheme.bodyMedium!,
+                    child: content!,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+            if (actions != null)
+              Row(
+                mainAxisAlignment: actionsAlignment,
+                children: actions!,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}

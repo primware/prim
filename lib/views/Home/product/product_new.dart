@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
@@ -12,6 +13,7 @@ import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/toast_message.dart';
+import '../../../Widgets/GlassDesign.dart';
 
 class ProductNewPage extends StatefulWidget {
   final String? productName;
@@ -118,10 +120,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return AlertDialog(
-              backgroundColor: Theme.of(context).cardColor,
-              insetPadding: const EdgeInsets.all(16.0),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            return GlassAlertDialog(
               title: Text(
                 AppLocale.newCategory.getString(context),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -155,9 +154,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                         ? () async {
                             final confirm = await showDialog<bool>(
                               context: context,
-                              builder: (ctx) => AlertDialog(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                backgroundColor: Theme.of(context).cardColor,
+                              builder: (ctx) => GlassAlertDialog(
                                 title: const Column(
                                   children: [
                                     Icon(Icons.help_outline, size: 45, color: Colors.blueAccent),
@@ -230,10 +227,10 @@ class _ProductNewPageState extends State<ProductNewPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
+        return GlassAlertDialog(
           title: Text(AppLocale.newProduct.getString(context)),
           content: Text(AppLocale.confirmCreateProduct.getString(context)),
+          actionsAlignment: MainAxisAlignment.end,
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
@@ -280,15 +277,62 @@ class _ProductNewPageState extends State<ProductNewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocale.newProduct.getString(context))),
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          AppLocale.newProduct.getString(context),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        flexibleSpace: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).primaryColor.withOpacity(0.6),
+                    Theme.of(context).primaryColor.withOpacity(0.4),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1.0,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       bottomNavigationBar: CustomFooter(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
-            child: CustomContainer(
-              child: Column(
-                children: [
-                  TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: GlassContainer(
+                  padding: const EdgeInsets.all(24.0),
+                  borderRadius: BorderRadius.circular(20),
+                  hasShadow: true,
+                  shadowBlur: 25,
+                  shadowOffset: const Offset(0, 8),
+                  shadowBlurStyle: BlurStyle.normal,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                    children: [
+                      TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: nameController,
@@ -398,8 +442,10 @@ class _ProductNewPageState extends State<ProductNewPage> {
                 ],
               ),
             ),
+            ),
           ),
         ),
+      ),
       ),
     );
   }
