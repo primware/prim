@@ -14,6 +14,7 @@ import '../../../shared/custom_textfield.dart';
 import '../../../shared/custom_searchfield.dart';
 import '../../../shared/toast_message.dart';
 import '../../../Widgets/GlassDesign.dart';
+import 'product_category.dart';
 
 class ProductNewPage extends StatefulWidget {
   final String? productName;
@@ -149,117 +150,16 @@ class _ProductNewPageState extends State<ProductNewPage> {
   }
 
   Future<void> _showCreateCategoryDialog(String initialName) async {
-    final TextEditingController catNameController = TextEditingController(text: initialName);
-    bool isCreating = false;
-    bool isCatNameValid = initialName.trim().isNotEmpty;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return GlassAlertDialog(
-              title: Text(
-                AppLocale.newCategory.getString(context),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              content: SizedBox(
-                width: 400,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextfieldTheme(
-                      controlador: catNameController,
-                      texto: '${AppLocale.name.getString(context)}*',
-                      colorEmpty: catNameController.text.trim().isEmpty,
-                      inputType: TextInputType.text,
-                      onChanged: (value) {
-                        setModalState(() {
-                          isCatNameValid = value.trim().isNotEmpty;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actionsAlignment: MainAxisAlignment.center,
-              actions: [
-                if (!isCreating)
-                  TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
-                if (!isCreating)
-                  ElevatedButton(
-                    onPressed: isCatNameValid
-                        ? () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (ctx) => GlassAlertDialog(
-                                title: const Column(
-                                  children: [
-                                    Icon(Icons.help_outline, size: 45, color: Colors.blueAccent),
-                                    SizedBox(height: 10),
-                                    Text(
-                                      'Crear Categoría',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                    ),
-                                  ],
-                                ),
-                                content: Text(
-                                  AppLocale.confirmCreateCategory.getString(context),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                actionsAlignment: MainAxisAlignment.spaceEvenly,
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context).colorScheme.primary,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    onPressed: () => Navigator.pop(ctx, true),
-                                    child: Text(AppLocale.yes.getString(context)),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (confirm != true) return;
-
-                            setModalState(() => isCreating = true);
-
-                            final result = await postProductCategory(name: catNameController.text, context: context);
-
-                            if (!mounted) return;
-
-                            if (result['success'] == true) {
-                              final newCat = result['category'];
-                              setState(() {
-                                categories.add({'id': newCat['id'], 'name': newCat['Name'] ?? newCat['name'] ?? catNameController.text});
-                                categoryController.text = catNameController.text;
-                                selectedCategoryID = newCat['id'];
-                                categorySearchTerm = catNameController.text;
-                                _isFormValid();
-                              });
-
-                              Navigator.pop(dialogContext);
-                              ToastMessage.show(context: context, message: 'Categoría creada con éxito', type: ToastType.success);
-                            } else {
-                              setModalState(() => isCreating = false);
-                              ToastMessage.show(context: context, message: result['message'] ?? 'Error al crear', type: ToastType.failure);
-                            }
-                          }
-                        : null,
-                    child: Text(AppLocale.save.getString(context)),
-                  ),
-                if (isCreating) const CircularProgressIndicator(),
-              ],
-            );
-          },
-        );
-      },
-    );
+    final result = await ProductCategoryDialog.show(context, initialName: initialName);
+    if (result != null && result['success'] == true) {
+      setState(() {
+        categories.add({'id': result['id'], 'name': result['name']});
+        categoryController.text = result['name'];
+        selectedCategoryID = result['id'];
+        categorySearchTerm = result['name'];
+        _isFormValid();
+      });
+    }
   }
 
   Future<void> _createProduct() async {
@@ -434,6 +334,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           onItemSelected: (Map<String, dynamic> item) {
                             setState(() {
                               selectedCategoryID = item['id'];
+                              categoryController.text = (item['name'] ?? item['Name'] ?? '').toString();
                               _isFormValid();
                             });
                           },

@@ -1078,42 +1078,63 @@ class GlassAlertDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16.0),
       elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16.0),
       child: GlassContainer(
         borderRadius: BorderRadius.circular(16),
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.zero,
         hasShadow: true,
         shadowBlur: 20.0,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (title != null) ...[
-              DefaultTextStyle(
-                style: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                child: title!,
-              ),
-              const SizedBox(height: 16),
-            ],
-            if (content != null) ...[
-              Flexible(
-                child: SingleChildScrollView(
-                  child: DefaultTextStyle(
-                    style: Theme.of(context).textTheme.bodyMedium!,
-                    child: content!,
+        child: Container(
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.15),
+                Colors.white.withOpacity(0.04),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (title != null) ...[
+                DefaultTextStyle(
+                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                  textAlign: TextAlign.center,
+                  child: title!,
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (content != null) ...[
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: DefaultTextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Colors.white.withOpacity(0.85),
+                          ),
+                      child: content!,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ],
+              if (actions != null)
+                Row(
+                  mainAxisAlignment: actionsAlignment,
+                  children: actions!,
+                ),
             ],
-            if (actions != null)
-              Row(
-                mainAxisAlignment: actionsAlignment,
-                children: actions!,
-              ),
-          ],
+          ),
         ),
       ),
     );
@@ -1232,6 +1253,8 @@ class _GlassSearchFieldState extends State<GlassSearchField> {
                       _focusNode.unfocus();
                     },
                     onItemSelected: (item) {
+                      final itemName = (item['name'] ?? item['Name'] ?? '').toString();
+                      widget.controller.text = itemName;
                       widget.onItemSelected(item);
                       _focusNode.unfocus();
                     },

@@ -14,6 +14,7 @@ import '../../../shared/custom_textfield.dart';
 import '../dashboard/dashboard_view.dart';
 import '../order/order_funtions.dart';
 import 'product_new.dart';
+import 'product_category.dart';
 import 'product_details.dart';
 import 'product_funtions.dart';
 import '../../../shared/toast_message.dart';
@@ -83,7 +84,7 @@ class _ProductListPageState extends State<ProductListPage> {
   Widget _buildProductCard(Map<String, dynamic> record) {
     return GestureDetector(
       onTap: () async {
-        final refreshed = await Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailPage(product: record)));
+        final refreshed = await ProductDetailPage.show(context, product: record);
         if (refreshed == true) _loadProduct(showLoadingIndicator: true);
       },
       child: Container(
@@ -308,118 +309,10 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> _showCreateCategoryDialog() async {
-    final TextEditingController catNameController = TextEditingController();
-    bool isCreating = false;
-    bool isCatNameValid = false;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.all(16.0),
-              elevation: 0,
-              child: GlassContainer(
-                borderRadius: BorderRadius.circular(16),
-                padding: const EdgeInsets.all(24.0),
-                hasShadow: true,
-                shadowBlur: 20.0,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Nueva Categoría', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    TextfieldTheme(
-                      controlador: catNameController,
-                      texto: '${AppLocale.name.getString(context)}*',
-                      colorEmpty: catNameController.text.trim().isEmpty,
-                      inputType: TextInputType.text,
-                      onChanged: (value) {
-                        setModalState(() {
-                          isCatNameValid = value.trim().isNotEmpty;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (!isCreating)
-                          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
-                        if (!isCreating)
-                          ElevatedButton(
-                    onPressed: isCatNameValid
-                        ? () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                backgroundColor: Theme.of(context).cardColor,
-                                title: Column(
-                                  children: [
-                                    Icon(Icons.help_outline, size: 45, color: Colors.blueAccent),
-                                    SizedBox(height: 10),
-                                    Text(
-                                      AppLocale.newCategory.getString(context),
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                    ),
-                                  ],
-                                ),
-                                content: Text(
-                                  AppLocale.confirmCreateCategory.getString(context),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                actionsAlignment: MainAxisAlignment.spaceEvenly,
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context).colorScheme.primary,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    onPressed: () => Navigator.pop(ctx, true),
-                                    child: Text(AppLocale.yes.getString(context)),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (confirm != true) return;
-
-                            // Pasamos a modo cargando
-                            setModalState(() => isCreating = true);
-
-                            final result = await postProductCategory(name: catNameController.text, context: context);
-                            if (!mounted) return;
-
-                            if (result['success'] == true) {
-                              Navigator.pop(dialogContext);
-                              ToastMessage.show(context: context, message: 'Categoría creada con éxito', type: ToastType.success);
-                              _loadProductCategory();
-                            } else {
-                              setModalState(() => isCreating = false);
-                              ToastMessage.show(context: context, message: result['message'] ?? 'Error al crear', type: ToastType.failure);
-                            }
-                          }
-                        : null,
-                    child: Text(AppLocale.save.getString(context)),
-                  ),
-                        if (isCreating) const CircularProgressIndicator(),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
+    final result = await ProductCategoryDialog.show(context);
+    if (result != null && result['success'] == true) {
+      _loadProductCategory();
+    }
   }
 
   @override
