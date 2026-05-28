@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:primware/theme/theme.dart';
+import 'package:primware/shared/custom_textfield.dart';
 
 class LiquidBackground extends StatelessWidget {
   final Widget child;
@@ -1113,6 +1114,268 @@ class GlassAlertDialog extends StatelessWidget {
                 children: actions!,
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class GlassSearchField extends StatefulWidget {
+  final String label;
+  final TextEditingController controller;
+  final List<Map<String, dynamic>> options;
+  final void Function(Map<String, dynamic>) onItemSelected;
+  final void Function(String) onCreate;
+  final void Function(String) onChanged;
+  final bool showCreateButtonIfNotFound;
+  final String createAnchorTerm;
+  final Color? fillColor;
+  final Color? textColor;
+  final Color? labelColor;
+
+  const GlassSearchField({
+    super.key,
+    required this.label,
+    required this.controller,
+    required this.options,
+    required this.onItemSelected,
+    required this.onCreate,
+    required this.onChanged,
+    this.showCreateButtonIfNotFound = false,
+    this.createAnchorTerm = '',
+    this.fillColor,
+    this.textColor,
+    this.labelColor,
+  });
+
+  @override
+  State<GlassSearchField> createState() => _GlassSearchFieldState();
+}
+
+class _GlassSearchFieldState extends State<GlassSearchField> {
+  final FocusNode _focusNode = FocusNode();
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  bool _isOpen = false;
+  List<Map<String, dynamic>> _filteredOptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredOptions = widget.options;
+    _focusNode.addListener(_onFocusChange);
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    widget.controller.removeListener(_onTextChanged);
+    _focusNode.dispose();
+    _closeOverlay();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      _showOverlay();
+    } else {
+      Future.delayed(const Duration(milliseconds: 180), () {
+        if (mounted) _closeOverlay();
+      });
+    }
+  }
+
+  void _onTextChanged() {
+    final query = widget.controller.text.toLowerCase();
+    setState(() {
+      _filteredOptions = widget.options.where((option) {
+        final name = (option['name'] ?? option['Name'] ?? '').toString().toLowerCase();
+        return name.contains(query);
+      }).toList();
+    });
+    if (_overlayEntry != null) {
+      _overlayEntry!.markNeedsBuild();
+    }
+  }
+
+  void _showOverlay() {
+    if (_isOpen) return;
+    final renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => _focusNode.unfocus(),
+                behavior: HitTestBehavior.translucent,
+              ),
+            ),
+            CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: Offset(0.0, size.height + 8.0),
+              child: Material(
+                color: Colors.transparent,
+                child: SizedBox(
+                  width: size.width,
+                  child: _GlassSearchPanel(
+                    options: _filteredOptions,
+                    searchText: widget.controller.text,
+                    label: widget.label,
+                    showCreateButtonIfNotFound: widget.showCreateButtonIfNotFound,
+                    onCreate: (text) {
+                      widget.onCreate(text);
+                      _focusNode.unfocus();
+                    },
+                    onItemSelected: (item) {
+                      widget.onItemSelected(item);
+                      _focusNode.unfocus();
+                    },
+                    labelColor: widget.labelColor,
+                    textColor: widget.textColor,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _isOpen = true);
+  }
+
+  void _closeOverlay() {
+    if (!_isOpen) return;
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() => _isOpen = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: TextfieldTheme(
+        controlador: widget.controller,
+        focusNode: _focusNode,
+        texto: widget.label,
+        inputType: TextInputType.text,
+        fillColor: widget.fillColor,
+        textColor: widget.textColor,
+        labelColor: widget.labelColor,
+        onChanged: widget.onChanged,
+      ),
+    );
+  }
+}
+
+class _GlassSearchPanel extends StatelessWidget {
+  final List<Map<String, dynamic>> options;
+  final String searchText;
+  final String label;
+  final bool showCreateButtonIfNotFound;
+  final void Function(String) onCreate;
+  final void Function(Map<String, dynamic>) onItemSelected;
+  final Color? labelColor;
+  final Color? textColor;
+
+  const _GlassSearchPanel({
+    required this.options,
+    required this.searchText,
+    required this.label,
+    required this.showCreateButtonIfNotFound,
+    required this.onCreate,
+    required this.onItemSelected,
+    this.labelColor,
+    this.textColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textStyleColor = textColor ?? (isDark ? Colors.white : Colors.black87);
+
+    final showCreateButton = showCreateButtonIfNotFound &&
+        searchText.trim().isNotEmpty &&
+        !options.any((item) => (item['name'] ?? item['Name'] ?? '').toString().toLowerCase() == searchText.trim().toLowerCase());
+
+    final double itemHeight = 50.0;
+    final int visibleItemsCount = options.length + (showCreateButton ? 1 : 0);
+    final double maxHeight = visibleItemsCount > 5 ? 250.0 : (visibleItemsCount * itemHeight) + 16.0;
+
+    return GlassContainer(
+      padding: const EdgeInsets.all(8),
+      hasShadow: true,
+      shadowBlur: 30.0,
+      shadowOffset: const Offset(0, 10),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: ListView.builder(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          itemCount: visibleItemsCount,
+          itemBuilder: (context, index) {
+            if (index == options.length && showCreateButton) {
+              return InkWell(
+                onTap: () => onCreate(searchText),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: itemHeight - 8,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blueAccent.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.add_circle_outline, color: Colors.blueAccent, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Crear ${label.replaceAll('*', '').trim()} "$searchText"',
+                          style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 14),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final item = options[index];
+            final itemName = (item['name'] ?? item['Name'] ?? '').toString();
+
+            return InkWell(
+              onTap: () => onItemSelected(item),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: itemHeight - 8,
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  itemName,
+                  style: TextStyle(
+                    color: textStyleColor,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 15,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

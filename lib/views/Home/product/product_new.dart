@@ -393,9 +393,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   _isCategoryLoading
                       ? const ShimmerList(count: 1)
-                      : CustomSearchField(
+                      : GlassSearchField(
                           controller: categoryController,
-                          labelText: '${AppLocale.productCategory.getString(context)} *',
+                          label: '${AppLocale.productCategory.getString(context)} *',
                           options: categories,
                           showCreateButtonIfNotFound: true,
                           createAnchorTerm: categorySearchTerm,
