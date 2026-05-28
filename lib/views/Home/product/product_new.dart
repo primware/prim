@@ -317,6 +317,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
@@ -329,7 +332,14 @@ class _ProductNewPageState extends State<ProductNewPage> {
           shadowBlurStyle: BlurStyle.normal,
           child: Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.03),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.15),
+                  Colors.white.withOpacity(0.04),
+                ],
+              ),
               borderRadius: BorderRadius.circular(20),
             ),
             child: SingleChildScrollView(
@@ -350,9 +360,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     controlador: skuController,
                     texto: AppLocale.code.getString(context),
                     inputType: TextInputType.text,
-                    fillColor: Colors.white.withOpacity(0.08),
+                    fillColor: Colors.white.withOpacity(0.24),
                     textColor: Colors.white,
-                    labelColor: Colors.white.withOpacity(0.6),
+                    labelColor: Colors.white.withOpacity(0.9),
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
@@ -360,18 +370,18 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     texto: '${AppLocale.name.getString(context)}*',
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.text,
-                    fillColor: Colors.white.withOpacity(0.08),
+                    fillColor: Colors.white.withOpacity(0.24),
                     textColor: Colors.white,
-                    labelColor: Colors.white.withOpacity(0.6),
+                    labelColor: Colors.white.withOpacity(0.9),
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: upcController,
                     texto: AppLocale.upc.getString(context),
                     inputType: TextInputType.text,
-                    fillColor: Colors.white.withOpacity(0.08),
+                    fillColor: Colors.white.withOpacity(0.24),
                     textColor: Colors.white,
-                    labelColor: Colors.white.withOpacity(0.6),
+                    labelColor: Colors.white.withOpacity(0.9),
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   GlassDropdown<String>(
@@ -380,7 +390,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     icon: Icons.category_outlined,
                     items: productTypes.map((type) => GlassDropdownItem<String>(value: type['value'], text: type['label'])).toList(),
                     textColor: Colors.white,
-                    labelColor: Colors.white.withOpacity(0.6),
+                    labelColor: Colors.white.withOpacity(0.9),
                     onChanged: (String? newValue) {
                       if (newValue != null) {
                         setState(() {
@@ -399,9 +409,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           options: categories,
                           showCreateButtonIfNotFound: true,
                           createAnchorTerm: categorySearchTerm,
-                          fillColor: Colors.white.withOpacity(0.08),
+                          fillColor: Colors.white.withOpacity(0.24),
                           textColor: Colors.white,
-                          labelColor: Colors.white.withOpacity(0.6),
+                          labelColor: Colors.white.withOpacity(0.9),
                           onChanged: (String val) {
                             setState(() {
                               categorySearchTerm = val;
@@ -415,7 +425,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                                 }
                               }
                               if (!matchFound) {
-                                selectedCategoryID = null;
+                                  selectedCategoryID = null;
                               }
 
                               _isFormValid();
@@ -440,7 +450,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           icon: Icons.percent_outlined,
                           items: taxies.map((t) => GlassDropdownItem<int>(value: t['id'], text: (t['name'] ?? t['Name'] ?? '').toString())).toList(),
                           textColor: Colors.white,
-                          labelColor: Colors.white.withOpacity(0.6),
+                          labelColor: Colors.white.withOpacity(0.9),
                           onChanged: (int? newValue) {
                             if (newValue != null) {
                               setState(() {
@@ -457,9 +467,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     colorEmpty: priceController.text.isEmpty,
                     inputType: TextInputType.text,
                     inputFormatters: [NumericTextFormatterWithDecimal()],
-                    fillColor: Colors.white.withOpacity(0.08),
+                    fillColor: Colors.white.withOpacity(0.24),
                     textColor: Colors.white,
-                    labelColor: Colors.white.withOpacity(0.6),
+                    labelColor: Colors.white.withOpacity(0.9),
                     onChanged: (value) {
                       _isFormValid();
                     },
@@ -478,8 +488,8 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   Container(
                     child: isValid
                         ? isLoading
-                            ? ButtonLoading(fullWidth: true)
-                            : ButtonPrimary(fullWidth: true, texto: AppLocale.save.getString(context), onPressed: _createProduct)
+                        ? ButtonLoading(fullWidth: true)
+                        : ButtonPrimary(fullWidth: true, texto: AppLocale.save.getString(context), onPressed: _createProduct)
                         : null,
                   ),
                 ],

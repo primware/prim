@@ -92,7 +92,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
           borderSide: BorderSide(
             color: widget.colorEmpty
                 ? Theme.of(context).colorScheme.errorContainer
-                : (widget.fillColor != null ? Colors.white.withOpacity(0.15) : Theme.of(context).primaryColor),
+                : (widget.fillColor != null ? Colors.white.withOpacity(0.35) : Theme.of(context).primaryColor),
           ), // Color del borde cuando no está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),

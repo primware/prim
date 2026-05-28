@@ -1330,18 +1330,24 @@ class _GlassSearchPanel extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.15),
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blueAccent.withOpacity(0.4)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      )
+                    ],
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.add_circle_outline, color: Colors.blueAccent, size: 20),
+                      const Icon(Icons.add_circle_outline, color: Colors.white, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Crear ${label.replaceAll('*', '').trim()} "$searchText"',
-                          style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
