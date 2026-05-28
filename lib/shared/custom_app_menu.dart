@@ -364,11 +364,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 //     _loadTheme();
                 //   },
                 // ),
-                //TODO TRADUCIR
                 _buildMenuItem(
                   context,
                   icon: Icons.settings_outlined,
-                  title: 'Configuración',
+                  title: AppLocale.settings.getString(context),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(

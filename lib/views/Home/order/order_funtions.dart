@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:http/http.dart';
+import '../../../localization/app_locale.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/API/user.api.dart';
 import '../../../API/endpoint.dart';
@@ -253,7 +255,7 @@ Future<Map<String, dynamic>> postInvoice({required int cBPartnerID, required Lis
   }
 }
 
-Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
+Future<Map<String, dynamic>?> fetchOrderById({required int orderId, required BuildContext context}) async {
   try {
     final response = await get(Uri.parse('${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
@@ -275,12 +277,11 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId}) async {
         'payments': record['C_POSPayment'] ?? [],
       };
     } else {
-      //TODO traducir
-      debugPrint('Error al obtener la orden: ${response.body}');
+      debugPrint('${AppLocale.fetchOrderError.getString(context)} ${response.body}');
       return null;
     }
   } catch (e) {
-    debugPrint('Error de red en fetchOrderById: $e');
+    debugPrint('${AppLocale.fetchOrderNetworkError.getString(context)} $e');
     return null;
   }
 }
