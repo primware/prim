@@ -1085,8 +1085,7 @@ class GlassAlertDialog extends StatelessWidget {
       child: GlassContainer(
         borderRadius: BorderRadius.circular(16),
         padding: EdgeInsets.zero,
-        hasShadow: true,
-        shadowBlur: 20.0,
+        hasShadow: false,
         child: Container(
           padding: const EdgeInsets.all(24.0),
           decoration: BoxDecoration(

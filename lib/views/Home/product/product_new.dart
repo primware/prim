@@ -226,10 +226,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
         child: GlassContainer(
           padding: const EdgeInsets.all(24.0),
           borderRadius: BorderRadius.circular(20),
-          hasShadow: true,
-          shadowBlur: 25,
-          shadowOffset: const Offset(0, 8),
-          shadowBlurStyle: BlurStyle.normal,
+          hasShadow: false,
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
