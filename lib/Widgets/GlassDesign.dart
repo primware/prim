@@ -536,6 +536,8 @@ class GlassDropdown<T> extends StatefulWidget {
   final IconData icon;
   final List<GlassDropdownItem<T>> items;
   final ValueChanged<T> onChanged;
+  final Color? textColor;
+  final Color? labelColor;
 
   const GlassDropdown({
     super.key,
@@ -544,6 +546,8 @@ class GlassDropdown<T> extends StatefulWidget {
     required this.items,
     required this.onChanged,
     this.icon = Icons.category_outlined,
+    this.textColor,
+    this.labelColor,
   });
 
   @override
@@ -694,10 +698,8 @@ class _GlassDropdownState<T> extends State<GlassDropdown<T>>
                                         ? FontWeight.w500
                                         : FontWeight.bold,
                                     color: widget.currentValue.isEmpty
-                                        ? Colors.grey.shade600
-                                        : (isDark
-                                              ? Colors.white
-                                              : Colors.black87),
+                                        ? (widget.labelColor ?? Colors.grey.shade600)
+                                        : (widget.textColor ?? (isDark ? Colors.white : Colors.black87)),
                                   ),
                             ),
                           ),
@@ -713,7 +715,7 @@ class _GlassDropdownState<T> extends State<GlassDropdown<T>>
                     ), // Sincronizado con la duración principal
                     child: Icon(
                       Icons.expand_more,
-                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                      color: widget.labelColor ?? (isDark ? Colors.white60 : Colors.grey.shade600),
                       size: 22,
                     ),
                   ),

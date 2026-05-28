@@ -520,7 +520,7 @@ class _ProductListPageState extends State<ProductListPage> {
                       GlassPressable(
                         onTap: () async {
                           setState(() => _isFabExpanded = false);
-                          final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductNewPage()));
+                          final result = await ProductNewPage.show(context);
 
                           if (result != null && result['created'] == true) {
                             _loadProduct(showLoadingIndicator: true);

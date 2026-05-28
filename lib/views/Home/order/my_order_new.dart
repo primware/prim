@@ -1688,10 +1688,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           showCreateButtonIfNotFound: canShowCreateProductButton,
                                           createAnchorTerm: createAnchorProductTerm,
                                           onCreate: (value) async {
-                                            final result = await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(builder: (_) => ProductNewPage(productName: value)),
-                                            );
+                                            final result = await ProductNewPage.show(context, productName: value);
                                             if (result != null && result['created'] == true) {
                                               setState(() {
                                                 productController.text = result['product']['name'] ?? result['product']['Name'] ?? value;

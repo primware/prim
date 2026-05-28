@@ -20,6 +20,9 @@ class TextfieldTheme extends StatefulWidget {
     this.maxLength,
     this.focusNode,
     this.textAlign,
+    this.fillColor,
+    this.textColor,
+    this.labelColor,
   });
 
   final String? texto;
@@ -35,6 +38,9 @@ class TextfieldTheme extends StatefulWidget {
 
   final int? maxLength;
   final FocusNode? focusNode;
+  final Color? fillColor;
+  final Color? textColor;
+  final Color? labelColor;
 
   @override
   State<TextfieldTheme> createState() => _TextfieldThemeState();
@@ -52,6 +58,9 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
 
   @override
   Widget build(BuildContext context) {
+    final defaultTextColor = widget.textColor ?? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87);
+    final defaultLabelColor = widget.labelColor ?? (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54);
+
     return TextField(
       maxLength: widget.maxLength,
       focusNode: widget.focusNode,
@@ -66,9 +75,9 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
       decoration: InputDecoration(
         counterText: '',
         hintText: widget.pista,
-        hintStyle: TextStyle(color: Colors.grey),
+        hintStyle: TextStyle(color: defaultLabelColor.withOpacity(0.6)),
         filled: true, // Habilita el relleno del fondo
-        fillColor: Theme.of(context).cardColor,
+        fillColor: widget.fillColor ?? Theme.of(context).cardColor,
         hoverColor: Theme.of(context).primaryColor.withAlpha(40),
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control
@@ -83,7 +92,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
           borderSide: BorderSide(
             color: widget.colorEmpty
                 ? Theme.of(context).colorScheme.errorContainer
-                : Theme.of(context).primaryColor,
+                : (widget.fillColor != null ? Colors.white.withOpacity(0.15) : Theme.of(context).primaryColor),
           ), // Color del borde cuando no está enfocado
           borderRadius: const BorderRadius.all(Radius.circular(8)),
         ),
@@ -91,8 +100,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
           borderRadius: BorderRadius.all(Radius.circular(4)),
         ),
         labelText: widget.texto,
-        labelStyle: Theme.of(context).textTheme.bodyLarge,
-
+        labelStyle: TextStyle(color: defaultLabelColor),
         prefixIcon: widget.icono != null
             ? Padding(
                 padding: const EdgeInsets.only(left: 12, right: 8),
@@ -119,10 +127,10 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
                 ),
               )
             : null,
-        floatingLabelStyle: Theme.of(context).textTheme.bodyLarge,
+        floatingLabelStyle: TextStyle(color: widget.textColor ?? Theme.of(context).colorScheme.primary),
         contentPadding: const EdgeInsets.all(16),
       ),
-      style: Theme.of(context).textTheme.bodyLarge,
+      style: TextStyle(color: defaultTextColor),
     );
   }
 }

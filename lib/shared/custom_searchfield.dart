@@ -23,8 +23,10 @@ class CustomSearchField extends StatefulWidget {
   final FocusNode? focusNode;
   final CustomSearchFieldController? fieldController;
   final Widget? suffixIcon;
-
   final void Function(String)? onCreate, onSubmit, onChanged;
+  final Color? fillColor;
+  final Color? textColor;
+  final Color? labelColor;
 
   const CustomSearchField({
     super.key,
@@ -45,6 +47,9 @@ class CustomSearchField extends StatefulWidget {
     this.focusNode,
     this.fieldController,
     this.suffixIcon,
+    this.fillColor,
+    this.textColor,
+    this.labelColor,
   }); // <-- LO AÑADIMOS AL CONSTRUCTOR
 
   @override
@@ -206,6 +211,9 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
       );
     }
 
+    final defaultTextColor = widget.textColor ?? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87);
+    final defaultLabelColor = widget.labelColor ?? (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54);
+
     return SearchField<Map<String, dynamic>>(
       controller: _controller,
       onSubmit: widget.onSubmit,
@@ -220,18 +228,27 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
       suggestions: items,
       suggestionsDecoration: SuggestionDecoration(color: Theme.of(context).cardColor, hoverColor: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(8), selectionColor: Theme.of(context).cardColor),
       searchInputDecoration: SearchInputDecoration(
+        searchStyle: TextStyle(color: defaultTextColor),
         labelText: widget.labelText,
-        labelStyle: Theme.of(context).textTheme.bodyMedium,
+        labelStyle: TextStyle(color: defaultLabelColor),
         contentPadding: const EdgeInsets.all(16),
         filled: true,
-        fillColor: Theme.of(context).cardColor,
+        fillColor: widget.fillColor ?? Theme.of(context).cardColor,
         border: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderSide: BorderSide(
+            color: widget.fillColor != null ? Colors.white.withOpacity(0.15) : Theme.of(context).primaryColor,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: widget.fillColor != null ? Colors.white.withOpacity(0.15) : Theme.of(context).primaryColor,
+          ),
           borderRadius: BorderRadius.circular(8),
         ),
         suffixIcon: widget.suffixIcon,
       ),
-      suggestionStyle: Theme.of(context).textTheme.bodyMedium,
+      suggestionStyle: TextStyle(color: defaultTextColor),
       onSearchTextChanged: _onSearchItems,
       hint: 'Buscar por nombre o ${widget.searchByText ?? widget.searchBy}...',
     );

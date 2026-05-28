@@ -20,6 +20,34 @@ class ProductNewPage extends StatefulWidget {
 
   const ProductNewPage({super.key, this.productName});
 
+  static Future<Map<String, dynamic>?> show(BuildContext context, {String? productName}) {
+    return showGeneralDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'ProductNewPage',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 350),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return ProductNewPage(productName: productName);
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return ScaleTransition(
+          scale: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack,
+          ),
+          child: FadeTransition(
+            opacity: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeIn,
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   State<ProductNewPage> createState() => _ProductNewPageState();
 }
@@ -46,6 +74,17 @@ class _ProductNewPageState extends State<ProductNewPage> {
     {'value': 'I', 'label': 'Artículo'},
     {'value': 'S', 'label': 'Servicio'},
   ];
+
+  String _getSelectedProductTypeName() {
+    final matched = productTypes.firstWhere((t) => t['value'] == selectedProductType, orElse: () => {'label': ''});
+    return matched['label'].toString();
+  }
+
+  String _getSelectedTaxName() {
+    if (selectedTaxID == null) return '';
+    final matched = taxies.firstWhere((t) => t['id'] == selectedTaxID, orElse: () => <String, dynamic>{});
+    return (matched['name'] ?? matched['Name'] ?? '').toString();
+  }
 
   @override
   void initState() {
@@ -276,78 +315,72 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Dialog(
       backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
-          AppLocale.newProduct.getString(context),
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        flexibleSpace: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).primaryColor.withOpacity(0.6),
-                    Theme.of(context).primaryColor.withOpacity(0.4),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 1.0,
-                  ),
-                ),
-              ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: GlassContainer(
+          padding: const EdgeInsets.all(24.0),
+          borderRadius: BorderRadius.circular(20),
+          hasShadow: true,
+          shadowBlur: 25,
+          shadowOffset: const Offset(0, 8),
+          shadowBlurStyle: BlurStyle.normal,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(20),
             ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: CustomFooter(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: GlassContainer(
-                  padding: const EdgeInsets.all(24.0),
-                  borderRadius: BorderRadius.circular(20),
-                  hasShadow: true,
-                  shadowBlur: 25,
-                  shadowOffset: const Offset(0, 8),
-                  shadowBlurStyle: BlurStyle.normal,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.03),
-                      borderRadius: BorderRadius.circular(20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    AppLocale.newProduct.getString(context),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
                     ),
-                    child: Column(
-                    children: [
-                      TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
+                  ),
+                  const SizedBox(height: CustomSpacer.large),
+                  TextfieldTheme(
+                    controlador: skuController,
+                    texto: AppLocale.code.getString(context),
+                    inputType: TextInputType.text,
+                    fillColor: Colors.white.withOpacity(0.08),
+                    textColor: Colors.white,
+                    labelColor: Colors.white.withOpacity(0.6),
+                  ),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: nameController,
                     texto: '${AppLocale.name.getString(context)}*',
                     colorEmpty: nameController.text.isEmpty,
                     inputType: TextInputType.text,
+                    fillColor: Colors.white.withOpacity(0.08),
+                    textColor: Colors.white,
+                    labelColor: Colors.white.withOpacity(0.6),
                   ),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(controlador: upcController, texto: AppLocale.upc.getString(context), inputType: TextInputType.text),
+                  TextfieldTheme(
+                    controlador: upcController,
+                    texto: AppLocale.upc.getString(context),
+                    inputType: TextInputType.text,
+                    fillColor: Colors.white.withOpacity(0.08),
+                    textColor: Colors.white,
+                    labelColor: Colors.white.withOpacity(0.6),
+                  ),
                   const SizedBox(height: CustomSpacer.medium),
-                  SearchableDropdown<String>(
-                    value: selectedProductType,
-                    options: productTypes.map((type) => {'id': type['value'], 'name': type['label']}).toList(),
-                    labelText: '${AppLocale.productType.getString(context)} *',
-                    showSearchBox: false,
+                  GlassDropdown<String>(
+                    label: '${AppLocale.productType.getString(context)} *',
+                    currentValue: _getSelectedProductTypeName(),
+                    icon: Icons.category_outlined,
+                    items: productTypes.map((type) => GlassDropdownItem<String>(value: type['value'], text: type['label'])).toList(),
+                    textColor: Colors.white,
+                    labelColor: Colors.white.withOpacity(0.6),
                     onChanged: (String? newValue) {
                       if (newValue != null) {
                         setState(() {
@@ -366,6 +399,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
                           options: categories,
                           showCreateButtonIfNotFound: true,
                           createAnchorTerm: categorySearchTerm,
+                          fillColor: Colors.white.withOpacity(0.08),
+                          textColor: Colors.white,
+                          labelColor: Colors.white.withOpacity(0.6),
                           onChanged: (String val) {
                             setState(() {
                               categorySearchTerm = val;
@@ -397,17 +433,21 @@ class _ProductNewPageState extends State<ProductNewPage> {
                         ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isTaxiesLoading
-                      ? ShimmerList(count: 1)
-                      : SearchableDropdown<int>(
-                          value: selectedTaxID,
-                          options: taxies,
-                          showSearchBox: false,
-                          labelText: '${AppLocale.taxCategory.getString(context)} *',
+                      ? const ShimmerList(count: 1)
+                      : GlassDropdown<int>(
+                          label: '${AppLocale.taxCategory.getString(context)} *',
+                          currentValue: _getSelectedTaxName(),
+                          icon: Icons.percent_outlined,
+                          items: taxies.map((t) => GlassDropdownItem<int>(value: t['id'], text: (t['name'] ?? t['Name'] ?? '').toString())).toList(),
+                          textColor: Colors.white,
+                          labelColor: Colors.white.withOpacity(0.6),
                           onChanged: (int? newValue) {
-                            setState(() {
-                              selectedTaxID = newValue;
-                              _isFormValid();
-                            });
+                            if (newValue != null) {
+                              setState(() {
+                                selectedTaxID = newValue;
+                                _isFormValid();
+                              });
+                            }
                           },
                         ),
                   const SizedBox(height: CustomSpacer.medium),
@@ -417,6 +457,9 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     colorEmpty: priceController.text.isEmpty,
                     inputType: TextInputType.text,
                     inputFormatters: [NumericTextFormatterWithDecimal()],
+                    fillColor: Colors.white.withOpacity(0.08),
+                    textColor: Colors.white,
+                    labelColor: Colors.white.withOpacity(0.6),
                     onChanged: (value) {
                       _isFormValid();
                     },
@@ -435,17 +478,15 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   Container(
                     child: isValid
                         ? isLoading
-                              ? ButtonLoading(fullWidth: true)
-                              : ButtonPrimary(fullWidth: true, texto: AppLocale.save.getString(context), onPressed: _createProduct)
+                            ? ButtonLoading(fullWidth: true)
+                            : ButtonPrimary(fullWidth: true, texto: AppLocale.save.getString(context), onPressed: _createProduct)
                         : null,
                   ),
                 ],
               ),
             ),
-            ),
           ),
         ),
-      ),
       ),
     );
   }
