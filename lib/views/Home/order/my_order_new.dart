@@ -32,8 +32,9 @@ class OrderNewPage extends StatefulWidget {
   final int? doctypeID;
   final String? orderName;
   final int? sourceOrderId;
+  final String? docSubTypeSO;
 
-  const OrderNewPage({super.key, this.isRefund = false, this.doctypeID, this.orderName, this.sourceOrderId});
+  const OrderNewPage({super.key, this.isRefund = false, this.doctypeID, this.orderName, this.sourceOrderId, this.docSubTypeSO});
 
   @override
   State<OrderNewPage> createState() => _OrderNewPageState();
@@ -331,10 +332,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final change = overpay > 0 ? _r2(totalCash >= overpay ? overpay : totalCash) : 0.0;
 
     setState(() {
-      if (paymentMethods.isEmpty) {
-        _isInvoiceValid = clientSelected && products.isNotEmpty;
-      } else {
+      if (paymentMethods.isNotEmpty && widget.docSubTypeSO == docSubTypeSO.factura) {
         _isInvoiceValid = clientSelected && products.isNotEmpty && (totalPayment + eps) >= amount;
+      } else {
+        _isInvoiceValid = clientSelected && products.isNotEmpty;
       }
       calculatedChange = change > 0 ? change : 0.0;
     });
@@ -1828,7 +1829,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                     ],
                   ),
                 ),
-                if (POSTenderType.isMultiPayment)
+                if (POSTenderType.isMultiPayment && widget.docSubTypeSO == 'WI')
                   CustomContainer(
                     maxWidthContainer: 320,
                     margin: EdgeInsets.only(top: 24),
