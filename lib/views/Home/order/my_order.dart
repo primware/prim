@@ -636,10 +636,9 @@ class _OrderListPageState extends State<OrderListPage> {
                     spacing: 14,
                     runSpacing: 8,
                     children: [
-                      //TODO traducir, creo que ya existen las traducciones para estos campos
-                      _buildAmountItem(label: 'Subtotal', value: totalLines.toStringAsFixed(2), icon: Icons.receipt_long_outlined),
-                      _buildAmountItem(label: 'Impuesto', value: taxAmount.toStringAsFixed(2), icon: Icons.account_balance_wallet_outlined),
-                      _buildAmountItem(label: 'Total', value: grandTotal.toStringAsFixed(2), icon: Icons.payments_rounded, highlight: true),
+                      _buildAmountItem(label: AppLocale.subtotal.getString(context), value: totalLines.toStringAsFixed(2), icon: Icons.receipt_long_outlined),
+                      _buildAmountItem(label: AppLocale.taxes.getString(context), value: taxAmount.toStringAsFixed(2), icon: Icons.account_balance_wallet_outlined),
+                      _buildAmountItem(label: AppLocale.total.getString(context), value: grandTotal.toStringAsFixed(2), icon: Icons.payments_rounded, highlight: true),
                     ],
                   ),
                 ],

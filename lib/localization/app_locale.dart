@@ -235,6 +235,25 @@ class AppLocale {
   static const String errorUploadingLogo = 'errorUploadingLogo';
   static const String settingsSavedSuccess = 'settingsSavedSuccess';
   static const String settingsSaveError = 'settingsSaveError';
+  static const String security = 'security';
+  static const String weak = 'weak';
+  static const String medium = 'medium';
+  static const String strong = 'strong';
+  static const String updatePassword = 'updatePassword';
+  static const String updatePasswordMsg = 'updatePasswordMsg';
+  static const String yesUpdate = 'yesUpdate';
+  static const String newPassword = 'newPassword';
+  static const String confirmPassword = 'confirmPassword';
+  static const String exactly8Chars = 'exactly8Chars';
+  static const String atLeastOneUppercase = 'atLeastOneUppercase';
+  static const String atLeastOneLowercase = 'atLeastOneLowercase';
+  static const String accountSecurity = 'accountSecurity';
+  static const String passwordUpdated = 'passwordUpdated';
+  static const String serverError = 'serverError';
+  static const String connectionError = 'connectionError';
+  static const String error = 'error';
+  static const String fetchOrderError = 'fetchOrderError';
+  static const String fetchOrderNetworkError = 'fetchOrderNetworkError';
 
   static const Map<String, dynamic> en = {
     orgProfileTitle: 'Organization\nProfile',
@@ -473,6 +492,25 @@ class AppLocale {
     productCategory: 'Product Category',
     dv: 'DV',
     customerType: 'Customer Type',
+    security: 'Security',
+    weak: 'Weak',
+    medium: 'Medium',
+    strong: 'Strong',
+    updatePassword: 'Update password?',
+    updatePasswordMsg: 'Current session will be closed and you will have to login again.',
+    yesUpdate: 'Yes, update',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm Password',
+    exactly8Chars: 'Exactly 8 characters',
+    atLeastOneUppercase: 'At least one uppercase letter',
+    atLeastOneLowercase: 'At least one lowercase letter',
+    accountSecurity: 'Account\nSecurity',
+    passwordUpdated: 'Password updated.',
+    serverError: 'Server error',
+    connectionError: 'Connection error',
+    error: 'Error',
+    fetchOrderError: 'Error fetching order:',
+    fetchOrderNetworkError: 'Network error in fetchOrderById:',
   };
 
   static const Map<String, dynamic> es = {
@@ -707,5 +745,24 @@ class AppLocale {
     productCategory: 'Categoría de producto',
     dv: 'DV',
     customerType: 'Tipo de Persona',
+    security: 'Seguridad',
+    weak: 'Débil',
+    medium: 'Medio',
+    strong: 'Fuerte',
+    updatePassword: '¿Actualizar clave?',
+    updatePasswordMsg: 'Se cerrará la sesión actual y tendrás que ingresar nuevamente.',
+    yesUpdate: 'Sí, actualizar',
+    newPassword: 'Nueva Contraseña',
+    confirmPassword: 'Confirmar Contraseña',
+    exactly8Chars: 'Exactamente 8 caracteres',
+    atLeastOneUppercase: 'Al menos una letra Mayúscula',
+    atLeastOneLowercase: 'Al menos una letra minúscula',
+    accountSecurity: 'Seguridad de la\nCuenta',
+    passwordUpdated: 'Contraseña actualizada.',
+    serverError: 'Error del servidor',
+    connectionError: 'Error de conexión',
+    error: 'Error',
+    fetchOrderError: 'Error al obtener la orden:',
+    fetchOrderNetworkError: 'Error de red en fetchOrderById:',
   };
 }
