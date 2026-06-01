@@ -52,3 +52,9 @@ class POSPrinter {
   static Uint8List? logo;
   static bool isLogoSet = false;
 }
+
+class docSubTypeSO {
+  static String factura = 'WI';
+  static String pedido = 'SO';
+  static String cotizacion = 'OB';
+}
