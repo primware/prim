@@ -378,7 +378,16 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     },
                   ),
                   const SizedBox(height: CustomSpacer.xlarge),
-                  if (!isLoading) ...[
+                  isLoading
+                      ? const ButtonLoading(fullWidth: true)
+                      : ButtonPrimary(
+                          fullWidth: true,
+                          texto: AppLocale.save.getString(context),
+                          onPressed: _createProduct,
+                          enable: isValid,
+                        ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  if (!isLoading)
                     ButtonSecondary(
                       fullWidth: true,
                       texto: AppLocale.cancel.getString(context),
@@ -386,15 +395,6 @@ class _ProductNewPageState extends State<ProductNewPage> {
                         Navigator.pop(context);
                       },
                     ),
-                    const SizedBox(height: CustomSpacer.medium),
-                  ],
-                  Container(
-                    child: isValid
-                        ? isLoading
-                              ? ButtonLoading(fullWidth: true)
-                              : ButtonPrimary(fullWidth: true, texto: AppLocale.save.getString(context), onPressed: _createProduct)
-                        : null,
-                  ),
                 ],
               ),
             ),
