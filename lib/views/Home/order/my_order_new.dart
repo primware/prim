@@ -332,7 +332,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final change = overpay > 0 ? _r2(totalCash >= overpay ? overpay : totalCash) : 0.0;
 
     setState(() {
-      if (paymentMethods.isNotEmpty && widget.docSubTypeSO == docSubTypeSO.factura) {
+      if (POS.isPOS && paymentMethods.isNotEmpty && widget.docSubTypeSO == docSubTypeSO.factura) {
         _isInvoiceValid = clientSelected && products.isNotEmpty && (totalPayment + eps) >= amount;
       } else {
         _isInvoiceValid = clientSelected && products.isNotEmpty;
@@ -1829,7 +1829,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                     ],
                   ),
                 ),
-                if (POSTenderType.isMultiPayment && widget.docSubTypeSO == 'WI')
+                if (POS.isPOS && POSTenderType.isMultiPayment && widget.docSubTypeSO == 'WI')
                   CustomContainer(
                     maxWidthContainer: 320,
                     margin: EdgeInsets.only(top: 24),
