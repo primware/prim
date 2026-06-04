@@ -13,6 +13,7 @@ import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../../shared/toast_message.dart';
+import '../../../shared/doc_type_chip.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -184,30 +185,13 @@ class OrderDetailPage extends StatelessWidget {
   Widget _buildSubtypePill(BuildContext context, Map<String, dynamic> order) {
     final sub = order['doctypetarget']?['subtype']?['id'];
     final bool isReturn = (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+    final String? docName = order['doctypetarget']?['name'];
 
-    final Color baseColor = isReturn ? Colors.red : Colors.green;
-    final Color bgColor = baseColor.withOpacity(0.12);
-    final String label = isReturn ? AppLocale.refund.getString(context) : AppLocale.order.getString(context);
-    final IconData icon = isReturn ? Icons.undo : Icons.shopping_cart;
-
-    return Container(
-      margin: const EdgeInsets.only(top: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: baseColor, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: baseColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: DocTypeChip(
+        docTypeName: docName,
+        isReturn: isReturn,
       ),
     );
   }
@@ -919,8 +903,8 @@ class OrderDetailPage extends StatelessWidget {
   }
 
   Widget _buildFinalSummary({required Map<String, Map<String, double>> taxSummary, required double grandTotal, required BuildContext context, required Color textColor}) {
-    final double totalNeto = taxSummary.values.map((e) => e['net']!).reduce((a, b) => a + b);
-    final double totalImpuesto = taxSummary.values.map((e) => e['tax']!).reduce((a, b) => a + b);
+    final double totalNeto = taxSummary.values.map((e) => e['net'] ?? 0.0).fold(0.0, (a, b) => a + b);
+    final double totalImpuesto = taxSummary.values.map((e) => e['tax'] ?? 0.0).fold(0.0, (a, b) => a + b);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
