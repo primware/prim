@@ -3,6 +3,7 @@ import 'dart:typed_data';
 class POS {
   static int? cPosID;
   static int? priceListID;
+  static int? cPaymentTermID;
   static int? priceListVersionID;
   static int? docTypeID;
   static String? docTypeName;
@@ -50,4 +51,10 @@ class POSPrinter {
   static String? headerEmail;
   static Uint8List? logo;
   static bool isLogoSet = false;
+}
+
+class docSubTypeSO {
+  static String factura = 'WI';
+  static String pedido = 'SO';
+  static String cotizacion = 'OB';
 }

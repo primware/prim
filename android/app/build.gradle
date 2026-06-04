@@ -18,6 +18,12 @@ android {
     namespace = "net.primware.prim"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "29.0.13599879"
+    // Required for 16 KB page-size devices (Android 15+) when packaging native .so libs
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8

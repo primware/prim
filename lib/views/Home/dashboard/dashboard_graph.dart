@@ -1,568 +1,725 @@
 // ignore_for_file: deprecated_member_use
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:intl/intl.dart';
 import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_spacer.dart';
+import '../../../shared/toast_message.dart';
+import '../order/my_order.dart';
+import '../order/my_order_new.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-enum ChartType { line, bar, pie }
+typedef ChartDataLoader = Future<Map<String, double>> Function({required BuildContext context});
 
-typedef ChartDataLoader =
-    Future<Map<String, double>> Function({required BuildContext context});
-
-/// Reusable metric card that supports multiple chart types (line, bar, pie).
-class MetricCard extends StatefulWidget {
+class GraphicBarMetricCard extends StatefulWidget {
   final String Function(BuildContext) titleBuilder;
-  final ChartDataLoader dataLoader; // returns Map<X, Y>
-  final ChartType chartType;
-  final String? xAxisLabel; // eje X label
-  final String? yAxisLabel; // eje Y label
+  final ChartDataLoader dataLoader;
   final bool showRefresh;
+  final bool showTotal;
+  final String? subtitle;
+  final Map<String, double> initialData;
 
-  const MetricCard({
-    super.key,
-    required this.titleBuilder,
-    required this.dataLoader,
-    this.chartType = ChartType.line,
-    this.xAxisLabel,
-    this.yAxisLabel,
-    this.showRefresh = true,
-  });
+  const GraphicBarMetricCard({super.key, required this.titleBuilder, required this.dataLoader, this.showRefresh = true, this.showTotal = false, this.subtitle, this.initialData = const {}});
 
   @override
-  State<MetricCard> createState() => _MetricCardState();
+  State<GraphicBarMetricCard> createState() => _GraphicBarMetricCardState();
 }
 
-class _MetricCardState extends State<MetricCard> {
-  List<String> dataKeys = [];
-  List<FlSpot> points = [];
-  List<BarChartGroupData> barGroups = [];
-  List<PieChartSectionData> pieSections = [];
+class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
+  Map<String, double> rawChartData = {};
   bool isLoading = true;
-
-  final NumberFormat _moneyFmt = NumberFormat('#,##0.00', 'en_US');
-
-  String _formatMoneyFull(double value) {
-    final formatted = _moneyFmt.format(value);
-    return '${POS.currencySymbol} $formatted';
-  }
-
-  String _formatY(double value) {
-    final abs = value.abs();
-    String formatted;
-    if (abs >= 1000000) {
-      formatted = '${(value / 1000000).toStringAsFixed(1)}M';
-    } else if (abs >= 1000) {
-      formatted = '${(value / 1000).toStringAsFixed(0)}k';
-    } else {
-      formatted = value.toStringAsFixed(0);
-    }
-    return '${POS.currencySymbol} $formatted';
-  }
-
-  double _niceInterval(double maxY) {
-    if (maxY <= 0) return 1;
-    // choose rough 5 steps
-    final double rough = maxY / 5.0;
-    final num pow10 = pow(10, (log(rough) / ln10).floor());
-    final double normalized = rough / pow10;
-    double step;
-    if (normalized < 1.5) {
-      step = 1;
-    } else if (normalized < 3) {
-      step = 2;
-    } else if (normalized < 7) {
-      step = 5;
-    } else {
-      step = 10;
-    }
-    return step * pow10;
-  }
-
-  double _gridInterval() {
-    if (points.isEmpty) return 1;
-    final double maxY = points.map((e) => e.y).reduce((a, b) => a > b ? a : b);
-    return _niceInterval(maxY);
-  }
-
-  double _maxYWithPadding() {
-    if (points.isEmpty) return 0;
-    final double maxVal = points
-        .map((e) => e.y)
-        .reduce((a, b) => a > b ? a : b);
-    final double step = _niceInterval(maxVal);
-    // Round up to next tick and add a small headroom so the top label isn’t clipped
-    final double rounded = ((maxVal) / step).ceil() * step;
-    return rounded + step * 0.5; // 20% of a step as headroom
-  }
-
-  // --- Horizontal scroll helpers ---
-  double _tickMinWidth() {
-    if (widget.chartType == ChartType.pie) return 0; // not used
-    return 72.0;
-  }
-
-  double _computeChartWidth(BuildContext context) {
-    if (widget.chartType == ChartType.pie) {
-      return MediaQuery.of(context).size.width; // no scroll for pie
-    }
-    final screen = MediaQuery.of(context).size.width * 0.8;
-    if (dataKeys.isEmpty) return screen;
-    // sin tope; deja crecer para que no se monten las etiquetas
-    final desired = (dataKeys.length * _tickMinWidth()) + 32.0; // padding extra
-    return desired > screen ? desired : screen;
-  }
-
-  Future<void> _load() async {
-    setState(() => isLoading = true);
-    final rawData = await widget.dataLoader(context: context);
-    final groupedData = rawData;
-
-    // Respetar el orden provisto por el dataLoader (ya viene cronológico)
-    final keys = groupedData.keys.toList();
-
-    // Build line points
-    final linePoints = <FlSpot>[];
-    double xIndex = 0;
-    for (var k in keys) {
-      linePoints.add(FlSpot(xIndex, (groupedData[k] ?? 0).toDouble()));
-      xIndex++;
-    }
-
-    // Build bar groups
-    final groups = <BarChartGroupData>[];
-    for (int i = 0; i < keys.length; i++) {
-      final y = (groupedData[keys[i]] ?? 0).toDouble();
-      groups.add(
-        BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
-              toY: y,
-              width: 14,
-              borderRadius: BorderRadius.circular(4),
-              // Forzar color sólido igual al de la línea (algunas versiones ignoran `color`)
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.secondary,
-                  Theme.of(context).colorScheme.secondary,
-                ],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Build pie sections
-    final total = groupedData.values.fold<double>(
-      0,
-      (a, b) => a + (b.toDouble()),
-    );
-    final sections = <PieChartSectionData>[];
-    for (int i = 0; i < keys.length; i++) {
-      final label = keys[i];
-      final value = (groupedData[label] ?? 0).toDouble();
-      final pct = total == 0 ? 0 : (value / total) * 100;
-      sections.add(
-        PieChartSectionData(
-          value: value,
-          title: '${pct.toStringAsFixed(0)}%',
-          radius: 50,
-        ),
-      );
-    }
-
-    setState(() {
-      dataKeys = keys;
-      points = linePoints;
-      barGroups = groups;
-      pieSections = sections;
-      isLoading = false;
-    });
-  }
+  int touchedIndex = -1;
 
   @override
   void initState() {
     super.initState();
-    _load();
-  }
 
-  void _reload() {
-    _load();
-  }
-
-  Widget _withAlwaysOnLabels({required Widget chart, required bool forBars}) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const double edgePad =
-            20.0; // espacio extra para que no se corten los extremos
-        final innerLeft =
-            50.0 +
-            edgePad; // debe corresponder al reservedSize de los leftTitles
-        final innerRight = edgePad;
-        final innerTop = 0.0;
-        final innerBottom = forBars
-            ? 38.0
-            : 24.0; // match bottomTitles reserved
-        final innerWidth = constraints.maxWidth - innerLeft - innerRight;
-        final innerHeight = constraints.maxHeight - innerTop - innerBottom;
-        final maxX = (dataKeys.isNotEmpty)
-            ? (dataKeys.length - 1).toDouble()
-            : 0.0;
-        final maxY = _maxYWithPadding();
-        final List<Widget> labels = [];
-        for (int i = 0; i < dataKeys.length; i++) {
-          final double xRel = (maxX == 0) ? 0.0 : (i / maxX);
-          final double x = innerLeft + xRel * innerWidth;
-          final double yVal = forBars
-              ? (barGroups[i].barRods.first.toY)
-              : points[i].y;
-          final double yRel = (maxY == 0) ? 0.0 : (yVal / maxY);
-          final double y = innerTop + (1.0 - yRel) * innerHeight;
-          labels.add(
-            Positioned(
-              left: (x - 36).clamp(0.0, constraints.maxWidth - 72),
-              top: (y - 22).clamp(0.0, constraints.maxHeight - 22),
-              width: 72,
-              child: IgnorePointer(
-                child: Text(
-                  _formatMoneyFull(yVal),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          );
-        }
-        return Stack(
-          children: [
-            Positioned.fill(child: chart),
-            ...labels,
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildChart() {
-    switch (widget.chartType) {
-      case ChartType.bar:
-        return _withAlwaysOnLabels(
-          chart: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceBetween,
-              groupsSpace: 8,
-              barTouchData: BarTouchData(
-                enabled: false,
-                touchTooltipData: BarTouchTooltipData(
-                  getTooltipColor: (group) =>
-                      Theme.of(context).colorScheme.secondary,
-                  fitInsideHorizontally: true,
-                  fitInsideVertically: true,
-                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                    return BarTooltipItem(
-                      _formatMoneyFull(rod.toY),
-                      Theme.of(context).textTheme.titleMedium!.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: _gridInterval(),
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.secondaryContainer.withOpacity(0.6),
-                  strokeWidth: 1,
-                ),
-              ),
-              titlesData: FlTitlesData(
-                bottomTitles: AxisTitles(
-                  axisNameWidget: widget.xAxisLabel != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(widget.xAxisLabel!),
-                        )
-                      : null,
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      final i = value.round();
-                      if (i < 0 || i >= dataKeys.length) {
-                        return const SizedBox();
-                      }
-
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 2.0),
-                        child: Text(
-                          dataKeys[i],
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      );
-                    },
-                    reservedSize: 28,
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  axisNameWidget: widget.yAxisLabel != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: RotatedBox(
-                            quarterTurns: 3,
-                            child: Text(widget.yAxisLabel!),
-                          ),
-                        )
-                      : null,
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 60,
-                    interval: _gridInterval(),
-                    getTitlesWidget: (value, meta) => Text(
-                      _formatY(value),
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ),
-                ),
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              maxY: _maxYWithPadding(),
-              barGroups: barGroups,
-            ),
-          ),
-          forBars: true,
-        );
-      case ChartType.pie:
-        return PieChart(
-          PieChartData(
-            sections: pieSections,
-            sectionsSpace: 2,
-            centerSpaceRadius: 0,
-          ),
-        );
-      case ChartType.line:
-        return _withAlwaysOnLabels(
-          chart: LineChart(
-            LineChartData(
-              lineTouchData: LineTouchData(
-                enabled: false,
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (touchedSpot) =>
-                      Theme.of(context).colorScheme.secondary,
-                  fitInsideHorizontally: true,
-                  fitInsideVertically: true,
-                  getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
-                    return LineTooltipItem(
-                      _formatMoneyFull(spot.y),
-                      Theme.of(context).textTheme.titleMedium!.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: true,
-                horizontalInterval: _gridInterval(),
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.secondaryContainer.withOpacity(0.6),
-                  strokeWidth: 1,
-                ),
-              ),
-              titlesData: FlTitlesData(
-                bottomTitles: AxisTitles(
-                  axisNameWidget: widget.xAxisLabel != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(widget.xAxisLabel!),
-                        )
-                      : null,
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 24,
-                    getTitlesWidget: (value, meta) {
-                      // Show labels only on integer ticks to avoid repetition
-                      final nearest = value.roundToDouble();
-                      if ((value - nearest).abs() > 0.01) {
-                        return const SizedBox();
-                      }
-                      final index = nearest.toInt();
-                      if (index < 0 || index >= dataKeys.length) {
-                        return const SizedBox();
-                      }
-                      final total = dataKeys.length;
-                      final step = (total / 8).ceil();
-                      if (step > 1 &&
-                          index % step != 0 &&
-                          index != total - 1 &&
-                          index != 0) {
-                        return const SizedBox();
-                      }
-                      return Text(
-                        dataKeys[index],
-                        style: Theme.of(context).textTheme.titleSmall,
-                      );
-                    },
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  axisNameWidget: widget.yAxisLabel != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: RotatedBox(
-                            quarterTurns: 3,
-                            child: Text(widget.yAxisLabel!),
-                          ),
-                        )
-                      : null,
-                  sideTitles: SideTitles(
-                    reservedSize: 60,
-                    showTitles: true,
-                    interval: _gridInterval(),
-                    getTitlesWidget: (value, meta) => Text(
-                      _formatY(value),
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ),
-                ),
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              minX: 0,
-              maxX: points.isNotEmpty ? points.length.toDouble() - 1 : 0,
-              minY: 0,
-              maxY: _maxYWithPadding(),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: points,
-                  isCurved: false,
-                  color: Theme.of(context).colorScheme.secondary,
-                  barWidth: 3,
-                  isStrokeCapRound: true,
-                  dotData: const FlDotData(show: true),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(
-                          context,
-                        ).colorScheme.secondary.withOpacity(0.5),
-                        Theme.of(context).colorScheme.secondary.withOpacity(0),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          forBars: false,
-        );
+    if (widget.initialData.isNotEmpty) {
+      rawChartData = Map<String, double>.from(widget.initialData);
+      isLoading = false;
+    } else {
+      _load();
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              widget.titleBuilder(context),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            if (widget.showRefresh)
-              IconButton(
-                tooltip: 'Refrescar',
-                icon: const Icon(Icons.refresh),
-                onPressed: isLoading ? null : _reload,
-              ),
-          ],
-        ),
+  void didUpdateWidget(covariant GraphicBarMetricCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
 
-        const SizedBox(height: CustomSpacer.small),
-        // Chart area with optional horizontal scroll for narrow screens
-        SizedBox(
-          height: widget.chartType == ChartType.pie ? 220 : 200,
-          child: isLoading
-              ? Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: Container(
-                    width: double.infinity,
-                    height: 200,
-                    color: Colors.white,
-                  ),
-                )
-              : (dataKeys.isEmpty)
-              ? Center(
-                  child: Text(
-                    AppLocale.noDataForFilter.getString(context),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                )
-              : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: _computeChartWidth(context),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8, right: 24),
-                      child: _buildChart(),
+    if (oldWidget.initialData != widget.initialData && widget.initialData.isNotEmpty) {
+      setState(() {
+        rawChartData = Map<String, double>.from(widget.initialData);
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _load() async {
+    setState(() => isLoading = true);
+    rawChartData = await widget.dataLoader(context: context);
+    if (!mounted) return;
+    setState(() => isLoading = false);
+  }
+
+  void _reload() => _load();
+
+  double _totalValue() {
+    if (rawChartData.isEmpty) return 0;
+    return rawChartData.values.fold(0.0, (sum, value) => sum + value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final secondaryColor = Theme.of(context).colorScheme.secondary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final totalFmt = NumberFormat('#,##0.00', 'en_US');
+
+    final entries = rawChartData.entries.toList();
+    final double maxY = rawChartData.isEmpty ? 100 : rawChartData.values.reduce((a, b) => a > b ? a : b) * 1.2;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              if (widget.showRefresh) const SizedBox(width: 48),
+
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      widget.titleBuilder(context),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
+                    if (widget.subtitle != null && widget.subtitle!.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          widget.subtitle!,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              if (widget.showRefresh)
+                SizedBox(
+                  width: 48,
+                  child: IconButton(
+                    tooltip: AppLocale.refresh.getString(context),
+                    icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500),
+                    onPressed: isLoading ? null : _reload,
                   ),
                 ),
-        ),
-      ],
+            ],
+          ),
+          if (widget.showTotal)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 8),
+              child: Text(
+                '${AppLocale.total.getString(context)}: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: primaryColor),
+              ),
+            ),
+          const SizedBox(height: CustomSpacer.large),
+          SizedBox(
+            height: 300,
+            child: isLoading
+                ? Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!.withOpacity(0.5),
+                    highlightColor: Colors.grey[100]!.withOpacity(0.5),
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                    ),
+                  )
+                : rawChartData.isEmpty
+                ? Center(
+                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: BarChart(
+                      BarChartData(
+                        alignment: BarChartAlignment.spaceAround,
+                        maxY: maxY,
+                        barTouchData: BarTouchData(
+                          enabled: true,
+                          touchTooltipData: BarTouchTooltipData(
+                            getTooltipColor: (group) => isDark ? Colors.grey.shade800 : Colors.blueGrey.shade900,
+                            tooltipRoundedRadius: 8,
+                            tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            tooltipMargin: 8,
+                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                              return BarTooltipItem(
+                                '${entries[group.x].key}\n',
+                                Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white70, fontWeight: FontWeight.bold),
+                                children: <TextSpan>[
+                                  TextSpan(
+                                    text: '${POS.currencySymbol} ${totalFmt.format(rod.toY)}',
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          touchCallback: (FlTouchEvent event, barTouchResponse) {
+                            setState(() {
+                              if (!event.isInterestedForInteractions || barTouchResponse == null || barTouchResponse.spot == null) {
+                                touchedIndex = -1;
+                                return;
+                              }
+                              touchedIndex = barTouchResponse.spot!.touchedBarGroupIndex;
+                            });
+                          },
+                        ),
+                        titlesData: FlTitlesData(
+                          show: true,
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 32,
+                              getTitlesWidget: (value, meta) {
+                                if (value.toInt() >= 0 && value.toInt() < entries.length) {
+                                  bool showLabel = entries.length < 10 || value.toInt() % (entries.length ~/ 6 + 1) == 0;
+                                  return SideTitleWidget(
+                                    axisSide: meta.axisSide,
+                                    child: Text(
+                                      showLabel ? entries[value.toInt()].key : '',
+                                      style: TextStyle(color: Colors.grey.shade600, fontSize: 10, fontWeight: FontWeight.w500),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 48,
+                              getTitlesWidget: (value, meta) {
+                                if (value == 0 || value == maxY) return const SizedBox.shrink();
+                                return SideTitleWidget(
+                                  axisSide: meta.axisSide,
+                                  child: Text(NumberFormat.compact().format(value), style: TextStyle(color: Colors.grey.shade500, fontSize: 10)),
+                                );
+                              },
+                            ),
+                          ),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        ),
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: maxY / 5 > 0 ? maxY / 5 : 1, // Previene divisiones entre 0
+                          getDrawingHorizontalLine: (value) {
+                            return FlLine(color: Theme.of(context).dividerColor.withOpacity(0.1), strokeWidth: 1, dashArray: [4, 4]);
+                          },
+                        ),
+                        borderData: FlBorderData(show: false),
+                        barGroups: List.generate(entries.length, (index) {
+                          final isTouched = index == touchedIndex;
+                          return BarChartGroupData(
+                            x: index,
+                            barRods: [
+                              BarChartRodData(
+                                toY: entries[index].value,
+                                width: isTouched ? 22 : 16,
+                                gradient: LinearGradient(colors: isTouched ? [secondaryColor, secondaryColor.withOpacity(0.7)] : [primaryColor, primaryColor.withOpacity(0.6)], begin: Alignment.bottomCenter, end: Alignment.topCenter),
+                                borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
+                                backDrawRodData: BackgroundBarChartRodData(show: true, toY: maxY, color: Theme.of(context).dividerColor.withOpacity(0.05)),
+                              ),
+                            ],
+                          );
+                        }),
+                      ),
+                      swapAnimationDuration: const Duration(milliseconds: 150),
+                      swapAnimationCurve: Curves.easeInOut,
+                    ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// A simple container that can host multiple charts stacked vertically.
-class DashboardCharts extends StatelessWidget {
-  final List<Widget> children;
-  const DashboardCharts({super.key, required this.children});
+class GraphicPieMetricCard extends StatefulWidget {
+  final String Function(BuildContext) titleBuilder;
+  final ChartDataLoader dataLoader;
+  final bool showRefresh;
+  final bool showTotal;
+  final String? subtitle;
+  final Map<String, double> initialData;
+
+  const GraphicPieMetricCard({super.key, required this.titleBuilder, required this.dataLoader, this.showRefresh = true, this.showTotal = false, this.subtitle, this.initialData = const {}});
+
+  @override
+  State<GraphicPieMetricCard> createState() => _GraphicPieMetricCardState();
+}
+
+class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
+  Map<String, double> rawChartData = {};
+  bool isLoading = true;
+  int touchedIndex = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialData.isNotEmpty) {
+      rawChartData = Map<String, double>.from(widget.initialData);
+      isLoading = false;
+    } else {
+      _load();
+    }
+  }
+
+  Future<void> _load() async {
+    setState(() => isLoading = true);
+    rawChartData = await widget.dataLoader(context: context);
+    if (!mounted) return;
+    setState(() => isLoading = false);
+  }
+
+  void _reload() => _load();
+
+  @override
+  void didUpdateWidget(covariant GraphicPieMetricCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialData != widget.initialData && widget.initialData.isNotEmpty) {
+      setState(() {
+        rawChartData = Map<String, double>.from(widget.initialData);
+        isLoading = false;
+      });
+    }
+  }
+
+  List<Map<String, Object>> _chartRows() {
+    return rawChartData.entries.where((entry) => entry.value > 0).map((entry) => {'category': entry.key, 'value': entry.value}).toList();
+  }
+
+  double _totalValue() {
+    if (rawChartData.isEmpty) return 0;
+    return rawChartData.values.fold(0.0, (sum, value) => sum + value);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (int i = 0; i < children.length; i++) ...[
-          if (i > 0) const SizedBox(height: 24),
-          children[i],
+    final rows = _chartRows();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = <Color>[Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary, Theme.of(context).colorScheme.tertiary, Colors.orangeAccent, Colors.tealAccent.shade700, Colors.deepPurpleAccent, Colors.pinkAccent, Colors.indigoAccent];
+    final totalFmt = NumberFormat('#,##0.00', 'en_US');
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              if (widget.showRefresh) const SizedBox(width: 48),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      widget.titleBuilder(context),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    if (widget.subtitle != null && widget.subtitle!.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          widget.subtitle!,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (widget.showRefresh)
+                SizedBox(
+                  width: 48,
+                  child: IconButton(
+                    tooltip: AppLocale.refresh.getString(context),
+                    icon: Icon(Icons.refresh_rounded, color: Colors.grey.shade500),
+                    onPressed: isLoading ? null : _reload,
+                  ),
+                ),
+            ],
+          ),
+          if (widget.showTotal)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 8),
+              child: Text(
+                '${AppLocale.total.getString(context)}: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary),
+              ),
+            ),
+          const SizedBox(height: CustomSpacer.large),
+          SizedBox(
+            height: 340,
+            child: isLoading
+                ? Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!.withOpacity(0.5),
+                    highlightColor: Colors.grey[100]!.withOpacity(0.5),
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                    ),
+                  )
+                : rows.isEmpty
+                ? Center(
+                    child: Text(AppLocale.noDataForFilter.getString(context), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: 220,
+                              height: 220,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [if (touchedIndex >= 0 && touchedIndex < rows.length) BoxShadow(color: colors[touchedIndex % colors.length].withOpacity(0.55), blurRadius: 40, spreadRadius: 8) else BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, spreadRadius: 2)],
+                              ),
+                            ),
+
+                            // Gráfico de Pastel
+                            PieChart(
+                              PieChartData(
+                                centerSpaceRadius: 45,
+                                sectionsSpace: rows.length == 1 ? 0 : 5,
+                                pieTouchData: PieTouchData(
+                                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                    setState(() {
+                                      if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
+                                        touchedIndex = -1;
+                                        return;
+                                      }
+                                      touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                                    });
+                                  },
+                                ),
+                                sections: List.generate(rows.length, (index) {
+                                  final row = rows[index];
+                                  final color = colors[index % colors.length];
+                                  final value = (row['value'] as num).toDouble();
+                                  final total = _totalValue();
+                                  final percent = total > 0 ? (value / total) * 100 : 0.0;
+                                  final isTouched = index == touchedIndex || rows.length == 1;
+
+                                  return PieChartSectionData(
+                                    color: color,
+                                    value: value,
+                                    radius: isTouched ? 115 : 100,
+                                    title: percent > 4 ? '${percent.toStringAsFixed(0)}%' : '',
+                                    titleStyle: TextStyle(
+                                      fontSize: isTouched ? 16 : 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      shadows: const [BoxShadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 2))],
+                                    ),
+                                  );
+                                }),
+                              ),
+                              swapAnimationDuration: const Duration(milliseconds: 250),
+                              swapAnimationCurve: Curves.easeOutBack,
+                            ),
+
+                            IgnorePointer(
+                              child: Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [BoxShadow(color: isDark ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.15), blurRadius: 15, spreadRadius: -5)],
+                                ),
+                              ),
+                            ),
+
+                            if (touchedIndex >= 0 && touchedIndex < rows.length || rows.length == 1)
+                              IgnorePointer(
+                                child: Builder(
+                                  builder: (context) {
+                                    final displayIndex = (touchedIndex >= 0 && touchedIndex < rows.length) ? touchedIndex : 0;
+                                    final row = rows[displayIndex];
+                                    final value = (row['value'] as num).toDouble();
+                                    final percent = _totalValue() > 0 ? (value / _totalValue()) * 100 : 0.0;
+
+                                    return Container(
+                                      width: 120,
+                                      height: 120,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
+                                        shape: BoxShape.circle,
+                                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 12, spreadRadius: 2)],
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            row['category'].toString(),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 10),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          FittedBox(
+                                            child: Text(
+                                              '${POS.currencySymbol}${totalFmt.format(value)}',
+                                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w900),
+                                            ),
+                                          ),
+                                          if (rows.length > 1)
+                                            Text(
+                                              '${percent.toStringAsFixed(1)}%',
+                                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 10),
+                                            ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: List.generate(rows.length, (index) {
+                          final row = rows[index];
+                          final color = colors[index % colors.length];
+                          final isTouched = index == touchedIndex || rows.length == 1;
+
+                          return AnimatedOpacity(
+                            duration: const Duration(milliseconds: 200),
+                            opacity: touchedIndex == -1 || isTouched ? 1.0 : 0.35,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    boxShadow: isTouched ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 6)] : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  row['category'].toString(),
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: isTouched ? FontWeight.bold : FontWeight.w500, color: isTouched ? Theme.of(context).colorScheme.primary : Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+          ),
         ],
-      ],
+      ),
+    );
+  }
+}
+
+class EmptyMetricState extends StatelessWidget {
+  final bool showActions;
+  const EmptyMetricState({super.key, this.showActions = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 440,
+      height: 440,
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.query_stats_rounded, size: 80, color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
+                    const SizedBox(height: 24),
+
+                    Text(
+                      AppLocale.noOrdersRegistered.getString(context),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      AppLocale.readyForFirstOrder.getString(context),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    if (showActions) ...[
+                      const SizedBox(height: 40),
+
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 320),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                icon: Icon(Icons.add_shopping_cart, size: 20, color: Theme.of(context).colorScheme.primary),
+                                label: Text(
+                                  AppLocale.newOrder.getString(context),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                onPressed: () {
+                                  if (POS.docTypesComplete.isEmpty) {
+                                    ToastMessage.show(context: context, message: AppLocale.noDocTypesAvailable.getString(context), type: ToastType.help);
+                                    return;
+                                  }
+
+                                  showModalBottomSheet(
+                                    context: context,
+                                    backgroundColor: Theme.of(context).cardColor,
+                                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                                    builder: (BuildContext modalContext) {
+                                      final availableDocs = POS.docTypesComplete.where((doc) {
+                                        final dynamic rawId = doc['id'];
+                                        final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+
+                                        return doc['DocSubTypeSO'] != 'RM' && docTypeId != POS.docTypeRefundID;
+                                      }).toList();
+
+                                      if (availableDocs.isEmpty) {
+                                        return SafeArea(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(20.0),
+                                            child: Text(AppLocale.noDocTypesAvailable.getString(context), textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
+                                          ),
+                                        );
+                                      }
+
+                                      return SafeArea(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(AppLocale.documentType.getString(context), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                                              const SizedBox(height: 8),
+                                              const Divider(),
+                                              ...availableDocs.map((doc) {
+                                                final dynamic rawId = doc['id'];
+                                                final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+                                                final String docName = (doc['name'] ?? doc['Name'] ?? 'Documento').toString();
+
+                                                return ListTile(
+                                                  leading: Container(
+                                                    padding: const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(color: Theme.of(context).primaryColor.withOpacity(0.1), shape: BoxShape.circle),
+                                                    child: Icon(Icons.add_shopping_cart, color: Theme.of(context).primaryColor),
+                                                  ),
+                                                  title: Text(docName, style: Theme.of(context).textTheme.bodyLarge),
+                                                  trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                                                  onTap: () {
+                                                    Navigator.pop(modalContext);
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) => OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              }),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                icon: Icon(Icons.list_alt, size: 20, color: Theme.of(context).colorScheme.secondary),
+                                label: Text(
+                                  AppLocale.myOrders.getString(context),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderListPage()));
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -10,7 +10,8 @@ import '../../../shared/custom_dropdown.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/formater.dart';
 import '../../../shared/custom_textfield.dart';
-import '../../../theme/colors.dart';
+import '../../../shared/custom_searchfield.dart';
+import '../../../shared/toast_message.dart';
 
 class ProductNewPage extends StatefulWidget {
   final String? productName;
@@ -26,16 +27,14 @@ class _ProductNewPageState extends State<ProductNewPage> {
   final TextEditingController skuController = TextEditingController();
   final TextEditingController upcController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
+  final TextEditingController categoryController = TextEditingController();
 
-  bool isValid = false,
-      isLoading = false,
-      _isCategoryLoading = true,
-      _isTaxiesLoading = true,
-      _taxError = false;
+  bool isValid = false, isLoading = false, _isCategoryLoading = true, _isTaxiesLoading = true, _taxError = false;
 
   int? selectedCategoryID;
   int? selectedTaxID;
   String? selectedProductType = 'I'; // Valor por defecto: Artículo
+  String categorySearchTerm = '';
 
   List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> taxies = [];
@@ -62,12 +61,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   Future<void> _loadCategories() async {
     final fetchedCategories = await getMProductCategoryID(context) ?? [];
-    /*if (fetchedCategories != null) {
-      setState(() {
-        categories = fetchedCategories;
-        _isCategoryLoading = false;
-      });
-    }*/
+    if (!mounted) return;
     setState(() {
       categories = fetchedCategories;
       _isCategoryLoading = false;
@@ -76,12 +70,7 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   Future<void> _loadTaxies() async {
     final fetchedTaxies = await getCTaxCategoryID(context) ?? [];
-    /*if (fetchedTaxies != null) {
-      setState(() {
-        taxies = fetchedTaxies;
-        _isTaxiesLoading = false;
-      });
-    }*/
+    if (!mounted) return;
     setState(() {
       taxies = fetchedTaxies;
       _isTaxiesLoading = false;
@@ -91,8 +80,18 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
   void _isFormValid() {
     setState(() {
-      isValid = nameController.text.isNotEmpty &&
-          priceController.text.isNotEmpty &&
+      String rawPrice = priceController.text.trim().replaceAll(',', '.');
+      bool isPriceValid = rawPrice.isNotEmpty && double.tryParse(rawPrice) != null;
+
+      print('--- VALIDACIÓN ---');
+      print('Nombre: ${nameController.text.isNotEmpty} | Precio: $isPriceValid (Raw: "$rawPrice")');
+      print(
+        'Cat: ${selectedCategoryID != null} | Tax: ${selectedTaxID != null} | Tipo: ${selectedProductType != null} | SinErrorTax: ${!_taxError}',
+      );
+
+      isValid =
+          nameController.text.isNotEmpty &&
+          isPriceValid &&
           selectedCategoryID != null &&
           selectedTaxID != null &&
           selectedProductType != null &&
@@ -104,8 +103,127 @@ class _ProductNewPageState extends State<ProductNewPage> {
   void dispose() {
     nameController.removeListener(_isFormValid);
     priceController.removeListener(_isFormValid);
-
+    categoryController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showCreateCategoryDialog(String initialName) async {
+    final TextEditingController catNameController = TextEditingController(text: initialName);
+    bool isCreating = false;
+    bool isCatNameValid = initialName.trim().isNotEmpty;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: Theme.of(context).cardColor,
+              insetPadding: const EdgeInsets.all(16.0),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                AppLocale.newCategory.getString(context),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              content: SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextfieldTheme(
+                      controlador: catNameController,
+                      texto: '${AppLocale.name.getString(context)}*',
+                      colorEmpty: catNameController.text.trim().isEmpty,
+                      inputType: TextInputType.text,
+                      onChanged: (value) {
+                        setModalState(() {
+                          isCatNameValid = value.trim().isNotEmpty;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                if (!isCreating)
+                  TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
+                if (!isCreating)
+                  ElevatedButton(
+                    onPressed: isCatNameValid
+                        ? () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                backgroundColor: Theme.of(context).cardColor,
+                                title: const Column(
+                                  children: [
+                                    Icon(Icons.help_outline, size: 45, color: Colors.blueAccent),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      'Crear Categoría',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                    ),
+                                  ],
+                                ),
+                                content: Text(
+                                  AppLocale.confirmCreateCategory.getString(context),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: Text(AppLocale.yes.getString(context)),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm != true) return;
+
+                            setModalState(() => isCreating = true);
+
+                            final result = await postProductCategory(name: catNameController.text, context: context);
+
+                            if (!mounted) return;
+
+                            if (result['success'] == true) {
+                              final newCat = result['category'];
+                              setState(() {
+                                categories.add({'id': newCat['id'], 'name': newCat['Name'] ?? newCat['name'] ?? catNameController.text});
+                                categoryController.text = catNameController.text;
+                                selectedCategoryID = newCat['id'];
+                                categorySearchTerm = catNameController.text;
+                                _isFormValid();
+                              });
+
+                              Navigator.pop(dialogContext);
+                              ToastMessage.show(context: context, message: 'Categoría creada con éxito', type: ToastType.success);
+                            } else {
+                              setModalState(() => isCreating = false);
+                              ToastMessage.show(context: context, message: result['message'] ?? 'Error al crear', type: ToastType.failure);
+                            }
+                          }
+                        : null,
+                    child: Text(AppLocale.save.getString(context)),
+                  ),
+                if (isCreating) const CircularProgressIndicator(),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _createProduct() async {
@@ -115,20 +233,14 @@ class _ProductNewPageState extends State<ProductNewPage> {
         return AlertDialog(
           backgroundColor: Theme.of(context).cardColor,
           title: Text(AppLocale.newProduct.getString(context)),
-          content: Text('¿Está seguro de que desea crear el producto?'),
+          content: Text(AppLocale.confirmCreateProduct.getString(context)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(AppLocale.cancel.getString(context)),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 AppLocale.save.getString(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.surface),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
               ),
             ),
           ],
@@ -140,59 +252,43 @@ class _ProductNewPageState extends State<ProductNewPage> {
 
     setState(() => isLoading = true);
 
+    String finalPrice = priceController.text.trim().replaceAll(',', '.');
+
     final result = await postProduct(
       name: nameController.text,
       sku: skuController.text,
       upc: upcController.text,
       taxID: selectedTaxID!,
       categoryID: selectedCategoryID!,
-      price: priceController.text,
+      price: finalPrice,
       productType: selectedProductType!,
       context: context,
     );
 
+    if (!mounted) return;
+
     setState(() => isLoading = false);
 
     if (result['success'] == true) {
-      Navigator.pop(context, {
-        'created': true,
-        'product': result['product'],
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(
-              child: Text(
-                  AppLocale.productCreatedSuccessfully.getString(context))),
-          backgroundColor: ColorTheme.success,
-        ),
-      );
+      Navigator.pop(context, {'created': true, 'product': result['product']});
+      ToastMessage.show(context: context, message: AppLocale.productCreatedSuccessfully.getString(context), type: ToastType.success);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(
-              child: Text(AppLocale.errorCreatingProduct.getString(context))),
-          backgroundColor: ColorTheme.error,
-        ),
-      );
+      ToastMessage.show(context: context, message: AppLocale.errorCreatingProduct.getString(context), type: ToastType.failure);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text(AppLocale.newProduct.getString(context))),
-        bottomNavigationBar: CustomFooter(),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: CustomContainer(
-                  child: Column(
+      appBar: AppBar(title: Text(AppLocale.newProduct.getString(context))),
+      bottomNavigationBar: CustomFooter(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
+            child: CustomContainer(
+              child: Column(
                 children: [
-                  TextfieldTheme(
-                    controlador: skuController,
-                    texto: AppLocale.code.getString(context),
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: skuController, texto: AppLocale.code.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(
                     controlador: nameController,
@@ -201,20 +297,11 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     inputType: TextInputType.text,
                   ),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: upcController,
-                    texto: AppLocale.upc.getString(context),
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: upcController, texto: AppLocale.upc.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
                   SearchableDropdown<String>(
                     value: selectedProductType,
-                    options: productTypes
-                        .map((type) => {
-                              'id': type['value'],
-                              'name': type['label'],
-                            })
-                        .toList(),
+                    options: productTypes.map((type) => {'id': type['value'], 'name': type['label']}).toList(),
                     labelText: '${AppLocale.productType.getString(context)} *',
                     showSearchBox: false,
                     onChanged: (String? newValue) {
@@ -228,33 +315,50 @@ class _ProductNewPageState extends State<ProductNewPage> {
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isCategoryLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
-                      : SearchableDropdown<int>(
-                          value: selectedCategoryID,
+                      ? const ShimmerList(count: 1)
+                      : CustomSearchField(
+                          controller: categoryController,
+                          labelText: '${AppLocale.productCategory.getString(context)} *',
                           options: categories,
-                          showSearchBox: true,
-                          labelText:
-                              '${AppLocale.productCategory.getString(context)} *',
-                          onChanged: (int? newValue) {
+                          showCreateButtonIfNotFound: true,
+                          createAnchorTerm: categorySearchTerm,
+                          onChanged: (String val) {
                             setState(() {
-                              selectedCategoryID = newValue;
+                              categorySearchTerm = val;
+                              bool matchFound = false;
+                              for (var cat in categories) {
+                                String catName = (cat['name'] ?? cat['Name'] ?? '').toString();
+                                if (catName == val) {
+                                  selectedCategoryID = cat['id'];
+                                  matchFound = true;
+                                  break;
+                                }
+                              }
+                              if (!matchFound) {
+                                selectedCategoryID = null;
+                              }
+
                               _isFormValid();
                             });
+                          },
+                          onItemSelected: (Map<String, dynamic> item) {
+                            setState(() {
+                              selectedCategoryID = item['id'];
+                              _isFormValid();
+                            });
+                          },
+                          onCreate: (String searchTerm) {
+                            _showCreateCategoryDialog(searchTerm);
                           },
                         ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isTaxiesLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
+                      ? ShimmerList(count: 1)
                       : SearchableDropdown<int>(
                           value: selectedTaxID,
                           options: taxies,
-                          showSearchBox: true,
-                          labelText:
-                              '${AppLocale.taxCategory.getString(context)} *',
+                          showSearchBox: false,
+                          labelText: '${AppLocale.taxCategory.getString(context)} *',
                           onChanged: (int? newValue) {
                             setState(() {
                               selectedTaxID = newValue;
@@ -267,11 +371,23 @@ class _ProductNewPageState extends State<ProductNewPage> {
                     controlador: priceController,
                     texto: '${AppLocale.price.getString(context)}*',
                     colorEmpty: priceController.text.isEmpty,
-                    inputType: TextInputType.number,
+                    inputType: TextInputType.text,
                     inputFormatters: [NumericTextFormatterWithDecimal()],
+                    onChanged: (value) {
+                      _isFormValid();
+                    },
                   ),
                   const SizedBox(height: CustomSpacer.xlarge),
-                  if (!isLoading) ...[
+                  isLoading
+                      ? const ButtonLoading(fullWidth: true)
+                      : ButtonPrimary(
+                          fullWidth: true,
+                          texto: AppLocale.save.getString(context),
+                          onPressed: _createProduct,
+                          enable: isValid,
+                        ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  if (!isLoading)
                     ButtonSecondary(
                       fullWidth: true,
                       texto: AppLocale.cancel.getString(context),
@@ -279,23 +395,12 @@ class _ProductNewPageState extends State<ProductNewPage> {
                         Navigator.pop(context);
                       },
                     ),
-                    const SizedBox(height: CustomSpacer.medium)
-                  ],
-                  Container(
-                    child: isValid
-                        ? isLoading
-                            ? ButtonLoading(fullWidth: true)
-                            : ButtonPrimary(
-                                fullWidth: true,
-                                texto: AppLocale.save.getString(context),
-                                onPressed: _createProduct,
-                              )
-                        : null,
-                  )
                 ],
-              )),
+              ),
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

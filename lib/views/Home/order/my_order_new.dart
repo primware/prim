@@ -24,34 +24,29 @@ import 'order_funtions.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:printing/printing.dart';
+import '../product/product_new.dart';
+import 'package:primware/shared/shimmer_list.dart';
 
 class OrderNewPage extends StatefulWidget {
   final bool isRefund;
   final int? doctypeID;
   final String? orderName;
   final int? sourceOrderId;
+  final String? docSubTypeSO;
 
-  const OrderNewPage({
-    super.key,
-    this.isRefund = false,
-    this.doctypeID,
-    this.orderName,
-    this.sourceOrderId,
-  });
+  const OrderNewPage({super.key, this.isRefund = false, this.doctypeID, this.orderName, this.sourceOrderId, this.docSubTypeSO});
 
   @override
   State<OrderNewPage> createState() => _OrderNewPageState();
 }
 
 class _OrderNewPageState extends State<OrderNewPage> {
-  final CustomSearchFieldController customerFieldController =
-          CustomSearchFieldController(),
+  final CustomSearchFieldController customerFieldController = CustomSearchFieldController(),
       productFieldController = CustomSearchFieldController();
 
-  // Anchor term for create customer button
   String? createAnchorCustomerTerm;
+  String? createAnchorProductTerm;
 
-  // Timer? _debounce;
   double calculatedChange = 0.0;
   TextEditingController clienteController = TextEditingController();
   TextEditingController qtyProductController = TextEditingController();
@@ -67,7 +62,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isSalesRepLoading = true,
       isYappyConfigAvailable = false,
       canShowCreateCustomerButton = false,
-      firtsLoad = false;
+      firtsLoad = false,
+      canShowCreateProductButton = false,
+      isDocActionsLoading = true;
 
   final Set<int> _lockedPayments = {};
   List<Map<String, dynamic>> bPartnerOptions = [];
@@ -76,8 +73,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
   List<Map<String, dynamic>> taxOptions = [];
   List<Map<String, dynamic>> invoiceLines = [];
   List<Map<String, dynamic>> salesRep = [];
-
-  // Estado para categorías seleccionadas
   Set<int> selectedCategories = {};
 
   // Payment methods state
@@ -85,9 +80,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
   Map<int, TextEditingController> paymentControllers = {};
   bool isPaymentMethodsLoading = true;
   bool isFormValid = false;
-  bool _isInvoiceValid = false;
+  bool _isInvoiceValid = false, hasLocationBPartner = false;
 
-  int? selectedBPartnerID, docNoSequenceID, selectedSalesRepID;
+  int? selectedBPartnerID, docNoSequenceID, selectedSalesRepID, bpartnerPriceListID;
   String? selectedDocActionCode, yappyTransactionId, docNoSequenceNumber;
   Map<String, dynamic>? selectedTax;
 
@@ -121,7 +116,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadBPartner();
+      _loadBPartner(showLoadingIndicator: true);
       _loadSalesRep();
       _loadDocumentActions();
       _loadProduct();
@@ -158,13 +153,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _loadDocumentActions() async {
-    await fetchDocumentActions(docTypeID: widget.doctypeID!);
+    setState(() => isDocActionsLoading = true);
 
-    if (POS.documentActions.isNotEmpty) {
-      setState(() {
-        selectedDocActionCode = POS.documentActions.first['code'];
-      });
+    if (widget.doctypeID != null) {
+      await fetchDocumentActions(docTypeID: widget.doctypeID!);
     }
+
+    setState(() {
+      isDocActionsLoading = false;
+      if (POS.documentActions.isNotEmpty) {
+        selectedDocActionCode = POS.documentActions.first['code'];
+      }
+    });
   }
 
   Future<void> _initialPartner() async {
@@ -186,10 +186,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       setState(() {
         paymentMethods = result;
         for (var method in result) {
-          paymentControllers.putIfAbsent(
-            method['id'],
-            () => TextEditingController(),
-          );
+          paymentControllers.putIfAbsent(method['id'], () => TextEditingController());
         }
         isPaymentMethodsLoading = false;
       });
@@ -218,13 +215,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
         }
       }
 
-      final src = await fetchOrderById(orderId: widget.sourceOrderId!);
+      final src = await fetchOrderById(orderId: widget.sourceOrderId!, context: context);
       if (src == null) return;
 
       // Prefill cliente
       final bpId = src['bpartner']?['id'] ?? src['C_BPartner_ID']?['id'];
-      final bpName =
-          src['bpartner']?['name'] ?? src['C_BPartner_ID']?['identifier'] ?? '';
+      final bpName = src['bpartner']?['name'] ?? src['C_BPartner_ID']?['identifier'] ?? '';
 
       setState(() {
         if (bpId != null) selectedBPartnerID = bpId;
@@ -232,47 +228,24 @@ class _OrderNewPageState extends State<OrderNewPage> {
       });
 
       // Prefill productos/lineas
-      final List<dynamic> lines =
-          (src['lines'] ?? src['C_OrderLine'] ?? src['orderLines'] ?? [])
-              as List<dynamic>;
+      final List<dynamic> lines = (src['lines'] ?? src['C_OrderLine'] ?? src['orderLines'] ?? []) as List<dynamic>;
 
       final List<Map<String, dynamic>> mapped = [];
       for (final raw in lines) {
         final Map<String, dynamic> line = Map<String, dynamic>.from(raw as Map);
-        final name =
-            line['Name'] ??
-            (line['M_Product_ID']?['identifier']
-                    ?.toString()
-                    .split('_')
-                    .skip(1)
-                    .join(' ') ??
-                'Producto');
-        final price =
-            (line['PriceActual'] ?? line['Price'] ?? line['price'] ?? 0) as num;
-        final qty =
-            (line['QtyOrdered'] ?? line['QtyEntered'] ?? line['quantity'] ?? 1)
-                as num;
+        final name = line['Name'] ?? (line['M_Product_ID']?['identifier']?.toString().split('_').skip(1).join(' ') ?? 'Producto');
+        final price = (line['PriceActual'] ?? line['Price'] ?? line['price'] ?? 0) as num;
+        final qty = (line['QtyOrdered'] ?? line['QtyEntered'] ?? line['quantity'] ?? 1) as num;
         final dynamic taxField = line['C_Tax_ID'];
-        final taxId = (taxField is Map)
-            ? taxField['id']
-            : (taxField ?? selectedTax?['id']);
+        final taxId = (taxField is Map) ? taxField['id'] : (taxField ?? selectedTax?['id']);
         final dynamic productField = line['M_Product_ID'];
         final dynamic categoryField = line['M_Product_Category_ID'];
-        final dynamic categoryValue =
-            line['Category'] ??
-            (categoryField is Map ? categoryField['identifier'] : null);
+        final dynamic categoryValue = line['Category'] ?? (categoryField is Map ? categoryField['identifier'] : null);
         // Compute PriceList and Discount
-        final priceList =
-            (line['PriceList'] ??
-            line['priceList'] ??
-            line['Price'] ??
-            line['price'] ??
-            0);
+        final priceList = (line['PriceList'] ?? line['priceList'] ?? line['Price'] ?? line['price'] ?? 0);
         final discount = (line['Discount'] ?? 0);
         mapped.add({
-          'id': (productField is Map)
-              ? productField['id']
-              : (productField ?? line['id']),
+          'id': (productField is Map) ? productField['id'] : (productField ?? line['id']),
           'sku': line['SKU'] ?? line['Value'] ?? '',
           'upc': line['upc'] ?? '',
           'category': categoryValue,
@@ -281,12 +254,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
           'quantity': (qty).toInt(),
           'C_Tax_ID': taxId,
           'Description': line['Description'] ?? '',
-          'PriceList': (priceList is num
-              ? priceList.toDouble()
-              : double.tryParse(priceList.toString()) ?? 0.0),
-          'Discount': (discount is num
-              ? discount.toDouble()
-              : double.tryParse(discount.toString()) ?? 0.0),
+          'PriceList': (priceList is num ? priceList.toDouble() : double.tryParse(priceList.toString()) ?? 0.0),
+          'Discount': (discount is num ? discount.toDouble() : double.tryParse(discount.toString()) ?? 0.0),
         });
       }
 
@@ -298,15 +267,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
       }
 
       // Prefill pagos
-      final List<dynamic> pays =
-          (src['payments'] ?? src['C_POSPayment'] ?? []) as List<dynamic>;
+      final List<dynamic> pays = (src['payments'] ?? src['C_POSPayment'] ?? []) as List<dynamic>;
       if (pays.isNotEmpty && POSTenderType.isMultiPayment) {
         for (final raw in pays) {
           final Map<String, dynamic> p = Map<String, dynamic>.from(raw as Map);
           final dynamic tenderField = p['C_POSTenderType_ID'];
-          final tenderId = (tenderField is Map)
-              ? tenderField['id']
-              : tenderField;
+          final tenderId = (tenderField is Map) ? tenderField['id'] : tenderField;
           final amt = (p['PayAmt'] ?? p['Amount'] ?? 0).toString();
           if (tenderId != null && paymentControllers.containsKey(tenderId)) {
             paymentControllers[tenderId]!.text = amt;
@@ -321,7 +287,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _loadSequence() async {
-    //TODO cargar secuencia con el fortmato, buscar si hay un proceso que lo traiga
     docNoSequenceID = await getDocNoSequenceID(recordID: widget.doctypeID!);
 
     if (docNoSequenceID != null) {
@@ -348,45 +313,29 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   void _validateForm() {
     final totalPayment = _r2(
-      paymentControllers.values
-          .map(
-            (c) => _r2(double.tryParse((c.text).replaceAll(',', '.')) ?? 0.0),
-          )
-          .fold(0.0, (sum, val) => sum + val),
+      paymentControllers.values.map((c) => _r2(double.tryParse((c.text).replaceAll(',', '.')) ?? 0.0)).fold(0.0, (sum, val) => sum + val),
     );
 
     final totalCash = _r2(
       paymentControllers.entries
           .where((entry) {
-            final method = paymentMethods.firstWhere(
-              (m) => m['id'] == entry.key,
-              orElse: () => {},
-            );
+            final method = paymentMethods.firstWhere((m) => m['id'] == entry.key, orElse: () => {});
             return method['isCash'] == true;
           })
-          .map(
-            (entry) => _r2(
-              double.tryParse((entry.value.text).replaceAll(',', '.')) ?? 0.0,
-            ),
-          )
+          .map((entry) => _r2(double.tryParse((entry.value.text).replaceAll(',', '.')) ?? 0.0))
           .fold(0.0, (sum, val) => sum + val),
     );
 
     final amount = _r2(totalAmount);
 
     final overpay = _r2(totalPayment - amount);
-    final change = overpay > 0
-        ? _r2(totalCash >= overpay ? overpay : totalCash)
-        : 0.0;
+    final change = overpay > 0 ? _r2(totalCash >= overpay ? overpay : totalCash) : 0.0;
 
     setState(() {
-      if (paymentMethods.isEmpty) {
-        _isInvoiceValid = clientSelected && products.isNotEmpty;
+      if (POS.isPOS && paymentMethods.isNotEmpty) {
+        _isInvoiceValid = clientSelected && products.isNotEmpty && (totalPayment + eps) >= amount;
       } else {
-        _isInvoiceValid =
-            clientSelected &&
-            products.isNotEmpty &&
-            (totalPayment + eps) >= amount;
+        _isInvoiceValid = clientSelected && products.isNotEmpty;
       }
       calculatedChange = change > 0 ? change : 0.0;
     });
@@ -400,15 +349,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
         createAnchorCustomerTerm = null;
       });
     }
-    setState(() {
-      selectedBPartnerID = null;
-      _validateForm();
-    });
 
-    final partner = await fetchBPartner(
-      context: context,
-      searchTerm: clienteController.text.trim(),
-    );
+    final partner = await fetchBPartner(context: context, searchTerm: clienteController.text.trim());
 
     setState(() {
       bPartnerOptions = partner;
@@ -418,9 +360,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
         createAnchorCustomerTerm = null;
       } else {
         canShowCreateCustomerButton = clienteController.text.trim().isNotEmpty;
-        createAnchorCustomerTerm = canShowCreateCustomerButton
-            ? clienteController.text.trim()
-            : null;
+        createAnchorCustomerTerm = canShowCreateCustomerButton ? clienteController.text.trim() : null;
       }
     });
     if (mounted && firtsLoad) {
@@ -438,20 +378,34 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (showLoadingIndicator) {
       setState(() {
         isProductSearchLoading = true;
+        canShowCreateProductButton = false; // Limpiamos al empezar a buscar
+        createAnchorProductTerm = null;
       });
     }
+
     final product = await fetchProductInPriceList(
       context: context,
-      categoryID: selectedCategories.isNotEmpty
-          ? selectedCategories.toList()
-          : null,
+      categoryID: selectedCategories.isNotEmpty ? selectedCategories.toList() : null,
       searchTerm: productController.text.trim(),
+      priceListID: bpartnerPriceListID,
     );
+
     setState(() {
       productOptions = product;
       isProductLoading = false;
       isProductSearchLoading = false;
+
+      // --- NUEVA LÓGICA: ¿Mostramos el botón de crear producto? ---
+      if (productOptions.isNotEmpty) {
+        canShowCreateProductButton = false;
+        createAnchorProductTerm = null;
+      } else {
+        // Si no hay resultados y el usuario escribió algo, encendemos el botón
+        canShowCreateProductButton = productController.text.trim().isNotEmpty;
+        createAnchorProductTerm = canShowCreateProductButton ? productController.text.trim() : null;
+      }
     });
+
     if (mounted && firtsLoad) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -473,9 +427,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   Future<void> _loadTax() async {
     final tax = await fetchTax();
-    final defaultTax = tax.isNotEmpty
-        ? tax.firstWhere((t) => t['isdefault'] == true, orElse: () => tax.first)
-        : null;
+    final defaultTax = tax.isNotEmpty ? tax.firstWhere((t) => t['isdefault'] == true, orElse: () => tax.first) : null;
     setState(() {
       taxOptions = tax;
       if (defaultTax != null) {
@@ -500,10 +452,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final lineNet = _r2(price * quantity);
       newSubtotal += lineNet;
 
-      final tax = taxOptions.firstWhere(
-        (t) => t['id'] == taxID,
-        orElse: () => {},
-      );
+      final tax = taxOptions.firstWhere((t) => t['id'] == taxID, orElse: () => {});
       final taxPercent = _r2(double.tryParse('${tax['rate'] ?? '0'}') ?? 0.0);
 
       final lineTax = _r2(lineNet * (taxPercent / 100));
@@ -525,148 +474,63 @@ class _OrderNewPageState extends State<OrderNewPage> {
         margin: const EdgeInsets.symmetric(vertical: 8),
         height: 60,
         width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-        ),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
-  Future<void> _showQuantityDialog(
-    Map<String, dynamic> product, {
-    int? index,
-  }) async {
-    int? selectedTaxID = index != null
-        ? (product['C_Tax_ID'] ?? product['tax']?['id'])
-        : (product['tax']?['id'] ?? selectedTax?['id']);
+  Future<void> _showQuantityDialog(Map<String, dynamic> product, {int? index}) async {
+    int? selectedTaxID = index != null ? (product['C_Tax_ID'] ?? product['tax']?['id']) : (product['tax']?['id'] ?? selectedTax?['id']);
+
     final quantityController = TextEditingController(
-      text: index != null && product['quantity'] != null
-          ? product['quantity'].toString()
-          : "1",
+      text: index != null && product['quantity'] != null ? product['quantity'].toString() : "1",
     );
 
-    // --- Discount/PriceList helpers ---
+    // --- Funciones Matemáticas sin la función clamp para permitir negativos ---
     double r2local(num v) {
       final x = v * 100.0;
       final adj = v >= 0 ? 1e-9 : -1e-9;
       return ((x + adj).round()) / 100.0;
     }
 
-    double calcDiscount(double priceList, double priceActual) => priceList <= 0
-        ? 0
-        : (100 * (1 - (priceActual / priceList))).clamp(0, 100);
-    double calcPrice(double priceList, double discount) =>
-        priceList * (1 - (discount.clamp(0, 100) / 100));
-    // --- end helpers ---
+    // Si el precio es mayor al de lista, el descuento dará negativo
+    double calcDiscount(double priceList, double priceActual) => priceList <= 0 ? 0 : (100 * (1 - (priceActual / priceList)));
 
-    // Determine priceList for the product
+    double calcPrice(double priceList, double discount) => priceList * (1 - (discount / 100));
+
     final double priceList =
         (index != null
-                ? (product['PriceList'] ??
-                      product['priceList'] ??
-                      product['price'] ??
-                      0)
-                : (product['PriceList'] ??
-                      product['priceList'] ??
-                      product['price'] ??
-                      0))
+                ? (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0)
+                : (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0))
             .toDouble();
 
-    // Controllers for price, priceList, discount
-    final priceController = TextEditingController(
-      text: index != null
-          ? (product['price'] ?? product['PriceActual'] ?? 0).toString()
-          : (product['price'] == 0 ? '' : product['price'].toString()),
-    );
-    final discountController = TextEditingController(
-      text: (() {
-        if (index != null) {
-          final disc = product['Discount'];
-          if (disc != null) {
-            return r2local(
-              disc is num ? disc : double.tryParse(disc.toString()) ?? 0.0,
-            ).toString();
-          }
-          final p =
-              double.tryParse(priceController.text.replaceAll(',', '.')) ??
-              (product['price'] ?? 0).toDouble();
-          return r2local(calcDiscount(priceList, p)).toString();
-        } else {
-          final p =
-              double.tryParse(priceController.text.replaceAll(',', '.')) ??
-              (product['price'] ?? 0).toDouble();
-          return r2local(calcDiscount(priceList, p)).toString();
-        }
-      })(),
-    );
+    // Valores iniciales
+    double initialPrice = index != null ? (product['price'] ?? product['PriceActual'] ?? 0).toDouble() : (product['price'] ?? 0).toDouble();
 
+    double initialDiscount = index != null ? (product['Discount'] ?? 0).toDouble() : calcDiscount(priceList, initialPrice);
+
+    final priceController = TextEditingController(text: initialPrice == 0 ? '' : initialPrice.toStringAsFixed(2));
+    final discountController = TextEditingController(text: initialDiscount == 0 ? '' : initialDiscount.toStringAsFixed(2));
     final descriptionController = TextEditingController(
-      text: index != null && product['Description'] != null
-          ? product['Description'].toString()
-          : '',
+      text: index != null && product['Description'] != null ? product['Description'].toString() : '',
     );
-
-    // === Normalize initial price/discount (force HALF-UP result shown) ===
-    {
-      final String discTxt = discountController.text.trim();
-      final double parsedPrice =
-          double.tryParse(priceController.text.replaceAll(',', '.')) ??
-          (product['price'] ?? 0.0);
-      if (discTxt.isNotEmpty) {
-        final double d = double.tryParse(discTxt.replaceAll(',', '.')) ?? 0.0;
-        final double p = r2local(calcPrice(priceList, d));
-        priceController.text = p.toStringAsFixed(2);
-      } else {
-        final double d = r2local(calcDiscount(priceList, parsedPrice));
-        discountController.text = d.toStringAsFixed(2);
-        final double p = r2local(calcPrice(priceList, d));
-        priceController.text = p.toStringAsFixed(2);
-      }
-    }
-
-    // Keep price and discount in sync
-    bool updating = false;
-    priceController.addListener(() {
-      if (updating) return;
-      updating = true;
-      final p =
-          double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
-      final d = r2local(calcDiscount(priceList, p));
-      discountController.text = d.toStringAsFixed(2);
-      updating = false;
-    });
-    discountController.addListener(() {
-      if (updating) return;
-      updating = true;
-      final d =
-          double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0;
-      final newPrice = r2local(calcPrice(priceList, d));
-      priceController.text = newPrice.toStringAsFixed(2);
-      updating = false;
-    });
 
     void onSubmitted(BuildContext dialogContext) {
       final qty = int.tryParse(quantityController.text) ?? 1;
-      final effectivePrice =
-          double.tryParse(priceController.text.replaceAll(',', '.')) ??
-          (product['price'] ?? 0.0);
-      final effectiveDiscount =
-          double.tryParse(discountController.text.replaceAll(',', '.')) ??
-          calcDiscount(priceList, effectivePrice);
-      final description = descriptionController.text;
+      final effectivePrice = double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
+      final effectiveDiscount = double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0;
 
       if (index != null) {
         invoiceLines.removeAt(index);
       }
 
       setState(() {
-        invoiceLines.add({
+        invoiceLines.insert(index ?? invoiceLines.length, {
           ...product,
           'quantity': qty,
           'price': r2local(effectivePrice),
           'C_Tax_ID': selectedTaxID ?? selectedTax?['id'],
-          'Description': description,
+          'Description': descriptionController.text,
           'PriceList': r2local(priceList),
           'Discount': r2local(effectiveDiscount),
         });
@@ -679,6 +543,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
 
     final result = await showDialog<bool>(
+      useSafeArea: true,
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) {
@@ -687,148 +552,192 @@ class _OrderNewPageState extends State<OrderNewPage> {
             productController.clear();
             return true;
           },
-          child: AlertDialog(
-            backgroundColor: Theme.of(context).cardColor,
-            title: Text(
-              product['name'] ?? 'Producto',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            content: SingleChildScrollView(
-              child: Padding(
-                padding: MediaQuery.of(context).viewInsets,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Divider(color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(height: CustomSpacer.medium),
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: IconButton(
-                            icon: Icon(Icons.remove),
-                            color: ColorTheme.error,
-                            onPressed: () {
-                              int current =
-                                  int.tryParse(quantityController.text) ?? 1;
-                              if (current > 1) {
-                                quantityController.text = (current - 1)
-                                    .toString();
-                              }
-                            },
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return AlertDialog(
+                backgroundColor: Theme.of(context).cardColor,
+                insetPadding: const EdgeInsets.all(16.0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+
+                title: Text(product['name'] ?? 'Producto', style: Theme.of(context).textTheme.bodyMedium),
+
+                content: SizedBox(
+                  width: 500,
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: MediaQuery.of(context).viewInsets,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Divider(color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(height: CustomSpacer.medium),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IconButton(
+                                  icon: const Icon(Icons.remove),
+                                  color: ColorTheme.error,
+                                  onPressed: () {
+                                    int current = int.tryParse(quantityController.text) ?? 1;
+                                    if (current > 1) {
+                                      setModalState(() {
+                                        quantityController.text = (current - 1).toString();
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: 120,
+                                child: TextfieldTheme(
+                                  controlador: quantityController,
+                                  texto: AppLocale.quantity.getString(context),
+                                  inputType: TextInputType.number,
+                                  onSubmitted: (_) => onSubmitted(dialogContext),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: IconButton(
+                                  icon: const Icon(Icons.add),
+                                  color: ColorTheme.success,
+                                  onPressed: () {
+                                    int current = int.tryParse(quantityController.text) ?? 1;
+                                    setModalState(() {
+                                      quantityController.text = (current + 1).toString();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        Expanded(
-                          child: TextfieldTheme(
-                            controlador: quantityController,
-                            texto: AppLocale.quantity.getString(context),
-                            inputType: TextInputType.number,
+                          const SizedBox(height: CustomSpacer.medium),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.local_offer_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      AppLocale.priceList.getString(context),
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '\$${r2local(priceList).toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: CustomSpacer.large),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 6,
+                                child: TextfieldTheme(
+                                  controlador: priceController,
+                                  pista: product['price'] == 0 ? product['price'].toString() : null,
+                                  texto: AppLocale.price.getString(context),
+                                  inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                      discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: CustomSpacer.small),
+                              Expanded(
+                                flex: 4,
+                                child: TextfieldTheme(
+                                  controlador: discountController,
+                                  texto: '% Desc.',
+                                  inputType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\-0-9\.,]'))],
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      if (val == '-') return;
+                                      final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                      priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: CustomSpacer.small),
+                          Divider(color: Colors.grey.withOpacity(0.3), thickness: 1, height: 24),
+
+                          SearchableDropdown<int>(
+                            labelText: AppLocale.taxType.getString(context),
+                            showSearchBox: false,
+                            options: taxOptions,
+                            value: selectedTaxID,
+                            onChanged: (value) {
+                              setModalState(() {
+                                selectedTaxID = value;
+                              });
+                            },
+                            displayItem: (item) => '${item['name']} (${item['rate']}%)',
+                          ),
+                          const SizedBox(height: CustomSpacer.medium),
+                          TextFieldComments(
+                            controlador: descriptionController,
+                            texto: AppLocale.descriptionOptional.getString(context),
                             onSubmitted: (_) => onSubmitted(dialogContext),
-                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: IconButton(
-                            icon: Icon(Icons.add),
-                            color: ColorTheme.success,
-                            onPressed: () {
-                              int current =
-                                  int.tryParse(quantityController.text) ?? 1;
-                              quantityController.text = (current + 1)
-                                  .toString();
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          AppLocale.priceList.getString(context),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        Text(
-                          r2local(priceList).toStringAsFixed(2),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.right,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    // Actual price field
-                    TextfieldTheme(
-                      controlador: priceController,
-                      pista: product['price'] == 0
-                          ? product['price'].toString()
-                          : null,
-                      texto: AppLocale.price.getString(context),
-                      inputType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: false,
+                        ],
                       ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
-                      ],
-                      onSubmitted: (_) => onSubmitted,
                     ),
-                    // Discount field (editable)
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextfieldTheme(
-                      controlador: discountController,
-                      texto: '% Descuento',
-                      inputType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: false,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
-                      ],
-                      onSubmitted: (_) => onSubmitted,
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    SearchableDropdown<int>(
-                      labelText: AppLocale.taxType.getString(context),
-                      showSearchBox: false,
-                      options: taxOptions,
-                      value: selectedTaxID,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedTaxID = value;
-                        });
-                      },
-                      displayItem: (item) =>
-                          '${item['name']} (${item['rate']}%)',
-                    ),
-                    const SizedBox(height: CustomSpacer.medium),
-                    TextFieldComments(
-                      controlador: descriptionController,
-                      texto: AppLocale.descriptionOptional.getString(context),
-                      onSubmitted: (_) => onSubmitted,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  productController.clear();
-                  Navigator.pop(dialogContext, false);
-                },
-                child: Text(AppLocale.cancel.getString(context)),
-              ),
-              ElevatedButton(
-                onPressed: () => onSubmitted(dialogContext),
-                child: Text(AppLocale.add.getString(context)),
-              ),
-            ],
+                actionsAlignment: MainAxisAlignment.center,
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      productController.clear();
+                      Navigator.pop(dialogContext, false);
+                    },
+                    child: Text(AppLocale.cancel.getString(context)),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () => onSubmitted(dialogContext),
+                    child: Text(index != null ? 'Editar' : AppLocale.add.getString(context)),
+                  ),
+                ],
+              );
+            },
           ),
         );
       },
     );
+
     if (result != true) {
       productController.clear();
     }
@@ -855,11 +764,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
 
     if (result['success'] != true) {
-      ToastMessage.show(
-        context: context,
-        message: result['message'] ?? 'No se pudo generar el QR',
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: result['message'] ?? 'No se pudo generar el QR', type: ToastType.failure);
       setState(() {
         isYappyLoading = false;
       });
@@ -905,11 +810,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                   }
                   closed = true;
                   t.cancel();
-                  ToastMessage.show(
-                    context: context,
-                    message: 'Pago recibido correctamente',
-                    type: ToastType.success,
-                  );
+                  ToastMessage.show(context: context, message: 'Pago recibido correctamente', type: ToastType.success);
                   if (Navigator.of(dialogContext).canPop()) {
                     Navigator.of(dialogContext).pop(true);
                   }
@@ -923,18 +824,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
               if (secondsLeft == 0) {
                 closed = true;
                 t.cancel();
-                await cancelYappyTransaction(
-                  transactionId: yappyTransactionId!,
-                );
+                await cancelYappyTransaction(transactionId: yappyTransactionId!);
                 setState(() {
                   yappyTransactionId = null;
                 });
 
-                ToastMessage.show(
-                  context: context,
-                  message: 'Pago cancelado o tiempo agotado',
-                  type: ToastType.failure,
-                );
+                ToastMessage.show(context: context, message: 'Pago cancelado o tiempo agotado', type: ToastType.failure);
                 if (Navigator.of(dialogContext).canPop()) {
                   Navigator.of(dialogContext).pop(false);
                 }
@@ -957,18 +852,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            topRight: Radius.circular(24),
-                          ),
+                          borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
                           color: Colors.white,
                         ),
-                        child: Center(
-                          child: Image.asset(
-                            'assets/img/yappyLogo.png',
-                            width: 240,
-                          ),
-                        ),
+                        child: Center(child: Image.asset('assets/img/yappyLogo.png', width: 240)),
                       ),
                       const SizedBox(height: CustomSpacer.xlarge),
 
@@ -977,60 +864,33 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         padding: const EdgeInsets.all(8),
                         width: 280,
                         // height: 280,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.white,
-                        ),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.white),
                         child: Center(
                           child: Column(
                             children: [
-                              QrImageView(
-                                data: hash,
-                                version: QrVersions.auto,
-                                size: 260,
-                              ),
+                              QrImageView(data: hash, version: QrVersions.auto, size: 260),
                               // Contador
-                              Text(
-                                'Tiempo restante: $mm:$ss',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
+                              Text('Tiempo restante: $mm:$ss', style: Theme.of(context).textTheme.titleMedium),
                               const SizedBox(height: 6),
                               // Id de transacción (pequeño)
-                              Text(
-                                'Transacción: $yappyTransactionId',
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
+                              Text('Transacción: $yappyTransactionId', style: Theme.of(context).textTheme.labelSmall),
                               const SizedBox(height: CustomSpacer.medium),
                               TextButton(
-                                style: TextButton.styleFrom(
-                                  backgroundColor: ColorTheme.error.withOpacity(
-                                    0.2,
-                                  ),
-                                ),
+                                style: TextButton.styleFrom(backgroundColor: ColorTheme.error.withOpacity(0.2)),
                                 onPressed: () {
                                   closed = true;
                                   ticker?.cancel();
-                                  cancelYappyTransaction(
-                                    transactionId: yappyTransactionId!,
-                                  );
+                                  cancelYappyTransaction(transactionId: yappyTransactionId!);
                                   setState(() {
                                     yappyTransactionId = null;
                                   });
 
-                                  ToastMessage.show(
-                                    context: context,
-                                    message: 'Pago cancelado o tiempo agotado',
-                                    type: ToastType.failure,
-                                  );
+                                  ToastMessage.show(context: context, message: 'Pago cancelado o tiempo agotado', type: ToastType.failure);
                                   Navigator.of(dialogContext).pop(false);
                                 },
                                 child: Text(
                                   AppLocale.cancel.getString(context),
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.red, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
@@ -1040,8 +900,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       const SizedBox(height: CustomSpacer.xlarge),
                       Text(
                         'Escanéalo desde Yappy App o desde Yappy en el App de tu banco',
-                        style: Theme.of(context).textTheme.headlineLarge
-                            ?.copyWith(color: Colors.white),
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: CustomSpacer.xlarge),
@@ -1063,9 +922,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       invoiceLines.removeAt(index);
       _recalculateSummary();
 
-      final totalPayment = paymentControllers.values
-          .map((c) => double.tryParse(c.text) ?? 0.0)
-          .fold(0.0, (sum, val) => sum + val);
+      final totalPayment = paymentControllers.values.map((c) => double.tryParse(c.text) ?? 0.0).fold(0.0, (sum, val) => sum + val);
 
       if (totalPayment > totalAmount) {
         for (var controller in paymentControllers.values) {
@@ -1085,30 +942,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
         title: Text(AppLocale.confirmPrintTicket.getString(context)),
         content: Text(AppLocale.printTicketMessage.getString(context)),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocale.no.getString(context)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocale.yes.getString(context)),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
         ],
       ),
     );
   }
 
-  Future<void> _createInvoice({
-    required List<Map<String, dynamic>> product,
-    required int bPartner,
-  }) async {
+  Future<void> _createInvoice({required List<Map<String, dynamic>> product, required int bPartner}) async {
     final String actionLabel = (() {
       try {
         final match = POS.documentActions.firstWhere(
           (a) => a['code'] == (selectedDocActionCode ?? ''),
-          orElse: () => POS.documentActions.isNotEmpty
-              ? POS.documentActions.first
-              : const {'name': ''},
+          orElse: () => POS.documentActions.isNotEmpty ? POS.documentActions.first : const {'name': ''},
         );
         return (match['name'] ?? '').toString();
       } catch (_) {
@@ -1126,30 +972,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
             widget.isRefund
                 ? AppLocale.confirmCompleteCreditNote
                       .getString(context)
-                      .replaceAll(
-                        '{action}',
-                        actionLabel.isEmpty
-                            ? AppLocale.process.getString(context)
-                            : actionLabel,
-                      )
+                      .replaceAll('{action}', actionLabel.isEmpty ? AppLocale.process.getString(context) : actionLabel)
                 : AppLocale.confirmCompleteOrder
                       .getString(context)
-                      .replaceAll(
-                        '{action}',
-                        actionLabel.isEmpty
-                            ? AppLocale.process.getString(context)
-                            : actionLabel,
-                      ),
+                      .replaceAll('{action}', actionLabel.isEmpty ? AppLocale.process.getString(context) : actionLabel),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(AppLocale.cancel.getString(context)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(AppLocale.confirm.getString(context)),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
+            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocale.confirm.getString(context))),
           ],
         );
       },
@@ -1160,13 +990,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
     setState(() => isSending = true);
     final List<Map<String, dynamic>> invoiceLine = product.map((item) {
       final double price = _r2(item['price'] ?? 0);
-      final double priceList = _r2(
-        item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0,
-      );
-      final double discount = _r2(
-        item['Discount'] ??
-            (priceList > 0 ? (100 * (1 - (price / priceList))) : 0),
-      );
+      final double priceList = _r2(item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0);
+      final double discount = _r2(item['Discount'] ?? (priceList > 0 ? (100 * (1 - (price / priceList))) : 0));
       return {
         'M_Product_ID': item['id'],
         'SKU': item['sku'],
@@ -1192,14 +1017,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
           final txt = entry.value.text.trim();
           final originalAmt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
 
-          final method = paymentMethods.firstWhere(
-            (m) => m['id'] == entry.key,
-            orElse: () => const <String, dynamic>{},
-          );
+          final method = paymentMethods.firstWhere((m) => m['id'] == entry.key, orElse: () => const <String, dynamic>{});
 
-          final bool isYappy =
-              (method['name']?.toString().toLowerCase().contains('yappy') ==
-              true);
+          final bool isYappy = (method['name']?.toString().toLowerCase().contains('yappy') == true);
           final bool isCash = (method['isCash'] == true);
 
           // Si es efectivo, restar el vuelto disponible (sin quedar negativo)
@@ -1208,15 +1028,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
             adjustedAmt = _r2(adjustedAmt - calculatedChange);
           }
 
-          final Map<String, dynamic> data = {
-            'PayAmt': adjustedAmt,
-            'C_POSTenderType_ID': entry.key,
-          };
+          final Map<String, dynamic> data = {'PayAmt': adjustedAmt, 'C_POSTenderType_ID': entry.key};
 
           // Si es Yappy y hay transacción, incluirla como RoutingNo
-          if (isYappy &&
-              yappyTransactionId != null &&
-              yappyTransactionId!.isNotEmpty) {
+          if (isYappy && yappyTransactionId != null && yappyTransactionId!.isNotEmpty) {
             data['RoutingNo'] = yappyTransactionId;
           }
 
@@ -1235,6 +1050,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       docAction: selectedDocActionCode ?? 'DR',
       isRefund: widget.isRefund,
       doctypeID: widget.doctypeID,
+      priceListID: bpartnerPriceListID,
     );
 
     if (result['success'] == true) {
@@ -1243,29 +1059,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: Theme.of(context).cardColor,
-            title: Text(
-              AppLocale.change.getString(context),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            title: Text(AppLocale.change.getString(context), style: Theme.of(context).textTheme.titleMedium),
             content: Text(
               '\$${calculatedChange.toStringAsFixed(2)}',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(AppLocale.close.getString(context)),
-              ),
-            ],
+            actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocale.close.getString(context)))],
           ),
         );
       }
 
-      final Map<String, dynamic>? order = await fetchOrderById(
-        orderId: int.parse(result['Record_ID'].toString()),
-      );
+      final Map<String, dynamic>? order = await fetchOrderById(orderId: int.parse(result['Record_ID'].toString()), context: context);
 
       if (order != null) {
         if (POS.isPOS == true) {
@@ -1278,9 +1082,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 final printers = await Printing.listPrinters();
                 final defaultPrinter = printers.firstWhere(
                   (p) => p.isDefault,
-                  orElse: () => printers.isNotEmpty
-                      ? printers.first
-                      : throw Exception('No hay impresoras disponibles'),
+                  orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
                 );
 
                 await Printing.directPrintPdf(
@@ -1290,34 +1092,23 @@ class _OrderNewPageState extends State<OrderNewPage> {
                   onLayout: (_) => pdfBytes,
                 );
               } catch (e) {
-                await Printing.sharePdf(
-                  bytes: pdfBytes,
-                  filename: 'Order_${order['DocumentNo']}.pdf',
-                );
+                await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
               }
             } catch (e) {
               try {
                 final pdfBytes = await generatePOSTicket(order);
-                await Printing.sharePdf(
-                  bytes: pdfBytes,
-                  filename: 'Order_${order['DocumentNo']}.pdf',
-                );
+                await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
               } catch (_) {}
             }
           }
         } else {
           //? Mostrar detalle de la orden [NO Es POS]
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)),
-          );
+          await Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)));
         }
       }
       ToastMessage.show(
         context: context,
-        message: widget.isRefund
-            ? AppLocale.creditNote.getString(context)
-            : AppLocale.newOrder.getString(context),
+        message: widget.isRefund ? AppLocale.creditNote.getString(context) : AppLocale.newOrder.getString(context),
         type: ToastType.success,
       );
 
@@ -1337,9 +1128,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     } else {
       ToastMessage.show(
         context: context,
-        message:
-            result['message'] ??
-            AppLocale.errorCompleteOrder.getString(context),
+        message: result['message'] ?? AppLocale.errorCompleteOrder.getString(context),
         type: ToastType.failure,
       );
     }
@@ -1353,17 +1142,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final price = (line['price'] ?? 0) as num;
       final quantity = (line['quantity'] ?? 1) as num;
       final taxID = line['C_Tax_ID'];
-      final tax = taxOptions.firstWhere(
-        (t) => t['id'] == taxID,
-        orElse: () => {},
-      );
+      final tax = taxOptions.firstWhere((t) => t['id'] == taxID, orElse: () => {});
       final rate = (tax['rate'] ?? 0).toDouble();
       final name = tax['name'] ?? AppLocale.noTax.getString(context);
 
       final taxAmount = price * quantity * (rate / 100);
-      groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] =
-          (groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] ?? 0) +
-          taxAmount;
+      groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] = (groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] ?? 0) + taxAmount;
     }
 
     return groupedTaxes;
@@ -1376,9 +1160,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 700
-        ? true
-        : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 700 ? true : false;
 
     return WillPopScope(
       onWillPop: () async {
@@ -1388,45 +1170,38 @@ class _OrderNewPageState extends State<OrderNewPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Row(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (isMobile == false) ...[
-                Text(
-                  '${AppLocale.user.getString(context)}: ${UserData.name} -',
-                ),
-                const SizedBox(width: 4),
-              ],
+              Text(
+                '${AppLocale.user.getString(context)}: ${UserData.name}',
+                style: TextStyle(fontSize: isMobile ? 12 : 14, fontWeight: FontWeight.w400, color: Colors.white70),
+                overflow: TextOverflow.ellipsis,
+              ),
               Text(
                 widget.orderName != null
-                    ? '${isMobile ? '' : '${widget.orderName!}: '}${docNoSequenceNumber != null ? "$docNoSequenceNumber" : ""}'
+                    ? '${widget.orderName!}: ${docNoSequenceNumber ?? ""}'
                     : widget.isRefund
                     ? '${AppLocale.creditNote.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}'
                     : '${AppLocale.newOrder.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}',
+                style: TextStyle(fontSize: isMobile ? 16 : 20, fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
-                maxLines: 1,
               ),
             ],
           ),
-          backgroundColor: widget.isRefund
-              ? Theme.of(context).colorScheme.error
-              : null,
+          backgroundColor: widget.isRefund ? Theme.of(context).colorScheme.error : null,
           actions: [
-            !isMobile
-                ? Padding(
-                    padding: const EdgeInsets.only(right: CustomSpacer.medium),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          CustomSpacer.medium,
-                        ),
-                        color: Colors.white,
-                      ),
-                      padding: EdgeInsets.all(CustomSpacer.small),
-                      child: Logo(width: 60),
-                    ),
-                  )
-                : SizedBox.shrink(),
+            Padding(
+              padding: const EdgeInsets.only(right: CustomSpacer.medium),
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(CustomSpacer.small), color: Colors.white),
+                  padding: EdgeInsets.all(isMobile ? 4.0 : CustomSpacer.small),
+                  child: Logo(width: isMobile ? 45 : 60),
+                ),
+              ),
+            ),
           ],
         ),
         drawer: MenuDrawer(),
@@ -1440,595 +1215,621 @@ class _OrderNewPageState extends State<OrderNewPage> {
               children: [
                 CustomContainer(
                   maxWidthContainer: 320,
-                  margin: EdgeInsets.only(top: 24),
+                  margin: const EdgeInsets.only(top: 24),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: CustomSpacer.medium),
-                          SearchableDropdown<int>(
-                            value: selectedSalesRepID,
-                            options: salesRep,
-                            showSearchBox: false,
-                            labelText: AppLocale.seller.getString(context),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedSalesRepID = value;
-                              });
-                            },
+                      const SizedBox(height: CustomSpacer.medium),
+                      SearchableDropdown<int>(
+                        value: selectedSalesRepID,
+                        options: salesRep,
+                        showSearchBox: false,
+                        labelText: AppLocale.seller.getString(context),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedSalesRepID = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: CustomSpacer.medium),
+                      if (isCustomerSearchLoading) ...[
+                        const SizedBox(height: 4),
+                        const LinearProgressIndicator(),
+                        const SizedBox(height: 8),
+                      ],
+
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: EdgeInsets.all(selectedBPartnerID == null ? 8.0 : 0.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: selectedBPartnerID == null ? Colors.red.shade400 : Colors.transparent,
+                            width: selectedBPartnerID == null ? 1.5 : 0,
                           ),
-                          const SizedBox(height: CustomSpacer.medium),
-                          if (isCustomerSearchLoading) ...[
-                            const SizedBox(height: 4),
-                            const LinearProgressIndicator(),
-                            const SizedBox(height: 8),
-                          ],
-                          Row(
-                            children: [
-                              Expanded(
-                                child: CustomSearchField(
-                                  options: bPartnerOptions,
-                                  labelText: AppLocale.customer.getString(
-                                    context,
-                                  ),
-                                  searchBy: "TaxID",
-                                  controller: clienteController,
-                                  showCreateButtonIfNotFound:
-                                      canShowCreateCustomerButton,
-                                  createAnchorTerm: createAnchorCustomerTerm,
-                                  fieldController: customerFieldController,
-                                  onSubmit: (_) =>
-                                      _loadBPartner(showLoadingIndicator: true),
-                                  onCreate: (value) async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => BPartnerNewPage(
-                                          bpartnerName: value,
-                                        ),
-                                      ),
-                                    );
-                                    if (result != null &&
-                                        result?['created'] == true) {
-                                      setState(() {
-                                        clienteController.text =
-                                            result['bpartner']['Name'];
-                                        selectedBPartnerID =
-                                            result['bpartner']['id'];
-                                      });
-
-                                      _loadBPartner(showLoadingIndicator: true);
-                                    }
-                                  },
-                                  onItemSelected: (item) {
-                                    setState(() {
-                                      selectedBPartnerID = item['id'];
-                                      _validateForm();
-                                    });
-                                  },
-                                  itemBuilder: (item) => Text(
-                                    '${item['TaxID'] ?? ''} - ${item['name'] ?? ''}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: CustomSpacer.small),
-                              IconButton(
-                                tooltip: AppLocale.refresh.getString(context),
-                                icon: const Icon(Icons.search),
-                                onPressed: () =>
-                                    _loadBPartner(showLoadingIndicator: true),
-                              ),
-                            ],
-                          ),
-                          if (selectedBPartnerID == null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                AppLocale.clientMustBeSelected.getString(
-                                  context,
-                                ),
-                                style: TextStyle(
-                                  color: ColorTheme.error,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: CustomSpacer.medium),
-                          isProductLoading
-                              ? _buildShimmerField()
-                              : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Segmento de selección de categorías con botón y modal
-                                    if (!isProductCategoryLoading)
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          TextButton.icon(
-                                            style: ButtonStyle(
-                                              textStyle:
-                                                  MaterialStateProperty.all(
-                                                    Theme.of(
-                                                      context,
-                                                    ).textTheme.bodyMedium,
-                                                  ),
-                                              backgroundColor:
-                                                  MaterialStateProperty.all(
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.secondary,
-                                                  ),
-                                              foregroundColor:
-                                                  MaterialStateProperty.all(
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.onSecondary,
-                                                  ),
-                                            ),
-                                            icon: const Icon(Icons.category),
-                                            label: Text(
-                                              AppLocale.categories.getString(
-                                                context,
-                                              ),
-                                            ),
-                                            onPressed: () async {
-                                              Set<int> tempSelected =
-                                                  Set<int>.from(
-                                                    selectedCategories,
-                                                  );
-                                              await showModalBottomSheet(
-                                                context: context,
-                                                isScrollControlled: true,
-                                                builder: (context) {
-                                                  return StatefulBuilder(
-                                                    builder: (context, setModalState) {
-                                                      return SafeArea(
-                                                        child: Padding(
-                                                          padding:
-                                                              MediaQuery.of(
-                                                                context,
-                                                              ).viewInsets,
-                                                          child: Container(
-                                                            constraints:
-                                                                const BoxConstraints(
-                                                                  maxHeight:
-                                                                      400,
-                                                                ),
-                                                            child: Column(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets.all(
-                                                                        16.0,
-                                                                      ),
-                                                                  child: Text(
-                                                                    AppLocale
-                                                                        .selectCategories
-                                                                        .getString(
-                                                                          context,
-                                                                        ),
-                                                                    style: Theme.of(
-                                                                      context,
-                                                                    ).textTheme.bodyLarge,
-                                                                  ),
-                                                                ),
-                                                                Expanded(
-                                                                  child: ListView.builder(
-                                                                    shrinkWrap:
-                                                                        true,
-                                                                    itemCount:
-                                                                        categpryOptions
-                                                                            .length,
-                                                                    itemBuilder:
-                                                                        (
-                                                                          context,
-                                                                          idx,
-                                                                        ) {
-                                                                          final cat =
-                                                                              categpryOptions[idx];
-                                                                          final isSelected = tempSelected.contains(
-                                                                            cat['id'],
-                                                                          );
-                                                                          return ListTile(
-                                                                            title: Text(
-                                                                              cat['name'],
-                                                                            ),
-                                                                            selected:
-                                                                                isSelected,
-                                                                            onTap: () {
-                                                                              setModalState(
-                                                                                () {
-                                                                                  if (isSelected) {
-                                                                                    tempSelected.remove(
-                                                                                      cat['id'],
-                                                                                    );
-                                                                                  } else {
-                                                                                    tempSelected.add(
-                                                                                      cat['id'],
-                                                                                    );
-                                                                                  }
-                                                                                },
-                                                                              );
-                                                                            },
-                                                                            trailing:
-                                                                                isSelected
-                                                                                ? const Icon(
-                                                                                    Icons.check,
-                                                                                    color: Colors.blue,
-                                                                                  )
-                                                                                : null,
-                                                                          );
-                                                                        },
-                                                                  ),
-                                                                ),
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets.all(
-                                                                        16.0,
-                                                                      ),
-                                                                  child: Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .end,
-                                                                    children: [
-                                                                      TextButton(
-                                                                        onPressed: () {
-                                                                          Navigator.pop(
-                                                                            context,
-                                                                          );
-                                                                        },
-                                                                        child: Text(
-                                                                          AppLocale.cancel.getString(
-                                                                            context,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            8,
-                                                                      ),
-                                                                      ElevatedButton(
-                                                                        onPressed: () {
-                                                                          Navigator.pop(
-                                                                            context,
-                                                                            tempSelected,
-                                                                          );
-                                                                        },
-                                                                        child: Text(
-                                                                          AppLocale.apply.getString(
-                                                                            context,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                              ).then((result) {
-                                                if (result != null &&
-                                                    result is Set<int>) {
-                                                  setState(() {
-                                                    selectedCategories =
-                                                        Set<int>.from(result);
-                                                  });
-                                                  _loadProduct(
-                                                    showLoadingIndicator: true,
-                                                  );
-                                                }
-                                              });
-                                            },
-                                          ),
-                                          // Chips de categorías seleccionadas
-                                          if (selectedCategories.isNotEmpty)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 8.0,
-                                              ),
-                                              child: Wrap(
-                                                spacing: 6,
-                                                runSpacing: 6,
-                                                children: selectedCategories.map(
-                                                  (catId) {
-                                                    final cat = categpryOptions
-                                                        .firstWhere(
-                                                          (c) =>
-                                                              c['id'] == catId,
-                                                          orElse: () =>
-                                                              <
-                                                                String,
-                                                                dynamic
-                                                              >{},
-                                                        );
-                                                    final catName =
-                                                        cat.isNotEmpty
-                                                        ? cat['name']
-                                                        : 'Categoría';
-                                                    return Chip(
-                                                      label: Text(catName),
-                                                      onDeleted: () {
-                                                        setState(() {
-                                                          selectedCategories
-                                                              .remove(catId);
-                                                        });
-                                                        _loadProduct(
-                                                          showLoadingIndicator:
-                                                              true,
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                ).toList(),
-                                              ),
-                                            ),
-                                          const SizedBox(
-                                            height: CustomSpacer.medium,
-                                          ),
-                                        ],
-                                      ),
-                                    // Campo de producto
-                                    if (isProductSearchLoading) ...[
-                                      const SizedBox(height: 4),
-                                      const LinearProgressIndicator(),
-                                      const SizedBox(height: 8),
-                                    ],
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: CustomSearchField(
-                                            options: productOptions,
-                                            controller: productController,
-                                            labelText: AppLocale.product
-                                                .getString(context),
-                                            searchBy: 'UPC',
-                                            fieldController:
-                                                productFieldController,
-                                            showCreateButtonIfNotFound: true,
-                                            onItemSelected: (item) {
-                                              // Si estamos en modo POS (hay cPosID), agregar directo sin mostrar el diálogo.
-                                              if (POS.cPosID != null) {
-                                                final int? selectedTaxID =
-                                                    (item['C_Tax_ID'] ??
-                                                            item['tax']?['id'] ??
-                                                            selectedTax?['id'])
-                                                        as int?;
-
-                                                final double priceActual = _r2(
-                                                  (item['price'] ??
-                                                          item['Price'] ??
-                                                          0)
-                                                      .toDouble(),
-                                                );
-                                                final double priceList = _r2(
-                                                  (item['PriceList'] ??
-                                                          item['priceList'] ??
-                                                          item['price'] ??
-                                                          0)
-                                                      .toDouble(),
-                                                );
-
-                                                final double discount =
-                                                    priceList > 0
-                                                    ? _r2(
-                                                        100 *
-                                                            (1 -
-                                                                (priceActual /
-                                                                    priceList)),
-                                                      )
-                                                    : 0.0;
-
-                                                setState(() {
-                                                  invoiceLines.add({
-                                                    ...item,
-                                                    'quantity': 1,
-                                                    'price': priceActual,
-                                                    'C_Tax_ID': selectedTaxID,
-                                                    'Description':
-                                                        item['Description'] ??
-                                                        '',
-                                                    'PriceList': priceList,
-                                                    'Discount': discount,
-                                                  });
-                                                });
-
-                                                _recalculateSummary();
-                                                productController.clear();
-                                                _validateForm();
-
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                      if (mounted) {
-                                                        productFieldController
-                                                            .requestFocus();
-                                                      }
-                                                    });
-                                              } else {
-                                                _showQuantityDialog(item);
-                                              }
-                                            },
-                                            onSubmit: (_) => _loadProduct(
-                                              showLoadingIndicator: true,
-                                            ),
-                                            itemBuilder: (item) => Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
+                          color: selectedBPartnerID == null ? Colors.red.withOpacity(0.02) : Colors.transparent,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: CustomSearchField(
+                                    options: bPartnerOptions,
+                                    labelText: AppLocale.customer.getString(context),
+                                    searchBy: "TaxID",
+                                    controller: clienteController,
+                                    showCreateButtonIfNotFound: canShowCreateCustomerButton,
+                                    createAnchorTerm: createAnchorCustomerTerm,
+                                    fieldController: customerFieldController,
+                                    onSubmit: (_) => _loadBPartner(showLoadingIndicator: true),
+                                    onCreate: (value) async {
+                                      if (selectedBPartnerID != null && invoiceLines.isNotEmpty) {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                            backgroundColor: Theme.of(context).cardColor,
+                                            title: const Column(
                                               children: [
-                                                Expanded(
-                                                  child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        '${item['name'] ?? ''}',
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: Theme.of(
-                                                          context,
-                                                        ).textTheme.bodySmall,
-                                                      ),
-                                                      if (item['value'] != null)
-                                                        Text(
-                                                          'Cod: ${item['value'] ?? ''}',
-                                                          maxLines: 2,
-                                                          style: Theme.of(
-                                                            context,
-                                                          ).textTheme.bodySmall,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                      if (POS.isPOS)
-                                                        Text(
-                                                          item['QtyAvailable'] !=
-                                                                  null
-                                                              ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}'
-                                                              : '${AppLocale.exist.getString(context)}: 0',
-                                                          style: Theme.of(context)
-                                                              .textTheme
-                                                              .bodySmall
-                                                              ?.copyWith(
-                                                                fontStyle:
-                                                                    FontStyle
-                                                                        .italic,
-                                                              ),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ),
+                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                SizedBox(height: 10),
                                                 Text(
-                                                  '\$${item['price'] ?? '0.00'}',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyMedium
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
+                                                  '¿Cambiar cliente?',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                                                 ),
                                               ],
                                             ),
+                                            content: const Text(
+                                              'Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(ctx, false),
+                                                child: Text(AppLocale.no.getString(context)),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.redAccent,
+                                                  foregroundColor: Colors.white,
+                                                ),
+                                                onPressed: () => Navigator.pop(ctx, true),
+                                                child: Text(AppLocale.yes.getString(context)),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        const SizedBox(
-                                          width: CustomSpacer.small,
-                                        ),
-                                        IconButton(
-                                          tooltip: AppLocale.refresh.getString(
-                                            context,
+                                        );
+                                        if (confirm != true) return;
+                                        setState(() {
+                                          invoiceLines.clear();
+                                          _recalculateSummary();
+                                        });
+                                      }
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => BPartnerNewPage(bpartnerName: value)),
+                                      );
+                                      if (result != null && result?['created'] == true) {
+                                        setState(() {
+                                          clienteController.text = result['bpartner']['Name'];
+                                          selectedBPartnerID = result['bpartner']['id'];
+                                          hasLocationBPartner = true;
+                                        });
+                                        _loadBPartner(showLoadingIndicator: true);
+                                      }
+                                    },
+                                    onItemSelected: (item) async {
+                                      if (selectedBPartnerID != null && selectedBPartnerID != item['id'] && invoiceLines.isNotEmpty) {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                            backgroundColor: Theme.of(context).cardColor,
+                                            title: Column(
+                                              children: [
+                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                SizedBox(height: 10),
+                                                Text(
+                                                  AppLocale.changeClient.getString(context),
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                ),
+                                              ],
+                                            ),
+                                            content: Text(
+                                              AppLocale.changeClientWarning.getString(context),
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(ctx, false),
+                                                child: Text(AppLocale.no.getString(context)),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.redAccent,
+                                                  foregroundColor: Colors.white,
+                                                ),
+                                                onPressed: () => Navigator.pop(ctx, true),
+                                                child: Text(AppLocale.yes.getString(context)),
+                                              ),
+                                            ],
                                           ),
-                                          icon: const Icon(Icons.search),
-                                          onPressed: () => _loadProduct(
-                                            showLoadingIndicator: true,
+                                        );
+                                        if (confirm != true) {
+                                          final prevCustomer = bPartnerOptions.firstWhere(
+                                            (c) => c['id'] == selectedBPartnerID,
+                                            orElse: () => {'name': ''},
+                                          );
+                                          setState(() => clienteController.text = prevCustomer['name']);
+                                          return;
+                                        }
+                                        setState(() {
+                                          invoiceLines.clear();
+                                          _recalculateSummary();
+                                        });
+                                      }
+                                      setState(() {
+                                        bpartnerPriceListID = item['M_PriceList_ID'];
+                                        selectedBPartnerID = item['id'];
+                                        hasLocationBPartner = item['C_BPartner_Location_ID'] != null;
+                                        if (POS.priceListID != bpartnerPriceListID) {
+                                          _loadProduct(showLoadingIndicator: true);
+                                        }
+                                        _validateForm();
+                                      });
+                                    },
+                                    itemBuilder: (item) => Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(item['name'], style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                                        if (item['TaxID'] != null)
+                                          Text(
+                                            item['TaxID'],
+                                            style: Theme.of(context).textTheme.bodyMedium,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
                                       ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: CustomSpacer.small),
+
+                                // --- BOTÓN DINÁMICO PARA BUSCAR Y BORRAR ---
+                                if (selectedBPartnerID != null)
+                                  IconButton(
+                                    tooltip: 'Quitar cliente',
+                                    icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                                    onPressed: () async {
+                                      if (invoiceLines.isNotEmpty) {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                            backgroundColor: Theme.of(context).cardColor,
+                                            title: const Column(
+                                              children: [
+                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                SizedBox(height: 10),
+                                                Text(
+                                                  '¿Quitar cliente?',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                ),
+                                              ],
+                                            ),
+                                            content: const Text(
+                                              'Al quitar el cliente, se eliminarán los productos agregados a la orden.\n¿Desea continuar?',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(ctx, false),
+                                                child: Text(AppLocale.no.getString(context)),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.redAccent,
+                                                  foregroundColor: Colors.white,
+                                                ),
+                                                onPressed: () => Navigator.pop(ctx, true),
+                                                child: Text(AppLocale.yes.getString(context)),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm != true) return;
+                                      }
+                                      setState(() {
+                                        selectedBPartnerID = null;
+                                        clienteController.clear();
+                                        invoiceLines.clear();
+                                        _recalculateSummary();
+                                        _validateForm();
+                                      });
+                                    },
+                                  )
+                                else
+                                  IconButton(
+                                    tooltip: AppLocale.refresh.getString(context),
+                                    icon: const Icon(Icons.search),
+                                    onPressed: () => _loadBPartner(showLoadingIndicator: true),
+                                  ),
+                              ],
+                            ),
+
+                            if (selectedBPartnerID == null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 16),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        AppLocale.selectCustomer.getString(context),
+                                        style: TextStyle(color: Colors.red.shade400, fontSize: 13, fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ],
                                 ),
-                          if (invoiceLines.isNotEmpty) ...[
-                            const SizedBox(height: CustomSpacer.large),
-                            Text(
-                              AppLocale.productSummary.getString(context),
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: CustomSpacer.medium),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: invoiceLines.asMap().entries.map((
-                                entry,
-                              ) {
-                                final index = entry.key;
-                                final line = entry.value;
-                                final tax = taxOptions.firstWhere(
-                                  (t) => t['id'] == line['C_Tax_ID'],
-                                  orElse: () => {},
-                                );
-                                final taxRate = tax['rate'] != null
-                                    ? '${tax['rate']}%'
-                                    : AppLocale.noTax.getString(context);
-                                return Tooltip(
-                                  message: line['name'],
-                                  child: InputChip(
-                                    onPressed: () =>
-                                        _showQuantityDialog(line, index: index),
-                                    deleteIcon: const Icon(Icons.close),
-                                    onDeleted: () => _deleteLine(index),
-                                    deleteIconColor: ColorTheme.error,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
+                              ),
+
+                            if (hasLocationBPartner == false && selectedBPartnerID != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 16),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        AppLocale.customerNoAddressError.getString(context),
+                                        style: TextStyle(color: Colors.red.shade400, fontSize: 13, fontWeight: FontWeight.bold),
+                                      ),
                                     ),
-                                    label: Column(
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: CustomSpacer.medium),
+
+                      // --- ANIMACIÓN PARA PRODUCTOS ---
+                      AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 400),
+                        crossFadeState: (selectedBPartnerID == null || hasLocationBPartner == false)
+                            ? CrossFadeState.showFirst
+                            : CrossFadeState.showSecond,
+                        firstChild: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.withOpacity(0.3), style: BorderStyle.solid),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.shopping_cart_outlined, size: 48, color: Colors.grey.withOpacity(0.6)),
+                              const SizedBox(height: 12),
+                              Text(
+                                AppLocale.selectValidCustomerForProducts.getString(context),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                        secondChild: isProductLoading
+                            ? _buildShimmerField()
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (!isProductCategoryLoading)
+                                    Column(
                                       mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          line['name'],
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                        if (line['Description'] != null &&
-                                            line['Description']
-                                                .toString()
-                                                .isNotEmpty)
-                                          Text(
-                                            '${line['Description']}',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.labelSmall,
+                                        TextButton.icon(
+                                          style: ButtonStyle(
+                                            textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium),
+                                            backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary),
+                                            foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary),
                                           ),
-                                        Text(
-                                          '${line['quantity']} x \$${line['price']} + $taxRate',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall,
+                                          icon: const Icon(Icons.category),
+                                          label: Text(AppLocale.categories.getString(context)),
+                                          onPressed: () async {
+                                            Set<int> tempSelected = Set<int>.from(selectedCategories);
+                                            await showModalBottomSheet(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              builder: (context) {
+                                                return StatefulBuilder(
+                                                  builder: (context, setModalState) {
+                                                    return SafeArea(
+                                                      child: Padding(
+                                                        padding: MediaQuery.of(context).viewInsets,
+                                                        child: Container(
+                                                          constraints: const BoxConstraints(maxHeight: 400),
+                                                          child: Column(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              Padding(
+                                                                padding: const EdgeInsets.all(16.0),
+                                                                child: Text(
+                                                                  AppLocale.selectCategories.getString(context),
+                                                                  style: Theme.of(context).textTheme.bodyLarge,
+                                                                ),
+                                                              ),
+                                                              Expanded(
+                                                                child: ListView.builder(
+                                                                  shrinkWrap: true,
+                                                                  itemCount: categpryOptions.length,
+                                                                  itemBuilder: (context, idx) {
+                                                                    final cat = categpryOptions[idx];
+                                                                    final isSelected = tempSelected.contains(cat['id']);
+                                                                    return ListTile(
+                                                                      title: Text(cat['name']),
+                                                                      selected: isSelected,
+                                                                      onTap: () {
+                                                                        setModalState(() {
+                                                                          if (isSelected) {
+                                                                            tempSelected.remove(cat['id']);
+                                                                          } else {
+                                                                            tempSelected.add(cat['id']);
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                      trailing: isSelected
+                                                                          ? const Icon(Icons.check, color: Colors.blue)
+                                                                          : null,
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ),
+                                                              Padding(
+                                                                padding: const EdgeInsets.all(16.0),
+                                                                child: Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.end,
+                                                                  children: [
+                                                                    TextButton(
+                                                                      onPressed: () {
+                                                                        Navigator.pop(context);
+                                                                      },
+                                                                      child: Text(AppLocale.cancel.getString(context)),
+                                                                    ),
+                                                                    const SizedBox(width: 8),
+                                                                    ElevatedButton(
+                                                                      onPressed: () {
+                                                                        Navigator.pop(context, tempSelected);
+                                                                      },
+                                                                      child: Text(AppLocale.apply.getString(context)),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            ).then((result) {
+                                              if (result != null && result is Set<int>) {
+                                                setState(() {
+                                                  selectedCategories = Set<int>.from(result);
+                                                });
+                                                _loadProduct(showLoadingIndicator: true);
+                                              }
+                                            });
+                                          },
                                         ),
+                                        if (selectedCategories.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 8.0),
+                                            child: Wrap(
+                                              spacing: 6,
+                                              runSpacing: 6,
+                                              children: selectedCategories.map((catId) {
+                                                final cat = categpryOptions.firstWhere(
+                                                  (c) => c['id'] == catId,
+                                                  orElse: () => <String, dynamic>{},
+                                                );
+                                                final catName = cat.isNotEmpty ? cat['name'] : 'Categoría';
+                                                return Chip(
+                                                  label: Text(catName),
+                                                  onDeleted: () {
+                                                    setState(() {
+                                                      selectedCategories.remove(catId);
+                                                    });
+                                                    _loadProduct(showLoadingIndicator: true);
+                                                  },
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                        const SizedBox(height: CustomSpacer.medium),
                                       ],
                                     ),
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).cardColor,
+                                  if (isProductSearchLoading) ...[
+                                    const SizedBox(height: 4),
+                                    const LinearProgressIndicator(),
+                                    const SizedBox(height: 8),
+                                  ],
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: CustomSearchField(
+                                          options: productOptions,
+                                          controller: productController,
+                                          labelText: AppLocale.product.getString(context),
+                                          searchBy: 'UPC',
+                                          fieldController: productFieldController,
+
+                                          // --- CREACION DE PRODUCTOS DESDE BUSQUEDA ---
+                                          showCreateButtonIfNotFound: canShowCreateProductButton,
+                                          createAnchorTerm: createAnchorProductTerm,
+                                          onCreate: (value) async {
+                                            final result = await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (_) => ProductNewPage(productName: value)),
+                                            );
+                                            if (result != null && result['created'] == true) {
+                                              setState(() {
+                                                productController.text = result['product']['name'] ?? result['product']['Name'] ?? value;
+                                              });
+                                              _loadProduct(showLoadingIndicator: true);
+                                            }
+                                          },
+
+                                          onItemSelected: (item) {
+                                            if (POS.cPosID != null) {
+                                              final int? selectedTaxID =
+                                                  (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
+                                              final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
+                                              final double priceList = _r2(
+                                                (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble(),
+                                              );
+                                              final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
+                                              setState(() {
+                                                invoiceLines.add({
+                                                  ...item,
+                                                  'quantity': 1,
+                                                  'price': priceActual,
+                                                  'C_Tax_ID': selectedTaxID,
+                                                  'Description': item['Description'] ?? '',
+                                                  'PriceList': priceList,
+                                                  'Discount': discount,
+                                                });
+                                              });
+                                              _recalculateSummary();
+                                              productController.clear();
+                                              _validateForm();
+                                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                                if (mounted) {
+                                                  productFieldController.requestFocus();
+                                                }
+                                              });
+                                            } else {
+                                              _showQuantityDialog(item);
+                                            }
+                                          },
+                                          onSubmit: (_) => _loadProduct(showLoadingIndicator: true),
+                                          itemBuilder: (item) => Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      '${item['name'] ?? ''}',
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: Theme.of(context).textTheme.bodySmall,
+                                                    ),
+                                                    if (item['value'] != null)
+                                                      Text(
+                                                        'Cod: ${item['value'] ?? ''}',
+                                                        maxLines: 2,
+                                                        style: Theme.of(context).textTheme.bodySmall,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    if (POS.isPOS)
+                                                      Text(
+                                                        item['QtyAvailable'] != null
+                                                            ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}'
+                                                            : '${AppLocale.exist.getString(context)}: 0',
+                                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Text(
+                                                '\$${item['price'] ?? '0.00'}',
+                                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: CustomSpacer.small),
+                                      IconButton(
+                                        tooltip: AppLocale.refresh.getString(context),
+                                        icon: const Icon(Icons.search),
+                                        onPressed: () => _loadProduct(showLoadingIndicator: true),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ],
+                                  if (invoiceLines.isNotEmpty) ...[
+                                    const SizedBox(height: CustomSpacer.large),
+                                    Text(AppLocale.productSummary.getString(context), style: Theme.of(context).textTheme.titleLarge),
+                                    const SizedBox(height: CustomSpacer.medium),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: invoiceLines.asMap().entries.map((entry) {
+                                        final index = entry.key;
+                                        final line = entry.value;
+                                        final tax = taxOptions.firstWhere((t) => t['id'] == line['C_Tax_ID'], orElse: () => {});
+                                        final taxRate = tax['rate'] != null ? '${tax['rate']}%' : AppLocale.noTax.getString(context);
+                                        return Tooltip(
+                                          message: line['name'],
+                                          child: InputChip(
+                                            onPressed: () => _showQuantityDialog(line, index: index),
+                                            deleteIcon: const Icon(Icons.close),
+                                            onDeleted: () => _deleteLine(index),
+                                            deleteIconColor: ColorTheme.error,
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            label: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  line['name'],
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                                ),
+                                                if (line['Description'] != null && line['Description'].toString().isNotEmpty)
+                                                  Text('${line['Description']}', style: Theme.of(context).textTheme.labelSmall),
+                                                Text(
+                                                  '${line['quantity']} x \$${line['price']} + $taxRate',
+                                                  style: Theme.of(context).textTheme.bodySmall,
+                                                ),
+                                              ],
+                                            ),
+                                            backgroundColor: Theme.of(context).cardColor,
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ],
+                              ),
                       ),
                     ],
                   ),
                 ),
-                if (POSTenderType.isMultiPayment)
+                if (POS.isPOS && POSTenderType.isMultiPayment)
                   CustomContainer(
                     maxWidthContainer: 320,
                     margin: EdgeInsets.only(top: 24),
@@ -2038,192 +1839,92 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              AppLocale.paymentMethods.getString(context),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
+                            Text(AppLocale.paymentMethods.getString(context), style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: 12),
                             if (isPaymentMethodsLoading)
                               _buildShimmerField()
                             else ...[
                               ...paymentMethods.map((method) {
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 6,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 6),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
                                           Expanded(
                                             child: TextfieldTheme(
-                                              controlador:
-                                                  paymentControllers[method['id']],
+                                              controlador: paymentControllers[method['id']],
                                               texto: method['name'],
                                               inputType: TextInputType.number,
-                                              inputFormatters: [
-                                                NumericTextFormatterWithDecimal(),
-                                              ],
-                                              readOnly: _lockedPayments
-                                                  .contains(method['id']),
+                                              inputFormatters: [NumericTextFormatterWithDecimal()],
+                                              readOnly: _lockedPayments.contains(method['id']),
                                               onChanged: (_) => _validateForm(),
                                             ),
                                           ),
                                           const SizedBox(width: 8),
                                           IconButton(
-                                            icon: const Icon(
-                                              Icons.attach_money_rounded,
-                                            ),
-                                            tooltip:
-                                                'Llenar con el máximo disponible',
+                                            icon: const Icon(Icons.attach_money_rounded),
+                                            tooltip: 'Llenar con el máximo disponible',
                                             onPressed: () {
-                                              final currentSum =
-                                                  paymentControllers.entries
-                                                      .where(
-                                                        (e) =>
-                                                            e.key !=
-                                                            method['id'],
-                                                      )
-                                                      .map(
-                                                        (e) =>
-                                                            double.tryParse(
-                                                              e.value.text,
-                                                            ) ??
-                                                            0.0,
-                                                      )
-                                                      .fold(
-                                                        0.0,
-                                                        (a, b) => a + b,
-                                                      );
+                                              final currentSum = paymentControllers.entries
+                                                  .where((e) => e.key != method['id'])
+                                                  .map((e) => double.tryParse(e.value.text) ?? 0.0)
+                                                  .fold(0.0, (a, b) => a + b);
 
-                                              final remaining = _r2(
-                                                (totalAmount - currentSum)
-                                                    .clamp(0.0, totalAmount),
-                                              );
-                                              paymentControllers[method['id']]
-                                                  ?.text = remaining
-                                                  .toStringAsFixed(2);
+                                              final remaining = _r2((totalAmount - currentSum).clamp(0.0, totalAmount));
+                                              paymentControllers[method['id']]?.text = remaining.toStringAsFixed(2);
                                               _validateForm();
                                             },
                                           ),
-                                          if (method['name']
-                                                  .toString()
-                                                  .toLowerCase()
-                                                  .contains('yappy') &&
+                                          if (method['name'].toString().toLowerCase().contains('yappy') &&
                                               isYappyConfigAvailable &&
-                                              paymentControllers[method['id']]
-                                                      ?.text !=
-                                                  null &&
-                                              (double.tryParse(
-                                                        paymentControllers[method['id']]
-                                                                ?.text ??
-                                                            '0',
-                                                      ) ??
-                                                      0) >
-                                                  0 &&
+                                              paymentControllers[method['id']]?.text != null &&
+                                              (double.tryParse(paymentControllers[method['id']]?.text ?? '0') ?? 0) > 0 &&
                                               yappyTransactionId == null)
                                             isYappyLoading
-                                                ? SizedBox(
-                                                    width: 24,
-                                                    height: 24,
-                                                    child:
-                                                        CircularProgressIndicator(),
-                                                  )
+                                                ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator())
                                                 : IconButton(
-                                                    icon: const Icon(
-                                                      Icons.qr_code,
-                                                    ),
-                                                    tooltip:
-                                                        'Mostrar código QR',
+                                                    icon: const Icon(Icons.qr_code),
+                                                    tooltip: 'Mostrar código QR',
                                                     onPressed: () {
                                                       _showYappyQRDialog(
-                                                        subTotal: double.parse(
-                                                          paymentControllers[method['id']]
-                                                                  ?.text
-                                                                  .toString() ??
-                                                              '0',
-                                                        ),
+                                                        subTotal: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'),
                                                         totalTax: 0,
-                                                        total: double.parse(
-                                                          paymentControllers[method['id']]
-                                                                  ?.text
-                                                                  .toString() ??
-                                                              '0',
-                                                        ),
+                                                        total: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'),
                                                         methodId: method['id'],
                                                       );
                                                     },
                                                   ),
                                           if (yappyTransactionId != null &&
-                                              method['name']
-                                                  .toString()
-                                                  .toLowerCase()
-                                                  .contains('yappy') &&
-                                              paymentControllers[method['id']]
-                                                      ?.text !=
-                                                  null &&
-                                              (paymentControllers[method['id']]
-                                                          ?.text ??
-                                                      '0.0') !=
-                                                  '0.0')
+                                              method['name'].toString().toLowerCase().contains('yappy') &&
+                                              paymentControllers[method['id']]?.text != null &&
+                                              (paymentControllers[method['id']]?.text ?? '0.0') != '0.0')
                                             if (yappyTransactionId != null)
                                               IconButton(
                                                 icon: Icon(Icons.cancel),
                                                 color: ColorTheme.error,
-                                                tooltip:
-                                                    'Anular transacción Yappy',
+                                                tooltip: 'Anular transacción Yappy',
                                                 onPressed: () async {
                                                   final confirm = await showDialog(
                                                     context: context,
                                                     builder: (context) {
                                                       return AlertDialog(
-                                                        backgroundColor:
-                                                            Theme.of(
-                                                              context,
-                                                            ).cardColor,
-                                                        title: Text(
-                                                          AppLocale
-                                                              .cancelYappyTransaction
-                                                              .getString(
-                                                                context,
-                                                              ),
-                                                        ),
+                                                        backgroundColor: Theme.of(context).cardColor,
+                                                        title: Text(AppLocale.cancelYappyTransaction.getString(context)),
                                                         actions: [
                                                           TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  context,
-                                                                  false,
-                                                                ),
-                                                            child: Text(
-                                                              AppLocale.cancel
-                                                                  .getString(
-                                                                    context,
-                                                                  ),
-                                                            ),
+                                                            onPressed: () => Navigator.pop(context, false),
+                                                            child: Text(AppLocale.cancel.getString(context)),
                                                           ),
                                                           ElevatedButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  context,
-                                                                  true,
-                                                                ),
+                                                            onPressed: () => Navigator.pop(context, true),
                                                             child: Text(
-                                                              AppLocale.confirm
-                                                                  .getString(
-                                                                    context,
-                                                                  ),
-                                                              style: Theme.of(context)
-                                                                  .textTheme
-                                                                  .bodySmall
-                                                                  ?.copyWith(
-                                                                    color: Theme.of(
-                                                                      context,
-                                                                    ).colorScheme.surface,
-                                                                  ),
+                                                              AppLocale.confirm.getString(context),
+                                                              style: Theme.of(
+                                                                context,
+                                                              ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
                                                             ),
                                                           ),
                                                         ],
@@ -2233,22 +1934,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
                                                   if (confirm != true) return;
 
-                                                  final paid =
-                                                      await cancelYappyTransaction(
-                                                        transactionId:
-                                                            yappyTransactionId!,
-                                                      );
+                                                  final paid = await cancelYappyTransaction(transactionId: yappyTransactionId!);
                                                   if (paid) {
                                                     if (mounted) {
-                                                      paymentControllers[method['id']]
-                                                              ?.text =
-                                                          '0.0';
+                                                      paymentControllers[method['id']]?.text = '0.0';
                                                       yappyTransactionId = null;
                                                       _validateForm();
                                                       ToastMessage.show(
                                                         context: context,
-                                                        message:
-                                                            'Pago anulado correctamente',
+                                                        message: 'Pago anulado correctamente',
                                                         type: ToastType.help,
                                                       );
                                                     }
@@ -2257,23 +1951,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                               ),
                                         ],
                                       ),
-                                      if (calculatedChange > 0 &&
-                                          method['isCash'])
+                                      if (calculatedChange > 0 && method['isCash'])
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 2,
-                                            bottom: 4,
-                                          ),
+                                          padding: const EdgeInsets.only(top: 2, bottom: 4),
                                           child: Text(
                                             'Vuelto: \$${calculatedChange.toStringAsFixed(2)}',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
-                                                ),
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
                                           ),
                                         ),
                                     ],
@@ -2283,19 +1968,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             ],
                           ],
                         ),
-                        if (!_isInvoiceValid &&
-                            clientSelected &&
-                            products.isNotEmpty)
+                        if (!_isInvoiceValid && clientSelected && products.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
-                              AppLocale.paymentSumMustEqualTotal.getString(
-                                context,
-                              ),
-                              style: TextStyle(
-                                color: ColorTheme.error,
-                                fontSize: 13,
-                              ),
+                              AppLocale.paymentSumMustEqualTotal.getString(context),
+                              style: TextStyle(color: ColorTheme.error, fontSize: 13),
                             ),
                           ),
                       ],
@@ -2308,54 +1986,28 @@ class _OrderNewPageState extends State<OrderNewPage> {
                   margin: EdgeInsets.only(top: 24, bottom: 36),
                   child: Column(
                     children: [
-                      Center(
-                        child: Text(
-                          AppLocale.summary.getString(context),
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
+                      Center(child: Text(AppLocale.summary.getString(context), style: Theme.of(context).textTheme.titleLarge)),
                       const SizedBox(height: CustomSpacer.medium),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            AppLocale.subtotal.getString(context),
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          Text(
-                            '\$${subtotal.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
+                          Text(AppLocale.subtotal.getString(context), style: Theme.of(context).textTheme.bodyMedium),
+                          Text('\$${subtotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
                         ],
                       ),
                       const SizedBox(height: CustomSpacer.medium),
-                      if (invoiceLines.isNotEmpty &&
-                          getTotalTaxAmount() > 0) ...[
+                      if (invoiceLines.isNotEmpty && getTotalTaxAmount() > 0) ...[
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              AppLocale.taxes.getString(context),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
+                            Text(AppLocale.taxes.getString(context), style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: CustomSpacer.small),
                             ...getGroupedTaxTotals().entries.map(
                               (entry) => Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    entry.key,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  ),
-                                  Text(
-                                    '\$${entry.value.toStringAsFixed(2)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  ),
+                                  Text(entry.key, style: Theme.of(context).textTheme.bodyMedium),
+                                  Text('\$${entry.value.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
                                 ],
                               ),
                             ),
@@ -2365,13 +2017,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
                               children: [
                                 Text(
                                   AppLocale.totalTaxes.getString(context),
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
                                   '\$${getTotalTaxAmount().toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -2382,31 +2032,28 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            AppLocale.total.getString(context),
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          Text(
-                            '\$${total}',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
+                          Text(AppLocale.total.getString(context), style: Theme.of(context).textTheme.titleLarge),
+                          Text('\$$total', style: Theme.of(context).textTheme.titleLarge),
                         ],
                       ),
                       const Divider(),
                       const SizedBox(height: CustomSpacer.xlarge),
-                      SearchableDropdown<String>(
-                        options: POS.documentActions,
-                        idKey: 'code',
-                        nameKey: 'name',
-                        labelText: AppLocale.documentAction.getString(context),
-                        value: selectedDocActionCode,
-                        showSearchBox: false,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedDocActionCode = value;
-                          });
-                        },
-                      ),
+                      if (isDocActionsLoading)
+                        const ShimmerList(count: 1)
+                      else
+                        SearchableDropdown<String>(
+                          options: POS.documentActions,
+                          idKey: 'code',
+                          nameKey: 'name',
+                          labelText: AppLocale.documentAction.getString(context),
+                          value: selectedDocActionCode,
+                          showSearchBox: false,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedDocActionCode = value;
+                            });
+                          },
+                        ),
                       const SizedBox(height: CustomSpacer.small),
                       Container(
                         child: isSending
@@ -2415,12 +2062,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 fullWidth: true,
                                 texto: AppLocale.process.getString(context),
                                 enable: _isInvoiceValid,
-                                onPressed: () => _isInvoiceValid
-                                    ? _createInvoice(
-                                        product: invoiceLines,
-                                        bPartner: selectedBPartnerID ?? 0,
-                                      )
-                                    : null,
+                                onPressed: () =>
+                                    _isInvoiceValid ? _createInvoice(product: invoiceLines, bPartner: selectedBPartnerID ?? 0) : null,
                               ),
                       ),
                     ],

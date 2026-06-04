@@ -11,6 +11,8 @@ class EndPoints {
 
   static String adUser = '${Base.baseURL}/api/v1/models/AD_User';
 
+  static String adOrg = '${Base.baseURL}/api/v1/models/AD_Org';
+
   static String mWarehouse = '${Base.baseURL}/api/v1/models/M_Warehouse';
 
   static String cBPartner = '${Base.baseURL}/api/v1/models/C_BPartner';
@@ -26,18 +28,19 @@ class EndPoints {
       '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
 
   static String getOrganizationsAfterLogin =
-      '${Base.baseURL}/api/v1/models/AD_Org';
+      '${Base.baseURL}/api/v1/models/AD_Org?\$filter=AD_Org_ID ne 0';
 
   static String cCurrency = '${Base.baseURL}/api/v1/models/C_Currency';
 
+  static String adChart = '${Base.baseURL}/api/v1/models/AD_Chart';
+
   static String cCountry = '${Base.baseURL}/api/v1/models/C_Country';
+
+  static String cCity = '${Base.baseURL}/api/v1/models/C_City';
 
   static String rRequest = '${Base.baseURL}/api/v1/models/R_Request';
 
   static String cPos = '${Base.baseURL}/api/v1/models/C_POS';
-
-  static String initialclientsetup =
-      '${Base.baseURL}/api/v1/processes/initialclientsetup';
 
   static String mProduct = '${Base.baseURL}/api/v1/models/M_Product';
 
@@ -47,6 +50,10 @@ class EndPoints {
       '${Base.baseURL}/api/v1/models/M_Product_Category';
 
   static String mPriceList = '${Base.baseURL}/api/v1/models/M_PriceList';
+
+  static String cPaymentTermID = '${Base.baseURL}/api/v1/models/C_PaymentTerm';
+
+  static String cdsCloseCash = '${Base.baseURL}/api/v1/models/CDS_CloseCash';
 
   static String cOrder = '${Base.baseURL}/api/v1/models/C_Order';
 
@@ -80,11 +87,6 @@ class EndPoints {
   static String yappyQRGeneratorDYN = '${Base.yappyURL}/qr/generate/DYN';
 
   static String yappyTransaction = '${Base.yappyURL}/transaction';
-
-  //? Charts
-  static String salesYTDMonthly = '${Base.baseURL}/api/v1/charts/50002/data';
-
-  static String salesPerDay = '${Base.baseURL}/api/v1/charts/1000005/data';
 }
 
 class GetCustomerData {
@@ -162,4 +164,40 @@ class GetDocumentActions {
 
   String get endPoint =>
       '${Base.baseURL}/api/v1/models/AD_Document_Action_Access?\$filter=AD_Role_ID eq $roleID AND C_DocType_ID eq $docTypeID&\$select=AD_Ref_List_ID';
+}
+
+class Processes {
+  static String cdsCloseCashProcess =
+      '${Base.baseURL}/api/v1/processes/cds_closecash_process'; // Action
+  static String closeCash =
+      '${Base.baseURL}/api/v1/processes/closecash'; // Report
+  static String syncFE =
+      '${Base.baseURL}/api/v1/processes/factelecsyncinvoice'; // process to sync factura electronica
+  static String createCreditMemo =
+      '${Base.baseURL}/api/v1/processes/cds-invoicecreatecreditmemo';
+  static String orderExecuteDocAction =
+      '${Base.baseURL}/api/v1/processes/orderexecutedocaction';
+  static String changePassword =
+      '${Base.baseURL}/api/v1/processes/setuserpasswordprocesspos';
+}
+
+class Charts {
+  static int? salesYTDID;
+  static int? salesPerDayID;
+  static int? salesYTDBySalesRepID;
+  static int? salesPerDayByProductCategoryID;
+
+  static String? get salesYTD => salesYTDID != null
+      ? '${Base.baseURL}/api/v1/charts/$salesYTDID/data'
+      : null;
+  static String? get salesPerDay => salesPerDayID != null
+      ? '${Base.baseURL}/api/v1/charts/$salesPerDayID/data'
+      : null;
+  static String? get salesYTDBySalesRep => salesYTDBySalesRepID != null
+      ? '${Base.baseURL}/api/v1/charts/$salesYTDBySalesRepID/data'
+      : null;
+  static String? get salesPerDayByProductCategory =>
+      salesPerDayByProductCategoryID != null
+      ? '${Base.baseURL}/api/v1/charts/$salesPerDayByProductCategoryID/data'
+      : null;
 }

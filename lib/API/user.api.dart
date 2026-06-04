@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 class UserData {
   static int? id;
+  static String? uu;
   static String? rolName;
   static String? clientName;
   static String? name;

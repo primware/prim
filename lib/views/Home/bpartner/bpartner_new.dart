@@ -28,17 +28,11 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
   TextEditingController locationController = TextEditingController();
   TextEditingController emailController = TextEditingController();
 
-  bool isValid = false,
-      isLoading = false,
-      _isTaxTypeLoading = true,
-      _isGroupLoading = true,
-      _taxTypeError = false;
+  bool isValid = false, isLoading = false, _isTaxTypeLoading = true, _isGroupLoading = true, _taxTypeError = false;
 
   int? selectedTaxTypeID, selectedBPartnerGroupID, selectectCustomerTypeID;
 
-  List<Map<String, dynamic>> taxTypes = [],
-      bPartnerGroups = [],
-      customerTypeOptions = TipoClienteFE.options;
+  List<Map<String, dynamic>> taxTypes = [], bPartnerGroups = [], customerTypeOptions = TipoClienteFE.options;
 
   @override
   void initState() {
@@ -58,6 +52,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
 
   Future<void> _loadTaxType() async {
     final fetchedTaxTypes = await getCTaxTypeID(context) ?? [];
+    if (!mounted) return;
 
     setState(() {
       taxTypes = fetchedTaxTypes;
@@ -68,6 +63,7 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
 
   Future<void> _loadBPartnerGroups() async {
     final fetchedGroups = await getCBPGroup(context) ?? [];
+    if (!mounted) return;
 
     setState(() {
       bPartnerGroups = fetchedGroups;
@@ -85,23 +81,14 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
 
   void _isFormValid() {
     setState(() {
-      bool hasDV =
-          (selectectCustomerTypeID == 1 && dvController.text.isNotEmpty) ||
-              selectectCustomerTypeID != 1;
+      bool hasDV = (selectectCustomerTypeID == 1 && dvController.text.isNotEmpty) || selectectCustomerTypeID != 1;
 
-      isValid = nameController.text.isNotEmpty &&
-          locationController.text.isNotEmpty &&
-          selectedTaxTypeID != null &&
-          selectedBPartnerGroupID != null &&
-          selectectCustomerTypeID != null &&
-          hasDV &&
-          !_taxTypeError;
+      isValid = nameController.text.isNotEmpty && locationController.text.isNotEmpty && selectedTaxTypeID != null && selectedBPartnerGroupID != null && selectectCustomerTypeID != null && hasDV && !_taxTypeError;
     });
   }
 
   bool isValidEmail(String email) {
-    final emailRegex =
-        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return emailRegex.hasMatch(email);
   }
 
@@ -125,16 +112,8 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
           title: Text(AppLocale.createCustomer.getString(context)),
           content: Text(AppLocale.confirmCreateCustomer.getString(context)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(AppLocale.cancel.getString(context)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                AppLocale.confirm.getString(context),
-              ),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
+            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocale.confirm.getString(context))),
           ],
         );
       },
@@ -144,54 +123,31 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
 
     setState(() => isLoading = true);
 
-    final result = await postBPartner(
-      name: nameController.text,
-      location: locationController.text,
-      taxID: taxController.text,
-      cBPartnerGroupID: selectedBPartnerGroupID!,
-      email: emailController.text,
-      cTaxTypeID: selectedTaxTypeID!,
-      dv: dvController.text,
-      customerType: '0$selectectCustomerTypeID',
-      context: context,
-    );
+    final result = await postBPartner(name: nameController.text, location: locationController.text, taxID: taxController.text, cBPartnerGroupID: selectedBPartnerGroupID!, email: emailController.text, cTaxTypeID: selectedTaxTypeID!, dv: dvController.text, customerType: '0$selectectCustomerTypeID', context: context);
+    if (!mounted) return;
 
     setState(() => isLoading = false);
     if (result['success'] == true) {
       clearPartnerFields();
-      Navigator.pop(context, {
-        'created': true,
-        'bpartner': result['bpartner'],
-      });
+      Navigator.pop(context, {'created': true, 'bpartner': result['bpartner']});
     } else {
-      ToastMessage.show(
-        context: context,
-        message: result['message'] ??
-            AppLocale.errorCreateCustomer.getString(context),
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: result['message'] ?? AppLocale.errorCreateCustomer.getString(context), type: ToastType.failure);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            AppLocale.newCustomer.getString(context),
-          ),
-          leading: IconButton(
-              onPressed: () => Navigator.pop(context, {
-                    'created': false,
-                  }),
-              icon: Icon(Icons.arrow_back)),
-        ),
-        bottomNavigationBar: CustomFooter(),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Center(
-              child: CustomContainer(
-                  child: Column(
+      appBar: AppBar(
+        title: Text(AppLocale.newCustomer.getString(context)),
+        leading: IconButton(onPressed: () => Navigator.pop(context, {'created': false}), icon: Icon(Icons.arrow_back)),
+      ),
+      bottomNavigationBar: CustomFooter(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
+            child: CustomContainer(
+              child: Column(
                 children: [
                   SearchableDropdown<int>(
                     value: selectectCustomerTypeID,
@@ -206,17 +162,10 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                     },
                   ),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: nameController,
-                    texto: AppLocale.nameReq.getString(context),
-                    colorEmpty: nameController.text.isEmpty,
-                    inputType: TextInputType.name,
-                  ),
+                  TextfieldTheme(controlador: nameController, texto: AppLocale.nameReq.getString(context), colorEmpty: nameController.text.isEmpty, inputType: TextInputType.name),
                   const SizedBox(height: CustomSpacer.medium),
                   _isGroupLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
+                      ? ShimmerList(count: 1)
                       : SearchableDropdown<int>(
                           value: selectedBPartnerGroupID,
                           options: bPartnerGroups,
@@ -231,82 +180,54 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                         ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isTaxTypeLoading
-                      ? ShimmerList(
-                          count: 1,
-                        )
+                      ? ShimmerList(count: 1)
                       : (taxTypes != []) //? Si no hay tipos de persona
-                          ? SearchableDropdown<int>(
-                              value: selectedTaxTypeID,
-                              options: taxTypes,
-                              showSearchBox: false,
-                              labelText:
-                                  AppLocale.personTypeReq.getString(context),
-                              onChanged: (int? newValue) {
-                                setState(() {
-                                  selectedTaxTypeID = newValue;
-                                  _isFormValid();
-                                });
-                              },
-                            )
-                          : const SizedBox(),
+                      ? SearchableDropdown<int>(
+                          value: selectedTaxTypeID,
+                          options: taxTypes,
+                          showSearchBox: false,
+                          labelText: AppLocale.personTypeReq.getString(context),
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              selectedTaxTypeID = newValue;
+                              _isFormValid();
+                            });
+                          },
+                        )
+                      : const SizedBox(),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: taxController,
-                    texto: AppLocale.taxId.getString(context),
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: taxController, texto: AppLocale.taxId.getString(context), inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: dvController,
-                    texto:
-                        '${AppLocale.dv.getString(context)}${selectectCustomerTypeID == 1 ? ' *' : ''}',
-                    colorEmpty: selectectCustomerTypeID == 1 &&
-                        dvController.text.isEmpty,
-                    inputType: TextInputType.text,
-                  ),
+                  TextfieldTheme(controlador: dvController, texto: '${AppLocale.dv.getString(context)}${selectectCustomerTypeID == 1 ? ' *' : ''}', colorEmpty: selectectCustomerTypeID == 1 && dvController.text.isEmpty, inputType: TextInputType.text),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: emailController,
-                    texto: AppLocale.email.getString(context),
-                    colorEmpty: !isValidEmail(emailController.text),
-                    inputType: TextInputType.emailAddress,
-                  ),
+                  TextfieldTheme(controlador: emailController, texto: AppLocale.email.getString(context), colorEmpty: !isValidEmail(emailController.text), inputType: TextInputType.emailAddress),
                   const SizedBox(height: CustomSpacer.medium),
-                  TextfieldTheme(
-                    controlador: locationController,
-                    texto: AppLocale.addressReq.getString(context),
-                    colorEmpty: locationController.text.isEmpty,
-                    inputType: TextInputType.name,
-                  ),
+                  TextfieldTheme(controlador: locationController, texto: AppLocale.addressReq.getString(context), colorEmpty: locationController.text.isEmpty, inputType: TextInputType.name),
                   const SizedBox(height: CustomSpacer.xlarge),
-                  if (!isLoading) ...[
+                  isLoading
+                      ? const ButtonLoading(fullWidth: true)
+                      : ButtonPrimary(
+                          fullWidth: true,
+                          texto: AppLocale.save.getString(context),
+                          onPressed: _createBPartner,
+                          enable: isValid,
+                        ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  if (!isLoading)
                     ButtonSecondary(
                       fullWidth: true,
                       texto: AppLocale.cancel.getString(context),
                       onPressed: () {
                         clearPartnerFields();
-                        Navigator.pop(context, {
-                          'created': false,
-                        });
+                        Navigator.pop(context, {'created': false});
                       },
                     ),
-                    const SizedBox(height: CustomSpacer.medium)
-                  ],
-                  Container(
-                    child: isValid
-                        ? isLoading
-                            ? ButtonLoading(fullWidth: true)
-                            : ButtonPrimary(
-                                fullWidth: true,
-                                texto: AppLocale.save.getString(context),
-                                onPressed: _createBPartner,
-                              )
-                        : null,
-                  )
                 ],
-              )),
+              ),
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

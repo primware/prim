@@ -5,9 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:primware/API/pos.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../API/endpoint.api.dart';
+import '../../API/endpoint.dart';
 import '../../shared/button.widget.dart';
-import '../../shared/custom_checkbox.dart';
 import '../../shared/custom_container.dart';
 import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
@@ -17,11 +16,10 @@ import '../../shared/toast_message.dart';
 import '../../theme/colors.dart';
 import 'auth_funtions.dart';
 import 'config_view.dart';
+import 'dart:ui';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({
-    super.key,
-  });
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -32,8 +30,7 @@ TextEditingController claveController = TextEditingController();
 
 class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
-  final TextEditingController baseURLController = TextEditingController(),
-      cPosController = TextEditingController();
+  final TextEditingController baseURLController = TextEditingController(), cPosController = TextEditingController();
   bool rememberUser = false;
   String version = '';
 
@@ -109,35 +106,18 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            AppLocale.server.getString(context),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          title: Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.bodyLarge),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextfieldTheme(
-                texto: 'URL',
-                controlador: baseURLController,
-                pista: 'Ej: https://test.idempiere.org',
-              ),
+              TextfieldTheme(texto: 'URL', controlador: baseURLController, pista: 'Ej: https://test.idempiere.org'),
               const SizedBox(height: CustomSpacer.medium),
-              TextfieldTheme(
-                texto: 'POS ID',
-                controlador: cPosController,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                inputType: TextInputType.number,
-              ),
+              TextfieldTheme(texto: 'POS ID', controlador: cPosController, inputFormatters: [FilteringTextInputFormatter.digitsOnly], inputType: TextInputType.number),
             ],
           ),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.cancel_outlined),
-              color: ColorTheme.error,
-              iconSize: 32,
-            ),
+            IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.cancel_outlined), color: ColorTheme.error, iconSize: 32),
             IconButton(
               onPressed: () async {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -161,22 +141,9 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            AppLocale.server.getString(context),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          content: Text(
-            AppLocale.serverSaved.getString(context),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          actions: [
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.check_circle_outline),
-              color: ColorTheme.success,
-              iconSize: 32,
-            ),
-          ],
+          title: Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.titleMedium),
+          content: Text(AppLocale.serverSaved.getString(context), style: Theme.of(context).textTheme.bodyLarge),
+          actions: [IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.check_circle_outline), color: ColorTheme.success, iconSize: 32)],
         );
       },
     );
@@ -202,21 +169,9 @@ class _LoginPageState extends State<LoginPage> {
       }
       _saveConfig();
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ConfigPage(
-            clients: authData['clients'],
-          ),
-        ),
-      );
-      // }
+      Navigator.push(context, MaterialPageRoute(builder: (context) => ConfigPage(clients: authData['clients'])));
     } else {
-      ToastMessage.show(
-        context: context,
-        message: AppLocale.invalidCredentials.getString(context),
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: AppLocale.invalidCredentials.getString(context), type: ToastType.failure);
     }
 
     setState(() {
@@ -227,40 +182,25 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _openExternal(String url) async {
     final uri = Uri.parse(url);
     try {
-      final ok = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok && mounted) {
-        ToastMessage.show(
-          context: context,
-          message: 'No se pudo abrir el navegador.',
-          type: ToastType.failure,
-        );
+        ToastMessage.show(context: context, message: 'No se pudo abrir el navegador.', type: ToastType.failure);
       }
     } catch (e) {
       if (mounted) {
-        ToastMessage.show(
-          context: context,
-          message: 'No se pudo abrir el navegador.',
-          type: ToastType.failure,
-        );
+        ToastMessage.show(context: context, message: 'No se pudo abrir el navegador.', type: ToastType.failure);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile =
-        MediaQuery.of(context).size.width < 750 ? true : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
 
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showBaseURLDialog,
-          child: Icon(Icons.settings),
-        ),
+        floatingActionButton: FloatingActionButton(onPressed: _showBaseURLDialog, child: Icon(Icons.settings)),
         body: Center(
           child: SingleChildScrollView(
             child: Column(
@@ -272,41 +212,19 @@ class _LoginPageState extends State<LoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Center(
-                        child: Logo(
-                          width: isMobile ? 200 : 320,
-                        ),
-                      ),
-                      SizedBox(
-                          height: CustomSpacer.medium +
-                              (!isMobile ? CustomSpacer.xlarge : 10)),
-                      TextfieldTheme(
-                        icono: Icons.mail_outline,
-                        texto: AppLocale.user.getString(context),
-                        inputType: TextInputType.emailAddress,
-                        controlador: usuarioController,
-                      ),
+                      Center(child: Logo(width: isMobile ? 200 : 320)),
+                      SizedBox(height: CustomSpacer.medium + (!isMobile ? CustomSpacer.xlarge : 10)),
+                      TextfieldTheme(icono: Icons.mail_outline, texto: AppLocale.user.getString(context), inputType: TextInputType.emailAddress, controlador: usuarioController),
                       const SizedBox(height: CustomSpacer.small),
-                      TextfieldTheme(
-                        icono: Icons.lock_outline,
-                        texto: AppLocale.pass.getString(context),
-                        obscure: true,
-                        showSubIcon: true,
-                        controlador: claveController,
-                        onSubmitted: (_) => _funcionLogin(
-                            usuarioController.text.trim(),
-                            claveController.text.trim()),
-                      ),
+                      TextfieldTheme(icono: Icons.lock_outline, texto: AppLocale.pass.getString(context), obscure: true, showSubIcon: true, controlador: claveController, onSubmitted: (_) => _funcionLogin(usuarioController.text.trim(), claveController.text.trim())),
                       const SizedBox(height: CustomSpacer.medium),
                       SearchableDropdown<String>(
-                        value: FlutterLocalization
-                            .instance.currentLocale?.languageCode,
+                        value: FlutterLocalization.instance.currentLocale?.languageCode,
                         onChanged: (String? lang) async {
                           if (lang != null) {
                             FlutterLocalization.instance.translate(lang);
                             if (rememberUser) {
-                              SharedPreferences prefs =
-                                  await SharedPreferences.getInstance();
+                              SharedPreferences prefs = await SharedPreferences.getInstance();
                               await prefs.setString('languageCode', lang);
                             }
                           }
@@ -319,27 +237,47 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                       const SizedBox(height: CustomSpacer.small),
-                      CustomCheckbox(
-                        value: rememberUser,
-                        text: AppLocale.rememberMe.getString(context),
-                        onChanged: (newValue) {
-                          setState(() {
-                            rememberUser = newValue;
-                          });
-                        },
+                      // 👇 Tarjeta Premium para "Recuérdame"
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withOpacity(0.2) : Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.verified_user_outlined, size: 22, color: rememberUser ? Theme.of(context).primaryColor : Colors.grey.shade600),
+                                const SizedBox(width: 12),
+                                Text(
+                                  AppLocale.rememberMe.getString(context),
+                                  style: TextStyle(fontSize: 15, fontWeight: rememberUser ? FontWeight.bold : FontWeight.w500, color: rememberUser ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87) : Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
+                            GlassSwitch(
+                              value: rememberUser,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  rememberUser = newValue;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: CustomSpacer.medium),
                       Container(
                         child: isLoading
-                            ? ButtonLoading(
-                                fullWidth: true,
-                              )
+                            ? ButtonLoading(fullWidth: true)
                             : ButtonPrimary(
                                 texto: AppLocale.login.getString(context),
                                 fullWidth: true,
                                 onPressed: () {
-                                  _funcionLogin(usuarioController.text.trim(),
-                                      claveController.text.trim());
+                                  _funcionLogin(usuarioController.text.trim(), claveController.text.trim());
                                 },
                               ),
                       ),
@@ -349,43 +287,80 @@ class _LoginPageState extends State<LoginPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                AppLocale.noAccount.getString(context),
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
+                              Text(AppLocale.noAccount.getString(context), style: Theme.of(context).textTheme.bodyLarge),
                               const SizedBox(height: CustomSpacer.small),
                               InkWell(
-                                onTap: () => _openExternal(
-                                    'https://primware.net/register/'),
+                                onTap: () => _openExternal('https://primware.net/register/'),
                                 child: Text(
                                   AppLocale.register.getString(context),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline,
-                                      ),
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
                                 ),
-                              )
+                              ),
                             ],
                           ),
-                        )
-                      ]
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                if (version != 'No es web') ...[
-                  const SizedBox(
-                      height: CustomSpacer.xlarge + CustomSpacer.medium),
-                  Text(
-                    version,
-                    style: Theme.of(context).textTheme.labelMedium,
-                  )
-                ]
+                if (version != 'No es web') ...[const SizedBox(height: CustomSpacer.xlarge + CustomSpacer.medium), Text(version, style: Theme.of(context).textTheme.labelMedium)],
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class GlassSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const GlassSwitch({super.key, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        width: 56,
+        height: 32,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: value ? primary.withOpacity(0.3) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+          border: Border.all(color: value ? primary.withOpacity(0.6) : (isDark ? Colors.white30 : Colors.black12), width: 1.5),
+          boxShadow: [if (value) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)],
+        ),
+        child: Stack(
+          children: [
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutBack,
+              top: 2,
+              bottom: 2,
+              left: value ? 26 : 2,
+              right: value ? 2 : 26,
+              child: ClipOval(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: value ? primary.withOpacity(0.8) : (isDark ? Colors.white70 : Colors.white),
+                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

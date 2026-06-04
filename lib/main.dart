@@ -1,14 +1,13 @@
 // main.dart
 
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/theme/theme.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'API/endpoint.api.dart';
+import 'API/endpoint.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,9 +19,7 @@ Future<void> main() async {
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+    return super.createHttpClient(context)..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
 }
 
@@ -55,13 +52,7 @@ class _MainAppState extends State<MainApp> {
     ThemeManager.themeNotifier = this;
     _loadThemePreference();
 
-    _localization.init(
-      mapLocales: [
-        const MapLocale('en', AppLocale.en),
-        const MapLocale('es', AppLocale.es),
-      ],
-      initLanguageCode: 'es',
-    );
+    _localization.init(mapLocales: [const MapLocale('en', AppLocale.en), const MapLocale('es', AppLocale.es)], initLanguageCode: 'es');
     _localization.onTranslatedLanguage = _onLanguageChanged;
   }
 
@@ -78,14 +69,6 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: Base.title,
-      theme: _isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
-      supportedLocales: _localization.supportedLocales,
-      localizationsDelegates: _localization.localizationsDelegates,
-      locale: _localization.currentLocale,
-      home: const LoginPage(),
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, title: Base.title, theme: _isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme, supportedLocales: _localization.supportedLocales, localizationsDelegates: _localization.localizationsDelegates, locale: _localization.currentLocale, home: const LoginPage());
   }
 }

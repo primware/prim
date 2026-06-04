@@ -6,16 +6,21 @@ import 'package:http/http.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
-import '../../../API/endpoint.api.dart';
+import '../../../API/endpoint.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
+
+bool _hasHeaderValue(dynamic value) {
+  final text = value?.toString().trim() ?? '';
+  return text.isNotEmpty && text != '?';
+}
 
 Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   // Currency formatter
   final NumberFormat nf = NumberFormat.currency(locale: 'es_PA', symbol: 'B/.');
 
   // Fetch FE info if order['id'] exists
-  Map<String, String>? feInfo;
+  Map<String, dynamic>? feInfo;
   if (order['id'] != null) {
     feInfo = await fetchElectronicInvoiceInfo(orderId: order['id']);
   }
@@ -25,6 +30,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
 
   // Header fields (as in generatePOSTicket)
   String str(dynamic v) => v?.toString() ?? '';
+  bool hasHeaderValue(dynamic value) => _hasHeaderValue(value);
   String docTypename = order['doctypetarget']?['name'] ?? '';
   final docNo = str(order['DocumentNo']);
   final date = str(order['DateOrdered']);
@@ -37,48 +43,115 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   pdf.addPage(
     pw.MultiPage(
       build: (context) => <pw.Widget>[
-        POSPrinter.logo != null
-            ? pw.Image(
-                pw.MemoryImage(POSPrinter.logo!),
-                width: 100,
-                height: 100,
-                fit: pw.BoxFit.contain,
-              )
-            : pw.SizedBox(),
-        pw.SizedBox(height: 4),
-        pw.Text(POSPrinter.headerName ?? '', textAlign: pw.TextAlign.center),
-        pw.Text(POSPrinter.headerAddress ?? '', textAlign: pw.TextAlign.center),
-        if (POSPrinter.headerTaxID != null)
-          pw.Text(
-            'RUC: ${POSPrinter.headerTaxID ?? ''}',
-            textAlign: pw.TextAlign.center,
-          ),
-        if (POSPrinter.headerDV != null)
-          pw.Text(
-            'DV: ${POSPrinter.headerDV ?? ''}',
-            textAlign: pw.TextAlign.center,
-          ),
-        if (POSPrinter.headerPhone != null)
-          pw.Text(
-            'Tel: ${POSPrinter.headerPhone ?? ''}',
-            textAlign: pw.TextAlign.center,
-          ),
-        pw.Text(POSPrinter.headerEmail ?? '', textAlign: pw.TextAlign.center),
-        pw.SizedBox(height: 12),
-        pw.Text(
-          docTypename,
-          textAlign: pw.TextAlign.center,
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+        // Header + General info with QR at top-right (if FE exists)
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              flex: 3,
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                children: [
+                  POSPrinter.logo != null
+                      ? pw.Center(
+                          child: pw.Image(
+                            pw.MemoryImage(POSPrinter.logo!),
+                            width: 100,
+                            height: 100,
+                            fit: pw.BoxFit.contain,
+                          ),
+                        )
+                      : pw.SizedBox(),
+                  pw.SizedBox(height: 4),
+                  if (hasHeaderValue(POSPrinter.headerName))
+                    pw.Text(
+                      POSPrinter.headerName!,
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  if (hasHeaderValue(POSPrinter.headerAddress))
+                    pw.Text(
+                      POSPrinter.headerAddress!,
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  if (hasHeaderValue(POSPrinter.headerTaxID))
+                    pw.Text(
+                      'RUC: ${POSPrinter.headerTaxID}',
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  if (hasHeaderValue(POSPrinter.headerDV))
+                    pw.Text(
+                      'DV: ${POSPrinter.headerDV}',
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  if (hasHeaderValue(POSPrinter.headerPhone))
+                    pw.Text(
+                      'Tel: ${POSPrinter.headerPhone}',
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  if (hasHeaderValue(POSPrinter.headerEmail))
+                    pw.Text(
+                      POSPrinter.headerEmail!,
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  pw.SizedBox(height: 12),
+                  pw.Text(
+                    docTypename,
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  pw.SizedBox(height: 18),
+
+                  // Order details
+                  pw.Text('Orden Nro: $docNo'),
+                  pw.Text('Fecha: $date'),
+                  if (servedBy.isNotEmpty)
+                    pw.Text('Representante Comercial: $servedBy'),
+                  if (taxID.isNotEmpty)
+                    pw.Text('Nro de Identificación: $taxID'),
+                  pw.Text('Cliente: $customerName'),
+                  if (customeLocation.isNotEmpty)
+                    pw.Text('Dirección: $customeLocation'),
+                  if (phone.isNotEmpty) pw.Text('Teléfono: $phone'),
+                ],
+              ),
+            ),
+            if (feInfo != null) pw.SizedBox(width: 10),
+            if (feInfo != null)
+              pw.Expanded(
+                flex: 2,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      'QR FE',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 6),
+                    pw.BarcodeWidget(
+                      data: feInfo['url'] ?? '',
+                      barcode: pw.Barcode.qrCode(),
+                      width: 120,
+                      height: 120,
+                    ),
+                    pw.SizedBox(height: 6),
+                    if ((feInfo['protocolo'] ?? '').toString().isNotEmpty)
+                      pw.Text(
+                        'Prot: ${feInfo['protocolo']}',
+                        textAlign: pw.TextAlign.right,
+                        style: pw.TextStyle(fontSize: 8),
+                      ),
+                  ],
+                ),
+              ),
+          ],
         ),
-        pw.SizedBox(height: 18),
-        // Order details
-        pw.Text('Orden Nro: $docNo'),
-        pw.Text('Fecha: $date'),
-        if (servedBy.isNotEmpty) pw.Text('Representante Comercial: $servedBy'),
-        if (taxID.isNotEmpty) pw.Text('Nro de Identificación: $taxID'),
-        pw.Text('Cliente: $customerName'),
-        if (customeLocation.isNotEmpty) pw.Text('Dirección: $customeLocation'),
-        if (phone.isNotEmpty) pw.Text('Teléfono: $phone'),
+
         pw.SizedBox(height: 12),
         // Products table
         if (lines.isNotEmpty) ...[
@@ -92,13 +165,11 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
               'Total',
             ],
             data: lines.map((line) {
-              final name =
-                  (line['M_Product_ID']?['identifier'] ??
-                          '_${line['Description']}')
-                      .toString()
-                      .split('_')
-                      .skip(1)
-                      .join(' ');
+              final name = (line['M_Product_ID']?['identifier'])
+                  .toString()
+                  .split('_')
+                  .skip(1)
+                  .join(' ');
               final qty = (line['QtyOrdered'] ?? 0);
               final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
               final rate =
@@ -110,7 +181,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
               return [
                 name,
                 description,
-                "${qty} x ${nf.format(price)}",
+                "$qty x ${nf.format(price)}",
                 "${rate.toStringAsFixed(0)}%",
                 nf.format(net),
                 nf.format(total),
@@ -150,40 +221,22 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13),
         ),
         pw.SizedBox(height: 16),
-        // FE section if present
+        // FE footer note (QR is shown at top-right)
         if (feInfo != null) ...[
           pw.Divider(),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
           pw.Text(
             'FACTURA ELECTRÓNICA',
             textAlign: pw.TextAlign.center,
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
           ),
-          pw.SizedBox(height: 6),
-          pw.Text(
-            'Protocolo de Autorización: ${feInfo['protocolo']}',
-            style: pw.TextStyle(fontSize: 8),
-          ),
+          pw.SizedBox(height: 4),
           pw.Text(
             'Consulte por la clave de acceso en:',
             style: pw.TextStyle(fontSize: 8),
           ),
           pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 8)),
           pw.SizedBox(height: 6),
-          pw.Text(
-            'o escaneando el código QR:',
-            style: pw.TextStyle(fontSize: 8),
-          ),
-          pw.SizedBox(height: 6),
-          pw.Center(
-            child: pw.BarcodeWidget(
-              data: feInfo['url'] ?? '',
-              barcode: pw.Barcode.qrCode(),
-              width: 120,
-              height: 120,
-            ),
-          ),
-          pw.SizedBox(height: 10),
         ],
       ],
     ),
@@ -191,7 +244,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   return pdf.save();
 }
 
-Future<Map<String, String>?> fetchElectronicInvoiceInfo({
+Future<Map<String, dynamic>?> fetchElectronicInvoiceInfo({
   required int orderId,
 }) async {
   try {
@@ -207,7 +260,6 @@ Future<Map<String, String>?> fetchElectronicInvoiceInfo({
     );
 
     if (response.statusCode != 200) {
-      // Si la tabla/expand no existe o hay otro problema, devolver null silenciosamente
       debugPrint('FE query non-200: ${response.statusCode}');
       return null;
     }
@@ -216,28 +268,42 @@ Future<Map<String, String>?> fetchElectronicInvoiceInfo({
     final List records = (jsonResponse['records'] as List?) ?? const [];
     if (records.isEmpty) return null;
 
-    final invoice = records.first;
+    final invoice = records.firstWhere(
+      (record) {
+        final logs = (record['FE_InvoiceResponseLog'] as List?) ?? const [];
+        return record['RelatedInvoice_ID'] == null && logs.isNotEmpty;
+      },
+      orElse: () => records.firstWhere(
+        (record) => record['RelatedInvoice_ID'] == null,
+        orElse: () => records.first,
+      ),
+    );
     final List logs = (invoice['FE_InvoiceResponseLog'] as List?) ?? const [];
     if (logs.isEmpty) return null;
 
-    // Buscar el primer log con FE_ResponseCode == 200 (num o string)
-    final match = logs.firstWhere((e) {
-      final code = e['FE_ResponseCode'];
-      if (code == null) return false;
-      if (code is num) return code == 200;
-      if (code is String) return code.trim() == '200';
-      return false;
-    }, orElse: () => null);
+    final logsSorted = [...logs]
+      ..sort((a, b) {
+        final aId = (a['id'] as num?)?.toInt() ?? 0;
+        final bId = (b['id'] as num?)?.toInt() ?? 0;
+        return bId.compareTo(aId);
+      });
 
-    if (match == null) return null;
+    final latest = logsSorted.first;
 
-    final cufe = match['FE_ResponseCUFE']?.toString();
-    final protocolo = match['FE_NroProtocoloAutorizacion']?.toString();
-    final url = match['FE_ResponseQR']?.toString();
+    final responseCode = latest['FE_ResponseCode']?.toString() ?? '';
+    final responseMessage = latest['FE_ResponseMessage']?.toString() ?? '';
+    final cufe = latest['FE_ResponseCUFE']?.toString() ?? '';
+    final protocolo = latest['FE_NroProtocoloAutorizacion']?.toString() ?? '';
+    final url = latest['FE_ResponseQR']?.toString() ?? '';
 
-    if (cufe == null || protocolo == null || url == null) return null;
-
-    return {'cufe': cufe, 'protocolo': protocolo, 'url': url};
+    return {
+      'responseCode': responseCode,
+      'responseMessage': responseMessage,
+      'cufe': cufe,
+      'protocolo': protocolo,
+      'url': url,
+      'cInvoiceID': invoice['id'],
+    };
   } catch (e) {
     debugPrint('Error consultando FE_InvoiceResponseLog: $e');
     return null;
@@ -256,6 +322,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
 
   // Helpers
   String str(dynamic v) => v?.toString() ?? '';
+  bool hasHeaderValue(dynamic value) => _hasHeaderValue(value);
   String money(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
 
   String docTypename = order['doctypetarget']?['name'] ?? '';
@@ -315,33 +382,30 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
                   )
                 : pw.SizedBox(),
             pw.SizedBox(height: 4),
-            pw.Text(
-              POSPrinter.headerName ?? '',
-              textAlign: pw.TextAlign.center,
-            ),
-            pw.Text(
-              POSPrinter.headerAddress ?? '',
-              textAlign: pw.TextAlign.center,
-            ),
-            if (POSPrinter.headerTaxID != null)
+            if (hasHeaderValue(POSPrinter.headerName))
+              pw.Text(POSPrinter.headerName!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.headerAddress))
               pw.Text(
-                'RUC: ${POSPrinter.headerTaxID ?? ''}',
+                POSPrinter.headerAddress!,
                 textAlign: pw.TextAlign.center,
               ),
-            if (POSPrinter.headerDV != null)
+            if (hasHeaderValue(POSPrinter.headerTaxID))
               pw.Text(
-                'DV: ${POSPrinter.headerDV ?? ''}',
+                'RUC: ${POSPrinter.headerTaxID}',
                 textAlign: pw.TextAlign.center,
               ),
-            if (POSPrinter.headerPhone != null)
+            if (hasHeaderValue(POSPrinter.headerDV))
               pw.Text(
-                'Tel: ${POSPrinter.headerPhone ?? ''}',
+                'DV: ${POSPrinter.headerDV}',
                 textAlign: pw.TextAlign.center,
               ),
-            pw.Text(
-              POSPrinter.headerEmail ?? '',
-              textAlign: pw.TextAlign.center,
-            ),
+            if (hasHeaderValue(POSPrinter.headerPhone))
+              pw.Text(
+                'Tel: ${POSPrinter.headerPhone}',
+                textAlign: pw.TextAlign.center,
+              ),
+            if (hasHeaderValue(POSPrinter.headerEmail))
+              pw.Text(POSPrinter.headerEmail!, textAlign: pw.TextAlign.center),
             pw.SizedBox(height: 12),
             pw.Text(
               docTypename,
