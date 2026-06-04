@@ -204,7 +204,16 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                   const SizedBox(height: CustomSpacer.medium),
                   TextfieldTheme(controlador: locationController, texto: AppLocale.addressReq.getString(context), colorEmpty: locationController.text.isEmpty, inputType: TextInputType.name),
                   const SizedBox(height: CustomSpacer.xlarge),
-                  if (!isLoading) ...[
+                  isLoading
+                      ? const ButtonLoading(fullWidth: true)
+                      : ButtonPrimary(
+                          fullWidth: true,
+                          texto: AppLocale.save.getString(context),
+                          onPressed: _createBPartner,
+                          enable: isValid,
+                        ),
+                  const SizedBox(height: CustomSpacer.medium),
+                  if (!isLoading)
                     ButtonSecondary(
                       fullWidth: true,
                       texto: AppLocale.cancel.getString(context),
@@ -213,15 +222,6 @@ class _BPartnerNewPageState extends State<BPartnerNewPage> {
                         Navigator.pop(context, {'created': false});
                       },
                     ),
-                    const SizedBox(height: CustomSpacer.medium),
-                  ],
-                  Container(
-                    child: isValid
-                        ? isLoading
-                              ? ButtonLoading(fullWidth: true)
-                              : ButtonPrimary(fullWidth: true, texto: AppLocale.save.getString(context), onPressed: _createBPartner)
-                        : null,
-                  ),
                 ],
               ),
             ),
