@@ -345,10 +345,7 @@ class _OrderListPageState extends State<OrderListPage> {
     final bool isReturn = (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
     final String? docName = order['doctypetarget']?['name'];
 
-    return DocTypeChip(
-      docTypeName: docName,
-      isReturn: isReturn,
-    );
+    return DocTypeChip(docTypeName: docName, isReturn: isReturn);
   }
 
   Widget _buildCreditMemoPill() {
@@ -623,9 +620,22 @@ class _OrderListPageState extends State<OrderListPage> {
                     spacing: 14,
                     runSpacing: 8,
                     children: [
-                      _buildAmountItem(label: AppLocale.subtotal.getString(context), value: totalLines.toStringAsFixed(2), icon: Icons.receipt_long_outlined),
-                      _buildAmountItem(label: AppLocale.taxes.getString(context), value: taxAmount.toStringAsFixed(2), icon: Icons.account_balance_wallet_outlined),
-                      _buildAmountItem(label: AppLocale.total.getString(context), value: grandTotal.toStringAsFixed(2), icon: Icons.payments_rounded, highlight: true),
+                      _buildAmountItem(
+                        label: AppLocale.subtotal.getString(context),
+                        value: totalLines.toStringAsFixed(2),
+                        icon: Icons.receipt_long_outlined,
+                      ),
+                      _buildAmountItem(
+                        label: AppLocale.taxes.getString(context),
+                        value: taxAmount.toStringAsFixed(2),
+                        icon: Icons.account_balance_wallet_outlined,
+                      ),
+                      _buildAmountItem(
+                        label: AppLocale.total.getString(context),
+                        value: grandTotal.toStringAsFixed(2),
+                        icon: Icons.payments_rounded,
+                        highlight: true,
+                      ),
                     ],
                   ),
                 ],
@@ -693,7 +703,7 @@ class _OrderListPageState extends State<OrderListPage> {
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       Container(
-                        height: 55,
+                        height: 45,
                         decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
                         child: IconButton(
                           icon: const Icon(Icons.search, color: Colors.white),
@@ -764,8 +774,8 @@ class _OrderListPageState extends State<OrderListPage> {
                               child: FilterChip(
                                 label: const Text('Todos'),
                                 selected: selectedDocTypeFilter == null,
-                                selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                                checkmarkColor: Theme.of(context).primaryColor,
+                                selectedColor: Theme.of(context).primaryColor,
+                                checkmarkColor: Theme.of(context).colorScheme.onPrimary,
                                 onSelected: (bool selected) {
                                   setState(() {
                                     selectedDocTypeFilter = null;
@@ -773,22 +783,27 @@ class _OrderListPageState extends State<OrderListPage> {
                                 },
                               ),
                             ),
-                            ..._orders.map((e) => e['doctypetarget']?['name']?.toString() ?? '').where((name) => name.isNotEmpty).toSet().map((docName) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: FilterChip(
-                                  label: Text(docName),
-                                  selected: selectedDocTypeFilter == docName,
-                                  selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                                  checkmarkColor: Theme.of(context).primaryColor,
-                                  onSelected: (bool selected) {
-                                    setState(() {
-                                      selectedDocTypeFilter = selected ? docName : null;
-                                    });
-                                  },
-                                ),
-                              );
-                            }).toList(),
+                            ..._orders
+                                .map((e) => e['doctypetarget']?['name']?.toString() ?? '')
+                                .where((name) => name.isNotEmpty)
+                                .toSet()
+                                .map((docName) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: FilterChip(
+                                      label: Text(docName),
+                                      selected: selectedDocTypeFilter == docName,
+                                      selectedColor: Theme.of(context).primaryColor,
+                                      checkmarkColor: Theme.of(context).colorScheme.onPrimary,
+                                      onSelected: (bool selected) {
+                                        setState(() {
+                                          selectedDocTypeFilter = selected ? docName : null;
+                                        });
+                                      },
+                                    ),
+                                  );
+                                })
+                                .toList(),
                           ],
                         ),
                       ),
