@@ -17,6 +17,7 @@ import '../../../localization/app_locale.dart';
 import '../../../shared/footer.dart';
 import 'my_order_print_generator.dart';
 import 'dart:ui';
+import '../../../shared/doc_type_chip.dart';
 
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
@@ -28,6 +29,7 @@ class OrderListPage extends StatefulWidget {
 class _OrderListPageState extends State<OrderListPage> {
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true, isSearchLoading = false, onlyMyOrders = false;
+  String? selectedDocTypeFilter;
   String _searchQuery = '';
   TextEditingController searchController = TextEditingController();
 
@@ -194,7 +196,11 @@ class _OrderListPageState extends State<OrderListPage> {
   }
 
   List<Map<String, dynamic>> _getFilteredOrders() {
-    return _orders.where((order) => order['DocumentNo'].toString().toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    return _orders.where((order) {
+      final matchesSearch = order['DocumentNo'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesDocType = selectedDocTypeFilter == null || order['doctypetarget']?['name'] == selectedDocTypeFilter;
+      return matchesSearch && matchesDocType;
+    }).toList();
   }
 
   void _onOrderAction(String action, Map<String, dynamic> order) async {
@@ -337,31 +343,9 @@ class _OrderListPageState extends State<OrderListPage> {
   Widget _buildSubtypePill(Map<String, dynamic> order) {
     final sub = order['doctypetarget']?['subtype']?['id'];
     final bool isReturn = (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+    final String? docName = order['doctypetarget']?['name'];
 
-    final Color baseColor = isReturn ? Colors.red : Colors.green;
-    final Color bgColor = baseColor.withOpacity(0.12);
-    final String label = isReturn ? AppLocale.refund.getString(context) : AppLocale.order.getString(context);
-    final IconData icon = isReturn ? Icons.undo : Icons.shopping_cart;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: baseColor, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: baseColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
+    return DocTypeChip(docTypeName: docName, isReturn: isReturn);
   }
 
   Widget _buildCreditMemoPill() {
@@ -636,9 +620,22 @@ class _OrderListPageState extends State<OrderListPage> {
                     spacing: 14,
                     runSpacing: 8,
                     children: [
-                      _buildAmountItem(label: AppLocale.subtotal.getString(context), value: totalLines.toStringAsFixed(2), icon: Icons.receipt_long_outlined),
-                      _buildAmountItem(label: AppLocale.taxes.getString(context), value: taxAmount.toStringAsFixed(2), icon: Icons.account_balance_wallet_outlined),
-                      _buildAmountItem(label: AppLocale.total.getString(context), value: grandTotal.toStringAsFixed(2), icon: Icons.payments_rounded, highlight: true),
+                      _buildAmountItem(
+                        label: AppLocale.subtotal.getString(context),
+                        value: totalLines.toStringAsFixed(2),
+                        icon: Icons.receipt_long_outlined,
+                      ),
+                      _buildAmountItem(
+                        label: AppLocale.taxes.getString(context),
+                        value: taxAmount.toStringAsFixed(2),
+                        icon: Icons.account_balance_wallet_outlined,
+                      ),
+                      _buildAmountItem(
+                        label: AppLocale.total.getString(context),
+                        value: grandTotal.toStringAsFixed(2),
+                        icon: Icons.payments_rounded,
+                        highlight: true,
+                      ),
                     ],
                   ),
                 ],
@@ -706,7 +703,7 @@ class _OrderListPageState extends State<OrderListPage> {
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       Container(
-                        height: 55,
+                        height: 45,
                         decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
                         child: IconButton(
                           icon: const Icon(Icons.search, color: Colors.white),
@@ -763,6 +760,54 @@ class _OrderListPageState extends State<OrderListPage> {
                       ],
                     ),
                   ),
+
+                  if (_orders.isNotEmpty)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0, left: 16.0),
+                              child: FilterChip(
+                                label: const Text('Todos'),
+                                selected: selectedDocTypeFilter == null,
+                                selectedColor: Theme.of(context).primaryColor,
+                                checkmarkColor: Theme.of(context).colorScheme.onPrimary,
+                                onSelected: (bool selected) {
+                                  setState(() {
+                                    selectedDocTypeFilter = null;
+                                  });
+                                },
+                              ),
+                            ),
+                            ..._orders
+                                .map((e) => e['doctypetarget']?['name']?.toString() ?? '')
+                                .where((name) => name.isNotEmpty)
+                                .toSet()
+                                .map((docName) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: FilterChip(
+                                      label: Text(docName),
+                                      selected: selectedDocTypeFilter == docName,
+                                      selectedColor: Theme.of(context).primaryColor,
+                                      checkmarkColor: Theme.of(context).colorScheme.onPrimary,
+                                      onSelected: (bool selected) {
+                                        setState(() {
+                                          selectedDocTypeFilter = selected ? docName : null;
+                                        });
+                                      },
+                                    ),
+                                  );
+                                })
+                                .toList(),
+                          ],
+                        ),
+                      ),
+                    ),
 
                   if (isSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
 
