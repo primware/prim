@@ -16,6 +16,7 @@ import '../Home/dashboard/dashboard_view.dart';
 import 'auth_funtions.dart';
 import '../../API/user.api.dart';
 import 'login_view.dart';
+import 'loading_dialog.dart';
 import 'dart:ui';
 
 class ConfigPage extends StatefulWidget {
@@ -172,6 +173,8 @@ class _ConfigPageState extends State<ConfigPage> {
         isLoading = true;
       });
 
+      DynamicLoadingDialog.show(context);
+
       // Limpiamos los datos específicos del rol/organización antes de autenticar
       // Esto evita fugas de memoria (como guardar una orden en la organización anterior)
       Token.warehouseID = null;
@@ -190,7 +193,9 @@ class _ConfigPageState extends State<ConfigPage> {
 
       bool login = await usuarioAuth(context: context);
 
-      if (!mounted) return; // Freno de seguridad
+      if (!mounted) return;
+
+      DynamicLoadingDialog.hide(context);
 
       if (login) {
         if (rememberConfig) {
