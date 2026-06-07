@@ -38,7 +38,7 @@ class SettingsPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            _SettingsContentPage(title: AppLocale.changePassword.getString(context), child: const ChangePasswordCard()),
+                            SettingsContentPage(title: AppLocale.changePassword.getString(context), child: const ChangePasswordCard()),
                       ),
                     ),
                   ),
@@ -78,8 +78,8 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-class _SettingsContentPage extends StatelessWidget {
-  const _SettingsContentPage({required this.title, required this.child});
+class SettingsContentPage extends StatelessWidget {
+  const SettingsContentPage({super.key, required this.title, required this.child});
 
   final String title;
   final Widget child;

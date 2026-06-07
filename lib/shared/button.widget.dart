@@ -45,7 +45,16 @@ class _ButtonPrimaryState extends State<ButtonPrimary> {
             children: [
               if (widget.icono != null) Icon(widget.icono, color: Theme.of(context).cardColor),
               if (widget.icono != null && widget.texto != null) const SizedBox(width: 6),
-              if (widget.texto != null) Text(widget.texto!, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.surface)),
+              if (widget.texto != null)
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.texto!,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.surface),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -87,7 +96,16 @@ class _ButtonSecondaryState extends State<ButtonSecondary> {
           children: [
             if (widget.icono != null) Icon(widget.icono, color: Theme.of(context).primaryColor),
             if (widget.icono != null && widget.texto != null) const SizedBox(width: 6),
-            if (widget.texto != null) Text(widget.texto!, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).primaryColor)),
+            if (widget.texto != null)
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    widget.texto!,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).primaryColor),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

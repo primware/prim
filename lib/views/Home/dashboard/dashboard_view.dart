@@ -10,6 +10,7 @@ import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/footer.dart';
 import '../../Auth/login_view.dart';
+import 'password_warning_dialog.dart';
 import 'dashboard_graph.dart';
 import 'dashboard_funtions.dart';
 import '../../../localization/app_locale.dart';
@@ -41,6 +42,13 @@ class _DashboardPageState extends State<DashboardPage> {
     _salesPerDayByProductCategoryLoader = ({required context}) =>
         fetchSalesPerDayByProductCategory(context: context, dayOffset: 0);
     _checkDashboardData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (usuarioController.text.trim() == claveController.text.trim() &&
+          usuarioController.text.trim().isNotEmpty) {
+        PasswordWarningDialog.show(context);
+      }
+    });
   }
 
   Future<void> _checkDashboardData() async {
