@@ -9,12 +9,47 @@ import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'API/endpoint.dart';
 import 'package:app_links/app_links.dart';
+import 'package:protocol_handler/protocol_handler.dart';
 import 'dart:async';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+Future<void> _registerLinuxProtocol() async {
+  if (Platform.isLinux) {
+    try {
+      final home = Platform.environment['HOME'];
+      if (home != null) {
+        final desktopFile = File('$home/.local/share/applications/primware.desktop');
+        if (!await desktopFile.exists()) {
+          await desktopFile.create(recursive: true);
+          await desktopFile.writeAsString('''
+[Desktop Entry]
+Type=Application
+Name=Primware
+Exec=${Platform.resolvedExecutable} %U
+Terminal=false
+MimeType=x-scheme-handler/primware;
+''');
+          await Process.run('update-desktop-database', ['$home/.local/share/applications/']);
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to register Linux protocol: $e');
+    }
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Register protocol for Windows/macOS using protocol_handler
+  if (Platform.isWindows || Platform.isMacOS) {
+    await protocolHandler.register('primware');
+  }
+  
+  // Custom protocol registration for Linux
+  await _registerLinuxProtocol();
+
   HttpOverrides.global = MyHttpOverrides();
   await FlutterLocalization.instance.ensureInitialized();
   runApp(const MainApp());
