@@ -253,12 +253,12 @@ Future<Map<String, dynamic>> postInvoice({
       "InvoiceRule": "I",
       "PriorityRule": "5",
       "FreightCostRule": "I",
-      if (POSTenderType.isMultiPayment == false && POS.isPOS == false) //? solo cuando es con termino de pago.
+      if (POS.isPOS == false) //? solo cuando es con termino de pago.
         "C_PaymentTerm_ID": POS.cPaymentTermID,
-      "PaymentRule": POSTenderType.isMultiPayment
-          ? "M" //? Múltiples Medios de Pago
-          : POS.isPOS
-          ? "B" //? Caja de Punto de Venta
+      "PaymentRule": POS.isPOS
+          ? POSTenderType.isMultiPayment
+                ? "M" //? Múltiples Medios de Pago
+                : "B" //? Caja de Punto de Venta
           : "P", //? Con Término de Pago
       "M_PriceList_ID": priceListID != null ? {"id": priceListID} : (POS.priceListID ?? {"identifier": "Standard"}),
       "IsSOTrx": true,
