@@ -32,6 +32,7 @@ dependencies:
   graphic: ^2.7.0
   fl_chart: ^0.68.0
   image_cropper: ^12.2.1
+  app_links: ^7.0.0
 
 flutter_launcher_icons:
   web:
