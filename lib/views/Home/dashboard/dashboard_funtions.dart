@@ -146,8 +146,9 @@ Future<Map<String, double>> fetchSalesPerDay({
       if (xStr == null ||
           yNum == null ||
           series == null ||
-          series.trim().isEmpty)
+          series.trim().isEmpty) {
         continue;
+      }
 
       DateTime? dt;
       try {
