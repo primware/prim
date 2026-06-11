@@ -254,6 +254,17 @@ class AppLocale {
   static const String error = 'error';
   static const String fetchOrderError = 'fetchOrderError';
   static const String fetchOrderNetworkError = 'fetchOrderNetworkError';
+  static const String loadingMsg1 = 'loadingMsg1';
+  static const String loadingMsg2 = 'loadingMsg2';
+  static const String loadingMsg3 = 'loadingMsg3';
+  static const String loadingMsg4 = 'loadingMsg4';
+  static const String loadingMsg5 = 'loadingMsg5';
+  static const String passwordWarningTitle = 'passwordWarningTitle';
+  static const String passwordWarningBody = 'passwordWarningBody';
+  static const String changePasswordNow = 'changePasswordNow';
+  static const String maybeLater = 'maybeLater';
+  static const String passwordSameAsUserError = 'passwordSameAsUserError';
+  static const String passwordSameAsPreviousError = 'passwordSameAsPreviousError';
 
   static const Map<String, dynamic> en = {
     orgProfileTitle: 'Organization\nProfile',
@@ -511,6 +522,17 @@ class AppLocale {
     error: 'Error',
     fetchOrderError: 'Error fetching order:',
     fetchOrderNetworkError: 'Network error in fetchOrderById:',
+    loadingMsg1: 'Getting everything ready for you...',
+    loadingMsg2: 'Synchronizing information...',
+    loadingMsg3: 'Setting up the environment...',
+    loadingMsg4: 'Loading your preferences...',
+    loadingMsg5: 'Almost ready, please wait...',
+    passwordWarningTitle: 'Security Warning',
+    passwordWarningBody: 'We noticed your password is the same as your username. We recommend changing it for security.',
+    changePasswordNow: 'Yes, change password',
+    maybeLater: 'No, maybe later',
+    passwordSameAsUserError: 'Password cannot be the same as username',
+    passwordSameAsPreviousError: 'Password cannot be the same as the previous one',
   };
 
   static const Map<String, dynamic> es = {
@@ -764,5 +786,16 @@ class AppLocale {
     error: 'Error',
     fetchOrderError: 'Error al obtener la orden:',
     fetchOrderNetworkError: 'Error de red en fetchOrderById:',
+    loadingMsg1: 'Preparando todo para ti...',
+    loadingMsg2: 'Sincronizando información...',
+    loadingMsg3: 'Configurando el entorno...',
+    loadingMsg4: 'Cargando tus preferencias...',
+    loadingMsg5: 'Casi listo, por favor espera...',
+    passwordWarningTitle: 'Advertencia de Seguridad',
+    passwordWarningBody: 'Hemos detectado que tu contraseña es igual a tu nombre de usuario. Te recomendamos cambiarla por seguridad.',
+    changePasswordNow: 'Sí, cambiar contraseña',
+    maybeLater: 'No, tal vez más tarde',
+    passwordSameAsUserError: 'La contraseña no puede ser igual al usuario',
+    passwordSameAsPreviousError: 'La contraseña no puede ser igual a la anterior',
   };
 }

@@ -27,6 +27,7 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
   bool hasMinLength = false;
   bool hasUppercase = false;
   bool hasLowercase = false;
+  bool isNotSameAsUser = false;
   bool passwordsMatch = false;
 
   @override
@@ -53,6 +54,7 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
       hasMinLength = pass.length == 8;
       hasUppercase = pass.contains(RegExp(r'[A-Z]'));
       hasLowercase = pass.contains(RegExp(r'[a-z]'));
+      isNotSameAsUser = pass != usuarioController.text && pass.isNotEmpty;
       passwordsMatch = pass == confirm && pass.isNotEmpty;
     });
   }
@@ -95,6 +97,24 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
   }
 
   Future<void> _confirmUpdate() async {
+    if (!isNotSameAsUser) {
+      ToastMessage.show(
+        context: context,
+        message: AppLocale.passwordSameAsUserError.getString(context),
+        type: ToastType.warning,
+      );
+      return;
+    }
+
+    if (newPasswordController.text.trim() == claveController.text.trim() && claveController.text.trim().isNotEmpty) {
+      ToastMessage.show(
+        context: context,
+        message: AppLocale.passwordSameAsPreviousError.getString(context),
+        type: ToastType.warning,
+      );
+      return;
+    }
+
     final bool? confirm = await showDialog<bool>(
       context: context,
       barrierDismissible: false,

@@ -8,9 +8,20 @@ import 'package:primware/theme/theme.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'API/endpoint.dart';
+import 'package:app_links/app_links.dart';
+import 'package:protocol_handler/protocol_handler.dart';
+import 'dart:async';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Register protocol for Windows/macOS using protocol_handler
+  if (Platform.isWindows || Platform.isMacOS) {
+    await protocolHandler.register('primware');
+  }
+
   HttpOverrides.global = MyHttpOverrides();
   await FlutterLocalization.instance.ensureInitialized();
   runApp(const MainApp());
@@ -37,6 +48,9 @@ class ThemeManager {
 class _MainAppState extends State<MainApp> {
   bool _isDarkMode = false;
   final FlutterLocalization _localization = FlutterLocalization.instance;
+  
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
 
   Future<void> toggleTheme() async {
     final prefs = await SharedPreferences.getInstance();
@@ -54,6 +68,47 @@ class _MainAppState extends State<MainApp> {
 
     _localization.init(mapLocales: [const MapLocale('en', AppLocale.en), const MapLocale('es', AppLocale.es)], initLanguageCode: 'es');
     _localization.onTranslatedLanguage = _onLanguageChanged;
+
+    _initDeepLinks();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // Manejar el enlace inicial cuando la app estaba cerrada
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      debugPrint("Error getting initial link: $e");
+    }
+
+    // Escuchar enlaces cuando la app ya está abierta o en segundo plano
+    _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
+      if (uri != null) {
+        _handleDeepLink(uri);
+      }
+    }, onError: (err) {
+      debugPrint("Error listening to link: $err");
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme == 'primware' && uri.host == 'login') {
+      // Usamos el navigatorKey para navegar aunque estemos fuera del BuildContext de la app inicial
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginPage()), 
+        (route) => false
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 
   void _onLanguageChanged(Locale? locale) {
@@ -69,6 +124,6 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, title: Base.title, theme: _isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme, supportedLocales: _localization.supportedLocales, localizationsDelegates: _localization.localizationsDelegates, locale: _localization.currentLocale, home: const LoginPage());
+    return MaterialApp(navigatorKey: navigatorKey, debugShowCheckedModeBanner: false, title: Base.title, theme: _isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme, supportedLocales: _localization.supportedLocales, localizationsDelegates: _localization.localizationsDelegates, locale: _localization.currentLocale, home: const LoginPage());
   }
 }
