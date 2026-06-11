@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Primware
+Comment=Sales app fully integrated with iDempiere ERP
+# Cambia esta ruta por la ruta absoluta donde se instale tu ejecutable en el sistema del usuario
+Exec=/opt/primware/primware %U
+# Opcional: Ruta al icono
+Icon=/opt/primware/data/flutter_assets/assets/img/icono.png
+Terminal=false
+Type=Application
+Categories=Utility;
+MimeType=x-scheme-handler/primware;
