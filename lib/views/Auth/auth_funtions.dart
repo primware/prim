@@ -364,7 +364,7 @@ Future<bool> _loadPOSPrinterData() async {
       Token.adOrgInfoUU = record['uid']?.toString();
       POSPrinter.headerName = record['AD_Client_ID']?['identifier'];
       POSPrinter.headerAddress =
-          '${record['C_Location_ID']['Address1'] ?? ''}${record['C_Location_ID']['Address2'] != null ? ', ${record['C_Location_ID']['Address2']}' : ''}${record['C_Location_ID']['Address3'] != null ? ', ${record['C_Location_ID']['Address3']}' : ''}${record['C_Location_ID']['Address4'] != null ? ', ${record['C_Location_ID']['Address4']}' : ''}';
+          '${record['C_Location_ID']?['Address1'] ?? ''}${record['C_Location_ID']?['Address2'] != null ? ', ${record['C_Location_ID']?['Address2']}' : ''}${record['C_Location_ID']?['Address3'] != null ? ', ${record['C_Location_ID']?['Address3']}' : ''}${record['C_Location_ID']?['Address4'] != null ? ', ${record['C_Location_ID']?['Address4']}' : ''}';
       POSPrinter.headerPhone = record['Phone'];
       POSPrinter.headerTaxID = record['TaxID'];
       POSPrinter.headerDV = record['dv'];
@@ -460,11 +460,12 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       // Cargamos los tipos de documentos disponibles para el POS
       POS.docTypesComplete = [
-        {
-          'id': POS.docTypeID.toString(),
-          'name': POS.docTypeName ?? '',
-          'DocSubTypeSO': POS.docSubType ?? '',
-        },
+        if (POS.docTypeID != null)
+          {
+            'id': POS.docTypeID.toString(),
+            'name': POS.docTypeName ?? '',
+            'DocSubTypeSO': POS.docSubType ?? '',
+          },
         if (POS.docTypeRefundID != null)
           {
             'id': POS.docTypeRefundID.toString(),
