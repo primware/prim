@@ -382,6 +382,31 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
                   )
                 : pw.SizedBox(),
             pw.SizedBox(height: 4),
+            if (hasHeaderValue(POSPrinter.headerName))
+              pw.Text(POSPrinter.headerName!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.headerAddress))
+              pw.Text(
+                POSPrinter.headerAddress!,
+                textAlign: pw.TextAlign.center,
+              ),
+            if (hasHeaderValue(POSPrinter.headerTaxID))
+              pw.Text(
+                'RUC: ${POSPrinter.headerTaxID}',
+                textAlign: pw.TextAlign.center,
+              ),
+            if (hasHeaderValue(POSPrinter.headerDV))
+              pw.Text(
+                'DV: ${POSPrinter.headerDV}',
+                textAlign: pw.TextAlign.center,
+              ),
+            if (hasHeaderValue(POSPrinter.headerPhone))
+              pw.Text(
+                'Tel: ${POSPrinter.headerPhone}',
+                textAlign: pw.TextAlign.center,
+              ),
+            if (hasHeaderValue(POSPrinter.headerEmail))
+              pw.Text(POSPrinter.headerEmail!, textAlign: pw.TextAlign.center),
+
             if (hasHeaderValue(POSPrinter.header1))
               pw.Text(POSPrinter.header1!, textAlign: pw.TextAlign.center),
             if (hasHeaderValue(POSPrinter.header2))

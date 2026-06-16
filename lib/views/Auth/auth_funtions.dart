@@ -365,7 +365,7 @@ Future<bool> _loadPOSPrinterData() async {
       POSPrinter.headerName = record['AD_Client_ID']?['identifier'];
       POSPrinter.headerAddress =
           '${record['C_Location_ID']?['Address1'] ?? ''}${record['C_Location_ID']?['Address2'] != null ? ', ${record['C_Location_ID']?['Address2']}' : ''}${record['C_Location_ID']?['Address3'] != null ? ', ${record['C_Location_ID']?['Address3']}' : ''}${record['C_Location_ID']?['Address4'] != null ? ', ${record['C_Location_ID']?['Address4']}' : ''}';
-      POSPrinter.headerPhone = record['Phone'];
+      POSPrinter.headerPhone = record['Phone2']?.toString() ?? record['Phone']?.toString();
       POSPrinter.headerTaxID = record['TaxID'];
       POSPrinter.headerDV = record['dv'];
       POSPrinter.headerEmail = record['EMail'];
