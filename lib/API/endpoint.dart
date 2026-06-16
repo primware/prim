@@ -7,86 +7,86 @@ class Base {
 }
 
 class EndPoints {
-  static String postUserAuth = '${Base.baseURL}/api/v1/auth/tokens';
+  static String get postUserAuth => '${Base.baseURL}/api/v1/auth/tokens';
 
-  static String adUser = '${Base.baseURL}/api/v1/models/AD_User';
+  static String get adUser => '${Base.baseURL}/api/v1/models/AD_User';
 
-  static String adOrg = '${Base.baseURL}/api/v1/models/AD_Org';
+  static String get adOrg => '${Base.baseURL}/api/v1/models/AD_Org';
 
-  static String mWarehouse = '${Base.baseURL}/api/v1/models/M_Warehouse';
+  static String get mWarehouse => '${Base.baseURL}/api/v1/models/M_Warehouse';
 
-  static String cBPartner = '${Base.baseURL}/api/v1/models/C_BPartner';
+  static String get cBPartner => '${Base.baseURL}/api/v1/models/C_BPartner';
 
-  static String cBPartnerLocation =
+  static String get cBPartnerLocation =>
       '${Base.baseURL}/api/v1/models/C_BPartner_Location';
 
-  static String cLocation = '${Base.baseURL}/api/v1/models/C_Location';
+  static String get cLocation => '${Base.baseURL}/api/v1/models/C_Location';
 
-  static String adUserRoles = '${Base.baseURL}/api/v1/models/AD_User_Roles';
+  static String get adUserRoles => '${Base.baseURL}/api/v1/models/AD_User_Roles';
 
-  static String salesRep =
+  static String get salesRep =>
       '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
 
-  static String getOrganizationsAfterLogin =
+  static String get getOrganizationsAfterLogin =>
       '${Base.baseURL}/api/v1/models/AD_Org?\$filter=AD_Org_ID ne 0';
 
-  static String cCurrency = '${Base.baseURL}/api/v1/models/C_Currency';
+  static String get cCurrency => '${Base.baseURL}/api/v1/models/C_Currency';
 
-  static String adChart = '${Base.baseURL}/api/v1/models/AD_Chart';
+  static String get adChart => '${Base.baseURL}/api/v1/models/AD_Chart';
 
-  static String cCountry = '${Base.baseURL}/api/v1/models/C_Country';
+  static String get cCountry => '${Base.baseURL}/api/v1/models/C_Country';
 
-  static String cCity = '${Base.baseURL}/api/v1/models/C_City';
+  static String get cCity => '${Base.baseURL}/api/v1/models/C_City';
 
-  static String rRequest = '${Base.baseURL}/api/v1/models/R_Request';
+  static String get rRequest => '${Base.baseURL}/api/v1/models/R_Request';
 
-  static String cPos = '${Base.baseURL}/api/v1/models/C_POS';
+  static String get cPos => '${Base.baseURL}/api/v1/models/C_POS';
 
-  static String mProduct = '${Base.baseURL}/api/v1/models/M_Product';
+  static String get mProduct => '${Base.baseURL}/api/v1/models/M_Product';
 
-  static String mProductPrice = '${Base.baseURL}/api/v1/models/M_ProductPrice';
+  static String get mProductPrice => '${Base.baseURL}/api/v1/models/M_ProductPrice';
 
-  static String mProductCategory =
+  static String get mProductCategory =>
       '${Base.baseURL}/api/v1/models/M_Product_Category';
 
-  static String mPriceList = '${Base.baseURL}/api/v1/models/M_PriceList';
+  static String get mPriceList => '${Base.baseURL}/api/v1/models/M_PriceList';
 
-  static String cPaymentTermID = '${Base.baseURL}/api/v1/models/C_PaymentTerm';
+  static String get cPaymentTermID => '${Base.baseURL}/api/v1/models/C_PaymentTerm';
 
-  static String cdsCloseCash = '${Base.baseURL}/api/v1/models/CDS_CloseCash';
+  static String get cdsCloseCash => '${Base.baseURL}/api/v1/models/CDS_CloseCash';
 
-  static String cOrder = '${Base.baseURL}/api/v1/models/C_Order';
+  static String get cOrder => '${Base.baseURL}/api/v1/models/C_Order';
 
-  static String cOrderLine = '${Base.baseURL}/api/v1/models/C_OrderLine';
+  static String get cOrderLine => '${Base.baseURL}/api/v1/models/C_OrderLine';
 
-  static String cTax = '${Base.baseURL}/api/v1/models/C_Tax';
+  static String get cTax => '${Base.baseURL}/api/v1/models/C_Tax';
 
-  static String cInvoice = '${Base.baseURL}/api/v1/models/C_Invoice';
+  static String get cInvoice => '${Base.baseURL}/api/v1/models/C_Invoice';
 
-  static String adSequence = '${Base.baseURL}/api/v1/models/AD_Sequence';
+  static String get adSequence => '${Base.baseURL}/api/v1/models/AD_Sequence';
 
-  static String cTaxCategory = '${Base.baseURL}/api/v1/models/C_TaxCategory';
+  static String get cTaxCategory => '${Base.baseURL}/api/v1/models/C_TaxCategory';
 
-  static String cDocType = '${Base.baseURL}/api/v1/models/C_DocType';
+  static String get cDocType => '${Base.baseURL}/api/v1/models/C_DocType';
 
-  static String lcoTaxIdType = '${Base.baseURL}/api/v1/models/LCO_TaxIdType';
+  static String get lcoTaxIdType => '${Base.baseURL}/api/v1/models/LCO_TaxIdType';
 
-  static String cBPGroup = '${Base.baseURL}/api/v1/models/C_BP_Group';
+  static String get cBPGroup => '${Base.baseURL}/api/v1/models/C_BP_Group';
 
-  static String adOrgInfo = '${Base.baseURL}/api/v1/models/AD_OrgInfo';
+  static String get adOrgInfo => '${Base.baseURL}/api/v1/models/AD_OrgInfo';
 
-  static String cdsYappyConf = '${Base.baseURL}/api/v1/models/CDS_YappyConf';
+  static String get cdsYappyConf => '${Base.baseURL}/api/v1/models/CDS_YappyConf';
 
-  static String cdsYappyGroup = '${Base.baseURL}/api/v1/models/CDS_YappyGroup';
+  static String get cdsYappyGroup => '${Base.baseURL}/api/v1/models/CDS_YappyGroup';
 
-  static String cPOSTenderType =
+  static String get cPOSTenderType =>
       '${Base.baseURL}/api/v1/models/C_POSTenderType';
 
-  static String yappyDevice = '${Base.yappyURL}/session/device';
+  static String get yappyDevice => '${Base.yappyURL}/session/device';
 
-  static String yappyQRGeneratorDYN = '${Base.yappyURL}/qr/generate/DYN';
+  static String get yappyQRGeneratorDYN => '${Base.yappyURL}/qr/generate/DYN';
 
-  static String yappyTransaction = '${Base.yappyURL}/transaction';
+  static String get yappyTransaction => '${Base.yappyURL}/transaction';
 }
 
 class GetCustomerData {
@@ -167,17 +167,17 @@ class GetDocumentActions {
 }
 
 class Processes {
-  static String cdsCloseCashProcess =
+  static String get cdsCloseCashProcess =>
       '${Base.baseURL}/api/v1/processes/cds_closecash_process'; // Action
-  static String closeCash =
+  static String get closeCash =>
       '${Base.baseURL}/api/v1/processes/closecash'; // Report
-  static String syncFE =
+  static String get syncFE =>
       '${Base.baseURL}/api/v1/processes/factelecsyncinvoice'; // process to sync factura electronica
-  static String createCreditMemo =
+  static String get createCreditMemo =>
       '${Base.baseURL}/api/v1/processes/cds-invoicecreatecreditmemo';
-  static String orderExecuteDocAction =
+  static String get orderExecuteDocAction =>
       '${Base.baseURL}/api/v1/processes/orderexecutedocaction';
-  static String changePassword =
+  static String get changePassword =>
       '${Base.baseURL}/api/v1/processes/setuserpasswordprocesspos';
 }
 
