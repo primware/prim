@@ -265,6 +265,9 @@ class AppLocale {
   static const String maybeLater = 'maybeLater';
   static const String passwordSameAsUserError = 'passwordSameAsUserError';
   static const String passwordSameAsPreviousError = 'passwordSameAsPreviousError';
+  static const String posPrinterConfig = 'posPrinterConfig';
+  static const String headerText = 'headerText';
+  static const String footerText = 'footerText';
 
   static const Map<String, dynamic> en = {
     orgProfileTitle: 'Organization\nProfile',
@@ -533,6 +536,9 @@ class AppLocale {
     maybeLater: 'No, maybe later',
     passwordSameAsUserError: 'Password cannot be the same as username',
     passwordSameAsPreviousError: 'Password cannot be the same as the previous one',
+    posPrinterConfig: 'POS Printer Configuration',
+    headerText: 'Header',
+    footerText: 'Footer',
   };
 
   static const Map<String, dynamic> es = {
@@ -797,5 +803,8 @@ class AppLocale {
     maybeLater: 'No, tal vez más tarde',
     passwordSameAsUserError: 'La contraseña no puede ser igual al usuario',
     passwordSameAsPreviousError: 'La contraseña no puede ser igual a la anterior',
+    posPrinterConfig: 'Configuración de Impresora POS',
+    headerText: 'Encabezado',
+    footerText: 'Pie de página',
   };
 }

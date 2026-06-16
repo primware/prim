@@ -82,6 +82,9 @@ class EndPoints {
   static String get cPOSTenderType =>
       '${Base.baseURL}/api/v1/models/C_POSTenderType';
 
+  static String get cdsPOSPrinterConfig =>
+      '${Base.baseURL}/api/v1/models/CDS_POSPrinterConfig';
+
   static String get yappyDevice => '${Base.yappyURL}/session/device';
 
   static String get yappyQRGeneratorDYN => '${Base.yappyURL}/qr/generate/DYN';

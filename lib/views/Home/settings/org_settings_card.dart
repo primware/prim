@@ -12,8 +12,8 @@ import '../../../shared/custom_dropdown.dart';
 import '../../../shared/custom_textfield.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/toast_message.dart';
+import 'pos_printer_functions.dart';
 import 'settings_funtions.dart';
-
 class OrgSettingsPage extends StatelessWidget {
   const OrgSettingsPage({super.key});
 
@@ -50,6 +50,16 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
 
+  final TextEditingController header1Controller = TextEditingController();
+  final TextEditingController header2Controller = TextEditingController();
+  final TextEditingController header3Controller = TextEditingController();
+  final TextEditingController header4Controller = TextEditingController();
+  final TextEditingController footer1Controller = TextEditingController();
+  final TextEditingController footer2Controller = TextEditingController();
+  final TextEditingController footer3Controller = TextEditingController();
+  final TextEditingController footer4Controller = TextEditingController();
+  final TextEditingController printerConfigDisplayController = TextEditingController();
+
   List<Map<String, dynamic>> _countries = [];
   List<Map<String, dynamic>> _cities = [];
   int? _selectedCountryId;
@@ -65,6 +75,7 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
 
   int? _adOrgId;
   int? _cLocationId;
+  int? _printerConfigId;
 
   bool get _isRucValid => taxIdController.text.trim().isNotEmpty;
   bool get _canSave => !isLoading && _hasUnsavedChanges && _isRucValid;
@@ -78,7 +89,11 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
   }
 
   void _addFieldListeners() {
-    for (final controller in [nameController, taxIdController, dvController, phoneController, emailController, addressController]) {
+    for (final controller in [
+      nameController, taxIdController, dvController, phoneController, emailController, addressController,
+      header1Controller, header2Controller, header3Controller, header4Controller,
+      footer1Controller, footer2Controller, footer3Controller, footer4Controller,
+    ]) {
       controller.addListener(_onFieldChanged);
     }
   }
@@ -98,6 +113,23 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
       if (_selectedCountryId != null) {
         _cities = await fetchCities(context: context, countryId: _selectedCountryId!);
         if (!mounted) return;
+      }
+    }
+
+    if (POS.isPOS && POS.cPosID != null) {
+      final printerConfig = await fetchPOSPrinterConfig(context: context, posId: POS.cPosID!);
+      if (!mounted) return;
+      if (printerConfig != null) {
+        _printerConfigId = printerConfig['id'] as int?;
+        header1Controller.text = printerConfig['Header1']?.toString() ?? '';
+        header2Controller.text = printerConfig['Header2']?.toString() ?? '';
+        header3Controller.text = printerConfig['Header3']?.toString() ?? '';
+        header4Controller.text = printerConfig['Header4']?.toString() ?? '';
+        footer1Controller.text = printerConfig['Footer1']?.toString() ?? '';
+        footer2Controller.text = printerConfig['Footer2']?.toString() ?? '';
+        footer3Controller.text = printerConfig['Footer3']?.toString() ?? '';
+        footer4Controller.text = printerConfig['Footer4']?.toString() ?? '';
+        printerConfigDisplayController.text = 'Configuración cargada';
       }
     }
 
@@ -137,6 +169,15 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
     phoneController.dispose();
     emailController.dispose();
     addressController.dispose();
+    header1Controller.dispose();
+    header2Controller.dispose();
+    header3Controller.dispose();
+    header4Controller.dispose();
+    footer1Controller.dispose();
+    footer2Controller.dispose();
+    footer3Controller.dispose();
+    footer4Controller.dispose();
+    printerConfigDisplayController.dispose();
     super.dispose();
   }
 
@@ -321,6 +362,60 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
     );
   }
 
+  void _showPrinterConfigDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.print_outlined, color: Theme.of(context).primaryColor),
+              const SizedBox(width: 8),
+              Expanded(child: Text(AppLocale.posPrinterConfig.getString(context))),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextfieldTheme(controlador: header1Controller, texto: '${AppLocale.headerText.getString(context)} 1', icono: Icons.title),
+                const SizedBox(height: 16),
+                TextfieldTheme(controlador: header2Controller, texto: '${AppLocale.headerText.getString(context)} 2', icono: Icons.title),
+                const SizedBox(height: 16),
+                TextfieldTheme(controlador: header3Controller, texto: '${AppLocale.headerText.getString(context)} 3', icono: Icons.title),
+                const SizedBox(height: 16),
+                TextfieldTheme(controlador: header4Controller, texto: '${AppLocale.headerText.getString(context)} 4', icono: Icons.title),
+                const SizedBox(height: 16),
+                TextfieldTheme(controlador: footer1Controller, texto: '${AppLocale.footerText.getString(context)} 1', icono: Icons.text_snippet_outlined),
+                const SizedBox(height: 16),
+                TextfieldTheme(controlador: footer2Controller, texto: '${AppLocale.footerText.getString(context)} 2', icono: Icons.text_snippet_outlined),
+                const SizedBox(height: 16),
+                TextfieldTheme(controlador: footer3Controller, texto: '${AppLocale.footerText.getString(context)} 3', icono: Icons.text_snippet_outlined),
+                const SizedBox(height: 16),
+                TextfieldTheme(controlador: footer4Controller, texto: '${AppLocale.footerText.getString(context)} 4', icono: Icons.text_snippet_outlined),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () {
+                setState(() => _hasUnsavedChanges = true);
+                printerConfigDisplayController.text = 'Configuración actualizada';
+                Navigator.of(dialogContext).pop();
+              },
+              child: Text(AppLocale.accept.getString(context), style: const TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _saveOrganization() async {
     if (!_isRucValid) {
       ToastMessage.show(
@@ -364,6 +459,24 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
     if (!mounted) return;
 
     success = success && settingsOk;
+
+    if (POS.isPOS && POS.cPosID != null && success) {
+      final printerOk = await savePOSPrinterConfig(
+        context: context,
+        posId: POS.cPosID!,
+        configId: _printerConfigId,
+        header1: header1Controller.text.trim(),
+        header2: header2Controller.text.trim(),
+        header3: header3Controller.text.trim(),
+        header4: header4Controller.text.trim(),
+        footer1: footer1Controller.text.trim(),
+        footer2: footer2Controller.text.trim(),
+        footer3: footer3Controller.text.trim(),
+        footer4: footer4Controller.text.trim(),
+      );
+      if (!mounted) return;
+      success = success && printerOk;
+    }
 
     if (success) {
       POSPrinter.headerName = nameController.text.trim();
@@ -564,6 +677,20 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                     ),
                   ),
                 ),
+                if (POS.isPOS) ...[
+                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: isLoading ? null : _showPrinterConfigDialog,
+                    child: AbsorbPointer(
+                      child: TextfieldTheme(
+                        controlador: printerConfigDisplayController,
+                        texto: AppLocale.posPrinterConfig.getString(context),
+                        icono: Icons.print_outlined,
+                        inputType: TextInputType.text,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
