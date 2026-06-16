@@ -18,6 +18,7 @@ class TextfieldTheme extends StatefulWidget {
     this.readOnly = false,
     this.colorEmpty = false,
     this.maxLength,
+    this.maxLines = 1,
     this.focusNode,
     this.textAlign,
   });
@@ -34,6 +35,7 @@ class TextfieldTheme extends StatefulWidget {
   List<TextInputFormatter>? inputFormatters;
 
   final int? maxLength;
+  final int? maxLines;
   final FocusNode? focusNode;
 
   @override
@@ -54,6 +56,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
   Widget build(BuildContext context) {
     return TextField(
       maxLength: widget.maxLength,
+      maxLines: widget.maxLines,
       focusNode: widget.focusNode,
       onSubmitted: widget.onSubmitted,
       onChanged: widget.onChanged,

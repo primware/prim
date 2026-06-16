@@ -76,6 +76,7 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
   int? _adOrgId;
   int? _cLocationId;
   int? _printerConfigId;
+  bool _printerConfigUnsaved = false;
 
   bool get _isRucValid => taxIdController.text.trim().isNotEmpty;
   bool get _canSave => !isLoading && _hasUnsavedChanges && _isRucValid;
@@ -130,6 +131,7 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
         footer3Controller.text = printerConfig['Footer3']?.toString() ?? '';
         footer4Controller.text = printerConfig['Footer4']?.toString() ?? '';
         printerConfigDisplayController.text = 'Configuración cargada';
+        _printerConfigUnsaved = false;
       }
     }
 
@@ -363,6 +365,15 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
   }
 
   void _showPrinterConfigDialog() {
+    final origH1 = header1Controller.text;
+    final origH2 = header2Controller.text;
+    final origH3 = header3Controller.text;
+    final origH4 = header4Controller.text;
+    final origF1 = footer1Controller.text;
+    final origF2 = footer2Controller.text;
+    final origF3 = footer3Controller.text;
+    final origF4 = footer4Controller.text;
+
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -398,14 +409,31 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
             ),
           ),
           actions: [
+            TextButton(
+              onPressed: () {
+                header1Controller.text = origH1;
+                header2Controller.text = origH2;
+                header3Controller.text = origH3;
+                header4Controller.text = origH4;
+                footer1Controller.text = origF1;
+                footer2Controller.text = origF2;
+                footer3Controller.text = origF3;
+                footer4Controller.text = origF4;
+                Navigator.of(dialogContext).pop();
+              },
+              child: Text(AppLocale.cancel.getString(context), style: TextStyle(color: Colors.grey.shade600)),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () {
-                setState(() => _hasUnsavedChanges = true);
-                printerConfigDisplayController.text = 'Configuración actualizada';
+                setState(() {
+                  _hasUnsavedChanges = true;
+                  _printerConfigUnsaved = true;
+                  printerConfigDisplayController.text = 'Cambios pendientes de guardar';
+                });
                 Navigator.of(dialogContext).pop();
               },
               child: Text(AppLocale.accept.getString(context), style: const TextStyle(color: Colors.white)),
@@ -485,6 +513,10 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
       POSPrinter.headerPhone = phoneController.text.trim();
       POSPrinter.headerEmail = emailController.text.trim();
 
+      if (POS.isPOS && POS.cPosID != null) {
+        printerConfigDisplayController.text = 'Configuración cargada';
+      }
+
       final refreshedSettings = await fetchOrganizationSettings(context: context);
       if (!mounted) return;
       if (refreshedSettings != null) {
@@ -494,7 +526,10 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
 
     setState(() {
       isLoading = false;
-      if (success) _hasUnsavedChanges = false;
+      if (success) {
+        _hasUnsavedChanges = false;
+        _printerConfigUnsaved = false;
+      }
     });
 
     ToastMessage.show(
@@ -686,7 +721,9 @@ class _OrgSettingsCardState extends State<OrgSettingsCard> {
                         controlador: printerConfigDisplayController,
                         texto: AppLocale.posPrinterConfig.getString(context),
                         icono: Icons.print_outlined,
-                        inputType: TextInputType.text,
+                        inputType: TextInputType.multiline,
+                        maxLines: null,
+                        colorEmpty: _printerConfigUnsaved,
                       ),
                     ),
                   ),
