@@ -364,8 +364,8 @@ Future<bool> _loadPOSPrinterData() async {
       Token.adOrgInfoUU = record['uid']?.toString();
       POSPrinter.headerName = record['AD_Client_ID']?['identifier'];
       POSPrinter.headerAddress =
-          '${record['C_Location_ID']['Address1'] ?? ''}${record['C_Location_ID']['Address2'] != null ? ', ${record['C_Location_ID']['Address2']}' : ''}${record['C_Location_ID']['Address3'] != null ? ', ${record['C_Location_ID']['Address3']}' : ''}${record['C_Location_ID']['Address4'] != null ? ', ${record['C_Location_ID']['Address4']}' : ''}';
-      POSPrinter.headerPhone = record['Phone'];
+          '${record['C_Location_ID']?['Address1'] ?? ''}${record['C_Location_ID']?['Address2'] != null ? ', ${record['C_Location_ID']?['Address2']}' : ''}${record['C_Location_ID']?['Address3'] != null ? ', ${record['C_Location_ID']?['Address3']}' : ''}${record['C_Location_ID']?['Address4'] != null ? ', ${record['C_Location_ID']?['Address4']}' : ''}';
+      POSPrinter.headerPhone = record['Phone2']?.toString() ?? record['Phone']?.toString();
       POSPrinter.headerTaxID = record['TaxID'];
       POSPrinter.headerDV = record['dv'];
       POSPrinter.headerEmail = record['EMail'];
@@ -394,6 +394,41 @@ Future<bool> _loadPOSPrinterData() async {
   }
 
   return false;
+}
+
+Future<void> _loadDynamicPOSPrinterConfig() async {
+  if (!POS.isPOS || POS.cPosID == null) return;
+  try {
+    final response = await get(
+      Uri.parse('${EndPoints.cdsPOSPrinterConfig}?\$filter=C_POS_ID eq ${POS.cPosID}'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': Token.auth!,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = json.decode(utf8.decode(response.bodyBytes));
+      final records = decoded['records'] as List?;
+      if (records != null && records.isNotEmpty) {
+        final data = records.first;
+        POSPrinter.header1 = data['Header1']?.toString();
+        POSPrinter.header2 = data['Header2']?.toString();
+        POSPrinter.header3 = data['Header3']?.toString();
+        POSPrinter.header4 = data['Header4']?.toString();
+        POSPrinter.footer1 = data['Footer1']?.toString();
+        POSPrinter.footer2 = data['Footer2']?.toString();
+        POSPrinter.footer3 = data['Footer3']?.toString();
+        POSPrinter.footer4 = data['Footer4']?.toString();
+      }
+    }
+  } catch (e) {
+    CurrentLogMessage.add(
+      'Excepción en _loadDynamicPOSPrinterConfig: $e',
+      level: 'ERROR',
+      tag: '_loadDynamicPOSPrinterConfig',
+    );
+  }
 }
 
 Future<void> _loadPOSData(BuildContext context) async {
@@ -445,6 +480,7 @@ Future<void> _loadPOSData(BuildContext context) async {
       await fetchTaxs();
 
       POS.isPOS = POS.cPosID != null;
+      await _loadDynamicPOSPrinterConfig();
 
       // Tomamos la informacion del Yappy si existe, si no se mantiene en null
       Yappy.yappyConfigID = posData?['CDS_YappyConf_ID']?['id'];
@@ -460,11 +496,12 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       // Cargamos los tipos de documentos disponibles para el POS
       POS.docTypesComplete = [
-        {
-          'id': POS.docTypeID.toString(),
-          'name': POS.docTypeName ?? '',
-          'DocSubTypeSO': POS.docSubType ?? '',
-        },
+        if (POS.docTypeID != null)
+          {
+            'id': POS.docTypeID.toString(),
+            'name': POS.docTypeName ?? '',
+            'DocSubTypeSO': POS.docSubType ?? '',
+          },
         if (POS.docTypeRefundID != null)
           {
             'id': POS.docTypeRefundID.toString(),
