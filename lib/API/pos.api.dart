@@ -51,6 +51,15 @@ class POSPrinter {
   static String? headerEmail;
   static Uint8List? logo;
   static bool isLogoSet = false;
+
+  static String? header1;
+  static String? header2;
+  static String? header3;
+  static String? header4;
+  static String? footer1;
+  static String? footer2;
+  static String? footer3;
+  static String? footer4;
 }
 
 class docSubTypeSO {

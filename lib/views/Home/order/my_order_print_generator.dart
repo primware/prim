@@ -382,30 +382,14 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
                   )
                 : pw.SizedBox(),
             pw.SizedBox(height: 4),
-            if (hasHeaderValue(POSPrinter.headerName))
-              pw.Text(POSPrinter.headerName!, textAlign: pw.TextAlign.center),
-            if (hasHeaderValue(POSPrinter.headerAddress))
-              pw.Text(
-                POSPrinter.headerAddress!,
-                textAlign: pw.TextAlign.center,
-              ),
-            if (hasHeaderValue(POSPrinter.headerTaxID))
-              pw.Text(
-                'RUC: ${POSPrinter.headerTaxID}',
-                textAlign: pw.TextAlign.center,
-              ),
-            if (hasHeaderValue(POSPrinter.headerDV))
-              pw.Text(
-                'DV: ${POSPrinter.headerDV}',
-                textAlign: pw.TextAlign.center,
-              ),
-            if (hasHeaderValue(POSPrinter.headerPhone))
-              pw.Text(
-                'Tel: ${POSPrinter.headerPhone}',
-                textAlign: pw.TextAlign.center,
-              ),
-            if (hasHeaderValue(POSPrinter.headerEmail))
-              pw.Text(POSPrinter.headerEmail!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.header1))
+              pw.Text(POSPrinter.header1!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.header2))
+              pw.Text(POSPrinter.header2!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.header3))
+              pw.Text(POSPrinter.header3!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.header4))
+              pw.Text(POSPrinter.header4!, textAlign: pw.TextAlign.center),
             pw.SizedBox(height: 12),
             pw.Text(
               docTypename,
@@ -595,10 +579,14 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
             ],
 
             // Footer
-            pw.Text(
-              'Gracias por mantener sus pagos al día',
-              textAlign: pw.TextAlign.center,
-            ),
+            if (hasHeaderValue(POSPrinter.footer1))
+              pw.Text(POSPrinter.footer1!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.footer2))
+              pw.Text(POSPrinter.footer2!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.footer3))
+              pw.Text(POSPrinter.footer3!, textAlign: pw.TextAlign.center),
+            if (hasHeaderValue(POSPrinter.footer4))
+              pw.Text(POSPrinter.footer4!, textAlign: pw.TextAlign.center),
 
             pw.SizedBox(height: 56),
           ],
