@@ -803,7 +803,7 @@ class AppLocale {
     maybeLater: 'No, tal vez más tarde',
     passwordSameAsUserError: 'La contraseña no puede ser igual al usuario',
     passwordSameAsPreviousError: 'La contraseña no puede ser igual a la anterior',
-    posPrinterConfig: 'Emcabezado / Pie de página',
+    posPrinterConfig: 'Encabezado / Pie de página',
     headerText: 'Encabezado',
     footerText: 'Pie de página',
   };
