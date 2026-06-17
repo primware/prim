@@ -536,7 +536,7 @@ class AppLocale {
     maybeLater: 'No, maybe later',
     passwordSameAsUserError: 'Password cannot be the same as username',
     passwordSameAsPreviousError: 'Password cannot be the same as the previous one',
-    posPrinterConfig: 'POS Printer Configuration',
+    posPrinterConfig: 'Header / Footer',
     headerText: 'Header',
     footerText: 'Footer',
   };
@@ -803,7 +803,7 @@ class AppLocale {
     maybeLater: 'No, tal vez más tarde',
     passwordSameAsUserError: 'La contraseña no puede ser igual al usuario',
     passwordSameAsPreviousError: 'La contraseña no puede ser igual a la anterior',
-    posPrinterConfig: 'Configuración de Impresora POS',
+    posPrinterConfig: 'Encabezado / Pie de página',
     headerText: 'Encabezado',
     footerText: 'Pie de página',
   };
