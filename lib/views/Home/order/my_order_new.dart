@@ -169,9 +169,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   Future<void> _initialPartner() async {
     if (POS.templatePartnerID != null) {
+      final hasLocation = await fetchBPartnerHasLocation(context: context, partnerId: POS.templatePartnerID);
+
       setState(() {
         selectedBPartnerID = POS.templatePartnerID;
         clienteController.text = POS.templatePartnerName ?? '';
+        hasLocationBPartner = hasLocation;
       });
       _validateForm();
     }
