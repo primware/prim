@@ -49,6 +49,39 @@ Future<List<Map<String, dynamic>>> fetchBPartner({required BuildContext context,
   }
 }
 
+Future<bool> fetchBPartnerHasLocation({required BuildContext context, int? partnerId}) async {
+  try {
+    final currentPartnerId = partnerId ?? POS.templatePartnerID;
+    if (currentPartnerId == null) {
+      return false;
+    }
+
+    await usuarioAuth(context: context);
+    final filterQuery = 'IsCustomer eq true and id eq $currentPartnerId';
+
+    final response = await get(
+      Uri.parse('${EndPoints.cBPartner}?\$filter=$filterQuery&\$expand=C_BPartner_Location'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      final records = jsonResponse['records'] as List;
+      if (records.isEmpty) {
+        return false;
+      }
+
+      final record = records.first;
+      return record['C_BPartner_Location']?[0]?['id'] != null;
+    } else {
+      throw Exception('Error al validar ubicación del tercero: ${response.statusCode}');
+    }
+  } catch (e) {
+    CurrentLogMessage.add('Excepción al validar ubicación del tercero: $e', level: 'ERROR', tag: 'fetchBPartnerHasLocation');
+    return false;
+  }
+}
+
 Future<List<Map<String, dynamic>>> fetchProductInPriceList({
   required BuildContext context,
   List<int>? categoryID = const [],
