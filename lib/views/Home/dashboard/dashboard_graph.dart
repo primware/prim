@@ -1125,44 +1125,85 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                                           final row = rows[displayIndex];
                                           final value = (row['value'] as num)
                                               .toDouble();
+                                          final percent = _totalValue() > 0
+                                              ? (value / _totalValue()) * 100
+                                              : 0.0;
 
                                           return IgnorePointer(
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
+                                            child: Container(
+                                              width: 120,
+                                              height: 120,
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .surface
+                                                    .withOpacity(0.92),
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.1),
+                                                    blurRadius: 12,
+                                                    spreadRadius: 2,
+                                                  ),
+                                                ],
+                                              ),
                                               child: Column(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
-                                                mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   Text(
                                                     row['category'].toString(),
+                                                    textAlign: TextAlign.center,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .bodySmall
                                                         ?.copyWith(
-                                                          color: Colors.grey.shade600,
+                                                          color: isDark
+                                                              ? Colors.grey.shade400
+                                                              : Colors.grey.shade600,
                                                           fontWeight: FontWeight.bold,
-                                                          fontSize: 11,
+                                                          fontSize: 10,
                                                         ),
-                                                    textAlign: TextAlign.center,
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
                                                   ),
                                                   const SizedBox(height: 2),
-                                                  Text(
-                                                    '${POS.currencySymbol} ${totalFmt.format(value)}',
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyMedium
-                                                        ?.copyWith(
-                                                          fontWeight: FontWeight.w800,
-                                                          fontSize: 13,
-                                                          color: Theme.of(context)
-                                                              .colorScheme
-                                                              .primary,
-                                                        ),
-                                                    textAlign: TextAlign.center,
+                                                  FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    child: Text(
+                                                      '${POS.currencySymbol}${totalFmt.format(value)}',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleLarge
+                                                          ?.copyWith(
+                                                            color: Theme.of(
+                                                              context,
+                                                            ).colorScheme.primary,
+                                                            fontWeight:
+                                                                FontWeight.w900,
+                                                          ),
+                                                    ),
                                                   ),
+                                                  if (rows.length > 1) ...[
+                                                    const SizedBox(height: 2),
+                                                    Text(
+                                                      '${percent.toStringAsFixed(1)}%',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .bodySmall
+                                                          ?.copyWith(
+                                                            color: isDark
+                                                                ? Colors.grey.shade400
+                                                                : Colors
+                                                                      .grey
+                                                                      .shade600,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            fontSize: 10,
+                                                          ),
+                                                    ),
+                                                  ],
                                                 ],
                                               ),
                                             ),
@@ -1183,46 +1224,54 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                                   final isTouched =
                                       index == touchedIndex || rows.length == 1;
 
-                                  return AnimatedOpacity(
-                                    duration: const Duration(milliseconds: 200),
-                                    opacity: touchedIndex == -1 || isTouched
-                                        ? 1.0
-                                        : 0.35,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 10,
-                                          height: 10,
-                                          decoration: BoxDecoration(
-                                            color: color,
-                                            shape: BoxShape.circle,
-                                            boxShadow: isTouched
-                                                ? [
-                                                    BoxShadow(
-                                                      color: color.withOpacity(0.5),
-                                                      blurRadius: 6,
-                                                    ),
-                                                  ]
-                                                : null,
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        touchedIndex =
+                                            touchedIndex == index ? -1 : index;
+                                      });
+                                    },
+                                    child: AnimatedOpacity(
+                                      duration: const Duration(milliseconds: 200),
+                                      opacity: touchedIndex == -1 || isTouched
+                                          ? 1.0
+                                          : 0.35,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                              color: color,
+                                              shape: BoxShape.circle,
+                                              boxShadow: isTouched
+                                                  ? [
+                                                      BoxShadow(
+                                                        color: color.withOpacity(0.5),
+                                                        blurRadius: 6,
+                                                      ),
+                                                    ]
+                                                  : null,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          row['category'].toString(),
-                                          style: Theme.of(context).textTheme.bodySmall
-                                              ?.copyWith(
-                                                fontWeight: isTouched
-                                                    ? FontWeight.bold
-                                                    : FontWeight.w500,
-                                                color: isTouched
-                                                    ? Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary
-                                                    : Colors.grey.shade600,
-                                              ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            row['category'].toString(),
+                                            style: Theme.of(context).textTheme.bodySmall
+                                                ?.copyWith(
+                                                  fontWeight: isTouched
+                                                      ? FontWeight.bold
+                                                      : FontWeight.w500,
+                                                  color: isTouched
+                                                      ? Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary
+                                                      : Colors.grey.shade600,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   );
                                 }),
