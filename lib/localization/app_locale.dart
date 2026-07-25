@@ -265,6 +265,7 @@ class AppLocale {
   static const String maybeLater = 'maybeLater';
   static const String passwordSameAsUserError = 'passwordSameAsUserError';
   static const String passwordSameAsPreviousError = 'passwordSameAsPreviousError';
+  static const String yesterday = 'yesterday';
   static const String posPrinterConfig = 'posPrinterConfig';
   static const String headerText = 'headerText';
   static const String footerText = 'footerText';
@@ -536,6 +537,7 @@ class AppLocale {
     maybeLater: 'No, maybe later',
     passwordSameAsUserError: 'Password cannot be the same as username',
     passwordSameAsPreviousError: 'Password cannot be the same as the previous one',
+    yesterday: 'Yesterday',
     posPrinterConfig: 'Header / Footer',
     headerText: 'Header',
     footerText: 'Footer',
@@ -803,6 +805,7 @@ class AppLocale {
     maybeLater: 'No, tal vez más tarde',
     passwordSameAsUserError: 'La contraseña no puede ser igual al usuario',
     passwordSameAsPreviousError: 'La contraseña no puede ser igual a la anterior',
+    yesterday: 'Ayer',
     posPrinterConfig: 'Encabezado / Pie de página',
     headerText: 'Encabezado',
     footerText: 'Pie de página',
