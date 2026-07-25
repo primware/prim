@@ -146,12 +146,18 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              widget.titleBuilder(context, currentOffset),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: Text(
+                key: ValueKey(currentOffset),
+                widget.titleBuilder(context, currentOffset),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
             ),
             const SizedBox(height: 4),
             Row(
@@ -209,19 +215,25 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
             if (widget.showTotal)
               Padding(
                 padding: const EdgeInsets.only(top: 4, bottom: 8),
-                child: Text(
-                  '${AppLocale.total.getString(context)}: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: primaryColor,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
+                  child: Text(
+                    key: ValueKey(_totalValue()),
+                    '${AppLocale.total.getString(context)}: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: primaryColor,
+                        ),
                   ),
                 ),
               ),
             const SizedBox(height: CustomSpacer.large),
             SizedBox(
               height: 300,
-              child: isLoading
+              child: (isLoading && rawChartData.isEmpty)
                   ? Shimmer.fromColors(
                       baseColor: Colors.grey[300]!.withOpacity(0.5),
                       highlightColor: Colors.grey[100]!.withOpacity(0.5),
@@ -243,9 +255,12 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                         ).textTheme.titleMedium?.copyWith(color: Colors.grey),
                       ),
                     )
-                  : Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: BarChart(
+                  : AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: isLoading ? 0.4 : 1.0,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: BarChart(
                         BarChartData(
                           alignment: BarChartAlignment.spaceAround,
                           maxY: maxY,
@@ -416,11 +431,12 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                           }),
                         ),
                         swapAnimationDuration: const Duration(
-                          milliseconds: 150,
+                          milliseconds: 550,
                         ),
-                        swapAnimationCurve: Curves.easeInOut,
+                        swapAnimationCurve: Curves.easeOutCubic,
                       ),
                     ),
+                  ),
             ),
           ],
         ),
@@ -567,12 +583,18 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              widget.titleBuilder(context, currentOffset),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: Text(
+                key: ValueKey(currentOffset),
+                widget.titleBuilder(context, currentOffset),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
             ),
             const SizedBox(height: 4),
             Row(
@@ -630,19 +652,25 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
             if (widget.showTotal)
               Padding(
                 padding: const EdgeInsets.only(top: 4, bottom: 8),
-                child: Text(
-                  '${AppLocale.total.getString(context)}: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(context).colorScheme.primary,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
+                  child: Text(
+                    key: ValueKey(_totalValue()),
+                    '${AppLocale.total.getString(context)}: ${POS.currencySymbol} ${totalFmt.format(_totalValue())}',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                   ),
                 ),
               ),
             const SizedBox(height: CustomSpacer.large),
             SizedBox(
               height: 340,
-              child: isLoading
+              child: (isLoading && rawChartData.isEmpty)
                   ? Shimmer.fromColors(
                       baseColor: Colors.grey[300]!.withOpacity(0.5),
                       highlightColor: Colors.grey[100]!.withOpacity(0.5),
@@ -664,7 +692,10 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                         ).textTheme.titleMedium?.copyWith(color: Colors.grey),
                       ),
                     )
-                  : Column(
+                  : AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: isLoading ? 0.4 : 1.0,
+                      child: Column(
                       children: [
                         Expanded(
                           child: Stack(
@@ -756,7 +787,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                                   }),
                                 ),
                                 swapAnimationDuration: const Duration(
-                                  milliseconds: 250,
+                                  milliseconds: 550,
                                 ),
                                 swapAnimationCurve: Curves.easeOutBack,
                               ),
@@ -938,6 +969,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                         ),
                       ],
                     ),
+                  ),
             ),
           ],
         ),
