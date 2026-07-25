@@ -10,6 +10,7 @@ import '../../../shared/toast_message.dart';
 import '../order/my_order.dart';
 import '../order/my_order_new.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'dashboard_funtions.dart';
 
 class PulseLoadingWrapper extends StatefulWidget {
   final bool isLoading;
@@ -172,7 +173,10 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
     });
   }
 
-  void _reload() => _load();
+  void _reload() {
+    clearDashboardRawCache();
+    _load();
+  }
 
   void _goBack() {
     setState(() => currentOffset--);
@@ -753,7 +757,10 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
     });
   }
 
-  void _reload() => _load();
+  void _reload() {
+    clearDashboardRawCache();
+    _load();
+  }
 
   void _goBack() {
     setState(() => currentOffset--);

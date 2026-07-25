@@ -227,36 +227,48 @@ Future<Map<String, double>> fetchSalesPerDay({
   }
 }
 
+List? _cachedRawSalesYTDBySalesRep;
+List? _cachedRawSalesPerDayByProductCategory;
+
+void clearDashboardRawCache() {
+  _cachedRawSalesYTDBySalesRep = null;
+  _cachedRawSalesPerDayByProductCategory = null;
+}
+
 Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({
   required BuildContext context,
   int monthOffset = 0,
+  bool forceRefresh = false,
 }) async {
   try {
-    await usuarioAuth(context: context);
+    if (_cachedRawSalesYTDBySalesRep == null || forceRefresh) {
+      await usuarioAuth(context: context);
 
-    final chartUrl = Charts.salesYTDBySalesRep;
-    if (chartUrl == null) {
-      return {};
-    }
+      final chartUrl = Charts.salesYTDBySalesRep;
+      if (chartUrl == null) {
+        return {};
+      }
 
-    final response = await get(
-      Uri.parse(chartUrl),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
-    );
-
-    if (response.statusCode != 200) {
-      debugPrint(
-        'Error al obtener datos del gráfico Sales YTD By SalesRep (status ${response.statusCode}): ${response.body}',
+      final response = await get(
+        Uri.parse(chartUrl),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': Token.auth!,
+        },
       );
-      return {};
+
+      if (response.statusCode != 200) {
+        debugPrint(
+          'Error al obtener datos del gráfico Sales YTD By SalesRep (status ${response.statusCode}): ${response.body}',
+        );
+        return {};
+      }
+
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      _cachedRawSalesYTDBySalesRep = (jsonResponse['data'] as List?) ?? [];
     }
 
-    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-    final List data = (jsonResponse['data'] as List?) ?? [];
-
+    final List data = _cachedRawSalesYTDBySalesRep ?? [];
     final now = DateTime.now();
     final targetDate = DateTime(now.year, now.month + monthOffset, 1);
     final currentMonthKey =
@@ -314,39 +326,43 @@ Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({
 Future<Map<String, double>> fetchSalesPerDayByProductCategory({
   required BuildContext context,
   int dayOffset = 0,
+  bool forceRefresh = false,
 }) async {
   try {
-    await usuarioAuth(context: context);
+    if (_cachedRawSalesPerDayByProductCategory == null || forceRefresh) {
+      await usuarioAuth(context: context);
 
-    final chartUrl = Charts.salesPerDayByProductCategory;
-    if (chartUrl == null) {
-      return {};
+      final chartUrl = Charts.salesPerDayByProductCategory;
+      if (chartUrl == null) {
+        return {};
+      }
+
+      final response = await get(
+        Uri.parse(chartUrl),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': Token.auth!,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        CurrentLogMessage.add(
+          'Error fetchSalesPerDayByProductCategory: ${response.statusCode}, ${response.body}',
+          level: 'ERROR',
+          tag: 'fetchSalesPerDayByProductCategory',
+        );
+        debugPrint(
+          'Error al obtener datos del gráfico Sales Per Day By Product Category '
+          '(status ${response.statusCode}): ${response.body}',
+        );
+        return {};
+      }
+
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      _cachedRawSalesPerDayByProductCategory = (jsonResponse['data'] as List?) ?? [];
     }
 
-    final response = await get(
-      Uri.parse(chartUrl),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
-    );
-
-    if (response.statusCode != 200) {
-      CurrentLogMessage.add(
-        'Error fetchSalesPerDayByProductCategory: ${response.statusCode}, ${response.body}',
-        level: 'ERROR',
-        tag: 'fetchSalesPerDayByProductCategory',
-      );
-      debugPrint(
-        'Error al obtener datos del gráfico Sales Per Day By Product Category '
-        '(status ${response.statusCode}): ${response.body}',
-      );
-      return {};
-    }
-
-    final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-    final List data = (jsonResponse['data'] as List?) ?? [];
-
+    final List data = _cachedRawSalesPerDayByProductCategory ?? [];
     final now = DateTime.now();
     final targetDate = DateTime(
       now.year,
@@ -379,7 +395,7 @@ Future<Map<String, double>> fetchSalesPerDayByProductCategory({
         parsedDate = DateTime.parse(columnDate.replaceFirst(' ', 'T'));
       } catch (_) {
         try {
-          parsedDate = DateTime.parse(columnDate.split('').first);
+          parsedDate = DateTime.parse(columnDate.split(' ').first);
         } catch (e) {
           debugPrint('No se pudo parsear fecha column="$columnDate": $e');
           continue;
