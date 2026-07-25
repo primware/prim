@@ -1029,8 +1029,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                                                     ? (targetVal / total) * 100
                                                     : 0.0;
                                                 final isTouched =
-                                                    index == touchedIndex ||
-                                                    rows.length == 1;
+                                                    index == touchedIndex;
 
                                                 return PieChartSectionData(
                                                   color: color,
@@ -1116,108 +1115,141 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                                       ),
                                     ),
 
-                                    if (!isLoading &&
-                                        (touchedIndex >= 0 &&
-                                                touchedIndex < rows.length ||
-                                            rows.length == 1))
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              touchedIndex >= 0 &&
-                                                      touchedIndex < rows.length
-                                                  ? rows[touchedIndex]['category']
-                                                      .toString()
-                                                  : rows.first['category']
-                                                      .toString(),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall
-                                                  ?.copyWith(
-                                                    color: Colors.grey.shade600,
-                                                    fontWeight: FontWeight.bold,
+                                    if (!isLoading && rows.isNotEmpty)
+                                      Builder(
+                                        builder: (context) {
+                                          final displayIndex = (touchedIndex >= 0 &&
+                                                  touchedIndex < rows.length)
+                                              ? touchedIndex
+                                              : 0;
+                                          final row = rows[displayIndex];
+                                          final value = (row['value'] as num)
+                                              .toDouble();
+
+                                          return IgnorePointer(
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    row['category'].toString(),
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          color: Colors.grey.shade600,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 11,
+                                                        ),
+                                                    textAlign: TextAlign.center,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                            Text(
-                                              '${POS.currencySymbol} ${totalFmt.format(touchedIndex >= 0 && touchedIndex < rows.length ? rows[touchedIndex]['value'] : rows.first['value'])}',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12,
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    '${POS.currencySymbol} ${totalFmt.format(value)}',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.copyWith(
+                                                          fontWeight: FontWeight.w800,
+                                                          fontSize: 13,
+                                                          color: Theme.of(context)
+                                                              .colorScheme
+                                                              .primary,
+                                                        ),
+                                                    textAlign: TextAlign.center,
                                                   ),
-                                              textAlign: TextAlign.center,
+                                                ],
+                                              ),
                                             ),
-                                          ],
-                                        ),
+                                          );
+                                        },
                                       ),
                                   ],
                                 ),
                               ),
+                              const SizedBox(height: 20),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                alignment: WrapAlignment.center,
+                                children: List.generate(rows.length, (index) {
+                                  final row = rows[index];
+                                  final color = colors[index % colors.length];
+                                  final isTouched =
+                                      index == touchedIndex || rows.length == 1;
+
+                                  return AnimatedOpacity(
+                                    duration: const Duration(milliseconds: 200),
+                                    opacity: touchedIndex == -1 || isTouched
+                                        ? 1.0
+                                        : 0.35,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(
+                                            color: color,
+                                            shape: BoxShape.circle,
+                                            boxShadow: isTouched
+                                                ? [
+                                                    BoxShadow(
+                                                      color: color.withOpacity(0.5),
+                                                      blurRadius: 6,
+                                                    ),
+                                                  ]
+                                                : null,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          row['category'].toString(),
+                                          style: Theme.of(context).textTheme.bodySmall
+                                              ?.copyWith(
+                                                fontWeight: isTouched
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w500,
+                                                color: isTouched
+                                                    ? Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary
+                                                    : Colors.grey.shade600,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.center,
-                          children: List.generate(rows.length, (index) {
-                            final row = rows[index];
-                            final color = colors[index % colors.length];
-                            final isTouched =
-                                index == touchedIndex || rows.length == 1;
-
-                            return AnimatedOpacity(
-                              duration: const Duration(milliseconds: 200),
-                              opacity: touchedIndex == -1 || isTouched
-                                  ? 1.0
-                                  : 0.35,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                      boxShadow: isTouched
-                                          ? [
-                                              BoxShadow(
-                                                color: color.withOpacity(0.5),
-                                                blurRadius: 6,
-                                              ),
-                                            ]
-                                          : null,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    row['category'].toString(),
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          fontWeight: isTouched
-                                              ? FontWeight.bold
-                                              : FontWeight.w500,
-                                          color: isTouched
-                                              ? Theme.of(
-                                                  context,
-                                                ).colorScheme.primary
-                                              : Colors.grey.shade600,
-                                        ),
-                                  ),
-                                ],
+                        if (isLoading)
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
                               ),
-                            );
-                          }),
-                        ),
+                            ),
+                          ),
                       ],
                     ),
             ),
