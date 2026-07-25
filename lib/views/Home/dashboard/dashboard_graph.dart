@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_localization/flutter_localization.dart';
@@ -44,6 +44,20 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
   bool isLoading = true;
   int touchedIndex = -1;
   int currentOffset = 0;
+  Timer? _debounceTimer;
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _triggerLoad() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () {
+      _load();
+    });
+  }
 
   @override
   void initState() {
@@ -84,20 +98,20 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
 
   void _goBack() {
     setState(() => currentOffset--);
-    _load();
+    _triggerLoad();
   }
 
   void _goForward() {
     if (currentOffset < 0) {
       setState(() => currentOffset++);
-      _load();
+      _triggerLoad();
     }
   }
 
   void _goToday() {
     if (currentOffset != 0) {
       setState(() => currentOffset = 0);
-      _load();
+      _triggerLoad();
     }
   }
 
@@ -260,183 +274,191 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                       opacity: isLoading ? 0.4 : 1.0,
                       child: Padding(
                         padding: const EdgeInsets.only(top: 16.0),
-                        child: BarChart(
-                        BarChartData(
-                          alignment: BarChartAlignment.spaceAround,
-                          maxY: maxY,
-                          barTouchData: BarTouchData(
-                            enabled: true,
-                            touchTooltipData: BarTouchTooltipData(
-                              getTooltipColor: (group) => isDark
-                                  ? Colors.grey.shade800
-                                  : Colors.blueGrey.shade900,
-                              tooltipRoundedRadius: 8,
-                              tooltipPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              tooltipMargin: 8,
-                              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                                return BarTooltipItem(
-                                  '${entries[group.x].key}\n',
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyMedium!.copyWith(
-                                    color: Colors.white70,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  children: <TextSpan>[
-                                    TextSpan(
-                                      text:
-                                          '${POS.currencySymbol} ${totalFmt.format(rod.toY)}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: Colors.white70,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                        child: TweenAnimationBuilder<double>(
+                          key: ValueKey('${currentOffset}_${entries.length}'),
+                          tween: Tween<double>(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, animVal, child) {
+                            return BarChart(
+                              BarChartData(
+                                alignment: BarChartAlignment.spaceAround,
+                                maxY: maxY,
+                                barTouchData: BarTouchData(
+                                  enabled: true,
+                                  touchTooltipData: BarTouchTooltipData(
+                                    getTooltipColor: (group) => isDark
+                                        ? Colors.grey.shade800
+                                        : Colors.blueGrey.shade900,
+                                    tooltipRoundedRadius: 8,
+                                    tooltipPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
                                     ),
-                                  ],
-                                );
-                              },
-                            ),
-                            touchCallback:
-                                (FlTouchEvent event, barTouchResponse) {
-                                  setState(() {
-                                    if (!event.isInterestedForInteractions ||
-                                        barTouchResponse == null ||
-                                        barTouchResponse.spot == null) {
-                                      touchedIndex = -1;
-                                      return;
-                                    }
-                                    touchedIndex = barTouchResponse
-                                        .spot!
-                                        .touchedBarGroupIndex;
-                                  });
-                                },
-                          ),
-                          titlesData: FlTitlesData(
-                            show: true,
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 32,
-                                getTitlesWidget: (value, meta) {
-                                  if (value.toInt() >= 0 &&
-                                      value.toInt() < entries.length) {
-                                    bool showLabel =
-                                        entries.length < 10 ||
-                                        value.toInt() %
-                                                (entries.length ~/ 6 + 1) ==
-                                            0;
-                                    return SideTitleWidget(
-                                      axisSide: meta.axisSide,
-                                      child: Text(
-                                        showLabel
-                                            ? entries[value.toInt()].key
-                                            : '',
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w500,
+                                    tooltipMargin: 8,
+                                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                      return BarTooltipItem(
+                                        '${entries[group.x].key}\n',
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium!.copyWith(
+                                          color: Colors.white70,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
-                              ),
-                            ),
-                            leftTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 48,
-                                getTitlesWidget: (value, meta) {
-                                  if (value == 0 || value == maxY) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return SideTitleWidget(
-                                    axisSide: meta.axisSide,
-                                    child: Text(
-                                      NumberFormat.compact().format(value),
-                                      style: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 10,
-                                      ),
+                                        children: <TextSpan>[
+                                          TextSpan(
+                                            text:
+                                                '${POS.currencySymbol} ${totalFmt.format(entries[group.x].value)}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: Colors.white70,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                  touchCallback:
+                                      (FlTouchEvent event, barTouchResponse) {
+                                        setState(() {
+                                          if (!event.isInterestedForInteractions ||
+                                              barTouchResponse == null ||
+                                              barTouchResponse.spot == null) {
+                                            touchedIndex = -1;
+                                            return;
+                                          }
+                                          touchedIndex = barTouchResponse
+                                              .spot!
+                                              .touchedBarGroupIndex;
+                                        });
+                                      },
+                                ),
+                                titlesData: FlTitlesData(
+                                  show: true,
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 32,
+                                      getTitlesWidget: (value, meta) {
+                                        if (value.toInt() >= 0 &&
+                                            value.toInt() < entries.length) {
+                                          bool showLabel =
+                                              entries.length < 10 ||
+                                              value.toInt() %
+                                                      (entries.length ~/ 6 + 1) ==
+                                                  0;
+                                          return SideTitleWidget(
+                                            axisSide: meta.axisSide,
+                                            child: Text(
+                                              showLabel
+                                                  ? entries[value.toInt()].key
+                                                  : '',
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        return const SizedBox.shrink();
+                                      },
                                     ),
-                                  );
-                                },
-                              ),
-                            ),
-                            rightTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
-                            topTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false),
-                            ),
-                          ),
-                          gridData: FlGridData(
-                            show: true,
-                            drawVerticalLine: false,
-                            horizontalInterval: maxY / 5 > 0
-                                ? maxY / 5
-                                : 1, // Previene divisiones entre 0
-                            getDrawingHorizontalLine: (value) {
-                              return FlLine(
-                                color: Theme.of(
-                                  context,
-                                ).dividerColor.withOpacity(0.1),
-                                strokeWidth: 1,
-                                dashArray: [4, 4],
-                              );
-                            },
-                          ),
-                          borderData: FlBorderData(show: false),
-                          barGroups: List.generate(entries.length, (index) {
-                            final isTouched = index == touchedIndex;
-                            return BarChartGroupData(
-                              x: index,
-                              barRods: [
-                                BarChartRodData(
-                                  toY: entries[index].value,
-                                  width: isTouched ? 22 : 16,
-                                  gradient: LinearGradient(
-                                    colors: isTouched
-                                        ? [
-                                            secondaryColor,
-                                            secondaryColor.withOpacity(0.7),
-                                          ]
-                                        : [
-                                            primaryColor,
-                                            primaryColor.withOpacity(0.6),
-                                          ],
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
                                   ),
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(6),
-                                    topRight: Radius.circular(6),
+                                  leftTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 48,
+                                      getTitlesWidget: (value, meta) {
+                                        if (value == 0 || value == maxY) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        return SideTitleWidget(
+                                          axisSide: meta.axisSide,
+                                          child: Text(
+                                            NumberFormat.compact().format(value),
+                                            style: TextStyle(
+                                              color: Colors.grey.shade500,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
-                                  backDrawRodData: BackgroundBarChartRodData(
-                                    show: true,
-                                    toY: maxY,
-                                    color: Theme.of(
-                                      context,
-                                    ).dividerColor.withOpacity(0.05),
+                                  rightTitles: const AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false),
+                                  ),
+                                  topTitles: const AxisTitles(
+                                    sideTitles: SideTitles(showTitles: false),
                                   ),
                                 ),
-                              ],
+                                gridData: FlGridData(
+                                  show: true,
+                                  drawVerticalLine: false,
+                                  horizontalInterval: maxY / 5 > 0
+                                      ? maxY / 5
+                                      : 1,
+                                  getDrawingHorizontalLine: (value) {
+                                    return FlLine(
+                                      color: Theme.of(
+                                        context,
+                                      ).dividerColor.withOpacity(0.1),
+                                      strokeWidth: 1,
+                                      dashArray: [4, 4],
+                                    );
+                                  },
+                                ),
+                                borderData: FlBorderData(show: false),
+                                barGroups: List.generate(entries.length, (index) {
+                                  final isTouched = index == touchedIndex;
+                                  return BarChartGroupData(
+                                    x: index,
+                                    barRods: [
+                                      BarChartRodData(
+                                        toY: entries[index].value * animVal,
+                                        width: isTouched ? 22 : 16,
+                                        gradient: LinearGradient(
+                                          colors: isTouched
+                                              ? [
+                                                  secondaryColor,
+                                                  secondaryColor.withOpacity(0.7),
+                                                ]
+                                              : [
+                                                  primaryColor,
+                                                  primaryColor.withOpacity(0.6),
+                                                ],
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.topCenter,
+                                        ),
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(6),
+                                          topRight: Radius.circular(6),
+                                        ),
+                                        backDrawRodData: BackgroundBarChartRodData(
+                                          show: true,
+                                          toY: maxY,
+                                          color: Theme.of(
+                                            context,
+                                          ).dividerColor.withOpacity(0.05),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }),
+                              ),
+                              swapAnimationDuration: const Duration(
+                                milliseconds: 150,
+                              ),
+                              swapAnimationCurve: Curves.easeOutCubic,
                             );
-                          }),
+                          },
                         ),
-                        swapAnimationDuration: const Duration(
-                          milliseconds: 550,
-                        ),
-                        swapAnimationCurve: Curves.easeOutCubic,
                       ),
                     ),
-                  ),
             ),
           ],
         ),
@@ -472,6 +494,20 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
   bool isLoading = true;
   int touchedIndex = -1;
   int currentOffset = 0;
+  Timer? _debounceTimer;
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _triggerLoad() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () {
+      _load();
+    });
+  }
 
   @override
   void initState() {
@@ -498,20 +534,20 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
 
   void _goBack() {
     setState(() => currentOffset--);
-    _load();
+    _triggerLoad();
   }
 
   void _goForward() {
     if (currentOffset < 0) {
       setState(() => currentOffset++);
-      _load();
+      _triggerLoad();
     }
   }
 
   void _goToday() {
     if (currentOffset != 0) {
       setState(() => currentOffset = 0);
-      _load();
+      _triggerLoad();
     }
   }
 
@@ -727,69 +763,77 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                                 ),
                               ),
 
-                              // Gráfico de Pastel
-                              PieChart(
-                                PieChartData(
-                                  centerSpaceRadius: 45,
-                                  sectionsSpace: rows.length == 1 ? 0 : 5,
-                                  pieTouchData: PieTouchData(
-                                    touchCallback:
-                                        (FlTouchEvent event, pieTouchResponse) {
-                                          setState(() {
-                                            if (!event
-                                                    .isInterestedForInteractions ||
-                                                pieTouchResponse == null ||
-                                                pieTouchResponse
-                                                        .touchedSection ==
-                                                    null) {
-                                              touchedIndex = -1;
-                                              return;
-                                            }
-                                            touchedIndex = pieTouchResponse
-                                                .touchedSection!
-                                                .touchedSectionIndex;
-                                          });
-                                        },
-                                  ),
-                                  sections: List.generate(rows.length, (index) {
-                                    final row = rows[index];
-                                    final color = colors[index % colors.length];
-                                    final value = (row['value'] as num)
-                                        .toDouble();
-                                    final total = _totalValue();
-                                    final percent = total > 0
-                                        ? (value / total) * 100
-                                        : 0.0;
-                                    final isTouched =
-                                        index == touchedIndex ||
-                                        rows.length == 1;
-
-                                    return PieChartSectionData(
-                                      color: color,
-                                      value: value,
-                                      radius: isTouched ? 115 : 100,
-                                      title: percent > 4
-                                          ? '${percent.toStringAsFixed(0)}%'
-                                          : '',
-                                      titleStyle: TextStyle(
-                                        fontSize: isTouched ? 16 : 13,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white,
-                                        shadows: const [
-                                          BoxShadow(
-                                            color: Colors.black54,
-                                            blurRadius: 4,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ],
+                               // Gráfico de Pastel
+                              TweenAnimationBuilder<double>(
+                                key: ValueKey('${currentOffset}_${rows.length}'),
+                                tween: Tween<double>(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.easeOutCubic,
+                                builder: (context, animVal, child) {
+                                  return PieChart(
+                                    PieChartData(
+                                      centerSpaceRadius: 45,
+                                      sectionsSpace: rows.length == 1 ? 0 : 5,
+                                      pieTouchData: PieTouchData(
+                                        touchCallback:
+                                            (FlTouchEvent event, pieTouchResponse) {
+                                              setState(() {
+                                                if (!event
+                                                        .isInterestedForInteractions ||
+                                                    pieTouchResponse == null ||
+                                                    pieTouchResponse
+                                                            .touchedSection ==
+                                                        null) {
+                                                  touchedIndex = -1;
+                                                  return;
+                                                }
+                                                touchedIndex = pieTouchResponse
+                                                    .touchedSection!
+                                                    .touchedSectionIndex;
+                                              });
+                                            },
                                       ),
-                                    );
-                                  }),
-                                ),
-                                swapAnimationDuration: const Duration(
-                                  milliseconds: 550,
-                                ),
-                                swapAnimationCurve: Curves.easeOutBack,
+                                      sections: List.generate(rows.length, (index) {
+                                        final row = rows[index];
+                                        final color = colors[index % colors.length];
+                                        final targetVal = (row['value'] as num).toDouble();
+                                        final value = targetVal * animVal;
+                                        final total = _totalValue();
+                                        final percent = total > 0
+                                            ? (targetVal / total) * 100
+                                            : 0.0;
+                                        final isTouched =
+                                            index == touchedIndex ||
+                                            rows.length == 1;
+
+                                        return PieChartSectionData(
+                                          color: color,
+                                          value: value,
+                                          radius: isTouched ? 115 : 100,
+                                          title: (percent > 4 && animVal > 0.5)
+                                              ? '${percent.toStringAsFixed(0)}%'
+                                              : '',
+                                          titleStyle: TextStyle(
+                                            fontSize: isTouched ? 16 : 13,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                            shadows: const [
+                                              BoxShadow(
+                                                color: Colors.black54,
+                                                blurRadius: 4,
+                                                offset: Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                    swapAnimationDuration: const Duration(
+                                      milliseconds: 150,
+                                    ),
+                                    swapAnimationCurve: Curves.easeOutCubic,
+                                  );
+                                },
                               ),
 
                               IgnorePointer(

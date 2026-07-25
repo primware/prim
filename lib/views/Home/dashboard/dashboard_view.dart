@@ -196,8 +196,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   final now = DateTime.now();
                                   final d = DateTime(now.year, now.month, now.day).add(Duration(days: offset));
                                   final lang = Localizations.localeOf(context).languageCode;
-                                  final months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                                  final enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                  final months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                                  final enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                                   final m = lang == 'es' ? months[d.month - 1] : enMonths[d.month - 1];
                                   return '${d.day} de $m';
                                 },
