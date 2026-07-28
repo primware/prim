@@ -37,10 +37,10 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
 
-    _salesYTDBySalesRepLoader = ({required context}) =>
-        fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: 0);
-    _salesPerDayByProductCategoryLoader = ({required context}) =>
-        fetchSalesPerDayByProductCategory(context: context, dayOffset: 0);
+    _salesYTDBySalesRepLoader = ({required context, required int offset}) =>
+        fetchSalesYTDBySalesRepCurrentMonth(context: context, monthOffset: offset);
+    _salesPerDayByProductCategoryLoader = ({required context, required int offset}) =>
+        fetchSalesPerDayByProductCategory(context: context, dayOffset: offset);
     _checkDashboardData();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -61,7 +61,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     if (Charts.salesYTDBySalesRep != null && ytdData.isEmpty) {
       futures.add(
-        _salesYTDBySalesRepLoader(context: context).then((value) {
+        _salesYTDBySalesRepLoader(context: context, offset: 0).then((value) {
           ytdData = value;
         }),
       );
@@ -70,7 +70,7 @@ class _DashboardPageState extends State<DashboardPage> {
     if (Charts.salesPerDayByProductCategory != null &&
         productCategoryData.isEmpty) {
       futures.add(
-        _salesPerDayByProductCategoryLoader(context: context).then((value) {
+        _salesPerDayByProductCategoryLoader(context: context, offset: 0).then((value) {
           productCategoryData = value;
         }),
       );
@@ -168,8 +168,16 @@ class _DashboardPageState extends State<DashboardPage> {
                           children: [
                             if (Charts.salesYTDBySalesRep != null)
                               GraphicBarMetricCard(
-                                titleBuilder: (ctx) =>
-                                    AppLocale.thisMonth.getString(context),
+                                titleBuilder: (ctx, offset) {
+                                  if (offset == 0) return AppLocale.thisMonth.getString(context);
+                                  final now = DateTime.now();
+                                  final d = DateTime(now.year, now.month + offset, 1);
+                                  final lang = Localizations.localeOf(context).languageCode;
+                                  final months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                                  final enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                  final m = lang == 'es' ? months[d.month - 1] : enMonths[d.month - 1];
+                                  return '$m ${d.year}';
+                                },
                                 initialData: _salesYTDBySalesRepData,
                                 dataLoader: _salesYTDBySalesRepLoader,
                                 subtitle: AppLocale
@@ -182,8 +190,17 @@ class _DashboardPageState extends State<DashboardPage> {
                                 null) ...[
                               const SizedBox(height: CustomSpacer.medium),
                               GraphicPieMetricCard(
-                                titleBuilder: (ctx) =>
-                                    AppLocale.today.getString(ctx),
+                                titleBuilder: (ctx, offset) {
+                                  if (offset == 0) return AppLocale.today.getString(ctx);
+                                  if (offset == -1) return AppLocale.yesterday.getString(ctx);
+                                  final now = DateTime.now();
+                                  final d = DateTime(now.year, now.month, now.day).add(Duration(days: offset));
+                                  final lang = Localizations.localeOf(context).languageCode;
+                                  final months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                                  final enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                  final m = lang == 'es' ? months[d.month - 1] : enMonths[d.month - 1];
+                                  return '${d.day} de $m';
+                                },
                                 initialData: _salesPerDayByProductCategoryData,
                                 dataLoader: _salesPerDayByProductCategoryLoader,
                                 subtitle: AppLocale
