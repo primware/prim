@@ -26,6 +26,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   DateTime? lastBackPressed;
   bool _isLoading = true;
+  // ignore: unused_field
   bool _hasData = false;
 
   Map<String, double> _salesYTDBySalesRepData = {};
@@ -45,8 +46,7 @@ class _DashboardPageState extends State<DashboardPage> {
     _checkDashboardData();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (usuarioController.text.trim() == claveController.text.trim() &&
-          usuarioController.text.trim().isNotEmpty) {
+      if (usuarioController.text.trim() == claveController.text.trim() && usuarioController.text.trim().isNotEmpty) {
         PasswordWarningDialog.show(context);
       }
     });
@@ -68,8 +68,7 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
-    if (Charts.salesPerDayByProductCategory != null &&
-        productCategoryData.isEmpty) {
+    if (Charts.salesPerDayByProductCategory != null && productCategoryData.isEmpty) {
       futures.add(
         _salesPerDayByProductCategoryLoader(context: context, offset: 0).then((value) {
           productCategoryData = value;
@@ -93,23 +92,17 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 700
-        ? true
-        : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 700 ? true : false;
 
     return WillPopScope(
       onWillPop: () async {
         final now = DateTime.now();
 
-        if (lastBackPressed == null ||
-            now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
+        if (lastBackPressed == null || now.difference(lastBackPressed!) > const Duration(seconds: 2)) {
           lastBackPressed = now;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocale.pressAgainToLogout.getString(context)),
-              duration: const Duration(seconds: 2),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(AppLocale.pressAgainToLogout.getString(context)), duration: const Duration(seconds: 2)));
 
           return false;
         }
@@ -121,10 +114,7 @@ class _DashboardPageState extends State<DashboardPage> {
         UserData.rolName = null;
         UserData.imageBytes = null;
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
 
         return false;
       },
@@ -136,12 +126,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ? Padding(
                     padding: const EdgeInsets.only(right: CustomSpacer.medium),
                     child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          CustomSpacer.medium,
-                        ),
-                        color: Colors.white,
-                      ),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(CustomSpacer.medium), color: Colors.white),
                       padding: const EdgeInsets.all(CustomSpacer.small),
                       child: const Logo(width: 60),
                     ),
@@ -185,7 +170,6 @@ class _DashboardPageState extends State<DashboardPage> {
                               ),
                             ),
                             const SizedBox(height: CustomSpacer.medium),
-                            
 
                             if (Charts.salesYTDBySalesRep != null)
                               GraphicBarMetricCard(
@@ -194,21 +178,44 @@ class _DashboardPageState extends State<DashboardPage> {
                                   final now = DateTime.now();
                                   final d = DateTime(now.year, now.month + offset, 1);
                                   final lang = Localizations.localeOf(context).languageCode;
-                                  final months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                                  final enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                  final months = [
+                                    'Enero',
+                                    'Febrero',
+                                    'Marzo',
+                                    'Abril',
+                                    'Mayo',
+                                    'Junio',
+                                    'Julio',
+                                    'Agosto',
+                                    'Septiembre',
+                                    'Octubre',
+                                    'Noviembre',
+                                    'Diciembre',
+                                  ];
+                                  final enMonths = [
+                                    'January',
+                                    'February',
+                                    'March',
+                                    'April',
+                                    'May',
+                                    'June',
+                                    'July',
+                                    'August',
+                                    'September',
+                                    'October',
+                                    'November',
+                                    'December',
+                                  ];
                                   final m = lang == 'es' ? months[d.month - 1] : enMonths[d.month - 1];
                                   return '$m ${d.year}';
                                 },
                                 initialData: _salesYTDBySalesRepData,
                                 dataLoader: _salesYTDBySalesRepLoader,
-                                subtitle: AppLocale
-                                    .salesYTDBySalesRepDescription
-                                    .getString(context),
+                                subtitle: AppLocale.salesYTDBySalesRepDescription.getString(context),
                                 showTotal: true,
                               ),
 
-                            if (Charts.salesPerDayByProductCategory !=
-                                null) ...[
+                            if (Charts.salesPerDayByProductCategory != null) ...[
                               const SizedBox(height: CustomSpacer.medium),
                               GraphicPieMetricCard(
                                 titleBuilder: (ctx, offset) {
@@ -217,16 +224,40 @@ class _DashboardPageState extends State<DashboardPage> {
                                   final now = DateTime.now();
                                   final d = DateTime(now.year, now.month, now.day).add(Duration(days: offset));
                                   final lang = Localizations.localeOf(context).languageCode;
-                                  final months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                                  final enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                  final months = [
+                                    'Enero',
+                                    'Febrero',
+                                    'Marzo',
+                                    'Abril',
+                                    'Mayo',
+                                    'Junio',
+                                    'Julio',
+                                    'Agosto',
+                                    'Septiembre',
+                                    'Octubre',
+                                    'Noviembre',
+                                    'Diciembre',
+                                  ];
+                                  final enMonths = [
+                                    'January',
+                                    'February',
+                                    'March',
+                                    'April',
+                                    'May',
+                                    'June',
+                                    'July',
+                                    'August',
+                                    'September',
+                                    'October',
+                                    'November',
+                                    'December',
+                                  ];
                                   final m = lang == 'es' ? months[d.month - 1] : enMonths[d.month - 1];
                                   return '${d.day} de $m';
                                 },
                                 initialData: _salesPerDayByProductCategoryData,
                                 dataLoader: _salesPerDayByProductCategoryLoader,
-                                subtitle: AppLocale
-                                    .todaySalesByCategoryDescription
-                                    .getString(context),
+                                subtitle: AppLocale.todaySalesByCategoryDescription.getString(context),
                                 showTotal: true,
                               ),
                             ],
