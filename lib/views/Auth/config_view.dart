@@ -13,6 +13,7 @@ import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
 import '../../shared/toast_message.dart';
 import '../Home/dashboard/dashboard_view.dart';
+import '../Home/dashboard/dashboard_funtions.dart';
 import 'auth_funtions.dart';
 import '../../API/user.api.dart';
 import 'login_view.dart';
@@ -190,8 +191,9 @@ class _ConfigPageState extends State<ConfigPage> {
       POS.documentActions.clear();
       POS.principalTaxs.clear();
       POS.docTypesComplete.clear();
+      clearDashboardRawCache();
 
-      bool login = await usuarioAuth(context: context);
+      bool login = await usuarioAuth(context: context, forceNewToken: true);
 
       if (!mounted) return;
 

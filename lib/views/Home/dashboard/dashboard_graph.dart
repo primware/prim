@@ -343,12 +343,11 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
                       ),
                     )
                   : rawChartData.isEmpty
-                  ? Center(
-                      child: Text(
-                        AppLocale.noDataForFilter.getString(context),
-                        style: Theme.of(
-                          context,
-                        ).textTheme.titleMedium?.copyWith(color: Colors.grey),
+                  ? const Center(
+                      child: EmptyMetricState(
+                        showActions: true,
+                        showMyOrders: false,
+                        isEmbedded: true,
                       ),
                     )
                   : Stack(
@@ -950,12 +949,11 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                       ),
                     )
                   : rows.isEmpty
-                  ? Center(
-                      child: Text(
-                        AppLocale.noDataForFilter.getString(context),
-                        style: Theme.of(
-                          context,
-                        ).textTheme.titleMedium?.copyWith(color: Colors.grey),
+                  ? const Center(
+                      child: EmptyMetricState(
+                        showActions: true,
+                        showMyOrders: false,
+                        isEmbedded: true,
                       ),
                     )
                   : Stack(
@@ -1318,25 +1316,34 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
 
 class EmptyMetricState extends StatelessWidget {
   final bool showActions;
-  const EmptyMetricState({super.key, this.showActions = false});
+  final bool showMyOrders;
+  final bool isEmbedded;
+  const EmptyMetricState({
+    super.key,
+    this.showActions = false,
+    this.showMyOrders = true,
+    this.isEmbedded = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 440,
-      height: 440,
-      padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      width: isEmbedded ? null : 440,
+      height: isEmbedded ? null : 440,
+      padding: EdgeInsets.all(isEmbedded ? 8.0 : 24.0),
+      decoration: isEmbedded
+          ? null
+          : BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -1555,48 +1562,49 @@ class EmptyMetricState extends StatelessWidget {
                                 },
                               ),
 
-                              const SizedBox(height: 12),
-
-                              TextButton.icon(
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
+                              if (showMyOrders) ...[
+                                const SizedBox(height: 12),
+                                TextButton.icon(
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary.withOpacity(0.1),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.secondary.withOpacity(0.1),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: Icon(
-                                  Icons.list_alt,
-                                  size: 20,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.secondary,
-                                ),
-                                label: Text(
-                                  AppLocale.myOrders.getString(context),
-                                  style: TextStyle(
+                                  icon: Icon(
+                                    Icons.list_alt,
+                                    size: 20,
                                     color: Theme.of(
                                       context,
                                     ).colorScheme.secondary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
                                   ),
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const OrderListPage(),
+                                  label: Text(
+                                    AppLocale.myOrders.getString(context),
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.secondary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
                                     ),
-                                  );
-                                },
-                              ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const OrderListPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                         ),

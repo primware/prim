@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/custom_container.dart';
@@ -29,7 +28,12 @@ class SettingsPage extends StatelessWidget {
                   _SettingsMenuItem(
                     icon: Icons.business_outlined,
                     title: AppLocale.organizationInfo.getString(context),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrgSettingsPage())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const OrgSettingsPage(),
+                      ),
+                    ),
                   ),
                   _SettingsMenuItem(
                     icon: Icons.shield_outlined,
@@ -37,8 +41,10 @@ class SettingsPage extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            SettingsContentPage(title: AppLocale.changePassword.getString(context), child: const ChangePasswordCard()),
+                        builder: (_) => SettingsContentPage(
+                          title: AppLocale.changePassword.getString(context),
+                          child: const ChangePasswordCard(),
+                        ),
                       ),
                     ),
                   ),
@@ -74,12 +80,20 @@ class SettingsPage extends StatelessWidget {
   }
 
   void _showUnavailable(BuildContext context) {
-    ToastMessage.show(context: context, message: AppLocale.notAvailableYet.getString(context), type: ToastType.warning);
+    ToastMessage.show(
+      context: context,
+      message: AppLocale.notAvailableYet.getString(context),
+      type: ToastType.warning,
+    );
   }
 }
 
 class SettingsContentPage extends StatelessWidget {
-  const SettingsContentPage({super.key, required this.title, required this.child});
+  const SettingsContentPage({
+    super.key,
+    required this.title,
+    required this.child,
+  });
 
   final String title;
   final Widget child;
@@ -92,7 +106,10 @@ class SettingsContentPage extends StatelessWidget {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Center(
-            child: Padding(padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16), child: child),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: child,
+            ),
           ),
         ),
       ),
@@ -102,7 +119,13 @@ class SettingsContentPage extends StatelessWidget {
 }
 
 class _SettingsMenuItem extends StatelessWidget {
-  const _SettingsMenuItem({required this.icon, required this.title, required this.onTap, this.subtitle, this.enabled = true});
+  const _SettingsMenuItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+    this.enabled = true,
+  });
 
   final IconData icon;
   final String title;
@@ -112,14 +135,18 @@ class _SettingsMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = enabled ? Theme.of(context).primaryColor : Theme.of(context).disabledColor;
+    final color = enabled
+        ? Theme.of(context).primaryColor
+        : Theme.of(context).disabledColor;
 
     return Card(
       elevation: 0,
       color: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.25)),
+        side: BorderSide(
+          color: Theme.of(context).dividerColor.withOpacity(0.25),
+        ),
       ),
       child: ListTile(
         minTileHeight: 64,
@@ -127,12 +154,27 @@ class _SettingsMenuItem extends StatelessWidget {
         onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Icon(icon, color: color),
         ),
-        title: Text(title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-        subtitle: subtitle == null ? null : Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
-        trailing: enabled ? Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outline) : const Icon(Icons.lock_outline),
+        title: Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        subtitle: subtitle == null
+            ? null
+            : Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
+        trailing: enabled
+            ? Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.outline,
+              )
+            : const Icon(Icons.lock_outline),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
