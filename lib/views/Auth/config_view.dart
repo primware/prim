@@ -83,9 +83,7 @@ class _ConfigPageState extends State<ConfigPage> {
             _onRoleSelected(selectedRoleId);
           }
 
-          final selectClient = clients.firstWhere(
-            (client) => client['id'] == clientId,
-          );
+          final selectClient = clients.firstWhere((client) => client['id'] == clientId);
           UserData.clientName = selectClient['name'];
         });
       }
@@ -105,11 +103,7 @@ class _ConfigPageState extends State<ConfigPage> {
     });
 
     if (roleId != null) {
-      final fetchedOrganizations = await getOrganizations(
-        selectedClientId!,
-        roleId,
-        context,
-      );
+      final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
       if (fetchedOrganizations != null) {
         setState(() {
           fetchedOrganizations.removeWhere((org) => org['id'] == 0);
@@ -163,9 +157,7 @@ class _ConfigPageState extends State<ConfigPage> {
   }
 
   Future<void> _onContinue() async {
-    if (selectedClientId != null &&
-        selectedRoleId != null &&
-        selectedOrganizationId != null) {
+    if (selectedClientId != null && selectedRoleId != null && selectedOrganizationId != null) {
       Token.client = selectedClientId!;
       Token.rol = selectedRoleId;
       Token.organitation = selectedOrganizationId!;
@@ -193,7 +185,7 @@ class _ConfigPageState extends State<ConfigPage> {
       POS.docTypesComplete.clear();
       clearDashboardRawCache();
 
-      bool login = await usuarioAuth(context: context, forceNewToken: true);
+      bool login = await usuarioAuth(context: context);
 
       if (!mounted) return;
 
@@ -205,10 +197,7 @@ class _ConfigPageState extends State<ConfigPage> {
           String usuario = usuarioController.text.trim();
           await prefs.setInt('clientId_$usuario', selectedClientId!);
           await prefs.setInt('roleId_$usuario', selectedRoleId!);
-          await prefs.setInt(
-            'organizationId_$usuario',
-            selectedOrganizationId!,
-          );
+          await prefs.setInt('organizationId_$usuario', selectedOrganizationId!);
           await prefs.setString('roleName_$usuario', UserData.rolName!);
         }
 
@@ -218,11 +207,7 @@ class _ConfigPageState extends State<ConfigPage> {
           context,
           MaterialPageRoute(
             builder: (context) => POS.isPOS
-                ? OrderNewPage(
-                    doctypeID: POS.docTypeID,
-                    orderName: POS.docTypeName,
-                    isRefund: POS.docSubType == 'RM',
-                  )
+                ? OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM')
                 : DashboardPage(),
           ),
           (Route<dynamic> route) => false,
@@ -237,19 +222,13 @@ class _ConfigPageState extends State<ConfigPage> {
         });
       }
     } else {
-      ToastMessage.show(
-        context: context,
-        message: AppLocale.selectCompanyRoleOrganization.getString(context),
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: AppLocale.selectCompanyRoleOrganization.getString(context), type: ToastType.failure);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 750
-        ? true
-        : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -261,12 +240,7 @@ class _ConfigPageState extends State<ConfigPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Center(
-                  child: Text(
-                    AppLocale.selectRole.getString(context),
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                ),
+                Center(child: Text(AppLocale.selectRole.getString(context), style: Theme.of(context).textTheme.headlineSmall)),
                 const SizedBox(height: CustomSpacer.medium),
                 SearchableDropdown<int>(
                   value: selectedClientId,
@@ -294,18 +268,11 @@ class _ConfigPageState extends State<ConfigPage> {
                 const SizedBox(height: CustomSpacer.medium),
                 const SizedBox(height: CustomSpacer.medium),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.black.withOpacity(0.2)
-                        : Colors.white.withOpacity(0.3),
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withOpacity(0.2) : Colors.white.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                    ),
+                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -315,23 +282,16 @@ class _ConfigPageState extends State<ConfigPage> {
                           Icon(
                             Icons.save_as_outlined,
                             size: 24,
-                            color: rememberConfig
-                                ? Theme.of(context).primaryColor
-                                : Colors.grey.shade600,
+                            color: rememberConfig ? Theme.of(context).primaryColor : Colors.grey.shade600,
                           ),
                           const SizedBox(width: 12),
                           Text(
                             AppLocale.rememberMe.getString(context),
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: rememberConfig
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
+                              fontWeight: rememberConfig ? FontWeight.bold : FontWeight.w500,
                               color: rememberConfig
-                                  ? (Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white
-                                        : Colors.black87)
+                                  ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)
                                   : Colors.grey.shade600,
                             ),
                           ),
@@ -352,11 +312,7 @@ class _ConfigPageState extends State<ConfigPage> {
                 Container(
                   child: isLoading
                       ? ButtonLoading(fullWidth: true)
-                      : ButtonPrimary(
-                          texto: AppLocale.continueKey.getString(context),
-                          fullWidth: true,
-                          onPressed: _onContinue,
-                        ),
+                      : ButtonPrimary(texto: AppLocale.continueKey.getString(context), fullWidth: true, onPressed: _onContinue),
                 ),
                 const SizedBox(height: 12),
                 ButtonSecondary(
@@ -395,25 +351,9 @@ class GlassSwitch extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: value
-              ? primary.withOpacity(0.3)
-              : (isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.05)),
-          border: Border.all(
-            color: value
-                ? primary.withOpacity(0.6)
-                : (isDark ? Colors.white30 : Colors.black12),
-            width: 1.5,
-          ),
-          boxShadow: [
-            if (value)
-              BoxShadow(
-                color: primary.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-              ),
-          ],
+          color: value ? primary.withOpacity(0.3) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
+          border: Border.all(color: value ? primary.withOpacity(0.6) : (isDark ? Colors.white30 : Colors.black12), width: 1.5),
+          boxShadow: [if (value) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)],
         ),
         child: Stack(
           children: [
@@ -430,20 +370,9 @@ class GlassSwitch extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: value
-                          ? primary.withOpacity(0.8)
-                          : (isDark ? Colors.white70 : Colors.white),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.5),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      color: value ? primary.withOpacity(0.8) : (isDark ? Colors.white70 : Colors.white),
+                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
                     ),
                   ),
                 ),
