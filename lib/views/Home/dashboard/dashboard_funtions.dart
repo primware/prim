@@ -23,7 +23,7 @@ Future<Map<String, double>> fetchSalesYTDData({
         'Authorization': Token.auth!,
       },
     );
-
+    //TODO TRADUCIR
     if (response.statusCode != 200) {
       debugPrint(
         'Error al obtener datos del gráfico mensual (status ${response.statusCode}): ${response.body}',
@@ -257,6 +257,10 @@ Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({
         },
       );
 
+      debugPrint(
+        'Respuesta del servidor (status ${response.statusCode}): ${response.body}',
+      );
+      //TODO TRADUCIR
       if (response.statusCode != 200) {
         debugPrint(
           'Error al obtener datos del gráfico Sales YTD By SalesRep (status ${response.statusCode}): ${response.body}',
@@ -359,7 +363,8 @@ Future<Map<String, double>> fetchSalesPerDayByProductCategory({
       }
 
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-      _cachedRawSalesPerDayByProductCategory = (jsonResponse['data'] as List?) ?? [];
+      _cachedRawSalesPerDayByProductCategory =
+          (jsonResponse['data'] as List?) ?? [];
     }
 
     final List data = _cachedRawSalesPerDayByProductCategory ?? [];

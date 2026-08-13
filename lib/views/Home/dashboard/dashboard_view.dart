@@ -14,6 +14,7 @@ import 'password_warning_dialog.dart';
 import 'dashboard_graph.dart';
 import 'dashboard_funtions.dart';
 import '../../../localization/app_locale.dart';
+import '../order/my_order.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -153,11 +154,6 @@ class _DashboardPageState extends State<DashboardPage> {
         body: SafeArea(
           child: _isLoading
               ? const DashboardSkeleton()
-              : !_hasData
-              ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: EmptyMetricState(showActions: true)),
-                )
               : SingleChildScrollView(
                   child: Center(
                     child: CustomContainer(
@@ -166,6 +162,31 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                icon: Icon(Icons.list_alt, size: 20, color: Theme.of(context).colorScheme.secondary),
+                                label: Text(
+                                  AppLocale.myOrders.getString(context),
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.secondary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderListPage()));
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: CustomSpacer.medium),
+                            
+
                             if (Charts.salesYTDBySalesRep != null)
                               GraphicBarMetricCard(
                                 titleBuilder: (ctx, offset) {
