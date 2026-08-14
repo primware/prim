@@ -102,6 +102,8 @@ class AppLocale {
   static const String priceList = 'priceList';
   static const String taxCategory = 'taxCategory';
   static const String discount = 'discount';
+  static const String discounts = 'discounts';
+  static const String removeDiscount = 'removeDiscount';
   static const String subtotal = 'subtotal';
   static const String total = 'total';
   static const String noName = 'noName';
@@ -478,6 +480,8 @@ class AppLocale {
     apply: 'Apply',
     product: 'Product',
     paymentMethods: 'Payment methods',
+    discounts: 'Discounts',
+    removeDiscount: 'Remove discount',
     paymentSumMustEqualTotal: 'The sum of payments must equal the total.',
     summary: 'Summary',
     taxes: 'Taxes',
@@ -733,6 +737,8 @@ class AppLocale {
     terminal: 'Terminal',
     product: 'Producto',
     paymentMethods: 'Métodos de pago',
+    discounts: 'Descuentos',
+    removeDiscount: 'Quitar descuento',
     paymentSumMustEqualTotal: 'La suma de los pagos debe ser igual al total.',
     summary: 'Resumen',
     taxes: 'Impuestos',

@@ -314,6 +314,91 @@ class _OrderNewPageState extends State<OrderNewPage> {
   List<Map<String, dynamic>> get products => invoiceLines;
   double get totalAmount => total;
 
+  Future<bool> _resetPaymentsForProductChange() async {
+    final transactionId = yappyTransactionId;
+    if (transactionId != null) {
+      final wasCancelled = await cancelYappyTransaction(transactionId: transactionId);
+      if (!wasCancelled) {
+        if (mounted) {
+          ToastMessage.show(
+            context: context,
+            message: 'No se pudo anular el pago Yappy. Los productos no fueron modificados.',
+            type: ToastType.failure,
+          );
+        }
+        return false;
+      }
+    }
+
+    if (!mounted) return false;
+
+    setState(() {
+      for (final controller in paymentControllers.values) {
+        controller.text = '0.00';
+      }
+      _lockedPayments.clear();
+      yappyTransactionId = null;
+    });
+    _validateForm();
+    return true;
+  }
+
+  Future<void> _applyRetireDiscount(int methodId) async {
+    final discount = _r2(totalAmount * 0.25);
+    final projectedTotal = _r2(
+      paymentControllers.entries
+          .map((entry) {
+            if (entry.key == methodId) return discount;
+            return _r2(double.tryParse(entry.value.text.replaceAll(',', '.')) ?? 0.0);
+          })
+          .fold(0.0, (sum, value) => sum + value),
+    );
+    final exceedsTotal = _r2(projectedTotal - totalAmount) > 0;
+
+    if (exceedsTotal && yappyTransactionId != null) {
+      final transactionId = yappyTransactionId!;
+      final wasCancelled = await cancelYappyTransaction(transactionId: transactionId);
+      if (!wasCancelled) {
+        if (mounted) {
+          ToastMessage.show(
+            context: context,
+            message: 'No se pudo anular el pago Yappy. El descuento no fue aplicado.',
+            type: ToastType.failure,
+          );
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      paymentControllers[methodId]?.text = discount.toStringAsFixed(2);
+
+      if (exceedsTotal) {
+        for (final entry in paymentControllers.entries) {
+          final method = paymentMethods.firstWhere((item) => item['id'] == entry.key, orElse: () => {});
+          if (method['isRetireDiscount'] != true) {
+            entry.value.text = '0.00';
+            _lockedPayments.remove(entry.key);
+          }
+        }
+        yappyTransactionId = null;
+      }
+
+      _lockedPayments.add(methodId);
+    });
+    _validateForm();
+  }
+
+  void _clearRetireDiscount(int methodId) {
+    setState(() {
+      paymentControllers[methodId]?.text = '0.00';
+      _lockedPayments.remove(methodId);
+    });
+    _validateForm();
+  }
+
   void _validateForm() {
     final totalPayment = _r2(
       paymentControllers.values.map((c) => _r2(double.tryParse((c.text).replaceAll(',', '.')) ?? 0.0)).fold(0.0, (sum, val) => sum + val),
@@ -333,10 +418,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     final overpay = _r2(totalPayment - amount);
     final change = overpay > 0 ? _r2(totalCash >= overpay ? overpay : totalCash) : 0.0;
+    final paymentDifference = _r2(totalPayment - amount).abs();
 
     setState(() {
       if (POS.isPOS && paymentMethods.isNotEmpty) {
-        _isInvoiceValid = clientSelected && products.isNotEmpty && (totalPayment + eps) >= amount;
+        _isInvoiceValid = clientSelected && products.isNotEmpty && paymentDifference < eps;
       } else {
         _isInvoiceValid = clientSelected && products.isNotEmpty;
       }
@@ -518,10 +604,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
       text: index != null && product['Description'] != null ? product['Description'].toString() : '',
     );
 
-    void onSubmitted(BuildContext dialogContext) {
+    Future<void> onSubmitted(BuildContext dialogContext) async {
       final qty = int.tryParse(quantityController.text) ?? 1;
       final effectivePrice = double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
       final effectiveDiscount = double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0;
+
+      if (!await _resetPaymentsForProductChange()) {
+        return;
+      }
 
       if (index != null) {
         invoiceLines.removeAt(index);
@@ -920,19 +1010,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
     ticker?.cancel();
   }
 
-  void _deleteLine(int index) {
+  Future<void> _deleteLine(int index) async {
+    if (!await _resetPaymentsForProductChange()) {
+      return;
+    }
+
     setState(() {
       invoiceLines.removeAt(index);
       _recalculateSummary();
-
-      final totalPayment = paymentControllers.values.map((c) => double.tryParse(c.text) ?? 0.0).fold(0.0, (sum, val) => sum + val);
-
-      if (totalPayment > totalAmount) {
-        for (var controller in paymentControllers.values) {
-          controller.text = '0';
-        }
-      }
-
       _validateForm();
     });
   }
@@ -1164,6 +1249,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 700 ? true : false;
+    final discountPaymentMethods = paymentMethods.where((method) => method['isRetireDiscount'] == true).toList();
+    final standardPaymentMethods = paymentMethods.where((method) => method['isRetireDiscount'] != true).toList();
+    final orderedPaymentMethods = [...discountPaymentMethods, ...standardPaymentMethods];
 
     return WillPopScope(
       onWillPop: () async {
@@ -1308,6 +1396,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           ),
                                         );
                                         if (confirm != true) return;
+                                        if (!await _resetPaymentsForProductChange()) {
+                                          return;
+                                        }
                                         setState(() {
                                           invoiceLines.clear();
                                           _recalculateSummary();
@@ -1372,6 +1463,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                             orElse: () => {'name': ''},
                                           );
                                           setState(() => clienteController.text = prevCustomer['name']);
+                                          return;
+                                        }
+                                        if (!await _resetPaymentsForProductChange()) {
                                           return;
                                         }
                                         setState(() {
@@ -1452,6 +1546,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           ),
                                         );
                                         if (confirm != true) return;
+                                      }
+                                      if (!await _resetPaymentsForProductChange()) {
+                                        return;
                                       }
                                       setState(() {
                                         selectedBPartnerID = null;
@@ -1704,8 +1801,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                             }
                                           },
 
-                                          onItemSelected: (item) {
+                                          onItemSelected: (item) async {
                                             if (POS.cPosID != null) {
+                                              if (!await _resetPaymentsForProductChange()) {
+                                                return;
+                                              }
                                               final int? selectedTaxID =
                                                   (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
                                               final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
@@ -1842,130 +1942,169 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(AppLocale.paymentMethods.getString(context), style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: 12),
                             if (isPaymentMethodsLoading)
                               _buildShimmerField()
                             else ...[
-                              ...paymentMethods.map((method) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 6),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: TextfieldTheme(
-                                              controlador: paymentControllers[method['id']],
-                                              texto: method['name'],
-                                              inputType: TextInputType.number,
-                                              inputFormatters: [NumericTextFormatterWithDecimal()],
-                                              readOnly: _lockedPayments.contains(method['id']),
-                                              onChanged: (_) => _validateForm(),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          IconButton(
-                                            icon: const Icon(Icons.attach_money_rounded),
-                                            tooltip: 'Llenar con el máximo disponible',
-                                            onPressed: () {
-                                              final currentSum = paymentControllers.entries
-                                                  .where((e) => e.key != method['id'])
-                                                  .map((e) => double.tryParse(e.value.text) ?? 0.0)
-                                                  .fold(0.0, (a, b) => a + b);
+                              ...orderedPaymentMethods.map((method) {
+                                final isFirstDiscount =
+                                    discountPaymentMethods.isNotEmpty && method['id'] == discountPaymentMethods.first['id'];
+                                final isFirstStandard =
+                                    standardPaymentMethods.isNotEmpty && method['id'] == standardPaymentMethods.first['id'];
 
-                                              final remaining = _r2((totalAmount - currentSum).clamp(0.0, totalAmount));
-                                              paymentControllers[method['id']]?.text = remaining.toStringAsFixed(2);
-                                              _validateForm();
-                                            },
-                                          ),
-                                          if (method['name'].toString().toLowerCase().contains('yappy') &&
-                                              isYappyConfigAvailable &&
-                                              paymentControllers[method['id']]?.text != null &&
-                                              (double.tryParse(paymentControllers[method['id']]?.text ?? '0') ?? 0) > 0 &&
-                                              yappyTransactionId == null)
-                                            isYappyLoading
-                                                ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator())
-                                                : IconButton(
-                                                    icon: const Icon(Icons.qr_code),
-                                                    tooltip: 'Mostrar código QR',
-                                                    onPressed: () {
-                                                      _showYappyQRDialog(
-                                                        subTotal: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'),
-                                                        totalTax: 0,
-                                                        total: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'),
-                                                        methodId: method['id'],
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (isFirstDiscount) ...[
+                                      Text(AppLocale.discounts.getString(context), style: Theme.of(context).textTheme.titleMedium),
+                                      const SizedBox(height: 6),
+                                    ],
+                                    if (isFirstStandard) ...[
+                                      if (discountPaymentMethods.isNotEmpty) const SizedBox(height: CustomSpacer.medium),
+                                      Text(AppLocale.paymentMethods.getString(context), style: Theme.of(context).textTheme.titleMedium),
+                                      const SizedBox(height: 6),
+                                    ],
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 6),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: TextfieldTheme(
+                                                  controlador: paymentControllers[method['id']],
+                                                  texto: method['name'],
+                                                  inputType: TextInputType.number,
+                                                  inputFormatters: [NumericTextFormatterWithDecimal()],
+                                                  readOnly: method['isRetireDiscount'] == true || _lockedPayments.contains(method['id']),
+                                                  onChanged: (_) => _validateForm(),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              IconButton(
+                                                icon: Icon(
+                                                  method['isRetireDiscount'] == true ? Icons.percent_rounded : Icons.attach_money_rounded,
+                                                ),
+                                                tooltip: method['isRetireDiscount'] == true
+                                                    ? 'Aplicar descuento 25%'
+                                                    : 'Llenar con el máximo disponible',
+                                                onPressed: method['isRetireDiscount'] == true
+                                                    ? () => _applyRetireDiscount(method['id'])
+                                                    : () {
+                                                        final currentSum = paymentControllers.entries
+                                                            .where((e) => e.key != method['id'])
+                                                            .map((e) => double.tryParse(e.value.text) ?? 0.0)
+                                                            .fold(0.0, (a, b) => a + b);
+
+                                                        final remaining = _r2((totalAmount - currentSum).clamp(0.0, totalAmount));
+                                                        paymentControllers[method['id']]?.text = remaining.toStringAsFixed(2);
+                                                        _validateForm();
+                                                      },
+                                              ),
+                                              if (method['isRetireDiscount'] == true &&
+                                                  _r2(
+                                                        double.tryParse(
+                                                              paymentControllers[method['id']]?.text.replaceAll(',', '.') ?? '0',
+                                                            ) ??
+                                                            0.0,
+                                                      ) >
+                                                      0)
+                                                IconButton(
+                                                  icon: const Icon(Icons.close),
+                                                  color: ColorTheme.error,
+                                                  tooltip: AppLocale.removeDiscount.getString(context),
+                                                  onPressed: () => _clearRetireDiscount(method['id']),
+                                                ),
+                                              if (method['name'].toString().toLowerCase().contains('yappy') &&
+                                                  isYappyConfigAvailable &&
+                                                  paymentControllers[method['id']]?.text != null &&
+                                                  (double.tryParse(paymentControllers[method['id']]?.text ?? '0') ?? 0) > 0 &&
+                                                  yappyTransactionId == null)
+                                                isYappyLoading
+                                                    ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator())
+                                                    : IconButton(
+                                                        icon: const Icon(Icons.qr_code),
+                                                        tooltip: 'Mostrar código QR',
+                                                        onPressed: () {
+                                                          _showYappyQRDialog(
+                                                            subTotal: double.parse(
+                                                              paymentControllers[method['id']]?.text.toString() ?? '0',
+                                                            ),
+                                                            totalTax: 0,
+                                                            total: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'),
+                                                            methodId: method['id'],
+                                                          );
+                                                        },
+                                                      ),
+                                              if (yappyTransactionId != null &&
+                                                  method['name'].toString().toLowerCase().contains('yappy') &&
+                                                  paymentControllers[method['id']]?.text != null &&
+                                                  (paymentControllers[method['id']]?.text ?? '0.0') != '0.0')
+                                                if (yappyTransactionId != null)
+                                                  IconButton(
+                                                    icon: Icon(Icons.cancel),
+                                                    color: ColorTheme.error,
+                                                    tooltip: 'Anular transacción Yappy',
+                                                    onPressed: () async {
+                                                      final confirm = await showDialog(
+                                                        context: context,
+                                                        builder: (context) {
+                                                          return AlertDialog(
+                                                            backgroundColor: Theme.of(context).cardColor,
+                                                            title: Text(AppLocale.cancelYappyTransaction.getString(context)),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () => Navigator.pop(context, false),
+                                                                child: Text(AppLocale.cancel.getString(context)),
+                                                              ),
+                                                              ElevatedButton(
+                                                                onPressed: () => Navigator.pop(context, true),
+                                                                child: Text(
+                                                                  AppLocale.confirm.getString(context),
+                                                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                                                    color: Theme.of(context).colorScheme.surface,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          );
+                                                        },
                                                       );
+
+                                                      if (confirm != true) return;
+
+                                                      final paid = await cancelYappyTransaction(transactionId: yappyTransactionId!);
+                                                      if (paid) {
+                                                        if (mounted) {
+                                                          paymentControllers[method['id']]?.text = '0.0';
+                                                          yappyTransactionId = null;
+                                                          _validateForm();
+                                                          ToastMessage.show(
+                                                            context: context,
+                                                            message: 'Pago anulado correctamente',
+                                                            type: ToastType.help,
+                                                          );
+                                                        }
+                                                      }
                                                     },
                                                   ),
-                                          if (yappyTransactionId != null &&
-                                              method['name'].toString().toLowerCase().contains('yappy') &&
-                                              paymentControllers[method['id']]?.text != null &&
-                                              (paymentControllers[method['id']]?.text ?? '0.0') != '0.0')
-                                            if (yappyTransactionId != null)
-                                              IconButton(
-                                                icon: Icon(Icons.cancel),
-                                                color: ColorTheme.error,
-                                                tooltip: 'Anular transacción Yappy',
-                                                onPressed: () async {
-                                                  final confirm = await showDialog(
-                                                    context: context,
-                                                    builder: (context) {
-                                                      return AlertDialog(
-                                                        backgroundColor: Theme.of(context).cardColor,
-                                                        title: Text(AppLocale.cancelYappyTransaction.getString(context)),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () => Navigator.pop(context, false),
-                                                            child: Text(AppLocale.cancel.getString(context)),
-                                                          ),
-                                                          ElevatedButton(
-                                                            onPressed: () => Navigator.pop(context, true),
-                                                            child: Text(
-                                                              AppLocale.confirm.getString(context),
-                                                              style: Theme.of(
-                                                                context,
-                                                              ).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.surface),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  );
-
-                                                  if (confirm != true) return;
-
-                                                  final paid = await cancelYappyTransaction(transactionId: yappyTransactionId!);
-                                                  if (paid) {
-                                                    if (mounted) {
-                                                      paymentControllers[method['id']]?.text = '0.0';
-                                                      yappyTransactionId = null;
-                                                      _validateForm();
-                                                      ToastMessage.show(
-                                                        context: context,
-                                                        message: 'Pago anulado correctamente',
-                                                        type: ToastType.help,
-                                                      );
-                                                    }
-                                                  }
-                                                },
+                                            ],
+                                          ),
+                                          if (calculatedChange > 0 && method['isCash'])
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 2, bottom: 4),
+                                              child: Text(
+                                                'Vuelto: \$${calculatedChange.toStringAsFixed(2)}',
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
                                               ),
+                                            ),
                                         ],
                                       ),
-                                      if (calculatedChange > 0 && method['isCash'])
-                                        Padding(
-                                          padding: const EdgeInsets.only(top: 2, bottom: 4),
-                                          child: Text(
-                                            'Vuelto: \$${calculatedChange.toStringAsFixed(2)}',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 );
                               }),
                             ],

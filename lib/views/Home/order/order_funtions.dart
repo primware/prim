@@ -539,6 +539,7 @@ Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
           'tenderType': record['TenderType']?['identifier'] ?? 'Desconocido',
           'tenderTypeID': record['TenderType']?['id'],
           'isCash': record['TenderType']?['id'] == 'X',
+          'isRetireDiscount': record['TenderType']?['id'] == 'R',
         };
       }).toList();
     } else {
