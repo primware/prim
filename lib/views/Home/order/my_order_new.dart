@@ -91,7 +91,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
   double total = 0.0;
 
   // ==== Helpers for monetary rounding and comparisons ====
-  static const double eps = 0.01; // tolerancia de 1 centavo
   // Redondeo HALF-UP estable a 2 decimales (evita 8.414999 => 8.41)
   double _r2(num v) {
     final x = v * 100.0;
@@ -417,12 +416,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final amount = _r2(totalAmount);
 
     final overpay = _r2(totalPayment - amount);
-    final change = overpay > 0 ? _r2(totalCash >= overpay ? overpay : totalCash) : 0.0;
-    final paymentDifference = _r2(totalPayment - amount).abs();
+    final hasEnoughPayment = totalPayment >= amount;
+    final cashCoversOverpay = overpay <= 0 || totalCash >= overpay;
+    final change = hasEnoughPayment && cashCoversOverpay && overpay > 0 ? overpay : 0.0;
 
     setState(() {
       if (POS.isPOS && paymentMethods.isNotEmpty) {
-        _isInvoiceValid = clientSelected && products.isNotEmpty && paymentDifference < eps;
+        _isInvoiceValid = clientSelected && products.isNotEmpty && hasEnoughPayment && cashCoversOverpay;
       } else {
         _isInvoiceValid = clientSelected && products.isNotEmpty;
       }
@@ -1095,6 +1095,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       };
     }).toList();
 
+    double remainingChange = _r2(calculatedChange);
     final paymentData = paymentControllers.entries
         .where((entry) {
           final txt = entry.value.text.trim();
@@ -1110,10 +1111,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
           final bool isYappy = (method['name']?.toString().toLowerCase().contains('yappy') == true);
           final bool isCash = (method['isCash'] == true);
 
-          // Si es efectivo, restar el vuelto disponible (sin quedar negativo)
+          // Distribuir el vuelto una sola vez entre los métodos de efectivo.
           double adjustedAmt = _r2(originalAmt);
-          if (isCash && calculatedChange > 0) {
-            adjustedAmt = _r2(adjustedAmt - calculatedChange);
+          if (isCash && remainingChange > 0) {
+            final changeFromThisPayment = adjustedAmt < remainingChange ? adjustedAmt : remainingChange;
+            adjustedAmt = _r2(adjustedAmt - changeFromThisPayment);
+            remainingChange = _r2(remainingChange - changeFromThisPayment);
           }
 
           final Map<String, dynamic> data = {'PayAmt': adjustedAmt, 'C_POSTenderType_ID': entry.key};
