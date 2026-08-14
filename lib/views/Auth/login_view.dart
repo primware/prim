@@ -29,7 +29,7 @@ TextEditingController usuarioController = TextEditingController();
 TextEditingController claveController = TextEditingController();
 
 class _LoginPageState extends State<LoginPage> {
-  bool isLoading = false;
+  bool isLoading = false, isConfigLoaded = false;
   final TextEditingController baseURLController = TextEditingController(),
       cPosController = TextEditingController();
   bool rememberUser = false;
@@ -99,6 +99,7 @@ class _LoginPageState extends State<LoginPage> {
       cPosController.text = cPosID ?? '';
       Base.baseURL = baseURL;
       POS.cPosID = int.tryParse(cPosController.text);
+      isConfigLoaded = true;
     });
   }
 
@@ -140,9 +141,11 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: () async {
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 await prefs.clear();
-                _saveConfig();
+                await _saveConfig();
+                if (!mounted || !context.mounted) return;
+                setState(() => isConfigLoaded = true);
                 Navigator.of(context).pop();
-                _resetDialog();
+                await _resetDialog();
               },
               icon: const Icon(Icons.check_circle_outline),
               color: ColorTheme.success,
@@ -386,7 +389,7 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
                       ),
-                      if (Base.allowCreateAccount) ...[
+                      if (isConfigLoaded && Base.allowCreateAccount && POS.cPosID == null) ...[
                         const SizedBox(height: CustomSpacer.medium),
                         Center(
                           child: Column(

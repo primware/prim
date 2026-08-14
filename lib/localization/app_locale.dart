@@ -102,6 +102,8 @@ class AppLocale {
   static const String priceList = 'priceList';
   static const String taxCategory = 'taxCategory';
   static const String discount = 'discount';
+  static const String discounts = 'discounts';
+  static const String removeDiscount = 'removeDiscount';
   static const String subtotal = 'subtotal';
   static const String total = 'total';
   static const String noName = 'noName';
@@ -478,7 +480,9 @@ class AppLocale {
     apply: 'Apply',
     product: 'Product',
     paymentMethods: 'Payment methods',
-    paymentSumMustEqualTotal: 'The sum of payments must equal the total.',
+    discounts: 'Discounts',
+    removeDiscount: 'Remove discount',
+    paymentSumMustEqualTotal: 'Payments must cover the total. Only cash may exceed it to provide change.',
     summary: 'Summary',
     taxes: 'Taxes',
     totalTaxes: 'Total taxes',
@@ -733,7 +737,9 @@ class AppLocale {
     terminal: 'Terminal',
     product: 'Producto',
     paymentMethods: 'Métodos de pago',
-    paymentSumMustEqualTotal: 'La suma de los pagos debe ser igual al total.',
+    discounts: 'Descuentos',
+    removeDiscount: 'Quitar descuento',
+    paymentSumMustEqualTotal: 'Los pagos deben cubrir el total. Solo el efectivo puede excederlo para generar vuelto.',
     summary: 'Resumen',
     taxes: 'Impuestos',
     totalTaxes: 'Total impuestos',
