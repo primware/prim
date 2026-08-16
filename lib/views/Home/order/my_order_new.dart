@@ -26,6 +26,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:printing/printing.dart';
 import '../product/product_new.dart';
 import 'package:primware/shared/shimmer_list.dart';
+import 'product_selection_popup.dart';
 
 class OrderNewPage extends StatefulWidget {
   final bool isRefund;
@@ -503,6 +504,42 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
     if (productOptions.isNotEmpty && bPartnerOptions.isNotEmpty) {
       firtsLoad = true;
+    }
+  }
+
+  Future<void> _showProductSelectionPopup() async {
+    final selectedProducts = await ProductSelectionPopup.show(context, priceListID: bpartnerPriceListID);
+    if (selectedProducts != null && selectedProducts.isNotEmpty) {
+      if (POS.cPosID != null) {
+        if (!await _resetPaymentsForProductChange()) return;
+      }
+      setState(() {
+        for (final item in selectedProducts) {
+          final int? selectedTaxID =
+              (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
+          final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
+          final double priceList = _r2(
+            (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble(),
+          );
+          final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
+          
+          invoiceLines.add({
+            ...item,
+            'quantity': 1,
+            'price': priceActual,
+            'C_Tax_ID': selectedTaxID,
+            'Description': item['Description'] ?? '',
+            'PriceList': priceList,
+            'Discount': discount,
+          });
+        }
+      });
+      if (POS.cPosID != null) {
+        _recalculateSummary();
+        _validateForm();
+      } else {
+        _recalculateSummary();
+      }
     }
   }
 
@@ -1877,6 +1914,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                             ],
                                           ),
                                         ),
+                                      ),
+                                      const SizedBox(width: CustomSpacer.small),
+                                      IconButton(
+                                        tooltip: "Selección Múltiple",
+                                        icon: const Icon(Icons.grid_view),
+                                        onPressed: _showProductSelectionPopup,
                                       ),
                                       const SizedBox(width: CustomSpacer.small),
                                       IconButton(
