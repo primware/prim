@@ -86,6 +86,9 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
     );
   }
 
+  static List<dynamic>? _globalCachedProducts;
+  static List<dynamic>? _globalCachedCategories;
+
   bool _isProductsLoading = false;
 
   Future<void> _loadData({bool isCategoryChange = false}) async {
@@ -97,32 +100,47 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
       }
     });
 
-    List<dynamic> categories = _categories;
-    if (_categories.isEmpty) {
-      categories = await fetchProductCategory();
+    if (_globalCachedCategories == null) {
+      _globalCachedCategories = await fetchProductCategory();
     }
 
-    final products = await fetchProductInPriceList(
-      context: context,
-      categoryID: _selectedCategoryIds.isNotEmpty ? _selectedCategoryIds.toList() : null,
-      searchTerm: _searchController.text.trim(),
-      priceListID: widget.priceListID,
-    );
+    if (_globalCachedProducts == null) {
+      _globalCachedProducts = await fetchProductInPriceList(
+        context: context,
+        categoryID: null,
+        searchTerm: '',
+        priceListID: widget.priceListID,
+      );
+    }
+
+    List<dynamic> productsToDisplay;
+
+    if (_selectedCategoryIds.isNotEmpty) {
+      // Fallback to API filtering to guarantee correct results
+      productsToDisplay = await fetchProductInPriceList(
+        context: context,
+        categoryID: _selectedCategoryIds.toList(),
+        searchTerm: '',
+        priceListID: widget.priceListID,
+      );
+    } else {
+      productsToDisplay = List.from(_globalCachedProducts!);
+    }
 
     // Sort alphabetically
-    products.sort(
+    productsToDisplay.sort(
       (a, b) => (a['name'] ?? '').toString().toLowerCase().compareTo(
         (b['name'] ?? '').toString().toLowerCase(),
       ),
     );
 
     // Favorites
-    final favoritesList = products
+    final favoritesList = productsToDisplay
         .where((p) => _favoriteIds.contains(_getId(p)))
         .toList();
 
     // Grouping for main view
-    products.sort((a, b) {
+    productsToDisplay.sort((a, b) {
       final isAFav = _favoriteIds.contains(_getId(a)) ? 0 : 1;
       final isBFav = _favoriteIds.contains(_getId(b)) ? 0 : 1;
       if (isAFav != isBFav) return isAFav.compareTo(isBFav);
@@ -132,8 +150,8 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
     });
 
     setState(() {
-      _categories = categories;
-      _products = products;
+      _categories = _globalCachedCategories!;
+      _products = productsToDisplay;
       _favorites = favoritesList;
       _isLoading = false;
       _isProductsLoading = false;
