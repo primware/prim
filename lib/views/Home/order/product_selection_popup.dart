@@ -10,9 +10,28 @@ class ProductSelectionPopup extends StatefulWidget {
   const ProductSelectionPopup({super.key, this.priceListID});
 
   static Future<List<dynamic>?> show(BuildContext context, {int? priceListID}) {
-    return showDialog<List<dynamic>?>(
+    return showGeneralDialog<List<dynamic>?>(
       context: context,
-      builder: (context) => ProductSelectionPopup(priceListID: priceListID),
+      barrierDismissible: true,
+      barrierLabel: "Cerrar selección de productos",
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 350),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return ProductSelectionPopup(priceListID: priceListID);
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curve = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        return ScaleTransition(
+          scale: curve,
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+      },
     );
   }
 
