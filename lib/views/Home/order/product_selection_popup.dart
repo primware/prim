@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_localization/flutter_localization.dart';
-import '../../../localization/app_locale.dart';
 
 class ProductSelectionPopup extends StatefulWidget {
   final int? priceListID;
 
   const ProductSelectionPopup({super.key, this.priceListID});
+
+  static List<dynamic>? globalCachedProducts;
+  static List<dynamic>? globalCachedCategories;
+
+  static void clearGlobalCache() {
+    globalCachedProducts = null;
+    globalCachedCategories = null;
+  }
 
   static Future<List<dynamic>?> show(BuildContext context, {int? priceListID}) {
     return showGeneralDialog<List<dynamic>?>(
@@ -26,10 +32,7 @@ class ProductSelectionPopup extends StatefulWidget {
         );
         return ScaleTransition(
           scale: curve,
-          child: FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
+          child: FadeTransition(opacity: animation, child: child),
         );
       },
     );
@@ -105,8 +108,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
     );
   }
 
-  static List<dynamic>? _globalCachedProducts;
-  static List<dynamic>? _globalCachedCategories;
+
 
   bool _isProductsLoading = false;
 
@@ -119,12 +121,12 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
       }
     });
 
-    if (_globalCachedCategories == null) {
-      _globalCachedCategories = await fetchProductCategory();
+    if (ProductSelectionPopup.globalCachedCategories == null) {
+      ProductSelectionPopup.globalCachedCategories = await fetchProductCategory();
     }
 
-    if (_globalCachedProducts == null) {
-      _globalCachedProducts = await fetchProductInPriceList(
+    if (ProductSelectionPopup.globalCachedProducts == null) {
+      ProductSelectionPopup.globalCachedProducts = await fetchProductInPriceList(
         context: context,
         categoryID: null,
         searchTerm: '',
@@ -143,7 +145,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
         priceListID: widget.priceListID,
       );
     } else {
-      productsToDisplay = List.from(_globalCachedProducts!);
+      productsToDisplay = List.from(ProductSelectionPopup.globalCachedProducts!);
     }
 
     // Sort alphabetically
@@ -169,7 +171,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
     });
 
     setState(() {
-      _categories = _globalCachedCategories!;
+      _categories = ProductSelectionPopup.globalCachedCategories!;
       _products = productsToDisplay;
       _favorites = favoritesList;
       _isLoading = false;

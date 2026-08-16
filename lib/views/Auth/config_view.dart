@@ -18,6 +18,7 @@ import 'auth_funtions.dart';
 import '../../API/user.api.dart';
 import 'login_view.dart';
 import 'loading_dialog.dart';
+import '../Home/order/product_selection_popup.dart';
 import 'dart:ui';
 
 class ConfigPage extends StatefulWidget {
@@ -38,6 +39,10 @@ class _ConfigPageState extends State<ConfigPage> {
   List<Map<String, dynamic>> clients = [];
   List<Map<String, dynamic>> roles = [];
   List<Map<String, dynamic>> organizations = [];
+  
+  // Cachés locales para evitar volver a consultar si el usuario cambia de opción y regresa
+  final Map<int, List<Map<String, dynamic>>> _cachedRoles = {};
+  final Map<String, List<Map<String, dynamic>>> _cachedOrgs = {};
 
   @override
   void initState() {
@@ -60,6 +65,11 @@ class _ConfigPageState extends State<ConfigPage> {
     setState(() {
       isLoading = false;
     });
+
+    if (clients.length == 1 && selectedClientId == null) {
+      // Autoseleccionar si solo hay un grupo empresarial y empezar a cargar de fondo
+      _onClientSelected(clients[0]['id']);
+    }
   }
 
   Future<void> _onClientSelected(int? clientId) async {
@@ -73,19 +83,33 @@ class _ConfigPageState extends State<ConfigPage> {
     });
 
     if (clientId != null) {
-      final fetchedRoles = await getRoles(clientId, context);
-      if (fetchedRoles != null) {
+      if (_cachedRoles.containsKey(clientId)) {
+        // Usar caché si existe
         setState(() {
-          roles = fetchedRoles;
-
+          roles = _cachedRoles[clientId]!;
           if (roles.length == 1) {
             selectedRoleId = roles[0]['id'];
             _onRoleSelected(selectedRoleId);
           }
-
           final selectClient = clients.firstWhere((client) => client['id'] == clientId);
           UserData.clientName = selectClient['name'];
         });
+      } else {
+        final fetchedRoles = await getRoles(clientId, context);
+        if (fetchedRoles != null) {
+          _cachedRoles[clientId] = fetchedRoles;
+          setState(() {
+            roles = fetchedRoles;
+
+            if (roles.length == 1) {
+              selectedRoleId = roles[0]['id'];
+              _onRoleSelected(selectedRoleId);
+            }
+
+            final selectClient = clients.firstWhere((client) => client['id'] == clientId);
+            UserData.clientName = selectClient['name'];
+          });
+        }
       }
     }
 
@@ -103,18 +127,29 @@ class _ConfigPageState extends State<ConfigPage> {
     });
 
     if (roleId != null) {
-      final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
-      if (fetchedOrganizations != null) {
+      final cacheKey = '${selectedClientId}_$roleId';
+      if (_cachedOrgs.containsKey(cacheKey)) {
         setState(() {
-          fetchedOrganizations.removeWhere((org) => org['id'] == 0);
-
-          organizations = fetchedOrganizations;
-
+          organizations = _cachedOrgs[cacheKey]!;
           if (organizations.length == 1) {
             selectedOrganizationId = organizations[0]['id'];
             _onOrganizationSelected(selectedOrganizationId);
           }
         });
+      } else {
+        final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
+        if (fetchedOrganizations != null) {
+          fetchedOrganizations.removeWhere((org) => org['id'] == 0);
+          _cachedOrgs[cacheKey] = fetchedOrganizations;
+          setState(() {
+            organizations = fetchedOrganizations;
+
+            if (organizations.length == 1) {
+              selectedOrganizationId = organizations[0]['id'];
+              _onOrganizationSelected(selectedOrganizationId);
+            }
+          });
+        }
       }
     }
 
@@ -184,8 +219,9 @@ class _ConfigPageState extends State<ConfigPage> {
       POS.principalTaxs.clear();
       POS.docTypesComplete.clear();
       clearDashboardRawCache();
+      ProductSelectionPopup.clearGlobalCache();
 
-      bool login = await usuarioAuth(context: context);
+      bool login = await usuarioAuth(context: context, forceNewToken: true);
 
       if (!mounted) return;
 
