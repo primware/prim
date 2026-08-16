@@ -1686,15 +1686,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        TextButton.icon(
-                                          style: ButtonStyle(
-                                            textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium),
-                                            backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary),
-                                            foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary),
-                                          ),
-                                          icon: const Icon(Icons.category),
-                                          label: Text(AppLocale.categories.getString(context)),
-                                          onPressed: () async {
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            TextButton.icon(
+                                              style: ButtonStyle(
+                                                textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium),
+                                                backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary),
+                                                foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary),
+                                              ),
+                                              icon: const Icon(Icons.category),
+                                              label: Text(AppLocale.categories.getString(context)),
+                                              onPressed: () async {
                                             Set<int> tempSelected = Set<int>.from(selectedCategories);
                                             await showModalBottomSheet(
                                               context: context,
@@ -1780,10 +1783,21 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 });
                                                 _loadProduct(showLoadingIndicator: true);
                                               }
-                                            });
-                                          },
-                                        ),
-                                        if (selectedCategories.isNotEmpty)
+                                              });
+                                            },
+                                          ),
+                                          IconButton(
+                                            tooltip: "Selección Múltiple",
+                                            icon: const Icon(Icons.grid_view),
+                                            onPressed: _showProductSelectionPopup,
+                                            style: IconButton.styleFrom(
+                                              backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                              foregroundColor: Theme.of(context).colorScheme.secondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (selectedCategories.isNotEmpty)
                                           Padding(
                                             padding: const EdgeInsets.only(top: 8.0),
                                             child: Wrap(
@@ -1914,12 +1928,6 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                             ],
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: CustomSpacer.small),
-                                      IconButton(
-                                        tooltip: "Selección Múltiple",
-                                        icon: const Icon(Icons.grid_view),
-                                        onPressed: _showProductSelectionPopup,
                                       ),
                                       const SizedBox(width: CustomSpacer.small),
                                       IconButton(
