@@ -1786,13 +1786,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                               });
                                             },
                                           ),
-                                          IconButton(
-                                            tooltip: "Selección Múltiple",
-                                            icon: const Icon(Icons.grid_view),
-                                            onPressed: _showProductSelectionPopup,
-                                            style: IconButton.styleFrom(
-                                              backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                                              foregroundColor: Theme.of(context).colorScheme.secondary,
+                                          Material(
+                                            color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                            shape: const CircleBorder(),
+                                            clipBehavior: Clip.hardEdge,
+                                            child: IconButton(
+                                              tooltip: "Selección Múltiple",
+                                              icon: const Icon(Icons.grid_view),
+                                              color: Theme.of(context).colorScheme.secondary,
+                                              splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
+                                              highlightColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                              onPressed: _showProductSelectionPopup,
                                             ),
                                           ),
                                         ],
@@ -1930,10 +1934,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         ),
                                       ),
                                       const SizedBox(width: CustomSpacer.small),
-                                      IconButton(
-                                        tooltip: AppLocale.refresh.getString(context),
-                                        icon: const Icon(Icons.search),
-                                        onPressed: () => _loadProduct(showLoadingIndicator: true),
+                                      Material(
+                                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                        shape: const CircleBorder(),
+                                        clipBehavior: Clip.hardEdge,
+                                        child: IconButton(
+                                          tooltip: AppLocale.refresh.getString(context),
+                                          icon: const Icon(Icons.search),
+                                          color: Theme.of(context).colorScheme.secondary,
+                                          splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
+                                          highlightColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                          onPressed: () => _loadProduct(showLoadingIndicator: true),
+                                        ),
                                       ),
                                     ],
                                   ),
