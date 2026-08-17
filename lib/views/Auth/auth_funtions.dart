@@ -164,14 +164,15 @@ Future<bool> getWarehouse({required int clientId, required int roleId, required 
   return false;
 }
 
-Future<bool> usuarioAuth({required BuildContext context}) async {
+Future<bool> usuarioAuth({required BuildContext context, bool forceNewToken = false}) async {
   try {
     if (usuarioController.text.isEmpty || claveController.text.isEmpty) {
       return false;
     }
 
     //? Si han pasado 40 mins o mas, se solicita un nuevo token
-    if (await _canReuseCurrentToken()) {
+    // Si forceNewToken es true, ignoramos el caché (útil al cambiar de organización)
+    if (!forceNewToken && await _canReuseCurrentToken()) {
       return true;
     }
 

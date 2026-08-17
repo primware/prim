@@ -26,6 +26,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:printing/printing.dart';
 import '../product/product_new.dart';
 import 'package:primware/shared/shimmer_list.dart';
+import 'product_selection_popup.dart';
 
 class OrderNewPage extends StatefulWidget {
   final bool isRefund;
@@ -503,6 +504,42 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
     if (productOptions.isNotEmpty && bPartnerOptions.isNotEmpty) {
       firtsLoad = true;
+    }
+  }
+
+  Future<void> _showProductSelectionPopup() async {
+    final selectedProducts = await ProductSelectionPopup.show(context, priceListID: bpartnerPriceListID);
+    if (selectedProducts != null && selectedProducts.isNotEmpty) {
+      if (POS.cPosID != null) {
+        if (!await _resetPaymentsForProductChange()) return;
+      }
+      setState(() {
+        for (final item in selectedProducts) {
+          final int? selectedTaxID =
+              (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
+          final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
+          final double priceList = _r2(
+            (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble(),
+          );
+          final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
+          
+          invoiceLines.add({
+            ...item,
+            'quantity': 1,
+            'price': priceActual,
+            'C_Tax_ID': selectedTaxID,
+            'Description': item['Description'] ?? '',
+            'PriceList': priceList,
+            'Discount': discount,
+          });
+        }
+      });
+      if (POS.cPosID != null) {
+        _recalculateSummary();
+        _validateForm();
+      } else {
+        _recalculateSummary();
+      }
     }
   }
 
@@ -1649,15 +1686,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       mainAxisSize: MainAxisSize.min,
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        TextButton.icon(
-                                          style: ButtonStyle(
-                                            textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium),
-                                            backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary),
-                                            foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary),
-                                          ),
-                                          icon: const Icon(Icons.category),
-                                          label: Text(AppLocale.categories.getString(context)),
-                                          onPressed: () async {
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            TextButton.icon(
+                                              style: ButtonStyle(
+                                                textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium),
+                                                backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary),
+                                                foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary),
+                                              ),
+                                              icon: const Icon(Icons.category),
+                                              label: Text(AppLocale.categories.getString(context)),
+                                              onPressed: () async {
                                             Set<int> tempSelected = Set<int>.from(selectedCategories);
                                             await showModalBottomSheet(
                                               context: context,
@@ -1743,10 +1783,25 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 });
                                                 _loadProduct(showLoadingIndicator: true);
                                               }
-                                            });
-                                          },
-                                        ),
-                                        if (selectedCategories.isNotEmpty)
+                                              });
+                                            },
+                                          ),
+                                          Material(
+                                            color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                            shape: const CircleBorder(),
+                                            clipBehavior: Clip.hardEdge,
+                                            child: IconButton(
+                                              tooltip: "Selección Múltiple",
+                                              icon: const Icon(Icons.grid_view),
+                                              color: Theme.of(context).colorScheme.secondary,
+                                              splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
+                                              highlightColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                              onPressed: _showProductSelectionPopup,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (selectedCategories.isNotEmpty)
                                           Padding(
                                             padding: const EdgeInsets.only(top: 8.0),
                                             child: Wrap(
@@ -1879,10 +1934,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         ),
                                       ),
                                       const SizedBox(width: CustomSpacer.small),
-                                      IconButton(
-                                        tooltip: AppLocale.refresh.getString(context),
-                                        icon: const Icon(Icons.search),
-                                        onPressed: () => _loadProduct(showLoadingIndicator: true),
+                                      Material(
+                                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                        shape: const CircleBorder(),
+                                        clipBehavior: Clip.hardEdge,
+                                        child: IconButton(
+                                          tooltip: AppLocale.refresh.getString(context),
+                                          icon: const Icon(Icons.search),
+                                          color: Theme.of(context).colorScheme.secondary,
+                                          splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
+                                          highlightColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                          onPressed: () => _loadProduct(showLoadingIndicator: true),
+                                        ),
                                       ),
                                     ],
                                   ),
