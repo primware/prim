@@ -61,6 +61,8 @@ class EndPoints {
 
   static String get cTax => '${Base.baseURL}/api/v1/models/C_Tax';
 
+  static String get cCharge => '${Base.baseURL}/api/v1/models/C_Charge';
+
   static String get cInvoice => '${Base.baseURL}/api/v1/models/C_Invoice';
 
   static String get adSequence => '${Base.baseURL}/api/v1/models/AD_Sequence';

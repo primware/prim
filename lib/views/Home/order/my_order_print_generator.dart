@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../API/endpoint.dart';
 import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
+import 'order_line_helper.dart';
 
 bool _hasHeaderValue(dynamic value) {
   final text = value?.toString().trim() ?? '';
@@ -165,11 +166,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
               'Total',
             ],
             data: lines.map((line) {
-              final name = (line['M_Product_ID']?['identifier'])
-                  .toString()
-                  .split('_')
-                  .skip(1)
-                  .join(' ');
+              final name = orderLineDisplayName(line as Map);
               final qty = (line['QtyOrdered'] ?? 0);
               final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
               final rate =
@@ -464,13 +461,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
               pw.Divider(),
               pw.SizedBox(height: 6),
               ...lines.map((line) {
-                final name =
-                    (line['M_Product_ID']?['identifier'] ??
-                            '_${line['Description']}')
-                        .toString()
-                        .split('_')
-                        .skip(1)
-                        .join(' ');
+                final name = orderLineDisplayName(line as Map);
                 final qty = (line['QtyOrdered'] as num?)?.toDouble() ?? 0.0;
                 final price = (line['PriceActual'] as num?)?.toDouble() ?? 0.0;
                 final net = (line['LineNetAmt'] as num?)?.toDouble() ?? 0.0;
