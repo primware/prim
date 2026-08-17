@@ -240,6 +240,7 @@ Future<List<Map<String, dynamic>>> fetctSalesRep() async {
 Future<Map<String, dynamic>> postInvoice({
   required int cBPartnerID,
   required List<Map<String, dynamic>> invoiceLines,
+  required List<Map<String, dynamic>> discounts,
   required List<Map<String, dynamic>> payments,
   required BuildContext context,
   required String docAction,
@@ -250,6 +251,12 @@ Future<Map<String, dynamic>> postInvoice({
   int? priceListID,
 }) async {
   try {
+    if (discounts.isNotEmpty && (POS.discountChargeID == null || POS.discountTaxID == null || POS.discountTaxRate == null)) {
+      const message = 'No se puede procesar la orden: el POS no tiene configurado el charge o impuesto de descuento.';
+      CurrentLogMessage.add(message, level: 'ERROR', tag: 'postInvoice');
+      return {'success': false, 'message': message};
+    }
+
     await usuarioAuth(context: context);
 
     final orderLines = invoiceLines.map((line) {
@@ -262,6 +269,18 @@ Future<Map<String, dynamic>> postInvoice({
         "PriceEntered": line['Price'],
         "C_Tax_ID": {"id": line['C_Tax_ID']},
         "Description": line['Description'] ?? '',
+      };
+    }).toList();
+
+    final discountLines = discounts.map((discount) {
+      return {
+        "C_Charge_ID": {"id": POS.discountChargeID},
+        "C_Tax_ID": {"id": POS.discountTaxID},
+        "QtyEntered": -1,
+        "QtyOrdered": -1,
+        "PriceActual": discount['Amount'],
+        "PriceEntered": discount['Amount'],
+        "IsGlobalDiscount": true,
       };
     }).toList();
 
@@ -295,7 +314,7 @@ Future<Map<String, dynamic>> postInvoice({
           : "P", //? Con Término de Pago
       "M_PriceList_ID": priceListID != null ? {"id": priceListID} : (POS.priceListID ?? {"identifier": "Standard"}),
       "IsSOTrx": true,
-      "order-line": orderLines,
+      "order-line": [...orderLines, ...discountLines],
       if (POSTenderType.isMultiPayment) "pos-payment": posPayments,
       "doc-action": docAction,
     };
@@ -337,7 +356,7 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId, required Bui
   try {
     final response = await get(
       Uri.parse(
-        '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment',
+        '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID,M_Product_ID,C_Charge_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment',
       ),
       headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
     );
@@ -385,7 +404,7 @@ Future<List<Map<String, dynamic>>> fetchOrders({required BuildContext context, S
 
     final response = await get(
       Uri.parse(
-        '${EndPoints.cOrder}?\$filter=$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID,C_Invoice(\$select=RelatedInvoice_ID,DocStatus)',
+        '${EndPoints.cOrder}?\$filter=$filter&\$orderby=DateOrdered desc&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID,M_Product_ID,C_Charge_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID,C_Invoice(\$select=RelatedInvoice_ID,DocStatus)',
       ),
       headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
     );
@@ -540,6 +559,8 @@ Future<List<Map<String, dynamic>>> fetchPaymentMethods() async {
           'tenderTypeID': record['TenderType']?['id'],
           'isCash': record['TenderType']?['id'] == 'X',
           'isRetireDiscount': record['TenderType']?['id'] == 'R',
+          'isGlobalDiscount': record['TenderType']?['id'] == 'G',
+          'isDiscount': record['TenderType']?['id'] == 'R' || record['TenderType']?['id'] == 'G',
         };
       }).toList();
     } else {

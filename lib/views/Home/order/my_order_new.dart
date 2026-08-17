@@ -314,6 +314,186 @@ class _OrderNewPageState extends State<OrderNewPage> {
   List<Map<String, dynamic>> get products => invoiceLines;
   double get totalAmount => total;
 
+  Map<String, dynamic> _paymentMethod(int methodId) {
+    return paymentMethods.firstWhere((method) => method['id'] == methodId, orElse: () => const <String, dynamic>{});
+  }
+
+  bool _isDiscountMethod(Map<String, dynamic> method) => method['isDiscount'] == true;
+
+  List<Map<String, dynamic>> get _orderedDiscountMethods => [
+    ...paymentMethods.where((method) => method['isRetireDiscount'] == true),
+    ...paymentMethods.where((method) => method['isGlobalDiscount'] == true),
+  ];
+
+  double _controllerAmount(int methodId) {
+    return _r2(double.tryParse(paymentControllers[methodId]?.text.trim().replaceAll(',', '.') ?? '') ?? 0.0);
+  }
+
+  bool get _hasDiscountConfig =>
+      POS.discountChargeID != null && POS.discountTaxID != null && POS.discountTaxRate != null;
+
+  Map<int, Map<String, double>> _productTaxGroups() {
+    final groups = <int, Map<String, double>>{};
+    for (final line in invoiceLines) {
+      final dynamic taxIdValue = line['C_Tax_ID'];
+      if (taxIdValue is! num) continue;
+      final taxId = taxIdValue.toInt();
+      final tax = taxOptions.firstWhere((item) => item['id'] == taxId, orElse: () => const <String, dynamic>{});
+      final dynamic rawRate = tax['rate'];
+      final rate = rawRate is num ? rawRate.toDouble() : double.tryParse('${rawRate ?? 0}') ?? 0.0;
+      final base = _r2(((line['price'] ?? 0) as num) * ((line['quantity'] ?? 1) as num));
+      final group = groups.putIfAbsent(taxId, () => <String, double>{'Base': 0.0, 'Rate': rate});
+      group['Base'] = _r2((group['Base'] ?? 0.0) + base);
+    }
+    return groups;
+  }
+
+  double _simulatedTotalForDiscountBase(double discountBase) {
+    final groups = _productTaxGroups().map(
+      (taxId, group) => MapEntry(taxId, <String, double>{...group}),
+    );
+    final discountTaxId = POS.discountTaxID;
+    if (discountTaxId != null) {
+      final group = groups.putIfAbsent(
+        discountTaxId,
+        () => <String, double>{'Base': 0.0, 'Rate': POS.discountTaxRate ?? 0.0},
+      );
+      group['Base'] = _r2((group['Base'] ?? 0.0) - discountBase);
+      group['Rate'] = POS.discountTaxRate ?? group['Rate'] ?? 0.0;
+    }
+    final tax = _r2(
+      groups.values
+          .map((group) => _r2((group['Base'] ?? 0.0) * (group['Rate'] ?? 0.0) / 100))
+          .fold(0.0, (sum, amount) => sum + amount),
+    );
+    return _r2(subtotal - discountBase + tax);
+  }
+
+  double _effectiveDiscountForBase(double base, double previousBase) {
+    return _r2(_simulatedTotalForDiscountBase(previousBase) - _simulatedTotalForDiscountBase(previousBase + base));
+  }
+
+  double _baseDiscountForGross(double gross, double previousBase) {
+    if (gross <= 0 || POS.discountTaxRate == null) return 0.0;
+    final approximateCents = (gross / (1 + POS.discountTaxRate! / 100) * 100).floor();
+    double best = 0.0;
+    double bestEffective = 0.0;
+    for (var cents = approximateCents - 10; cents <= approximateCents + 10; cents++) {
+      if (cents < 0) continue;
+      final candidate = _r2(cents / 100);
+      final candidateEffective = _effectiveDiscountForBase(candidate, previousBase);
+      if (candidateEffective <= gross && candidateEffective > bestEffective) {
+        best = candidate;
+        bestEffective = candidateEffective;
+      }
+    }
+    return best;
+  }
+
+  double _normalizedDiscountAmount(double requested, {double previousBase = 0.0}) {
+    if (!_hasDiscountConfig || requested <= 0) return 0.0;
+    final base = _baseDiscountForGross(requested, previousBase);
+    return _effectiveDiscountForBase(base, previousBase);
+  }
+
+  List<Map<String, dynamic>> _buildDiscountLines() {
+    if (!_hasDiscountConfig || invoiceLines.isEmpty) return <Map<String, dynamic>>[];
+
+    final lines = <Map<String, dynamic>>[];
+    var cumulativeBase = 0.0;
+    for (final method in _orderedDiscountMethods) {
+      final methodId = method['id'] as int;
+      final requested = _controllerAmount(methodId);
+      if (requested <= 0) continue;
+      final base = _baseDiscountForGross(requested, cumulativeBase);
+      if (base <= 0) continue;
+      final effective = _effectiveDiscountForBase(base, cumulativeBase);
+      lines.add({
+        'Amount': base,
+        'C_Tax_ID': POS.discountTaxID,
+        'TaxAmount': _r2(effective - base),
+        'EffectiveAmount': effective,
+        'MethodId': methodId,
+      });
+      cumulativeBase = _r2(cumulativeBase + base);
+    }
+    return lines;
+  }
+
+  double get totalDiscount => _r2(
+    _buildDiscountLines()
+        .map((line) => (line['EffectiveAmount'] as num).toDouble())
+        .fold(0.0, (sum, amount) => sum + amount),
+  );
+
+  double get netTotalAmount {
+    final discountBase = _buildDiscountLines()
+        .map((line) => (line['Amount'] as num).toDouble())
+        .fold(0.0, (sum, amount) => sum + amount);
+    return _r2(_simulatedTotalForDiscountBase(discountBase).clamp(0.0, totalAmount));
+  }
+
+  double get listSubtotal => _r2(
+    invoiceLines
+        .map((line) => _r2(((line['PriceList'] ?? line['price'] ?? 0) as num) * ((line['quantity'] ?? 1) as num)))
+        .fold(0.0, (sum, amount) => sum + amount),
+  );
+
+  double get lineDiscountTotal => _r2(
+    invoiceLines
+        .map((line) {
+          final priceList = ((line['PriceList'] ?? line['price'] ?? 0) as num).toDouble();
+          final priceActual = ((line['price'] ?? 0) as num).toDouble();
+          final quantity = ((line['quantity'] ?? 1) as num).toDouble();
+          return _r2(((priceList - priceActual).clamp(0.0, priceList)) * quantity);
+        })
+        .fold(0.0, (sum, amount) => sum + amount),
+  );
+
+  List<Map<String, dynamic>> get specialDiscountSummary {
+    return _orderedDiscountMethods.map((method) {
+      final methodId = method['id'] as int;
+      final amount = _r2(
+        _buildDiscountLines()
+            .where((line) => line['MethodId'] == methodId)
+            .map((line) => (line['EffectiveAmount'] as num).toDouble())
+            .fold(0.0, (sum, value) => sum + value),
+      );
+      return <String, dynamic>{'Name': method['name'] ?? AppLocale.discount.getString(context), 'Amount': amount};
+    }).where((item) => (item['Amount'] as double) > 0).toList();
+  }
+
+  double get retireDiscountAmount => _normalizedDiscountAmount(_r2(totalAmount * 0.25));
+
+  void _clampGlobalDiscount(int methodId, String rawValue) {
+    final otherDiscounts = _r2(
+      paymentMethods
+          .where((method) => _isDiscountMethod(method) && method['id'] != methodId)
+          .map((method) => _controllerAmount(method['id'] as int))
+          .fold(0.0, (sum, amount) => sum + amount),
+    );
+    final maximum = _r2((totalAmount - otherDiscounts).clamp(0.0, totalAmount));
+    final current = _controllerAmount(methodId);
+    if (current > maximum) {
+      paymentControllers[methodId]?.text = maximum.toStringAsFixed(2);
+      paymentControllers[methodId]?.selection = TextSelection.collapsed(offset: paymentControllers[methodId]!.text.length);
+    }
+    final decimals = rawValue.replaceAll(',', '.').split('.');
+    if (decimals.length == 2 && decimals.last.length >= 2 && _controllerAmount(methodId) > 0) {
+      final effective = _r2(
+        _buildDiscountLines()
+            .where((line) => line['MethodId'] == methodId)
+            .map((line) => (line['EffectiveAmount'] as num).toDouble())
+            .fold(0.0, (sum, amount) => sum + amount),
+      );
+      if (effective != _controllerAmount(methodId)) {
+        paymentControllers[methodId]?.text = effective.toStringAsFixed(2);
+        paymentControllers[methodId]?.selection = TextSelection.collapsed(offset: paymentControllers[methodId]!.text.length);
+      }
+    }
+    _validateForm();
+  }
+
   Future<bool> _resetPaymentsForProductChange() async {
     final transactionId = yappyTransactionId;
     if (transactionId != null) {
@@ -344,18 +524,23 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _applyRetireDiscount(int methodId) async {
-    final discount = _r2(totalAmount * 0.25);
-    final projectedTotal = _r2(
-      paymentControllers.entries
-          .map((entry) {
-            if (entry.key == methodId) return discount;
-            return _r2(double.tryParse(entry.value.text.replaceAll(',', '.')) ?? 0.0);
-          })
-          .fold(0.0, (sum, value) => sum + value),
+    final discount = retireDiscountAmount;
+    final otherDiscounts = _r2(
+      paymentMethods
+          .where((method) => _isDiscountMethod(method) && method['id'] != methodId)
+          .map((method) => _controllerAmount(method['id'] as int))
+          .fold(0.0, (sum, amount) => sum + amount),
     );
-    final exceedsTotal = _r2(projectedTotal - totalAmount) > 0;
+    final normalPayments = _r2(
+      paymentControllers.entries
+          .where((entry) => !_isDiscountMethod(_paymentMethod(entry.key)))
+          .map((entry) => _controllerAmount(entry.key))
+          .fold(0.0, (sum, amount) => sum + amount),
+    );
+    final projectedDiscount = _r2((discount + otherDiscounts).clamp(0.0, totalAmount));
+    final exceedsNetTotal = normalPayments > _r2(totalAmount - projectedDiscount);
 
-    if (exceedsTotal && yappyTransactionId != null) {
+    if (exceedsNetTotal && yappyTransactionId != null) {
       final transactionId = yappyTransactionId!;
       final wasCancelled = await cancelYappyTransaction(transactionId: transactionId);
       if (!wasCancelled) {
@@ -375,10 +560,27 @@ class _OrderNewPageState extends State<OrderNewPage> {
     setState(() {
       paymentControllers[methodId]?.text = discount.toStringAsFixed(2);
 
-      if (exceedsTotal) {
+      // R siempre conserva su 25%; si G ya tenía un valor, se limita al saldo disponible.
+      final retireTotal = _r2(
+        paymentMethods
+            .where((method) => method['isRetireDiscount'] == true)
+            .map((method) => _controllerAmount(method['id'] as int))
+            .fold(0.0, (sum, amount) => sum + amount),
+      );
+      var globalRemaining = _r2((totalAmount - retireTotal).clamp(0.0, totalAmount));
+      for (final method in paymentMethods.where((method) => method['isGlobalDiscount'] == true)) {
+        final globalId = method['id'] as int;
+        final amount = _controllerAmount(globalId);
+        if (amount > globalRemaining) {
+          paymentControllers[globalId]?.text = globalRemaining.toStringAsFixed(2);
+        }
+        globalRemaining = _r2((globalRemaining - _controllerAmount(globalId)).clamp(0.0, globalRemaining));
+      }
+
+      if (exceedsNetTotal) {
         for (final entry in paymentControllers.entries) {
-          final method = paymentMethods.firstWhere((item) => item['id'] == entry.key, orElse: () => {});
-          if (method['isRetireDiscount'] != true) {
+          final method = _paymentMethod(entry.key);
+          if (!_isDiscountMethod(method)) {
             entry.value.text = '0.00';
             _lockedPayments.remove(entry.key);
           }
@@ -401,7 +603,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   void _validateForm() {
     final totalPayment = _r2(
-      paymentControllers.values.map((c) => _r2(double.tryParse((c.text).replaceAll(',', '.')) ?? 0.0)).fold(0.0, (sum, val) => sum + val),
+      paymentControllers.entries
+          .where((entry) => !_isDiscountMethod(_paymentMethod(entry.key)))
+          .map((entry) => _controllerAmount(entry.key))
+          .fold(0.0, (sum, val) => sum + val),
     );
 
     final totalCash = _r2(
@@ -414,7 +619,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
           .fold(0.0, (sum, val) => sum + val),
     );
 
-    final amount = _r2(totalAmount);
+    final amount = netTotalAmount;
 
     final overpay = _r2(totalPayment - amount);
     final hasEnoughPayment = totalPayment >= amount;
@@ -1135,6 +1340,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     double remainingChange = _r2(calculatedChange);
     final paymentData = paymentControllers.entries
         .where((entry) {
+          if (_isDiscountMethod(_paymentMethod(entry.key))) return false;
           final txt = entry.value.text.trim();
           final amt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
           return amt > 0;
@@ -1169,10 +1375,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
         .where((p) => (p['PayAmt'] ?? 0) > 0)
         .toList();
 
+    final discountData = _buildDiscountLines();
+
     final result = await postInvoice(
       cBPartnerID: bPartner,
       salesRepID: selectedSalesRepID!,
       invoiceLines: invoiceLine,
+      discounts: discountData,
       payments: paymentData,
       context: context,
       docAction: selectedDocActionCode ?? 'DR',
@@ -1278,6 +1487,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] = (groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] ?? 0) + taxAmount;
     }
 
+    groupedTaxes.updateAll((_, amount) => _r2(amount));
     return groupedTaxes;
   }
 
@@ -1289,8 +1499,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 700 ? true : false;
-    final discountPaymentMethods = paymentMethods.where((method) => method['isRetireDiscount'] == true).toList();
-    final standardPaymentMethods = paymentMethods.where((method) => method['isRetireDiscount'] != true).toList();
+    final discountPaymentMethods = !_hasDiscountConfig
+        ? <Map<String, dynamic>>[]
+        : _orderedDiscountMethods;
+    final standardPaymentMethods = paymentMethods.where((method) => !_isDiscountMethod(method)).toList();
     final orderedPaymentMethods = [...discountPaymentMethods, ...standardPaymentMethods];
 
     return WillPopScope(
@@ -2044,31 +2256,42 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                   inputType: TextInputType.number,
                                                   inputFormatters: [NumericTextFormatterWithDecimal()],
                                                   readOnly: method['isRetireDiscount'] == true || _lockedPayments.contains(method['id']),
-                                                  onChanged: (_) => _validateForm(),
+                                                  onChanged: (value) {
+                                                    if (method['isGlobalDiscount'] == true) {
+                                                      _clampGlobalDiscount(method['id'], value);
+                                                    } else {
+                                                      _validateForm();
+                                                    }
+                                                  },
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
-                                              IconButton(
-                                                icon: Icon(
-                                                  method['isRetireDiscount'] == true ? Icons.percent_rounded : Icons.attach_money_rounded,
-                                                ),
-                                                tooltip: method['isRetireDiscount'] == true
-                                                    ? 'Aplicar descuento 25%'
-                                                    : 'Llenar con el máximo disponible',
-                                                onPressed: method['isRetireDiscount'] == true
-                                                    ? () => _applyRetireDiscount(method['id'])
-                                                    : () {
-                                                        final currentSum = paymentControllers.entries
-                                                            .where((e) => e.key != method['id'])
-                                                            .map((e) => double.tryParse(e.value.text) ?? 0.0)
-                                                            .fold(0.0, (a, b) => a + b);
+                                              if (method['isRetireDiscount'] == true)
+                                                IconButton(
+                                                  icon: const Icon(Icons.percent_rounded),
+                                                  tooltip: 'Aplicar descuento 25%',
+                                                  onPressed: () => _applyRetireDiscount(method['id']),
+                                                )
+                                              else if (!_isDiscountMethod(method))
+                                                IconButton(
+                                                  icon: const Icon(Icons.attach_money_rounded),
+                                                  tooltip: 'Llenar con el máximo disponible',
+                                                  onPressed: () {
+                                                    final currentSum = paymentControllers.entries
+                                                        .where(
+                                                          (entry) =>
+                                                              entry.key != method['id'] &&
+                                                              !_isDiscountMethod(_paymentMethod(entry.key)),
+                                                        )
+                                                        .map((entry) => _controllerAmount(entry.key))
+                                                        .fold(0.0, (a, b) => a + b);
 
-                                                        final remaining = _r2((totalAmount - currentSum).clamp(0.0, totalAmount));
-                                                        paymentControllers[method['id']]?.text = remaining.toStringAsFixed(2);
-                                                        _validateForm();
-                                                      },
-                                              ),
-                                              if (method['isRetireDiscount'] == true &&
+                                                    final remaining = _r2((netTotalAmount - currentSum).clamp(0.0, netTotalAmount));
+                                                    paymentControllers[method['id']]?.text = remaining.toStringAsFixed(2);
+                                                    _validateForm();
+                                                  },
+                                                ),
+                                              if (_isDiscountMethod(method) &&
                                                   _r2(
                                                         double.tryParse(
                                                               paymentControllers[method['id']]?.text.replaceAll(',', '.') ?? '0',
@@ -2199,7 +2422,25 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(AppLocale.subtotal.getString(context), style: Theme.of(context).textTheme.bodyMedium),
+                          Text(AppLocale.listSubtotal.getString(context), style: Theme.of(context).textTheme.bodyMedium),
+                          Text('\$${listSubtotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                        ],
+                      ),
+                      const SizedBox(height: CustomSpacer.medium),
+                      if (lineDiscountTotal > 0) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(AppLocale.lineDiscounts.getString(context), style: Theme.of(context).textTheme.bodyMedium),
+                            Text('-\$${lineDiscountTotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                          ],
+                        ),
+                        const SizedBox(height: CustomSpacer.medium),
+                      ],
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(AppLocale.netSubtotal.getString(context), style: Theme.of(context).textTheme.bodyMedium),
                           Text('\$${subtotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
                         ],
                       ),
@@ -2210,7 +2451,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                           children: [
                             Text(AppLocale.taxes.getString(context), style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: CustomSpacer.small),
-                            ...getGroupedTaxTotals().entries.map(
+                            ...getGroupedTaxTotals().entries.where((entry) => entry.value > 0).map(
                               (entry) => Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -2240,8 +2481,34 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(AppLocale.total.getString(context), style: Theme.of(context).textTheme.titleLarge),
-                          Text('\$$total', style: Theme.of(context).textTheme.titleLarge),
+                          Text(AppLocale.totalWithTaxes.getString(context), style: Theme.of(context).textTheme.bodyMedium),
+                          Text('\$${totalAmount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                        ],
+                      ),
+                      if (specialDiscountSummary.isNotEmpty) ...[
+                        const SizedBox(height: CustomSpacer.medium),
+                        ...specialDiscountSummary.map(
+                          (discount) => Padding(
+                            padding: const EdgeInsets.only(bottom: CustomSpacer.small),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(child: Text(discount['Name'].toString(), style: Theme.of(context).textTheme.bodyMedium)),
+                                Text(
+                                  '-\$${(discount['Amount'] as double).toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: CustomSpacer.medium),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(AppLocale.totalToPay.getString(context), style: Theme.of(context).textTheme.titleLarge),
+                          Text('\$${netTotalAmount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.titleLarge),
                         ],
                       ),
                       const Divider(),

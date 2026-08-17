@@ -105,6 +105,11 @@ class AppLocale {
   static const String discounts = 'discounts';
   static const String removeDiscount = 'removeDiscount';
   static const String subtotal = 'subtotal';
+  static const String listSubtotal = 'listSubtotal';
+  static const String lineDiscounts = 'lineDiscounts';
+  static const String netSubtotal = 'netSubtotal';
+  static const String totalWithTaxes = 'totalWithTaxes';
+  static const String totalToPay = 'totalToPay';
   static const String total = 'total';
   static const String noName = 'noName';
   static const String finalSummary = 'finalSummary';
@@ -435,6 +440,11 @@ class AppLocale {
     quantity: 'Quantity',
     price: 'Price',
     subtotal: 'Subtotal',
+    listSubtotal: 'List subtotal',
+    lineDiscounts: 'Line discounts',
+    netSubtotal: 'Net subtotal',
+    totalWithTaxes: 'Total with taxes',
+    totalToPay: 'Total to pay',
     total: 'Total',
     salesYTDBySalesRepDescription:
         'Shows the total invoiced in the current month by each sales representative. The amount does not include taxes. If you tap the chart you can see the details of sales by representative. Does not include documents without invoice',
@@ -691,6 +701,11 @@ class AppLocale {
     quantity: 'Cantidad',
     price: 'Precio',
     subtotal: 'Subtotal',
+    listSubtotal: 'Subtotal de lista',
+    lineDiscounts: 'Descuentos por línea',
+    netSubtotal: 'Subtotal neto',
+    totalWithTaxes: 'Total con impuestos',
+    totalToPay: 'Total a pagar',
     total: 'Total',
     priceList: 'Precio de lista',
     noName: 'Sin nombre',

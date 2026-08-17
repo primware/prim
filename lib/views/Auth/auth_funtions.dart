@@ -318,8 +318,65 @@ Future<void> _loadDynamicPOSPrinterConfig() async {
   }
 }
 
+Future<void> _loadDiscountTaxConfig() async {
+  final chargeId = POS.discountChargeID;
+  if (chargeId == null) return;
+
+  try {
+    final chargeResponse = await get(
+      Uri.parse('${EndPoints.cCharge}?\$filter=C_Charge_ID eq $chargeId&\$select=C_TaxCategory_ID'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
+    if (chargeResponse.statusCode != 200) {
+      throw Exception('No se pudo consultar C_Charge: ${chargeResponse.statusCode} ${chargeResponse.body}');
+    }
+
+    final chargeRecords = (json.decode(utf8.decode(chargeResponse.bodyBytes))['records'] as List?) ?? const [];
+    final dynamic taxCategoryField = chargeRecords.isNotEmpty ? chargeRecords.first['C_TaxCategory_ID'] : null;
+    final dynamic taxCategoryId = taxCategoryField is Map ? taxCategoryField['id'] : null;
+    if (taxCategoryId is! num) {
+      throw Exception('El charge $chargeId no tiene C_TaxCategory_ID configurado.');
+    }
+
+    final categoryResponse = await get(
+      Uri.parse(
+        '${EndPoints.cTaxCategory}?\$filter=C_TaxCategory_ID eq ${taxCategoryId.toInt()}&\$select=Name&\$expand=C_Tax(\$select=Name,Rate)',
+      ),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
+    if (categoryResponse.statusCode != 200) {
+      throw Exception('No se pudo consultar C_TaxCategory: ${categoryResponse.statusCode} ${categoryResponse.body}');
+    }
+
+    final categoryRecords = (json.decode(utf8.decode(categoryResponse.bodyBytes))['records'] as List?) ?? const [];
+    final List<dynamic> taxes = categoryRecords.isNotEmpty ? (categoryRecords.first['C_Tax'] as List? ?? const []) : const [];
+    if (taxes.isEmpty) {
+      throw Exception('La categoría ${taxCategoryId.toInt()} no tiene impuestos configurados.');
+    }
+
+    final firstTax = taxes.first;
+    final dynamic taxId = firstTax['id'];
+    final dynamic rawRate = firstTax['Rate'];
+    final rate = rawRate is num ? rawRate.toDouble() : double.tryParse(rawRate?.toString() ?? '');
+    if (taxId is! num || rate == null) {
+      throw Exception('El primer impuesto de la categoría ${taxCategoryId.toInt()} no tiene ID o Rate válido.');
+    }
+
+    POS.discountTaxID = taxId.toInt();
+    POS.discountTaxRate = rate;
+  } catch (e) {
+    POS.discountTaxID = null;
+    POS.discountTaxRate = null;
+    CurrentLogMessage.add('Configuración fiscal del descuento no disponible: $e', level: 'ERROR', tag: '_loadDiscountTaxConfig');
+  }
+}
+
 Future<void> _loadPOSData(BuildContext context) async {
   try {
+    // Evita reutilizar el charge de una sesión/POS anterior cuando el campo no viene configurado.
+    POS.discountChargeID = null;
+    POS.discountTaxID = null;
+    POS.discountTaxRate = null;
     final String filter = 'C_POS_ID eq ${POS.cPosID}';
 
     final response = await get(
@@ -354,7 +411,9 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
       POS.warehouseID = posData['M_Warehouse_ID']?['id'];
-      POS.discountChargeID = posData['POS_Discount_Charge_ID']?['id'];
+      final dynamic discountChargeId = posData['POS_Discount_Charge_ID']?['id'];
+      POS.discountChargeID = discountChargeId is num && discountChargeId.toInt() > 0 ? discountChargeId.toInt() : null;
+      await _loadDiscountTaxConfig();
       POS.priceListVersionID = await getMPriceListVersion(POS.priceListID ?? 0);
 
       await fetchTaxs();

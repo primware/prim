@@ -26,10 +26,7 @@ class ProductSelectionPopup extends StatefulWidget {
         return ProductSelectionPopup(priceListID: priceListID);
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curve = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutBack,
-        );
+        final curve = CurvedAnimation(parent: animation, curve: Curves.easeOutBack);
         return ScaleTransition(
           scale: curve,
           child: FadeTransition(opacity: animation, child: child),
@@ -42,10 +39,8 @@ class ProductSelectionPopup extends StatefulWidget {
   State<ProductSelectionPopup> createState() => _ProductSelectionPopupState();
 }
 
-class _ProductSelectionPopupState extends State<ProductSelectionPopup>
-    with SingleTickerProviderStateMixin {
+class _ProductSelectionPopupState extends State<ProductSelectionPopup> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final TextEditingController _searchController = TextEditingController();
 
   List<dynamic> _products = [];
   List<dynamic> _categories = [];
@@ -102,13 +97,8 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
     });
 
     final prefs = await SharedPreferences.getInstance();
-    prefs.setStringList(
-      'favorite_products',
-      _favoriteIds.map((e) => e.toString()).toList(),
-    );
+    prefs.setStringList('favorite_products', _favoriteIds.map((e) => e.toString()).toList());
   }
-
-
 
   bool _isProductsLoading = false;
 
@@ -121,18 +111,14 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
       }
     });
 
-    if (ProductSelectionPopup.globalCachedCategories == null) {
-      ProductSelectionPopup.globalCachedCategories = await fetchProductCategory();
-    }
+    ProductSelectionPopup.globalCachedCategories ??= await fetchProductCategory();
 
-    if (ProductSelectionPopup.globalCachedProducts == null) {
-      ProductSelectionPopup.globalCachedProducts = await fetchProductInPriceList(
-        context: context,
-        categoryID: null,
-        searchTerm: '',
-        priceListID: widget.priceListID,
-      );
-    }
+    ProductSelectionPopup.globalCachedProducts ??= await fetchProductInPriceList(
+      context: context,
+      categoryID: null,
+      searchTerm: '',
+      priceListID: widget.priceListID,
+    );
 
     List<dynamic> productsToDisplay;
 
@@ -149,25 +135,17 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
     }
 
     // Sort alphabetically
-    productsToDisplay.sort(
-      (a, b) => (a['name'] ?? '').toString().toLowerCase().compareTo(
-        (b['name'] ?? '').toString().toLowerCase(),
-      ),
-    );
+    productsToDisplay.sort((a, b) => (a['name'] ?? '').toString().toLowerCase().compareTo((b['name'] ?? '').toString().toLowerCase()));
 
     // Favorites
-    final favoritesList = productsToDisplay
-        .where((p) => _favoriteIds.contains(_getId(p)))
-        .toList();
+    final favoritesList = productsToDisplay.where((p) => _favoriteIds.contains(_getId(p))).toList();
 
     // Grouping for main view
     productsToDisplay.sort((a, b) {
       final isAFav = _favoriteIds.contains(_getId(a)) ? 0 : 1;
       final isBFav = _favoriteIds.contains(_getId(b)) ? 0 : 1;
       if (isAFav != isBFav) return isAFav.compareTo(isBFav);
-      return (a['name'] ?? '').toString().toLowerCase().compareTo(
-        (b['name'] ?? '').toString().toLowerCase(),
-      );
+      return (a['name'] ?? '').toString().toLowerCase().compareTo((b['name'] ?? '').toString().toLowerCase());
     });
 
     setState(() {
@@ -198,15 +176,10 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                 Expanded(
                   child: Text(
                     "Selección de Productos",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
               ],
             ),
             const SizedBox(height: 16),
@@ -246,20 +219,12 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "${_selectedProducts.length} seleccionados",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                    Text("${_selectedProducts.length} seleccionados", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () {
                         setState(() {
@@ -277,25 +242,14 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: const Icon(Icons.add_shopping_cart),
-                    label: const Text(
-                      "Añadir a la orden",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                    label: const Text("Añadir a la orden", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     onPressed: _selectedProducts.isEmpty
                         ? null
                         : () {
-                            Navigator.pop(
-                              context,
-                              _selectedProducts.values.toList(),
-                            );
+                            Navigator.pop(context, _selectedProducts.values.toList());
                           },
                   ),
                 ),
@@ -319,10 +273,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
           children: [
             Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text(
-              "No se encontraron productos",
-              style: TextStyle(color: Colors.grey),
-            ),
+            Text("No se encontraron productos", style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -354,15 +305,9 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                 spacing: 8,
                 runSpacing: 8,
                 children: _selectedCategoryIds.map((id) {
-                  final cat = _categories.firstWhere(
-                    (c) => _getId(c) == id,
-                    orElse: () => {'name': '...'},
-                  );
+                  final cat = _categories.firstWhere((c) => _getId(c) == id, orElse: () => {'name': '...'});
                   return InputChip(
-                    label: Text(
-                      cat['name'] ?? '',
-                      style: const TextStyle(fontSize: 12),
-                    ),
+                    label: Text(cat['name'] ?? '', style: const TextStyle(fontSize: 12)),
                     padding: EdgeInsets.zero,
                     deleteIconColor: Theme.of(context).primaryColor,
                     onDeleted: () {
@@ -383,11 +328,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
                   group.key,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
                 ),
               ),
             ),
@@ -422,12 +363,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isSelected
-              ? Theme.of(context).primaryColor
-              : Colors.transparent,
-          width: 2,
-        ),
+        side: BorderSide(color: isSelected ? Theme.of(context).primaryColor : Colors.transparent, width: 2),
       ),
       child: InkWell(
         onTap: () {
@@ -447,18 +383,11 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                 Expanded(
                   child: Container(
                     color: Theme.of(context).primaryColor.withOpacity(0.05),
-                    child: const Icon(
-                      Icons.inventory_2,
-                      size: 48,
-                      color: Colors.grey,
-                    ),
+                    child: const Icon(Icons.inventory_2, size: 48, color: Colors.grey),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4.0,
-                    vertical: 8.0,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -466,20 +395,13 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                         product['name'] ?? '',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         "\$${product['price'] ?? '0.00'}",
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -509,12 +431,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                      ),
-                    ],
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4)],
                   ),
                   padding: const EdgeInsets.all(4),
                   child: const Icon(Icons.check, color: Colors.white, size: 16),
@@ -549,17 +466,10 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
 
         return Card(
           elevation: isSelected ? 6 : 2,
-          color: isSelected
-              ? Theme.of(context).primaryColor.withOpacity(0.1)
-              : null,
+          color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: isSelected
-                  ? Theme.of(context).primaryColor
-                  : Colors.transparent,
-              width: 2,
-            ),
+            side: BorderSide(color: isSelected ? Theme.of(context).primaryColor : Colors.transparent, width: 2),
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
@@ -579,9 +489,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                 Icon(
                   isSelected ? Icons.folder_open : Icons.folder,
                   size: 48,
-                  color: isSelected
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey,
+                  color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
                 ),
                 const SizedBox(height: 12),
                 Padding(
@@ -591,10 +499,7 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup>
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Theme.of(context).primaryColor : null,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Theme.of(context).primaryColor : null),
                   ),
                 ),
               ],

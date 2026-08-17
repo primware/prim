@@ -14,6 +14,7 @@ import 'package:primware/views/Home/order/order_funtions.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../../shared/toast_message.dart';
 import '../../../shared/doc_type_chip.dart';
+import 'order_line_helper.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -632,7 +633,7 @@ class OrderDetailPage extends StatelessWidget {
                       ),
                       itemBuilder: (context, index) {
                         final line = lines[index];
-                        final String name = (line['M_Product_ID']?['identifier'] ?? '_${line['Description']}').split('_').skip(1).join(' ');
+                        final String name = orderLineDisplayName(line as Map);
                         final double qty = (line['QtyOrdered'] as num).toDouble();
                         final double price = (line['PriceActual'] as num).toDouble();
                         final double net = (line['LineNetAmt'] as num).toDouble();
