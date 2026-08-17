@@ -12,6 +12,7 @@ class POS {
   static String? docTypeRefundName;
   static String? docSubTypeRefund;
   static int? warehouseID;
+  static int? discountChargeID;
 
   static int? templatePartnerID;
   static String? templatePartnerName;
