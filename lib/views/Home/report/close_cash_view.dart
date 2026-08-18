@@ -4,7 +4,7 @@ import 'package:primware/shared/custom_container.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_app_menu.dart';
-import '../../../shared/custom_checkbox.dart';
+import '../../../shared/glass_switch.dart';
 import '../../../shared/custom_spacer.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
@@ -240,15 +240,20 @@ class _CloseCashPageState extends State<CloseCashPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CustomCheckbox(
-                    value: onlyMyRecords,
-                    text: AppLocale.onlyMyRecords.getString(context),
-                    onChanged: (newValue) {
-                      setState(() {
-                        onlyMyRecords = newValue;
-                        _fetchRecords();
-                      });
-                    },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(AppLocale.onlyMyRecords.getString(context), style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      GlassSwitch(
+                        value: onlyMyRecords,
+                        onChanged: (newValue) {
+                          setState(() {
+                            onlyMyRecords = newValue;
+                            _fetchRecords();
+                          });
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: CustomSpacer.medium),
                   _isLoading

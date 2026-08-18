@@ -12,6 +12,11 @@ import '../../../shared/footer.dart';
 import '../../../shared/loading_container.dart';
 import 'report_print.dart';
 import 'report_funtions.dart';
+import 'close_cash_print_pos_funtions.dart';
+import 'close_cash_print_carta_funtions.dart';
+import '../../../shared/format_date.dart';
+import 'package:printing/printing.dart';
+import 'package:intl/intl.dart';
 
 class CloseCashDetailPage extends StatefulWidget {
   final Map<String, dynamic> record;
@@ -120,6 +125,20 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
     );
   }
 
+  Future<bool?> _printTicketConfirmation(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocale.confirmPrintTicket.getString(context)),
+        content: Text(AppLocale.printTicketMessage.getString(context)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 700;
@@ -128,8 +147,8 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
 
     final terminal = (data['C_POS_ID']?['name'] ?? '---').toString();
     final rep = (data['SalesRep_ID']?['name'] ?? '---').toString();
-    final String dateTrx = (data['DateTrx'] ?? '').toString();
-    final String dateFrom = (data['DateFrom'] ?? '').toString();
+    final String dateTrx = formatDateUI((data['DateTrx'] ?? '').toString());
+    final String dateFrom = formatDateUI((data['DateFrom'] ?? '').toString());
     final int totalOrders = (data['QtyOrders'] ?? 0) as int;
 
     final double taxBase = _toDouble(data['TaxBaseAmt'] ?? 0);
@@ -154,21 +173,6 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocale.closeCash.getString(context)),
-
-        actions: [
-          _loading
-              ? Container()
-              : Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: IconButton(
-                    icon: const Icon(Icons.print),
-                    tooltip: AppLocale.printTicket.getString(context),
-                    onPressed: () async {
-                      await shareReportPrintFormatPdf(context: context, table: EndPoints.cdsCloseCash, fileName: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf', recordID: widget.record['id'] ?? widget.record['Record_ID']);
-                    },
-                  ),
-                ),
-        ],
       ),
       drawer: MenuDrawer(),
       bottomNavigationBar: CustomFooter(),
@@ -252,6 +256,67 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
                           },
                         ),
                       if (!processed) ...[const SizedBox(height: CustomSpacer.large), ButtonPrimary(texto: 'Cerrar Caja', fullWidth: true, icono: Icons.lock_outline, onPressed: _showCloseCashDialog)],
+                      const SizedBox(height: CustomSpacer.large),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Theme.of(context).dividerColor),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.print, size: 20, color: Theme.of(context).primaryColor),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Imprimir Cierre de Caja',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ButtonPrimary(
+                                    texto: 'Carta',
+                                    icono: Icons.print_outlined,
+                                    onPressed: () async {
+                                      final confirm = await _printTicketConfirmation(context);
+                                      if (confirm == true) {
+                                        if (!mounted) return;
+                                        final Map<String, dynamic> data = _detail ?? widget.record;
+                                        final cartaBytes = await generateCloseCashCartaTicket(data);
+                                        await Printing.sharePdf(bytes: cartaBytes, filename: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf');
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ButtonPrimary(
+                                    texto: 'POS 80mm',
+                                    icono: Icons.receipt_long,
+                                    onPressed: () async {
+                                      final confirm = await _printTicketConfirmation(context);
+                                      if (confirm == true) {
+                                        if (!mounted) return;
+                                        final Map<String, dynamic> data = _detail ?? widget.record;
+                                        final ticketBytes = await generateCloseCashPOSTicket(data);
+                                        await Printing.sharePdf(bytes: ticketBytes, filename: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf');
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
