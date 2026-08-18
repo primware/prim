@@ -15,6 +15,7 @@ import 'report_funtions.dart';
 import 'close_cash_print_pos_funtions.dart';
 import 'close_cash_print_carta_funtions.dart';
 import 'package:printing/printing.dart';
+import 'package:intl/intl.dart';
 
 class CloseCashDetailPage extends StatefulWidget {
   final Map<String, dynamic> record;
@@ -145,8 +146,18 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
 
     final terminal = (data['C_POS_ID']?['name'] ?? '---').toString();
     final rep = (data['SalesRep_ID']?['name'] ?? '---').toString();
-    final String dateTrx = (data['DateTrx'] ?? '').toString();
-    final String dateFrom = (data['DateFrom'] ?? '').toString();
+    String _formatDate(String dateStr) {
+      if (dateStr.isEmpty) return '';
+      try {
+        final DateTime dt = DateTime.parse(dateStr).toLocal();
+        return DateFormat('dd/MM/yyyy hh:mm a').format(dt);
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    final String dateTrx = _formatDate((data['DateTrx'] ?? '').toString());
+    final String dateFrom = _formatDate((data['DateFrom'] ?? '').toString());
     final int totalOrders = (data['QtyOrders'] ?? 0) as int;
 
     final double taxBase = _toDouble(data['TaxBaseAmt'] ?? 0);

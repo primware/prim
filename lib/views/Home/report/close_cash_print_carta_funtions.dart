@@ -19,12 +19,22 @@ Future<Uint8List> generateCloseCashCartaTicket(Map<String, dynamic> data) async 
     return 0.0;
   }
 
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return '';
+    try {
+      final DateTime dt = DateTime.parse(dateStr).toLocal();
+      return DateFormat('dd/MM/yyyy hh:mm a').format(dt);
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   // Data fields
   final docNo = str(data['DocumentNo']);
   final terminal = str(data['C_POS_ID']?['name'] ?? '---');
   final rep = str(data['SalesRep_ID']?['name'] ?? '---');
-  final String dateTrx = str(data['DateTrx']);
-  final String dateFrom = str(data['DateFrom']);
+  final String dateTrx = _formatDate(str(data['DateTrx']));
+  final String dateFrom = _formatDate(str(data['DateFrom']));
   final int totalOrders = (data['QtyOrders'] ?? 0) as int;
 
   final double taxBase = _toDouble(data['TaxBaseAmt']);
