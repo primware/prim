@@ -3,6 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:primware/API/pos.api.dart';
 import 'package:intl/intl.dart';
+import '../../../shared/format_date.dart';
 
 Future<Uint8List> generateCloseCashCartaTicket(Map<String, dynamic> data) async {
   final pdf = pw.Document();
@@ -19,22 +20,12 @@ Future<Uint8List> generateCloseCashCartaTicket(Map<String, dynamic> data) async 
     return 0.0;
   }
 
-  String _formatDate(String dateStr) {
-    if (dateStr.isEmpty) return '';
-    try {
-      final DateTime dt = DateTime.parse(dateStr).toLocal();
-      return DateFormat('dd/MM/yyyy hh:mm a').format(dt);
-    } catch (e) {
-      return dateStr;
-    }
-  }
-
   // Data fields
   final docNo = str(data['DocumentNo']);
   final terminal = str(data['C_POS_ID']?['name'] ?? '---');
   final rep = str(data['SalesRep_ID']?['name'] ?? '---');
-  final String dateTrx = _formatDate(str(data['DateTrx']));
-  final String dateFrom = _formatDate(str(data['DateFrom']));
+  final String dateTrx = formatDateUI(str(data['DateTrx']));
+  final String dateFrom = formatDateUI(str(data['DateFrom']));
   final int totalOrders = (data['QtyOrders'] ?? 0) as int;
 
   final double taxBase = _toDouble(data['TaxBaseAmt']);

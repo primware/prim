@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../localization/app_locale.dart';
+import '../../../shared/toast_message.dart';
+import '../../../shared/format_date.dart';
 import '../../../shared/footer.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
@@ -833,7 +835,7 @@ class OrderDetailPage extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
             ),
             const SizedBox(height: 4),
-            Text(order['DateOrdered'], style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+            Text(formatDateUI(order['DateOrdered']), style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
 
             const SizedBox(height: 8),
             Wrap(spacing: 8, runSpacing: 4, children: [_buildSubtypePill(context, order), _buildDocStatusPill(context, order), if (hasCreditNote) _buildCreditMemoPill()]),

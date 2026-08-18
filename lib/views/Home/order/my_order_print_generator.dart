@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
-// import 'package:printing_ffi/printing_ffi.dart';
+// import 'package:primware/localization/app_locale.dart';
+import '../../../shared/format_date.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:pdf/pdf.dart';
@@ -34,7 +35,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   bool hasHeaderValue(dynamic value) => _hasHeaderValue(value);
   String docTypename = order['doctypetarget']?['name'] ?? '';
   final docNo = str(order['DocumentNo']);
-  final date = str(order['DateOrdered']);
+  final date = formatDateUI(str(order['DateOrdered']));
   final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
   final taxID = str(order['bpartner']?['taxID'] ?? '');
   final phone = str(order['bpartner']?['phone'] ?? '');
@@ -326,7 +327,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
 
   // Order fields (safe access)
   final docNo = str(order['DocumentNo']);
-  final date = str(order['DateOrdered']);
+  final date = formatDateUI(str(order['DateOrdered']));
   final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
   final taxID = str(order['bpartner']['taxID'] ?? '');
   final phone = str(order['bpartner']['phone'] ?? '');

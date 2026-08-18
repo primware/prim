@@ -14,6 +14,7 @@ import 'report_print.dart';
 import 'report_funtions.dart';
 import 'close_cash_print_pos_funtions.dart';
 import 'close_cash_print_carta_funtions.dart';
+import '../../../shared/format_date.dart';
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 
@@ -146,18 +147,8 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
 
     final terminal = (data['C_POS_ID']?['name'] ?? '---').toString();
     final rep = (data['SalesRep_ID']?['name'] ?? '---').toString();
-    String _formatDate(String dateStr) {
-      if (dateStr.isEmpty) return '';
-      try {
-        final DateTime dt = DateTime.parse(dateStr).toLocal();
-        return DateFormat('dd/MM/yyyy hh:mm a').format(dt);
-      } catch (e) {
-        return dateStr;
-      }
-    }
-
-    final String dateTrx = _formatDate((data['DateTrx'] ?? '').toString());
-    final String dateFrom = _formatDate((data['DateFrom'] ?? '').toString());
+    final String dateTrx = formatDateUI((data['DateTrx'] ?? '').toString());
+    final String dateFrom = formatDateUI((data['DateFrom'] ?? '').toString());
     final int totalOrders = (data['QtyOrders'] ?? 0) as int;
 
     final double taxBase = _toDouble(data['TaxBaseAmt'] ?? 0);

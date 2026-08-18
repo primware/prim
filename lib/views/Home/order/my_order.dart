@@ -15,6 +15,7 @@ import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/glass_switch.dart';
+import '../../../shared/format_date.dart';
 import '../../../shared/footer.dart';
 import 'my_order_print_generator.dart';
 import 'dart:ui';
@@ -842,7 +843,7 @@ class _OrderListPageState extends State<OrderListPage> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        order['DateOrdered'],
+                        formatDateUI(order['DateOrdered']),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.grey.shade600,
                         ),
