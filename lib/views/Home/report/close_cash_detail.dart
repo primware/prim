@@ -5,18 +5,15 @@ import 'package:primware/shared/button.widget.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/shared/toast_message.dart';
-import '../../../API/endpoint.dart';
 import '../../../localization/app_locale.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/loading_container.dart';
-import 'report_print.dart';
 import 'report_funtions.dart';
 import 'close_cash_print_pos_funtions.dart';
 import 'close_cash_print_carta_funtions.dart';
 import '../../../shared/format_date.dart';
 import 'package:printing/printing.dart';
-import 'package:intl/intl.dart';
 
 class CloseCashDetailPage extends StatefulWidget {
   final Map<String, dynamic> record;
@@ -171,9 +168,7 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
     final String? docStatus = (data['DocStatus'] as String?)?.toString();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocale.closeCash.getString(context)),
-      ),
+      appBar: AppBar(title: Text(AppLocale.closeCash.getString(context))),
       drawer: MenuDrawer(),
       bottomNavigationBar: CustomFooter(),
       body: Center(
@@ -186,7 +181,16 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
                     children: [
                       if (_warning != null) ...[Text(_warning!, style: Theme.of(context).textTheme.bodySmall), const SizedBox(height: 8)],
 
-                      _buildHeader(context: context, isMobile: isMobile, terminal: terminal, rep: rep, dateTrx: dateTrx.isEmpty ? '---' : dateTrx, dateFrom: dateFrom.isEmpty ? '---' : dateFrom, docStatus: docStatus, processed: processed),
+                      _buildHeader(
+                        context: context,
+                        isMobile: isMobile,
+                        terminal: terminal,
+                        rep: rep,
+                        dateTrx: dateTrx.isEmpty ? '---' : dateTrx,
+                        dateFrom: dateFrom.isEmpty ? '---' : dateFrom,
+                        docStatus: docStatus,
+                        processed: processed,
+                      ),
                       const SizedBox(height: CustomSpacer.large),
 
                       Text("Resumen", style: Theme.of(context).textTheme.bodyMedium),
@@ -195,20 +199,61 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
                       isMobile
                           ? Column(
                               children: [
-                                _buildTotalsCard(context: context, title: "Órdenes", rows: [_kv("Cantidad de órdenes", "$totalOrders"), _kv("Total base del impuesto", _money(taxBase)), _kv("Total impuesto", _money(taxAmt)), _kv("Total exento", _money(exemptAmt)), _kv("Total órdenes", _money(totalOrdersAmt)), _kv("Gran Total", _money(grandTotal))]),
+                                _buildTotalsCard(
+                                  context: context,
+                                  title: "Órdenes",
+                                  rows: [
+                                    _kv("Cantidad de órdenes", "$totalOrders"),
+                                    _kv("Total base del impuesto", _money(taxBase)),
+                                    _kv("Total impuesto", _money(taxAmt)),
+                                    _kv("Total exento", _money(exemptAmt)),
+                                    _kv("Total órdenes", _money(totalOrdersAmt)),
+                                    _kv("Gran Total", _money(grandTotal)),
+                                  ],
+                                ),
                                 const SizedBox(height: 12),
-                                _buildTotalsCard(context: context, title: "Devoluciones", rows: [_kv("Cantidad de devoluciones", "$totalReturns"), _kv("Total base del impuesto (devolución)", _money(returnTaxBase)), _kv("Total impuesto (devolución)", _money(returnTaxAmt)), _kv("Total exento (devolución)", _money(returnExemptAmt)), _kv("Total devoluciones", _money(totalReturnsAmt))]),
+                                _buildTotalsCard(
+                                  context: context,
+                                  title: "Devoluciones",
+                                  rows: [
+                                    _kv("Cantidad de devoluciones", "$totalReturns"),
+                                    _kv("Total base del impuesto (devolución)", _money(returnTaxBase)),
+                                    _kv("Total impuesto (devolución)", _money(returnTaxAmt)),
+                                    _kv("Total exento (devolución)", _money(returnExemptAmt)),
+                                    _kv("Total devoluciones", _money(totalReturnsAmt)),
+                                  ],
+                                ),
                               ],
                             )
                           : Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  child: _buildTotalsCard(context: context, title: "Órdenes", rows: [_kv("Cantidad de órdenes", "$totalOrders"), _kv("Total base del impuesto", _money(taxBase)), _kv("Total impuesto", _money(taxAmt)), _kv("Total exento", _money(exemptAmt)), _kv("Total órdenes", _money(totalOrdersAmt))]),
+                                  child: _buildTotalsCard(
+                                    context: context,
+                                    title: "Órdenes",
+                                    rows: [
+                                      _kv("Cantidad de órdenes", "$totalOrders"),
+                                      _kv("Total base del impuesto", _money(taxBase)),
+                                      _kv("Total impuesto", _money(taxAmt)),
+                                      _kv("Total exento", _money(exemptAmt)),
+                                      _kv("Total órdenes", _money(totalOrdersAmt)),
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: _buildTotalsCard(context: context, title: "Devoluciones", rows: [_kv("Cantidad de devoluciones", "$totalReturns"), _kv("Total base del impuesto (devolución)", _money(returnTaxBase)), _kv("Total impuesto (devolución)", _money(returnTaxAmt)), _kv("Total exento (devolución)", _money(returnExemptAmt)), _kv("Total devoluciones", _money(totalReturnsAmt))]),
+                                  child: _buildTotalsCard(
+                                    context: context,
+                                    title: "Devoluciones",
+                                    rows: [
+                                      _kv("Cantidad de devoluciones", "$totalReturns"),
+                                      _kv("Total base del impuesto (devolución)", _money(returnTaxBase)),
+                                      _kv("Total impuesto (devolución)", _money(returnTaxAmt)),
+                                      _kv("Total exento (devolución)", _money(returnExemptAmt)),
+                                      _kv("Total devoluciones", _money(totalReturnsAmt)),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -235,13 +280,18 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
 
                             final dynamic tenderField = p['C_POSTenderType_ID'] ?? p['TenderType'] ?? p['tender'] ?? p['PaymentMethod'];
 
-                            final String tenderName = (tenderField is Map) ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString() : tenderField?.toString() ?? '---';
+                            final String tenderName = (tenderField is Map)
+                                ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString()
+                                : tenderField?.toString() ?? '---';
 
                             final double amt = _toDouble(p['PayAmt'] ?? p['Amount'] ?? p['Amt'] ?? 0);
 
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25), borderRadius: BorderRadius.circular(8)),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -255,7 +305,10 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
                             );
                           },
                         ),
-                      if (!processed) ...[const SizedBox(height: CustomSpacer.large), ButtonPrimary(texto: 'Cerrar Caja', fullWidth: true, icono: Icons.lock_outline, onPressed: _showCloseCashDialog)],
+                      if (!processed) ...[
+                        const SizedBox(height: CustomSpacer.large),
+                        ButtonPrimary(texto: 'Cerrar Caja', fullWidth: true, icono: Icons.lock_outline, onPressed: _showCloseCashDialog),
+                      ],
                       const SizedBox(height: CustomSpacer.large),
                       Container(
                         width: double.infinity,
@@ -291,7 +344,10 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
                                         if (!mounted) return;
                                         final Map<String, dynamic> data = _detail ?? widget.record;
                                         final cartaBytes = await generateCloseCashCartaTicket(data);
-                                        await Printing.sharePdf(bytes: cartaBytes, filename: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf');
+                                        await Printing.sharePdf(
+                                          bytes: cartaBytes,
+                                          filename: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf',
+                                        );
                                       }
                                     },
                                   ),
@@ -307,7 +363,10 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
                                         if (!mounted) return;
                                         final Map<String, dynamic> data = _detail ?? widget.record;
                                         final ticketBytes = await generateCloseCashPOSTicket(data);
-                                        await Printing.sharePdf(bytes: ticketBytes, filename: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf');
+                                        await Printing.sharePdf(
+                                          bytes: ticketBytes,
+                                          filename: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf',
+                                        );
                                       }
                                     },
                                   ),
@@ -327,24 +386,58 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
 
   // ---------------- UI Helpers ----------------
 
-  Widget _buildHeader({required BuildContext context, required bool isMobile, required String terminal, required String rep, required String dateTrx, required String dateFrom, required String? docStatus, required bool processed}) {
+  Widget _buildHeader({
+    required BuildContext context,
+    required bool isMobile,
+    required String terminal,
+    required String rep,
+    required String dateTrx,
+    required String dateFrom,
+    required String? docStatus,
+    required bool processed,
+  }) {
     final left = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _iconLine(context: context, icon: Icons.point_of_sale_outlined, label: "Terminal PDV", value: terminal, isMobile: isMobile),
         const SizedBox(height: 10),
-        _iconLine(context: context, icon: Icons.event_outlined, label: "Desde Fecha", value: dateFrom.isEmpty ? "---" : dateFrom, isMobile: isMobile),
+        _iconLine(
+          context: context,
+          icon: Icons.event_outlined,
+          label: "Desde Fecha",
+          value: dateFrom.isEmpty ? "---" : dateFrom,
+          isMobile: isMobile,
+        ),
         const SizedBox(height: 10),
-        _flagPill(context: context, icon: processed ? Icons.check_circle_outline : Icons.radio_button_unchecked, label: processed ? "Procesado" : "No procesado", color: processed ? Colors.green : Colors.grey),
+        _flagPill(
+          context: context,
+          icon: processed ? Icons.check_circle_outline : Icons.radio_button_unchecked,
+          label: processed ? "Procesado" : "No procesado",
+          color: processed ? Colors.green : Colors.grey,
+        ),
       ],
     );
 
     final right = Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.start : CrossAxisAlignment.end,
       children: [
-        _iconLine(context: context, icon: Icons.badge_outlined, label: "Representante Compañía", value: rep, isMobile: isMobile, alignEnd: !isMobile),
+        _iconLine(
+          context: context,
+          icon: Icons.badge_outlined,
+          label: "Representante Compañía",
+          value: rep,
+          isMobile: isMobile,
+          alignEnd: !isMobile,
+        ),
         const SizedBox(height: 10),
-        _iconLine(context: context, icon: Icons.schedule_outlined, label: "Fecha Transacción", value: dateTrx.isEmpty ? "---" : dateTrx, isMobile: isMobile, alignEnd: !isMobile),
+        _iconLine(
+          context: context,
+          icon: Icons.schedule_outlined,
+          label: "Fecha Transacción",
+          value: dateTrx.isEmpty ? "---" : dateTrx,
+          isMobile: isMobile,
+          alignEnd: !isMobile,
+        ),
         const SizedBox(height: 10),
         if (docStatus != null && docStatus.isNotEmpty) _buildDocStatusPill(context, docStatus),
       ],
@@ -367,7 +460,10 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
   Widget _buildTotalsCard({required BuildContext context, required String title, required List<MapEntry<String, String>> rows}) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -419,7 +515,8 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
   }
 
   Widget _buildDocStatusPill(BuildContext context, String statusCode) {
-    final meta = _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+    final meta =
+        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = (meta['color'] as Color?) ?? Theme.of(context).colorScheme.primary;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -470,7 +567,15 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
     );
   }
 
-  Widget _iconLine({required BuildContext context, required IconData icon, required String label, required String value, required bool isMobile, bool alignEnd = false, double iconGap = 10}) {
+  Widget _iconLine({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isMobile,
+    bool alignEnd = false,
+    double iconGap = 10,
+  }) {
     final textAlign = alignEnd ? TextAlign.right : TextAlign.left;
 
     final labelWidget = Text(
