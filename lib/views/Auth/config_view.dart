@@ -20,6 +20,7 @@ import 'login_view.dart';
 import 'loading_dialog.dart';
 import '../Home/order/product_selection_popup.dart';
 import 'dart:ui';
+import '../../shared/glass_switch.dart';
 
 class ConfigPage extends StatefulWidget {
   final List<dynamic> clients;
@@ -96,6 +97,7 @@ class _ConfigPageState extends State<ConfigPage> {
         });
       } else {
         final fetchedRoles = await getRoles(clientId, context);
+        if (!mounted) return;
         if (fetchedRoles != null) {
           _cachedRoles[clientId] = fetchedRoles;
           setState(() {
@@ -113,6 +115,7 @@ class _ConfigPageState extends State<ConfigPage> {
       }
     }
 
+    if (!mounted) return;
     setState(() {
       isLoading = false;
     });
@@ -138,6 +141,7 @@ class _ConfigPageState extends State<ConfigPage> {
         });
       } else {
         final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
+        if (!mounted) return;
         if (fetchedOrganizations != null) {
           fetchedOrganizations.removeWhere((org) => org['id'] == 0);
           _cachedOrgs[cacheKey] = fetchedOrganizations;
@@ -156,6 +160,7 @@ class _ConfigPageState extends State<ConfigPage> {
     final selectedRole = roles.firstWhere((role) => role['id'] == roleId);
     UserData.rolName = selectedRole['name'];
 
+    if (!mounted) return;
     setState(() {
       isLoading = false;
     });
@@ -361,60 +366,6 @@ class _ConfigPageState extends State<ConfigPage> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class GlassSwitch extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const GlassSwitch({super.key, required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).primaryColor;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        width: 56,
-        height: 32,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: value ? primary.withOpacity(0.3) : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
-          border: Border.all(color: value ? primary.withOpacity(0.6) : (isDark ? Colors.white30 : Colors.black12), width: 1.5),
-          boxShadow: [if (value) BoxShadow(color: primary.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)],
-        ),
-        child: Stack(
-          children: [
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutBack,
-              top: 2,
-              bottom: 2,
-              left: value ? 26 : 2,
-              right: value ? 2 : 26,
-              child: ClipOval(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: value ? primary.withOpacity(0.8) : (isDark ? Colors.white70 : Colors.white),
-                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

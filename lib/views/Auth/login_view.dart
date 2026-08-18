@@ -7,6 +7,7 @@ import 'package:primware/localization/app_locale.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../API/endpoint.dart';
 import '../../shared/button.widget.dart';
+import '../../shared/glass_switch.dart';
 import '../../shared/custom_container.dart';
 import '../../shared/custom_dropdown.dart';
 import '../../shared/custom_spacer.dart';
@@ -429,87 +430,6 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class GlassSwitch extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const GlassSwitch({super.key, required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).primaryColor;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        width: 56,
-        height: 32,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: value
-              ? primary.withOpacity(0.3)
-              : (isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.05)),
-          border: Border.all(
-            color: value
-                ? primary.withOpacity(0.6)
-                : (isDark ? Colors.white30 : Colors.black12),
-            width: 1.5,
-          ),
-          boxShadow: [
-            if (value)
-              BoxShadow(
-                color: primary.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-              ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutBack,
-              top: 2,
-              bottom: 2,
-              left: value ? 26 : 2,
-              right: value ? 2 : 26,
-              child: ClipOval(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: value
-                          ? primary.withOpacity(0.8)
-                          : (isDark ? Colors.white70 : Colors.white),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.5),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
