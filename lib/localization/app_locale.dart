@@ -276,8 +276,64 @@ class AppLocale {
   static const String posPrinterConfig = 'posPrinterConfig';
   static const String headerText = 'headerText';
   static const String footerText = 'footerText';
+  static const String invoicePayment = 'invoicePayment';
+  static const String customerInvoices = 'customerInvoices';
+  static const String invoice = 'invoice';
+  static const String invoiceValue = 'invoiceValue';
+  static const String invoiceDetail = 'invoiceDetail';
+  static const String amountToPayInvoice = 'amountToPayInvoice';
+  static const String totalPaid = 'totalPaid';
+  static const String outstandingDebt = 'outstandingDebt';
+  static const String paymentProgress = 'paymentProgress';
+  static const String selectCustomerForInvoices = 'selectCustomerForInvoices';
+  static const String noCompletedInvoices = 'noCompletedInvoices';
+  static const String invoiceLoadError = 'invoiceLoadError';
+  static const String noInvoiceLines = 'noInvoiceLines';
+  static const String invalidInvoicePaymentAmount = 'invalidInvoicePaymentAmount';
+  static const String noPaymentMethods = 'noPaymentMethods';
+  static const String noSelectedInvoices = 'noSelectedInvoices';
+  static const String selectedInvoices = 'selectedInvoices';
+  static const String selectedInvoiceValue = 'selectedInvoiceValue';
+  static const String allocatedPayment = 'allocatedPayment';
+  static const String paymentMethodTotal = 'paymentMethodTotal';
+  static const String paymentDifference = 'paymentDifference';
+  static const String remove = 'remove';
+  static const String invoicePaymentsCreated = 'invoicePaymentsCreated';
+  static const String invoicePaymentsPartialError = 'invoicePaymentsPartialError';
+  static const String paymentRecordCreated = 'paymentRecordCreated';
+  static const String paymentBankAccountRequired = 'paymentBankAccountRequired';
+  static const String invoicePaymentTotalsMismatch = 'invoicePaymentTotalsMismatch';
+  static const String paymentTenderTypeRequired = 'paymentTenderTypeRequired';
 
   static const Map<String, dynamic> en = {
+    invoicePayment: 'Invoice Payment',
+    customerInvoices: 'Customer invoices',
+    invoice: 'Invoice',
+    invoiceValue: 'Invoice value',
+    invoiceDetail: 'Invoice detail',
+    amountToPayInvoice: 'Amount to pay for this invoice',
+    totalPaid: 'Total paid',
+    outstandingDebt: 'Outstanding balance',
+    paymentProgress: 'Payment progress',
+    selectCustomerForInvoices: 'Select a customer to view completed invoices.',
+    noCompletedInvoices: 'This customer has no completed invoices.',
+    invoiceLoadError: 'The invoices could not be loaded.',
+    noInvoiceLines: 'This invoice has no detail lines.',
+    invalidInvoicePaymentAmount: 'Enter an amount greater than zero and no higher than the outstanding balance.',
+    noPaymentMethods: 'No payment methods are available.',
+    noSelectedInvoices: 'Select an invoice to build the payment summary.',
+    selectedInvoices: 'Selected invoices',
+    selectedInvoiceValue: 'Selected invoice value',
+    allocatedPayment: 'Amount allocated to invoices',
+    paymentMethodTotal: 'Payment methods total',
+    paymentDifference: 'Difference',
+    remove: 'Remove',
+    invoicePaymentsCreated: 'The payment records were created successfully.',
+    invoicePaymentsPartialError: 'Some payments could not be created: {methods}. You can retry the pending methods.',
+    paymentRecordCreated: 'Payment record created',
+    paymentBankAccountRequired: 'Invoice payments require a bank account configured on the POS. Non-POS configuration is still pending.',
+    invoicePaymentTotalsMismatch: 'Payment methods must equal the amount allocated to invoices.',
+    paymentTenderTypeRequired: 'A selected payment method does not have a tender type configured.',
     orgProfileTitle: 'Organization\nProfile',
     changePassword: 'Change password',
     organizationInfo: 'Organization information',
@@ -558,6 +614,34 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    invoicePayment: 'Pago a Factura',
+    customerInvoices: 'Facturas del cliente',
+    invoice: 'Factura',
+    invoiceValue: 'Valor de la factura',
+    invoiceDetail: 'Detalle de la factura',
+    amountToPayInvoice: 'Cuánto quiero pagar de esta factura',
+    totalPaid: 'Total pagado',
+    outstandingDebt: 'Deuda pendiente',
+    paymentProgress: 'Progreso del pago',
+    selectCustomerForInvoices: 'Seleccione un cliente para consultar sus facturas completadas.',
+    noCompletedInvoices: 'Este cliente no tiene facturas completadas.',
+    invoiceLoadError: 'No se pudieron cargar las facturas.',
+    noInvoiceLines: 'Esta factura no tiene líneas de detalle.',
+    invalidInvoicePaymentAmount: 'Ingrese un monto mayor que cero y no superior a la deuda pendiente.',
+    noPaymentMethods: 'No hay métodos de pago disponibles.',
+    noSelectedInvoices: 'Seleccione una factura para preparar el resumen del pago.',
+    selectedInvoices: 'Facturas seleccionadas',
+    selectedInvoiceValue: 'Valor de facturas seleccionadas',
+    allocatedPayment: 'Monto asignado a facturas',
+    paymentMethodTotal: 'Total en métodos de pago',
+    paymentDifference: 'Diferencia',
+    remove: 'Eliminar',
+    invoicePaymentsCreated: 'Los registros de pago fueron creados correctamente.',
+    invoicePaymentsPartialError: 'No se pudieron crear algunos pagos: {methods}. Puede reintentar los métodos pendientes.',
+    paymentRecordCreated: 'Registro de pago creado',
+    paymentBankAccountRequired: 'El pago a facturas requiere una cuenta bancaria configurada en el POS. La configuración sin POS sigue pendiente.',
+    invoicePaymentTotalsMismatch: 'Los métodos de pago deben coincidir con el monto asignado a las facturas.',
+    paymentTenderTypeRequired: 'Un método de pago seleccionado no tiene tipo de tender configurado.',
     orgProfileTitle: 'Perfil de la\nOrganización',
     changePassword: 'Cambiar contraseña',
     organizationInfo: 'Información de la organización',

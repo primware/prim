@@ -65,6 +65,9 @@ class EndPoints {
 
   static String get cInvoice => '${Base.baseURL}/api/v1/models/C_Invoice';
 
+  static String get paymentAndReceipt =>
+      '${Base.baseURL}/api/v1/windows/payment-and-receipt';
+
   static String get adSequence => '${Base.baseURL}/api/v1/models/AD_Sequence';
 
   static String get cTaxCategory => '${Base.baseURL}/api/v1/models/C_TaxCategory';

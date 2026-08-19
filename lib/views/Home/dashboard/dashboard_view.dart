@@ -4,6 +4,7 @@ import 'package:primware/shared/custom_container.dart';
 import 'package:primware/shared/logo.dart';
 import 'package:primware/views/Home/dashboard/dashboard_skeleton.dart';
 import '../../../API/endpoint.dart';
+import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/custom_app_menu.dart';
@@ -109,6 +110,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
         Token.auth = null;
         Token.adOrgInfoUU = null;
+        POS.bankAccountID = null;
         usuarioController.clear();
         claveController.clear();
         UserData.rolName = null;
