@@ -225,10 +225,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final bpId = src['bpartner']?['id'] ?? src['C_BPartner_ID']?['id'];
       final bpName = src['bpartner']?['name'] ?? src['C_BPartner_ID']?['identifier'] ?? '';
 
-      setState(() {
-        if (bpId != null) selectedBPartnerID = bpId;
-        clienteController.text = bpName.toString();
-      });
+      if (bpId != null) {
+        final hasLocation = await fetchBPartnerHasLocation(context: context, partnerId: bpId);
+        setState(() {
+          selectedBPartnerID = bpId;
+          clienteController.text = bpName.toString();
+          hasLocationBPartner = hasLocation;
+        });
+      } else {
+        setState(() {
+          clienteController.text = bpName.toString();
+        });
+      }
 
       // Prefill productos/lineas
       final List<dynamic> lines = (src['lines'] ?? src['C_OrderLine'] ?? src['orderLines'] ?? []) as List<dynamic>;
@@ -236,9 +244,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final List<Map<String, dynamic>> mapped = [];
       for (final raw in lines) {
         final Map<String, dynamic> line = Map<String, dynamic>.from(raw as Map);
+        // Omitir líneas de descuento genérico (qty == -1)
+        final qty = (line['QtyOrdered'] ?? line['QtyEntered'] ?? line['quantity'] ?? 1) as num;
+        if (qty.toInt() == -1) continue;
+
         final name = line['Name'] ?? (line['M_Product_ID']?['identifier']?.toString().split('_').skip(1).join(' ') ?? 'Producto');
         final price = (line['PriceActual'] ?? line['Price'] ?? line['price'] ?? 0) as num;
-        final qty = (line['QtyOrdered'] ?? line['QtyEntered'] ?? line['quantity'] ?? 1) as num;
         final dynamic taxField = line['C_Tax_ID'];
         final taxId = (taxField is Map) ? taxField['id'] : (taxField ?? selectedTax?['id']);
         final dynamic productField = line['M_Product_ID'];
