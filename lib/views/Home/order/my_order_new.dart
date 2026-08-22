@@ -225,10 +225,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final bpId = src['bpartner']?['id'] ?? src['C_BPartner_ID']?['id'];
       final bpName = src['bpartner']?['name'] ?? src['C_BPartner_ID']?['identifier'] ?? '';
 
-      setState(() {
-        if (bpId != null) selectedBPartnerID = bpId;
-        clienteController.text = bpName.toString();
-      });
+      if (bpId != null) {
+        final hasLocation = await fetchBPartnerHasLocation(context: context, partnerId: bpId);
+        setState(() {
+          selectedBPartnerID = bpId;
+          clienteController.text = bpName.toString();
+          hasLocationBPartner = hasLocation;
+        });
+      } else {
+        setState(() {
+          clienteController.text = bpName.toString();
+        });
+      }
 
       // Prefill productos/lineas
       final List<dynamic> lines = (src['lines'] ?? src['C_OrderLine'] ?? src['orderLines'] ?? []) as List<dynamic>;
