@@ -44,7 +44,8 @@ class AppLocale {
   static const String role = 'role';
   static const String taxIDOrName = 'taxIDOrName';
   static const String organization = 'organization';
-  static const String selectCompanyRoleOrganization = 'selectCompanyRoleOrganization';
+  static const String selectCompanyRoleOrganization =
+      'selectCompanyRoleOrganization';
   static const String clientMustBeSelected = 'clientMustBeSelected';
   static const String continueKey = 'continueKey';
   static const String back = 'back';
@@ -208,11 +209,13 @@ class AppLocale {
   static const String changeRole = 'changeRole';
   static const String newCategory = 'newCategory';
   static const String confirmCreateCategory = 'confirmCreateCategory';
-  static const String todaySalesByCategoryDescription = 'todaySalesByCategoryDescription';
+  static const String todaySalesByCategoryDescription =
+      'todaySalesByCategoryDescription';
   static const String today = 'today';
   static const String selectCustomer = 'selectCustomer';
   static const String customerNoAddressError = 'customerNoAddressError';
-  static const String selectValidCustomerForProducts = 'selectValidCustomerForProducts';
+  static const String selectValidCustomerForProducts =
+      'selectValidCustomerForProducts';
   static const String systemParameters = 'systemParameters';
   static const String urlNotAvailable = 'urlNotAvailable';
   static const String production = 'production';
@@ -271,7 +274,8 @@ class AppLocale {
   static const String changePasswordNow = 'changePasswordNow';
   static const String maybeLater = 'maybeLater';
   static const String passwordSameAsUserError = 'passwordSameAsUserError';
-  static const String passwordSameAsPreviousError = 'passwordSameAsPreviousError';
+  static const String passwordSameAsPreviousError =
+      'passwordSameAsPreviousError';
   static const String yesterday = 'yesterday';
   static const String posPrinterConfig = 'posPrinterConfig';
   static const String headerText = 'headerText';
@@ -289,7 +293,8 @@ class AppLocale {
   static const String noCompletedInvoices = 'noCompletedInvoices';
   static const String invoiceLoadError = 'invoiceLoadError';
   static const String noInvoiceLines = 'noInvoiceLines';
-  static const String invalidInvoicePaymentAmount = 'invalidInvoicePaymentAmount';
+  static const String invalidInvoicePaymentAmount =
+      'invalidInvoicePaymentAmount';
   static const String noPaymentMethods = 'noPaymentMethods';
   static const String noSelectedInvoices = 'noSelectedInvoices';
   static const String selectedInvoices = 'selectedInvoices';
@@ -299,10 +304,14 @@ class AppLocale {
   static const String paymentDifference = 'paymentDifference';
   static const String remove = 'remove';
   static const String invoicePaymentsCreated = 'invoicePaymentsCreated';
-  static const String invoicePaymentsPartialError = 'invoicePaymentsPartialError';
+  static const String confirmProcessInvoicePayments =
+      'confirmProcessInvoicePayments';
+  static const String invoicePaymentsPartialError =
+      'invoicePaymentsPartialError';
   static const String paymentRecordCreated = 'paymentRecordCreated';
   static const String paymentBankAccountRequired = 'paymentBankAccountRequired';
-  static const String invoicePaymentTotalsMismatch = 'invoicePaymentTotalsMismatch';
+  static const String invoicePaymentTotalsMismatch =
+      'invoicePaymentTotalsMismatch';
   static const String paymentTenderTypeRequired = 'paymentTenderTypeRequired';
 
   static const Map<String, dynamic> en = {
@@ -319,7 +328,8 @@ class AppLocale {
     noCompletedInvoices: 'This customer has no completed invoices.',
     invoiceLoadError: 'The invoices could not be loaded.',
     noInvoiceLines: 'This invoice has no detail lines.',
-    invalidInvoicePaymentAmount: 'Enter an amount greater than zero and no higher than the outstanding balance.',
+    invalidInvoicePaymentAmount:
+        'Enter an amount greater than zero and no higher than the outstanding balance.',
     noPaymentMethods: 'No payment methods are available.',
     noSelectedInvoices: 'Select an invoice to build the payment summary.',
     selectedInvoices: 'Selected invoices',
@@ -329,11 +339,17 @@ class AppLocale {
     paymentDifference: 'Difference',
     remove: 'Remove',
     invoicePaymentsCreated: 'The payment records were created successfully.',
-    invoicePaymentsPartialError: 'Some payments could not be created: {methods}. You can retry the pending methods.',
+    confirmProcessInvoicePayments:
+        'Are you sure you want to process these payments and apply them to the selected invoices?',
+    invoicePaymentsPartialError:
+        'Some payments could not be created: {methods}. You can retry the pending methods.',
     paymentRecordCreated: 'Payment record created',
-    paymentBankAccountRequired: 'Invoice payments require a bank account configured on the POS. Non-POS configuration is still pending.',
-    invoicePaymentTotalsMismatch: 'Payment methods must equal the amount allocated to invoices.',
-    paymentTenderTypeRequired: 'A selected payment method does not have a tender type configured.',
+    paymentBankAccountRequired:
+        'Invoice payments require a bank account configured on the POS. Non-POS configuration is still pending.',
+    invoicePaymentTotalsMismatch:
+        'Payment methods must equal the amount allocated to invoices.',
+    paymentTenderTypeRequired:
+        'A selected payment method does not have a tender type configured.',
     orgProfileTitle: 'Organization\nProfile',
     changePassword: 'Change password',
     organizationInfo: 'Organization information',
@@ -371,13 +387,16 @@ class AppLocale {
     production: 'Producción:',
     instance: 'Instancia:',
     isPointOfSale: 'Es Punto de Venta:',
-    selectValidCustomerForProducts: 'Please select a valid customer to add products to the order.',
+    selectValidCustomerForProducts:
+        'Please select a valid customer to add products to the order.',
     selectCustomer: 'Please select a customer',
-    customerNoAddressError: 'This customer does not have a valid address. Please edit the customer to add an address before continuing.',
+    customerNoAddressError:
+        'This customer does not have a valid address. Please edit the customer to add an address before continuing.',
     today: 'Today',
     todaySalesByCategoryDescription:
         'You can view your sales invoiced today grouped by product category. The amount does not include taxes. If you tap the chart you can see the details of sales by category.',
-    confirmCreateCategory: 'Are you sure you want to create this product category?',
+    confirmCreateCategory:
+        'Are you sure you want to create this product category?',
     newCategory: 'New Category',
     changeRole: 'Change Role',
     console: 'Console',
@@ -395,7 +414,8 @@ class AppLocale {
     confirmCreditNoteTitle: 'Confirm Credit Note',
     confirmCreditNoteBody: 'Are you sure you want to convert to a credit note?',
     cannotUndoWarning: 'Remember that this action cannot be undone.',
-    changeClientWarning: 'If you select another customer, the products will be removed.\nDo you want to continue?',
+    changeClientWarning:
+        'If you select another customer, the products will be removed.\nDo you want to continue?',
     changeClient: 'Change customer?',
     noDocComplete: 'The action could not be completed',
     duplicate: 'Duplicate',
@@ -444,7 +464,8 @@ class AppLocale {
     discount: 'Discount',
 
     organization: 'Organization',
-    selectCompanyRoleOrganization: 'Please select a company, role, and organization',
+    selectCompanyRoleOrganization:
+        'Please select a company, role, and organization',
     continueKey: 'Continue',
     back: 'Back',
     taxIDOrName: 'ID or Name...',
@@ -548,7 +569,8 @@ class AppLocale {
     paymentMethods: 'Payment methods',
     discounts: 'Discounts',
     removeDiscount: 'Remove discount',
-    paymentSumMustEqualTotal: 'Payments must cover the total. Only cash may exceed it to provide change.',
+    paymentSumMustEqualTotal:
+        'Payments must cover the total. Only cash may exceed it to provide change.',
     summary: 'Summary',
     taxes: 'Taxes',
     totalTaxes: 'Total taxes',
@@ -558,7 +580,8 @@ class AppLocale {
     change: 'Change',
     close: 'Close',
     confirmCompleteOrder: 'Are you sure you want to {action} the order?',
-    confirmCompleteCreditNote: 'Are you sure you want to {action} the credit note?',
+    confirmCompleteCreditNote:
+        'Are you sure you want to {action} the credit note?',
     noTax: 'No tax',
     fillWithRemaining: 'Fill with the remaining amount',
     errorCompleteOrder: 'Error completing order',
@@ -582,7 +605,8 @@ class AppLocale {
     medium: 'Medium',
     strong: 'Strong',
     updatePassword: 'Update password?',
-    updatePasswordMsg: 'Current session will be closed and you will have to login again.',
+    updatePasswordMsg:
+        'Current session will be closed and you will have to login again.',
     yesUpdate: 'Yes, update',
     newPassword: 'New Password',
     confirmPassword: 'Confirm Password',
@@ -602,11 +626,13 @@ class AppLocale {
     loadingMsg4: 'Loading your preferences...',
     loadingMsg5: 'Almost ready, please wait...',
     passwordWarningTitle: 'Security Warning',
-    passwordWarningBody: 'We noticed your password is the same as your username. We recommend changing it for security.',
+    passwordWarningBody:
+        'We noticed your password is the same as your username. We recommend changing it for security.',
     changePasswordNow: 'Yes, change password',
     maybeLater: 'No, maybe later',
     passwordSameAsUserError: 'Password cannot be the same as username',
-    passwordSameAsPreviousError: 'Password cannot be the same as the previous one',
+    passwordSameAsPreviousError:
+        'Password cannot be the same as the previous one',
     yesterday: 'Yesterday',
     posPrinterConfig: 'Header / Footer',
     headerText: 'Header',
@@ -623,25 +649,35 @@ class AppLocale {
     totalPaid: 'Total pagado',
     outstandingDebt: 'Deuda pendiente',
     paymentProgress: 'Progreso del pago',
-    selectCustomerForInvoices: 'Seleccione un cliente para consultar sus facturas completadas.',
+    selectCustomerForInvoices:
+        'Seleccione un cliente para consultar sus facturas completadas.',
     noCompletedInvoices: 'Este cliente no tiene facturas completadas.',
     invoiceLoadError: 'No se pudieron cargar las facturas.',
     noInvoiceLines: 'Esta factura no tiene líneas de detalle.',
-    invalidInvoicePaymentAmount: 'Ingrese un monto mayor que cero y no superior a la deuda pendiente.',
+    invalidInvoicePaymentAmount:
+        'Ingrese un monto mayor que cero y no superior a la deuda pendiente.',
     noPaymentMethods: 'No hay métodos de pago disponibles.',
-    noSelectedInvoices: 'Seleccione una factura para preparar el resumen del pago.',
+    noSelectedInvoices:
+        'Seleccione una factura para preparar el resumen del pago.',
     selectedInvoices: 'Facturas seleccionadas',
     selectedInvoiceValue: 'Valor de facturas seleccionadas',
     allocatedPayment: 'Monto asignado a facturas',
     paymentMethodTotal: 'Total en métodos de pago',
     paymentDifference: 'Diferencia',
     remove: 'Eliminar',
-    invoicePaymentsCreated: 'Los registros de pago fueron creados correctamente.',
-    invoicePaymentsPartialError: 'No se pudieron crear algunos pagos: {methods}. Puede reintentar los métodos pendientes.',
+    invoicePaymentsCreated:
+        'Los registros de pago fueron creados correctamente.',
+    confirmProcessInvoicePayments:
+        '¿Está seguro de que desea procesar estos pagos y aplicarlos a las facturas seleccionadas?',
+    invoicePaymentsPartialError:
+        'No se pudieron crear algunos pagos: {methods}. Puede reintentar los métodos pendientes.',
     paymentRecordCreated: 'Registro de pago creado',
-    paymentBankAccountRequired: 'El pago a facturas requiere una cuenta bancaria configurada en el POS. La configuración sin POS sigue pendiente.',
-    invoicePaymentTotalsMismatch: 'Los métodos de pago deben coincidir con el monto asignado a las facturas.',
-    paymentTenderTypeRequired: 'Un método de pago seleccionado no tiene tipo de tender configurado.',
+    paymentBankAccountRequired:
+        'El pago a facturas requiere una cuenta bancaria configurada en el POS. La configuración sin POS sigue pendiente.',
+    invoicePaymentTotalsMismatch:
+        'Los métodos de pago deben coincidir con el monto asignado a las facturas.',
+    paymentTenderTypeRequired:
+        'Un método de pago seleccionado no tiene tipo de tender configurado.',
     orgProfileTitle: 'Perfil de la\nOrganización',
     changePassword: 'Cambiar contraseña',
     organizationInfo: 'Información de la organización',
@@ -674,14 +710,16 @@ class AppLocale {
     settingsSaveError: 'Ocurrió un error al guardar. Revisa la consola.',
     noOrdersRegistered: 'Sin órdenes registradas',
     readyForFirstOrder: '¿Listo para realizar tu primera orden?',
-    selectValidCustomerForProducts: 'Seleccione un cliente válido para poder agregar productos a la orden.',
+    selectValidCustomerForProducts:
+        'Seleccione un cliente válido para poder agregar productos a la orden.',
     selectCustomer: 'Seleccione un cliente',
     customerNoAddressError:
         'Este cliente no tiene una dirección válida, por favor edite el cliente para agregar una dirección antes de continuar',
     today: 'Hoy',
     todaySalesByCategoryDescription:
         'Puedes visualizar las ventas facturadas del día agrupadas por categoría de producto. El monto no incluye impuestos. Si tocas el gráfico podrás ver el detalle de las ventas por categoría.',
-    confirmCreateCategory: '¿Seguro que desea crear esta categoría de producto?',
+    confirmCreateCategory:
+        '¿Seguro que desea crear esta categoría de producto?',
     newCategory: 'Nueva Categoría',
     changeRole: 'Cambiar Rol',
     thisMonth: 'Este mes',
@@ -689,7 +727,8 @@ class AppLocale {
     confirmCreateProduct: '¿Está seguro de que desea crear el producto?',
     copyToNewDocument: 'Copiar a nueva operación',
     documentType: 'Tipo de operación comercial',
-    noDocTypesAvailable: 'No hay tipos de documento disponibles para convertir.',
+    noDocTypesAvailable:
+        'No hay tipos de documento disponibles para convertir.',
     invoiceSentSuccess: 'Factura enviada con éxito',
     invoiceSendError: 'Error al enviar la factura',
     completeOrderTitle: 'Completar Orden',
@@ -699,7 +738,8 @@ class AppLocale {
     confirmCreditNoteTitle: 'Confirmar Nota de Crédito',
     confirmCreditNoteBody: '¿Seguro que quiere convertir a nota de crédito?',
     cannotUndoWarning: 'Recuerde que esta acción no se puede deshacer.',
-    changeClientWarning: 'Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?',
+    changeClientWarning:
+        'Si selecciona otro cliente, se eliminarán los productos.\n¿Desea continuar?',
     changeClient: '¿Cambiar cliente?',
     noDocComplete: 'No se pudo completar la acción',
     duplicate: 'Duplicar',
@@ -838,7 +878,8 @@ class AppLocale {
     paymentMethods: 'Métodos de pago',
     discounts: 'Descuentos',
     removeDiscount: 'Quitar descuento',
-    paymentSumMustEqualTotal: 'Los pagos deben cubrir el total. Solo el efectivo puede excederlo para generar vuelto.',
+    paymentSumMustEqualTotal:
+        'Los pagos deben cubrir el total. Solo el efectivo puede excederlo para generar vuelto.',
     summary: 'Resumen',
     taxes: 'Impuestos',
     totalTaxes: 'Total impuestos',
@@ -849,7 +890,8 @@ class AppLocale {
     discount: 'Descuento',
     close: 'Cerrar',
     confirmCompleteOrder: '¿Está seguro de que desea {action} la orden?',
-    confirmCompleteCreditNote: '¿Está seguro de que desea {action} la nota de crédito?',
+    confirmCompleteCreditNote:
+        '¿Está seguro de que desea {action} la nota de crédito?',
     noTax: 'Sin impuesto',
     fillWithRemaining: 'Llenar con el monto restante',
     errorCompleteOrder: 'Error al completar la orden',
@@ -885,7 +927,8 @@ class AppLocale {
     medium: 'Medio',
     strong: 'Fuerte',
     updatePassword: '¿Actualizar clave?',
-    updatePasswordMsg: 'Se cerrará la sesión actual y tendrás que ingresar nuevamente.',
+    updatePasswordMsg:
+        'Se cerrará la sesión actual y tendrás que ingresar nuevamente.',
     yesUpdate: 'Sí, actualizar',
     newPassword: 'Nueva Contraseña',
     confirmPassword: 'Confirmar Contraseña',
@@ -905,11 +948,13 @@ class AppLocale {
     loadingMsg4: 'Cargando tus preferencias...',
     loadingMsg5: 'Casi listo, por favor espera...',
     passwordWarningTitle: 'Advertencia de Seguridad',
-    passwordWarningBody: 'Hemos detectado que tu contraseña es igual a tu nombre de usuario. Te recomendamos cambiarla por seguridad.',
+    passwordWarningBody:
+        'Hemos detectado que tu contraseña es igual a tu nombre de usuario. Te recomendamos cambiarla por seguridad.',
     changePasswordNow: 'Sí, cambiar contraseña',
     maybeLater: 'No, tal vez más tarde',
     passwordSameAsUserError: 'La contraseña no puede ser igual al usuario',
-    passwordSameAsPreviousError: 'La contraseña no puede ser igual a la anterior',
+    passwordSameAsPreviousError:
+        'La contraseña no puede ser igual a la anterior',
     yesterday: 'Ayer',
     posPrinterConfig: 'Encabezado / Pie de página',
     headerText: 'Encabezado',

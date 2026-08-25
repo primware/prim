@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/API/user.api.dart';
 import 'package:primware/API/pos.api.dart';
+import 'package:primware/API/token.api.dart';
 import 'package:primware/localization/app_locale.dart';
 import 'package:primware/shared/button.widget.dart';
 import 'package:primware/shared/custom_app_menu.dart';
@@ -33,8 +34,6 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
   List<Map<String, dynamic>> _invoices = [];
   List<Map<String, dynamic>> _paymentMethods = [];
   final Map<int, Map<String, dynamic>> _selectedInvoices = {};
-  final Set<int> _createdPaymentMethodIds = {};
-  final Map<int, dynamic> _createdPaymentRecordIds = {};
 
   int? _selectedCustomerId;
   String? _selectedCustomerName;
@@ -68,29 +67,29 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
   }
 
   double get _selectedValue => _selectedInvoices.values.fold<double>(
-        0.0,
-        (sum, invoice) => sum + _money(invoice['grandTotal']),
-      );
+    0.0,
+    (sum, invoice) => sum + _money(invoice['grandTotal']),
+  );
 
   double get _allocatedValue => _selectedInvoices.values.fold<double>(
-        0.0,
-        (sum, invoice) => sum + _money(invoice['amountToPay']),
-      );
+    0.0,
+    (sum, invoice) => sum + _money(invoice['amountToPay']),
+  );
 
   double get _paymentValue => _paymentControllers.values.fold<double>(
-        0.0,
-        (sum, controller) => sum + _money(controller.text),
-      );
+    0.0,
+    (sum, controller) => sum + _money(controller.text),
+  );
 
   double get _historicalPaidValue => _selectedInvoices.values.fold<double>(
-        0.0,
-        (sum, invoice) => sum + _money(invoice['totalPaid']),
-      );
+    0.0,
+    (sum, invoice) => sum + _money(invoice['totalPaid']),
+  );
 
   double get _outstandingDebtValue => _selectedInvoices.values.fold<double>(
-        0.0,
-        (sum, invoice) => sum + _money(invoice['outstandingDebt']),
-      );
+    0.0,
+    (sum, invoice) => sum + _money(invoice['outstandingDebt']),
+  );
 
   double get _historicalPaymentProgress => _selectedValue <= 0
       ? 0.0
@@ -104,8 +103,8 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
       invoicePaymentAmountsMatch(_allocatedValue, _paymentValue);
 
   bool get _usedMethodsHaveTenderType => _usedPaymentMethods.every(
-        (method) => (method['tenderTypeID']?.toString().trim() ?? '').isNotEmpty,
-      );
+    (method) => (method['tenderTypeID']?.toString().trim() ?? '').isNotEmpty,
+  );
 
   bool get _canProcessPayments =>
       !_processingPayments &&
@@ -157,8 +156,6 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
       _customerController.text = _selectedCustomerName!;
       _invoices = [];
       _selectedInvoices.clear();
-      _createdPaymentMethodIds.clear();
-      _createdPaymentRecordIds.clear();
       _invoiceError = null;
       _loadingInvoices = true;
     });
@@ -193,8 +190,6 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
       _invoices.clear();
       _selectedInvoices.clear();
       _invoiceError = null;
-      _createdPaymentMethodIds.clear();
-      _createdPaymentRecordIds.clear();
     });
     for (final controller in _paymentControllers.values) {
       controller.clear();
@@ -203,46 +198,51 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
 
   Future<void> _processPayments() async {
     if (!_canProcessPayments) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Theme.of(dialogContext).cardColor,
+        title: Text(AppLocale.process.getString(dialogContext)),
+        content: Text(
+          AppLocale.confirmProcessInvoicePayments.getString(dialogContext),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(AppLocale.cancel.getString(dialogContext)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(AppLocale.confirm.getString(dialogContext)),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
     final customerId = _selectedCustomerId!;
     final bankAccountId = POS.bankAccountID!;
-    final failedMethods = <String>[];
+    final organizationId = Token.organitation;
+    if (organizationId == null || organizationId <= 0) return;
+
+    final payments = _usedPaymentMethods.map((method) {
+      final methodId = method['id'] as int;
+      return {...method, 'amount': _money(_paymentControllers[methodId]?.text)};
+    }).toList();
+    final invoices = _selectedInvoices.values.toList();
 
     setState(() => _processingPayments = true);
-    for (final method in _usedPaymentMethods) {
-      final methodId = method['id'] as int?;
-      if (methodId == null || _createdPaymentMethodIds.contains(methodId)) {
-        continue;
-      }
-      final tenderTypeId = method['tenderTypeID']?.toString();
-      if (tenderTypeId == null || tenderTypeId.isEmpty) {
-        failedMethods.add((method['name'] ?? methodId).toString());
-        continue;
-      }
-      final result = await postInvoicePayment(
-        context: context,
-        bankAccountId: bankAccountId,
-        tenderTypeId: tenderTypeId,
-        posTenderTypeId: methodId,
-        amount: _money(_paymentControllers[methodId]?.text),
-        bPartnerId: customerId,
-      );
-      if (!mounted) return;
-      if (result['success'] == true) {
-        setState(() {
-          _createdPaymentMethodIds.add(methodId);
-          _createdPaymentRecordIds[methodId] = result['id'];
-        });
-      } else {
-        failedMethods.add((method['name'] ?? methodId).toString());
-      }
-    }
+    final result = await postInvoicePaymentBatch(
+      context: context,
+      bankAccountId: bankAccountId,
+      organizationId: organizationId,
+      bPartnerId: customerId,
+      payments: payments,
+      invoices: invoices,
+    );
 
     if (!mounted) return;
-    final allCreated = _usedPaymentMethods.every((method) {
-      final id = method['id'];
-      return id is int && _createdPaymentMethodIds.contains(id);
-    });
-    if (allCreated && failedMethods.isEmpty) {
+    if (result['success'] == true) {
       setState(() {
         _processingPayments = false;
         _selectedCustomerId = null;
@@ -251,8 +251,6 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
         _invoices.clear();
         _selectedInvoices.clear();
         _invoiceError = null;
-        _createdPaymentMethodIds.clear();
-        _createdPaymentRecordIds.clear();
         for (final controller in _paymentControllers.values) {
           controller.clear();
         }
@@ -268,9 +266,10 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
     setState(() => _processingPayments = false);
     ToastMessage.show(
       context: context,
-      message: AppLocale.invoicePaymentsPartialError
-          .getString(context)
-          .replaceAll('{methods}', failedMethods.join(', ')),
+      message:
+          (result['message'] ??
+                  AppLocale.invoicePaymentsPartialError.getString(context))
+              .toString(),
       type: ToastType.failure,
     );
   }
@@ -297,8 +296,9 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
             final outstandingDebt = _money(invoice['outstandingDebt']);
             if (amount <= 0 || amount > outstandingDebt) {
               setDialogState(() {
-                errorText = AppLocale.invalidInvoicePaymentAmount
-                    .getString(context);
+                errorText = AppLocale.invalidInvoicePaymentAmount.getString(
+                  context,
+                );
               });
               return;
             }
@@ -323,7 +323,8 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                   children: [
                     _InfoRow(
                       label: AppLocale.invoiceValue.getString(context),
-                      value: '\$${_money(invoice['grandTotal']).toStringAsFixed(2)}',
+                      value:
+                          '\$${_money(invoice['grandTotal']).toStringAsFixed(2)}',
                       emphasized: true,
                     ),
                     const SizedBox(height: CustomSpacer.small),
@@ -349,10 +350,9 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.05),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Column(
@@ -360,9 +360,7 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                             children: [
                               Text(
                                 (line['productName'] ?? 'Producto').toString(),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
+                                style: Theme.of(context).textTheme.bodyLarge
                                     ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(height: 4),
@@ -389,13 +387,17 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                     TextField(
                       controller: amountController,
                       autofocus: true,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
                       ],
                       onSubmitted: (_) => submit(),
                       decoration: InputDecoration(
-                        labelText: AppLocale.amountToPayInvoice.getString(context),
+                        labelText: AppLocale.amountToPayInvoice.getString(
+                          context,
+                        ),
                         prefixText: '\$ ',
                         errorText: errorText,
                         border: const OutlineInputBorder(),
@@ -427,10 +429,7 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
 
     if (result != null && mounted) {
       setState(() {
-        _selectedInvoices[id] = {
-          ...invoice,
-          'amountToPay': result,
-        };
+        _selectedInvoices[id] = {...invoice, 'amountToPay': result};
       });
     }
   }
@@ -532,7 +531,9 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                         )
                       : IconButton(
                           tooltip: AppLocale.close.getString(context),
-                          onPressed: _processingPayments ? null : _clearCustomerSelection,
+                          onPressed: _processingPayments
+                              ? null
+                              : _clearCustomerSelection,
                           icon: const Icon(Icons.close),
                         ),
                 ),
@@ -582,7 +583,9 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                   final selected = _selectedInvoices.containsKey(invoice['id']);
                   return Material(
                     color: selected
-                        ? Theme.of(context).colorScheme.primary.withOpacity(0.10)
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.10)
                         : Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(10),
                     child: ListTile(
@@ -648,46 +651,44 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                       child: TextfieldTheme(
                         controlador: _paymentControllers[method['id']],
                         texto: method['name']?.toString(),
-                        readOnly: _processingPayments ||
-                            _createdPaymentMethodIds.contains(method['id']),
-                        inputType: const TextInputType.numberWithOptions(decimal: true),
+                        readOnly: _processingPayments,
+                        inputType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'[0-9\.,]'),
+                          ),
                         ],
                         onChanged: (_) => setState(() {}),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (_createdPaymentMethodIds.contains(method['id']))
-                      Tooltip(
-                        message: AppLocale.paymentRecordCreated.getString(context),
-                        child: const Icon(Icons.check_circle, color: Colors.green),
-                      )
-                    else
-                      IconButton(
-                        tooltip: AppLocale.fillWithRemaining.getString(context),
-                        onPressed: _processingPayments
-                            ? null
-                            : () {
-                                final methodId = method['id'];
-                                final otherAmounts = _paymentControllers.entries
-                                    .where((entry) => entry.key != methodId)
-                                    .map((entry) => _money(entry.value.text));
-                                final remaining = calculateRemainingInvoicePayment(
-                                  _allocatedValue,
-                                  otherAmounts,
-                                );
-                                final controller = _paymentControllers[methodId];
-                                controller?.text = remaining.toStringAsFixed(2);
-                                if (controller != null) {
-                                  controller.selection = TextSelection.collapsed(
-                                    offset: controller.text.length,
+                    IconButton(
+                      tooltip: AppLocale.fillWithRemaining.getString(context),
+                      onPressed: _processingPayments
+                          ? null
+                          : () {
+                              final methodId = method['id'];
+                              final otherAmounts = _paymentControllers.entries
+                                  .where((entry) => entry.key != methodId)
+                                  .map((entry) => _money(entry.value.text));
+                              final remaining =
+                                  calculateRemainingInvoicePayment(
+                                    _allocatedValue,
+                                    otherAmounts,
                                   );
-                                }
-                                setState(() {});
-                              },
-                        icon: const Icon(Icons.attach_money_rounded),
-                      ),
+                              final controller = _paymentControllers[methodId];
+                              controller?.text = remaining.toStringAsFixed(2);
+                              if (controller != null) {
+                                controller.selection = TextSelection.collapsed(
+                                  offset: controller.text.length,
+                                );
+                              }
+                              setState(() {});
+                            },
+                      icon: const Icon(Icons.attach_money_rounded),
+                    ),
                   ],
                 ),
               ),
@@ -767,7 +768,8 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
             _InlineWarning(
               text: AppLocale.invoicePaymentTotalsMismatch.getString(context),
             )
-          else if (_usedPaymentMethods.isNotEmpty && !_usedMethodsHaveTenderType)
+          else if (_usedPaymentMethods.isNotEmpty &&
+              !_usedMethodsHaveTenderType)
             _InlineWarning(
               text: AppLocale.paymentTenderTypeRequired.getString(context),
             ),
@@ -816,10 +818,9 @@ class _SelectedInvoiceCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '${AppLocale.invoice.getString(context)} ${invoice['documentNo']}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -918,10 +919,9 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = emphasized
-        ? Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(fontWeight: FontWeight.bold)
+        ? Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)
         : Theme.of(context).textTheme.bodyMedium;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -985,15 +985,11 @@ class _EmptyState extends StatelessWidget {
             Text(
               text,
               textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.grey.shade600),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
             ),
-            if (action != null) ...[
-              const SizedBox(height: 8),
-              action!,
-            ],
+            if (action != null) ...[const SizedBox(height: 8), action!],
           ],
         ),
       ),
