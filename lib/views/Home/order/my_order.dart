@@ -7,7 +7,6 @@ import 'package:primware/shared/custom_textfield.dart';
 import 'package:primware/shared/shimmer_list.dart';
 import 'package:primware/shared/toast_message.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
-import 'package:primware/API/user.api.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
 import 'package:primware/views/Home/order/my_order_detail.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
@@ -15,7 +14,6 @@ import 'package:printing/printing.dart';
 import '../../../API/pos.api.dart';
 import '../../../shared/custom_app_menu.dart';
 import '../../../localization/app_locale.dart';
-import '../../../shared/glass_switch.dart';
 import '../../../shared/format_date.dart';
 import '../../../shared/footer.dart';
 import 'my_order_print_generator.dart';
@@ -24,6 +22,7 @@ import '../invoice/invoice_details.dart';
 import '../invoice/invoice_funtions.dart';
 import '../invoice/invoice_payment_print_generator.dart';
 import '../invoice/invoice_payment_receipt.dart';
+import 'history_search_criteria.dart';
 
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
@@ -34,13 +33,22 @@ class OrderListPage extends StatefulWidget {
 
 class _OrderListPageState extends State<OrderListPage> {
   static const _paymentFilterLabel = 'Pagos a facturas';
+  static const _sourcePageSize = 50;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, dynamic>> _orders = [];
   List<InvoicePaymentReceipt> _invoicePaymentReceipts = [];
   bool _isLoadingReceipts = true;
-  bool _isLoading = true, isSearchLoading = false, onlyMyOrders = false;
+  bool _isLoading = true, isSearchLoading = false;
   String? selectedDocTypeFilter;
-  String _searchQuery = '';
-  TextEditingController searchController = TextEditingController();
+  HistorySearchCriteria _appliedCriteria = const HistorySearchCriteria();
+  HistorySearchCriteria _pendingCriteria = const HistorySearchCriteria();
+  final TextEditingController _customerSearchController = TextEditingController();
+  final TextEditingController _documentSearchController = TextEditingController();
+  final TextEditingController _localFilterController = TextEditingController();
+  final Map<int, UnifiedHistoryPage> _pageCache = {};
+  int _currentPage = 0;
+  int _totalRecords = 0;
+  String _localFilter = '';
 
   // Mapa de estados de documento (DocStatus) a nombre en español y color
   final Map<String, Map<String, dynamic>> _docStatusMap = {
@@ -184,63 +192,80 @@ class _OrderListPageState extends State<OrderListPage> {
   @override
   void initState() {
     super.initState();
-    _fetchOrders();
-    _fetchInvoicePaymentReceipts();
+    _loadHistory(initialLoad: true);
   }
 
   @override
   void dispose() {
-    searchController.dispose();
+    _customerSearchController.dispose();
+    _documentSearchController.dispose();
+    _localFilterController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchInvoicePaymentReceipts() async {
-    setState(() => _isLoadingReceipts = true);
-    try {
-      final receipts = await fetchInvoicePaymentReceipts(context: context);
-      if (!mounted) return;
+  Future<void> _loadHistory({bool initialLoad = false, int page = 0, bool resetCache = false}) async {
+    if (!mounted) return;
+    if (!resetCache && _pageCache[page] != null) {
+      final cached = _pageCache[page]!;
       setState(() {
-        _invoicePaymentReceipts = receipts;
+        _currentPage = page;
+        _totalRecords = cached.totalCount;
+        _assignHistoryItems(cached.items);
+      });
+      return;
+    }
+    setState(() {
+      _isLoading = initialLoad;
+      _isLoadingReceipts = initialLoad;
+      isSearchLoading = !initialLoad;
+    });
+    try {
+      final results = await Future.wait<dynamic>([
+        fetchOrdersPage(context: context, criteria: _pendingCriteria, top: _sourcePageSize, skip: page * _sourcePageSize),
+        fetchInvoicePaymentReceiptsPage(context: context, criteria: _pendingCriteria, top: _sourcePageSize, skip: page * _sourcePageSize),
+      ]);
+      if (!mounted) return;
+      final orderPage = results[0] as PagedResult<Map<String, dynamic>>;
+      final receiptPage = results[1] as PagedResult<InvoicePaymentReceipt>;
+      final items = <Object>[...orderPage.records, ...receiptPage.records]
+        ..sort((left, right) => _historyDate(right).compareTo(_historyDate(left)));
+      final unified = UnifiedHistoryPage(items: items, totalCount: orderPage.rowCount + receiptPage.rowCount, pageIndex: page);
+      setState(() {
+        if (resetCache) _pageCache.clear();
+        _pageCache[page] = unified;
+        _assignHistoryItems(items);
+        _currentPage = page;
+        _totalRecords = unified.totalCount;
+        _appliedCriteria = _pendingCriteria;
+        _isLoading = false;
         _isLoadingReceipts = false;
+        isSearchLoading = false;
       });
     } catch (error) {
       if (!mounted) return;
-      setState(() => _isLoadingReceipts = false);
-      ToastMessage.show(context: context, message: error.toString(), type: ToastType.failure);
+      setState(() {
+        _isLoading = false;
+        _isLoadingReceipts = false;
+        isSearchLoading = false;
+      });
+      ToastMessage.show(context: context, message: 'No se pudo actualizar el historial. $error', type: ToastType.failure);
     }
   }
 
-  Future<void> _fetchOrders({bool showLoadingIndicator = false}) async {
-    setState(() {
-      if (showLoadingIndicator) {
-        isSearchLoading = true;
-      }
-
-      _isLoading = true;
-    });
-
-    final result = await fetchOrders(context: context, filter: searchController.text, onlyMyOrders: onlyMyOrders);
-    setState(() {
-      _orders = result;
-      _isLoading = false;
-      isSearchLoading = false;
-    });
-  }
-
-  void _refreshHistory() {
-    _fetchOrders(showLoadingIndicator: true);
-    _fetchInvoicePaymentReceipts();
+  void _assignHistoryItems(List<Object> items) {
+    _orders = items.whereType<Map<String, dynamic>>().toList();
+    _invoicePaymentReceipts = items.whereType<InvoicePaymentReceipt>().toList();
   }
 
   List<Map<String, dynamic>> _getFilteredOrders() {
     return _orders.where((order) {
-      final query = _searchQuery.trim().toLowerCase();
-      final matchesSearch =
+      final query = _localFilter.trim().toLowerCase();
+      final matchesLocal =
           query.isEmpty ||
-          order['DocumentNo'].toString().toLowerCase().contains(query) ||
+          (order['DocumentNo'] ?? '').toString().toLowerCase().contains(query) ||
           (order['bpartner']?['name'] ?? '').toString().toLowerCase().contains(query);
       final matchesDocType = selectedDocTypeFilter == null || order['doctypetarget']?['name'] == selectedDocTypeFilter;
-      return matchesSearch && matchesDocType;
+      return matchesLocal && matchesDocType;
     }).toList();
   }
 
@@ -248,11 +273,9 @@ class _OrderListPageState extends State<OrderListPage> {
     if (selectedDocTypeFilter != null && selectedDocTypeFilter != _paymentFilterLabel) {
       return const [];
     }
-    final query = _searchQuery.trim().toLowerCase();
+    final query = _localFilter.trim().toLowerCase();
     return _invoicePaymentReceipts.where((receipt) {
-      final matchesOwner = !onlyMyOrders || receipt.salesRepId == UserData.id;
-      final matchesSearch = query.isEmpty || receipt.searchableText.contains(query);
-      return matchesOwner && matchesSearch;
+      return query.isEmpty || receipt.customerName.toLowerCase().contains(query) || receipt.displayDocumentNo.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -268,6 +291,292 @@ class _OrderListPageState extends State<OrderListPage> {
       return DateTime.tryParse((item['DateOrdered'] ?? item['Created'] ?? '').toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
     }
     return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  void _stageCriteria(HistorySearchCriteria criteria) {
+    setState(() {
+      _pendingCriteria = criteria;
+      if (_customerSearchController.text != criteria.customerText) {
+        _customerSearchController.text = criteria.customerText;
+      }
+      if (_documentSearchController.text != criteria.documentText) {
+        _documentSearchController.text = criteria.documentText;
+      }
+    });
+  }
+
+  void _updatePendingTextCriteria() {
+    setState(() {
+      _pendingCriteria = _pendingCriteria.copyWith(
+        customerText: _customerSearchController.text.trim(),
+        documentText: _documentSearchController.text.trim(),
+      );
+    });
+  }
+
+  void _clearPendingCriteria() {
+    FocusScope.of(context).unfocus();
+    _customerSearchController.clear();
+    _documentSearchController.clear();
+    _stageCriteria(const HistorySearchCriteria());
+  }
+
+  void _resetSearchDraft() {
+    _customerSearchController.text = _appliedCriteria.customerText;
+    _documentSearchController.text = _appliedCriteria.documentText;
+    setState(() => _pendingCriteria = _appliedCriteria);
+  }
+
+  Future<void> _applyDrawerSearch() async {
+    Navigator.of(context).pop();
+    await _loadHistory(page: 0, resetCache: true);
+  }
+
+  Widget _buildSearchDrawer() {
+    final criteria = _pendingCriteria;
+    return Drawer(
+      width: MediaQuery.of(context).size.width.clamp(320, 460).toDouble(),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.manage_search_rounded, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text('Búsqueda avanzada', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  ),
+                  IconButton(
+                    tooltip: 'Cerrar',
+                    onPressed: () {
+                      _resetSearchDraft();
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      TextfieldTheme(
+                        controlador: _customerSearchController,
+                        texto: 'Cliente o identificación',
+                        icono: Icons.person_search_outlined,
+                        maxLines: 1,
+                        fillColor: Theme.of(context).brightness == Brightness.light ? Colors.white : Theme.of(context).cardColor,
+                        onChanged: (_) => _updatePendingTextCriteria(),
+                        onSubmitted: (_) {
+                          if (!isSearchLoading) _applyDrawerSearch();
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextfieldTheme(
+                        controlador: _documentSearchController,
+                        texto: 'N.º de orden, recibo o factura',
+                        icono: Icons.receipt_long_outlined,
+                        maxLines: 1,
+                        fillColor: Theme.of(context).brightness == Brightness.light ? Colors.white : Theme.of(context).cardColor,
+                        onChanged: (_) => _updatePendingTextCriteria(),
+                        onSubmitted: (_) {
+                          if (!isSearchLoading) _applyDrawerSearch();
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      DropdownButtonFormField<String?>(
+                        value: criteria.docStatus,
+                        decoration: InputDecoration(
+                          labelText: 'Estado del documento',
+                          prefixIcon: const Icon(Icons.fact_check_outlined),
+                          filled: true,
+                          fillColor: Theme.of(context).brightness == Brightness.light ? Colors.white : Theme.of(context).cardColor,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        items: [
+                          const DropdownMenuItem<String?>(value: null, child: Text('Todos los estados')),
+                          ..._docStatusMap.entries.map(
+                            (entry) => DropdownMenuItem<String?>(value: entry.key, child: Text(entry.value['label'].toString())),
+                          ),
+                        ],
+                        onChanged: (value) =>
+                            _stageCriteria(value == null ? criteria.copyWith(clearDocStatus: true) : criteria.copyWith(docStatus: value)),
+                      ),
+                      const SizedBox(height: 8),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Solo mis movimientos'),
+                        subtitle: const Text('Órdenes y pagos registrados a mi nombre'),
+                        value: criteria.onlyMyMovements,
+                        onChanged: (value) => _stageCriteria(criteria.copyWith(onlyMyMovements: value)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(),
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: isSearchLoading
+                        ? null
+                        : () {
+                            _clearPendingCriteria();
+                            _applyDrawerSearch();
+                          },
+                    child: const Text('Limpiar'),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      _resetSearchDraft();
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Cancelar'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: isSearchLoading ? null : _applyDrawerSearch,
+                    icon: const Icon(Icons.search),
+                    label: const Text('Buscar'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocalFilterField() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Filtrar esta página', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 10),
+          TextfieldTheme(
+            controlador: _localFilterController,
+            texto: 'Cliente, orden o recibo',
+            icono: Icons.filter_alt_outlined,
+            maxLines: 1,
+            fillColor: Theme.of(context).brightness == Brightness.light ? Colors.white : Theme.of(context).cardColor,
+            onChanged: (value) {
+              setState(() => _localFilter = value.trim().toLowerCase());
+            },
+          ),
+          const SizedBox(height: 12),
+          Text('Tipo de documento:', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          if (_orders.isNotEmpty || _invoicePaymentReceipts.isNotEmpty)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: const Text('Todos'),
+                      selected: selectedDocTypeFilter == null,
+                      selectedColor: Theme.of(context).primaryColor,
+                      checkmarkColor: Theme.of(context).colorScheme.onPrimary,
+                      onSelected: (_) {
+                        setState(() => selectedDocTypeFilter = null);
+                      },
+                    ),
+                  ),
+                  if (_invoicePaymentReceipts.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        avatar: const Icon(Icons.payments_outlined, size: 17),
+                        label: const Text(_paymentFilterLabel),
+                        selected: selectedDocTypeFilter == _paymentFilterLabel,
+                        selectedColor: Theme.of(context).colorScheme.secondaryContainer,
+                        onSelected: (selected) {
+                          setState(() {
+                            selectedDocTypeFilter = selected ? _paymentFilterLabel : null;
+                          });
+                        },
+                      ),
+                    ),
+                  ..._orders
+                      .map((order) => order['doctypetarget']?['name']?.toString() ?? '')
+                      .where((name) => name.isNotEmpty)
+                      .toSet()
+                      .map(
+                        (docName) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(docName),
+                            selected: selectedDocTypeFilter == docName,
+                            selectedColor: Theme.of(context).primaryColor,
+                            checkmarkColor: Theme.of(context).colorScheme.onPrimary,
+                            onSelected: (selected) {
+                              setState(() {
+                                selectedDocTypeFilter = selected ? docName : null;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPagination() {
+    final visibleCount = _getUnifiedHistory().length;
+    final loadedCount = _orders.length + _invoicePaymentReceipts.length;
+    final totalPages = _totalRecords == 0 ? 1 : (_totalRecords / (_sourcePageSize * 2)).ceil();
+    final hasLocalFilter = _localFilter.isNotEmpty || selectedDocTypeFilter != null;
+    final start = _totalRecords == 0 ? 0 : (_currentPage * _sourcePageSize * 2) + 1;
+    final end = (start + loadedCount - 1).clamp(0, _totalRecords);
+    return Column(
+      children: [
+        Text(
+          hasLocalFilter
+              ? 'Mostrando $visibleCount de $loadedCount cargados en esta página · $_totalRecords resultados de búsqueda'
+              : 'Mostrando $start–$end de $_totalRecords movimientos',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            OutlinedButton.icon(
+              onPressed: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
+              icon: const Icon(Icons.chevron_left),
+              label: const Text('Anterior'),
+            ),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('Página ${_currentPage + 1} de $totalPages')),
+            OutlinedButton.icon(
+              onPressed: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
+              iconAlignment: IconAlignment.end,
+              icon: const Icon(Icons.chevron_right),
+              label: const Text('Siguiente'),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Future<void> _printInvoicePaymentReceipt(InvoicePaymentReceipt receipt) async {
@@ -492,7 +801,9 @@ class _OrderListPageState extends State<OrderListPage> {
                                   OrderNewPage(isRefund: false, doctypeID: docTypeId, orderName: docName, sourceOrderId: order['id']),
                             ),
                           ).then((value) {
-                            if (value == true) _fetchOrders(showLoadingIndicator: true);
+                            if (value == true) {
+                              _loadHistory(page: _currentPage, resetCache: true);
+                            }
                           });
                         },
                       );
@@ -543,7 +854,7 @@ class _OrderListPageState extends State<OrderListPage> {
         if (confirmArc == true) {
           final bool creditMemoSucces = await createCreditMemo(cInvoiceID: order['C_Invoice']?[0]?['id']);
           if (creditMemoSucces) {
-            _fetchOrders(showLoadingIndicator: true);
+            _loadHistory(page: _currentPage, resetCache: true);
           }
         }
         break;
@@ -552,11 +863,15 @@ class _OrderListPageState extends State<OrderListPage> {
         if (confirmDocComplete == true) {
           final docCompleteSucces = await docComplete(cOrderID: order['id']);
           if (docCompleteSucces["success"] == true && docCompleteSucces["isError"] == false) {
-            _fetchOrders(showLoadingIndicator: true);
+            _loadHistory(page: _currentPage, resetCache: true);
           } else if (docCompleteSucces["success"] == true && docCompleteSucces["isError"] == true) {
-            if (mounted) ToastMessage.show(context: context, message: docCompleteSucces["summary"], type: ToastType.failure);
+            if (mounted) {
+              ToastMessage.show(context: context, message: docCompleteSucces["summary"], type: ToastType.failure);
+            }
           } else {
-            if (mounted) ToastMessage.show(context: context, message: AppLocale.noDocComplete.getString(context), type: ToastType.failure);
+            if (mounted) {
+              ToastMessage.show(context: context, message: AppLocale.noDocComplete.getString(context), type: ToastType.failure);
+            }
           }
         }
         break;
@@ -683,7 +998,7 @@ class _OrderListPageState extends State<OrderListPage> {
       onTap: () async {
         final refreshed = await Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)));
         if (refreshed == true) {
-          _fetchOrders();
+          _loadHistory(page: _currentPage, resetCache: true);
         }
       },
       child: Container(
@@ -891,8 +1206,41 @@ class _OrderListPageState extends State<OrderListPage> {
         return Future.value(false);
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(AppLocale.myOrders.getString(context))),
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: Text(AppLocale.myOrders.getString(context)),
+          actions: [
+            IconButton(
+              tooltip: 'Búsqueda avanzada',
+              onPressed: () {
+                _resetSearchDraft();
+                _scaffoldKey.currentState?.openEndDrawer();
+              },
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.tune_rounded),
+                  if (!_appliedCriteria.isEmpty)
+                    Positioned(
+                      right: -3,
+                      top: -3,
+                      child: Container(
+                        width: 11,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
         drawer: MenuDrawer(),
+        endDrawer: _buildSearchDrawer(),
         floatingActionButton: POS.docTypeID != null
             ? FloatingActionButton(
                 onPressed: () {
@@ -914,142 +1262,7 @@ class _OrderListPageState extends State<OrderListPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextfieldTheme(
-                          controlador: searchController,
-                          texto: 'Buscar orden, recibo, factura o cliente',
-                          icono: Icons.receipt_long_rounded,
-                          onSubmitted: (_) => setState(() {}),
-                          onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: CustomSpacer.small),
-                      Container(
-                        height: 45,
-                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
-                        child: IconButton(
-                          icon: const Icon(Icons.search, color: Colors.white),
-                          onPressed: () => setState(() {}),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withOpacity(0.2)
-                          : Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.receipt,
-                              size: 22,
-                              color: onlyMyOrders ? Theme.of(context).primaryColor : Colors.grey.shade600,
-                            ), // Icono más grande
-                            const SizedBox(width: 12),
-                            Text(
-                              'Solo mis movimientos',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: onlyMyOrders ? FontWeight.bold : FontWeight.w500,
-                                color: onlyMyOrders
-                                    ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)
-                                    : Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        GlassSwitch(
-                          value: onlyMyOrders,
-                          onChanged: (newValue) {
-                            setState(() {
-                              onlyMyOrders = newValue;
-                              _refreshHistory();
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  if (_orders.isNotEmpty || _invoicePaymentReceipts.isNotEmpty)
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8.0, left: 16.0),
-                              child: FilterChip(
-                                label: const Text('Todos'),
-                                selected: selectedDocTypeFilter == null,
-                                selectedColor: Theme.of(context).primaryColor,
-                                checkmarkColor: Theme.of(context).colorScheme.onPrimary,
-                                onSelected: (bool selected) {
-                                  setState(() {
-                                    selectedDocTypeFilter = null;
-                                  });
-                                },
-                              ),
-                            ),
-                            if (_invoicePaymentReceipts.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: FilterChip(
-                                  avatar: const Icon(Icons.payments_outlined, size: 17),
-                                  label: const Text(_paymentFilterLabel),
-                                  selected: selectedDocTypeFilter == _paymentFilterLabel,
-                                  selectedColor: Theme.of(context).colorScheme.secondaryContainer,
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      selectedDocTypeFilter = selected ? _paymentFilterLabel : null;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ..._orders
-                                .map((e) => e['doctypetarget']?['name']?.toString() ?? '')
-                                .where((name) => name.isNotEmpty)
-                                .toSet()
-                                .map((docName) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 8.0),
-                                    child: FilterChip(
-                                      label: Text(docName),
-                                      selected: selectedDocTypeFilter == docName,
-                                      selectedColor: Theme.of(context).primaryColor,
-                                      checkmarkColor: Theme.of(context).colorScheme.onPrimary,
-                                      onSelected: (bool selected) {
-                                        setState(() {
-                                          selectedDocTypeFilter = selected ? docName : null;
-                                        });
-                                      },
-                                    ),
-                                  );
-                                }),
-                          ],
-                        ),
-                      ),
-                    ),
+                  _buildLocalFilterField(),
 
                   if (isSearchLoading) ...[const SizedBox(height: 4), const LinearProgressIndicator(), const SizedBox(height: 8)],
 
@@ -1058,17 +1271,25 @@ class _OrderListPageState extends State<OrderListPage> {
                   Expanded(
                     child: _isLoading || _isLoadingReceipts
                         ? ShimmerList(separation: CustomSpacer.medium)
-                        : _getUnifiedHistory().isEmpty
-                        ? Center(
-                            child: Text(
-                              'No hay órdenes ni pagos a facturas para mostrar.',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-                            ),
-                          )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),
-                            itemCount: _getUnifiedHistory().length,
+                            itemCount: _getUnifiedHistory().isEmpty ? 2 : _getUnifiedHistory().length + 1,
                             itemBuilder: (context, index) {
+                              if (_getUnifiedHistory().isEmpty && index == 0) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 40),
+                                  child: Center(
+                                    child: Text(
+                                      'No hay coincidencias en esta página.',
+                                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                                    ),
+                                  ),
+                                );
+                              }
+                              final footerIndex = _getUnifiedHistory().isEmpty ? 1 : _getUnifiedHistory().length;
+                              if (index == footerIndex) {
+                                return Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: _buildPagination());
+                              }
                               final item = _getUnifiedHistory()[index];
                               return item is InvoicePaymentReceipt
                                   ? _buildInvoicePaymentCard(item)

@@ -22,6 +22,7 @@ class TextfieldTheme extends StatefulWidget {
     this.minLines,
     this.focusNode,
     this.textAlign,
+    this.fillColor,
   });
 
   final String? texto;
@@ -39,6 +40,7 @@ class TextfieldTheme extends StatefulWidget {
   final int? maxLines;
   final int? minLines;
   final FocusNode? focusNode;
+  final Color? fillColor;
 
   @override
   State<TextfieldTheme> createState() => _TextfieldThemeState();
@@ -59,7 +61,12 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
     return TextField(
       maxLength: widget.maxLength,
       minLines: widget.obscure ? 1 : (widget.minLines ?? 1),
-      maxLines: widget.obscure ? 1 : (widget.maxLines == null && widget.inputType == TextInputType.multiline ? null : (widget.maxLines ?? 5)),
+      maxLines: widget.obscure
+          ? 1
+          : (widget.maxLines == null &&
+                    widget.inputType == TextInputType.multiline
+                ? null
+                : (widget.maxLines ?? 5)),
       focusNode: widget.focusNode,
       onSubmitted: widget.onSubmitted,
       onChanged: widget.onChanged,
@@ -74,7 +81,7 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
         hintText: widget.pista,
         hintStyle: TextStyle(color: Colors.grey),
         filled: true, // Habilita el relleno del fondo
-        fillColor: Theme.of(context).cardColor,
+        fillColor: widget.fillColor ?? Theme.of(context).cardColor,
         hoverColor: Theme.of(context).primaryColor.withAlpha(40),
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control

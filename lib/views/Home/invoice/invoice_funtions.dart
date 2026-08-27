@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:primware/API/endpoint.dart';
 import 'package:primware/API/token.api.dart';
+import 'package:primware/API/user.api.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
+import 'package:primware/views/Home/order/history_search_criteria.dart';
 
 import 'invoice_payment_receipt.dart';
 
@@ -433,28 +435,56 @@ InvoicePaymentReceipt buildInvoicePaymentReceiptFromBatch({
   );
 }
 
-Future<List<InvoicePaymentReceipt>> fetchInvoicePaymentReceipts({
+Future<PagedResult<InvoicePaymentReceipt>> fetchInvoicePaymentReceiptsPage({
   required BuildContext context,
+  HistorySearchCriteria criteria = const HistorySearchCriteria(),
+  int top = 50,
+  int skip = 0,
 }) async {
   await usuarioAuth(context: context);
+  if (criteria.docStatus != null && criteria.docStatus != 'CO') {
+    return PagedResult(
+      records: const [],
+      rowCount: 0,
+      recordsSize: 0,
+      skipRecords: skip,
+    );
+  }
   final allocationDocTypeId = await _fetchUniqueDocTypeId(
     "DocBaseType eq 'CMA'",
   );
-  final uri = Uri.parse(
-    '${EndPoints.cAllocationHdr}?\$filter=DocStatus eq \'CO\' and IsManual eq true '
-    'and C_DocType_ID eq $allocationDocTypeId'
-    '&\$orderby=DateTrx desc'
-    '&\$expand=C_AllocationLine',
-  );
-  final response = await get(uri, headers: _headers());
-  if (response.statusCode != 200) {
-    throw Exception(
-      'No se pudo cargar el historial de pagos (${response.statusCode}).',
+  final records = <Map>[];
+  var totalCount = 0;
+  var recordsSize = 0;
+  var skipRecords = skip;
+  {
+    final uri = Uri.parse(
+      '${EndPoints.cAllocationHdr}?\$top=$top&\$skip=$skip'
+      '&\$filter=DocStatus eq \'CO\' and IsManual eq true '
+      'and C_DocType_ID eq $allocationDocTypeId'
+      '&\$orderby=DateTrx desc'
+      '&\$expand=C_AllocationLine',
     );
+    final response = await get(uri, headers: _headers());
+    if (response.statusCode != 200) {
+      throw Exception(
+        'No se pudo cargar el historial de pagos (${response.statusCode}).',
+      );
+    }
+    final decoded = json.decode(utf8.decode(response.bodyBytes));
+    final page =
+        (decoded['records'] as List?)?.whereType<Map>().toList() ??
+        const <Map>[];
+    records.addAll(page);
+    recordsSize =
+        int.tryParse((decoded['records-size'] ?? page.length).toString()) ??
+        page.length;
+    skipRecords =
+        int.tryParse((decoded['skip-records'] ?? skip).toString()) ?? skip;
+    totalCount =
+        int.tryParse((decoded['row-count'] ?? page.length).toString()) ??
+        page.length;
   }
-  final decoded = json.decode(utf8.decode(response.bodyBytes));
-  final records =
-      (decoded['records'] as List?)?.whereType<Map>().toList() ?? const <Map>[];
   final paymentIds = records
       .expand((record) => ((record['C_AllocationLine'] as List?) ?? const []))
       .whereType<Map>()
@@ -462,7 +492,14 @@ Future<List<InvoicePaymentReceipt>> fetchInvoicePaymentReceipts({
       .whereType<int>()
       .toSet()
       .toList();
-  if (paymentIds.isEmpty) return const [];
+  if (paymentIds.isEmpty) {
+    return PagedResult(
+      records: const [],
+      rowCount: totalCount,
+      recordsSize: recordsSize,
+      skipRecords: skipRecords,
+    );
+  }
 
   final invoiceIds = records
       .expand((record) => ((record['C_AllocationLine'] as List?) ?? const []))
@@ -499,20 +536,25 @@ Future<List<InvoicePaymentReceipt>> fetchInvoicePaymentReceipts({
     select: 'Name,TaxID',
   );
 
-  final traceUri = Uri.parse(
-    '${EndPoints.cdsPOSPaymentTrace}?\$filter=C_Payment_ID in (${paymentIds.join(',')})'
-    '&\$expand=C_Payment_ID,SalesRep_ID,C_POS_ID',
-  );
-  final traceResponse = await get(traceUri, headers: _headers());
-  if (traceResponse.statusCode != 200) {
-    throw Exception(
-      'No se pudieron cargar las trazas de pagos (${traceResponse.statusCode}).',
+  final traces = <Map>[];
+  for (var start = 0; start < paymentIds.length; start += 75) {
+    final end = (start + 75).clamp(0, paymentIds.length);
+    final chunk = paymentIds.sublist(start, end);
+    final traceUri = Uri.parse(
+      '${EndPoints.cdsPOSPaymentTrace}?\$filter=C_Payment_ID in (${chunk.join(',')})'
+      '&\$expand=C_Payment_ID,SalesRep_ID,C_POS_ID',
+    );
+    final traceResponse = await get(traceUri, headers: _headers());
+    if (traceResponse.statusCode != 200) {
+      throw Exception(
+        'No se pudieron cargar las trazas de pagos (${traceResponse.statusCode}).',
+      );
+    }
+    final traceDecoded = json.decode(utf8.decode(traceResponse.bodyBytes));
+    traces.addAll(
+      (traceDecoded['records'] as List?)?.whereType<Map>() ?? const <Map>[],
     );
   }
-  final traceDecoded = json.decode(utf8.decode(traceResponse.bodyBytes));
-  final traces =
-      (traceDecoded['records'] as List?)?.whereType<Map>().toList() ??
-      const <Map>[];
   final tracesByPayment = <int, Map>{};
   for (final trace in traces) {
     final paymentId = _lookupInt(trace['C_Payment_ID']);
@@ -542,10 +584,33 @@ Future<List<InvoicePaymentReceipt>> fetchInvoicePaymentReceipts({
             .toList();
     return copy;
   }).toList();
-  return enrichedRecords
+  final normalized = enrichedRecords
       .map((record) => _normalizeHistoricalReceipt(record, tracesByPayment))
       .whereType<InvoicePaymentReceipt>()
       .toList();
+  final customerQuery = criteria.customerText.trim().toLowerCase();
+  final documentQuery = criteria.documentText.trim().toLowerCase();
+  final filtered = normalized.where((receipt) {
+    final matchesCustomer =
+        customerQuery.isEmpty ||
+        receipt.customerName.toLowerCase().contains(customerQuery) ||
+        receipt.customerTaxId.toLowerCase().contains(customerQuery);
+    final matchesDocument =
+        documentQuery.isEmpty ||
+        receipt.displayDocumentNo.toLowerCase().contains(documentQuery) ||
+        receipt.invoices.any(
+          (invoice) => invoice.documentNo.toLowerCase().contains(documentQuery),
+        );
+    final matchesOwner =
+        !criteria.onlyMyMovements || receipt.salesRepId == UserData.id;
+    return matchesCustomer && matchesDocument && matchesOwner;
+  }).toList();
+  return PagedResult(
+    records: filtered,
+    rowCount: totalCount,
+    recordsSize: recordsSize,
+    skipRecords: skipRecords,
+  );
 }
 
 Future<Map<int, Map>> _fetchRecordsByIds({
@@ -556,25 +621,31 @@ Future<Map<int, Map>> _fetchRecordsByIds({
   String? expand,
 }) async {
   if (ids.isEmpty) return {};
-  final uri = Uri.parse(
-    '$endpoint?\$filter=$idColumn in (${ids.join(',')})'
-    '&\$select=$select'
-    '${expand == null ? '' : '&\$expand=$expand'}',
-  );
-  final response = await get(uri, headers: _headers());
-  if (response.statusCode != 200) {
-    throw Exception(
-      'No se pudieron cargar registros relacionados de $idColumn (${response.statusCode}).',
+  final result = <int, Map>{};
+  for (var start = 0; start < ids.length; start += 75) {
+    final end = (start + 75).clamp(0, ids.length);
+    final chunk = ids.sublist(start, end);
+    final uri = Uri.parse(
+      '$endpoint?\$filter=$idColumn in (${chunk.join(',')})'
+      '&\$select=$select'
+      '${expand == null ? '' : '&\$expand=$expand'}',
     );
+    final response = await get(uri, headers: _headers());
+    if (response.statusCode != 200) {
+      throw Exception(
+        'No se pudieron cargar registros relacionados de $idColumn (${response.statusCode}).',
+      );
+    }
+    final decoded = json.decode(utf8.decode(response.bodyBytes));
+    final records =
+        (decoded['records'] as List?)?.whereType<Map>() ??
+        const Iterable<Map>.empty();
+    for (final record in records) {
+      final id = _asInt(record['id']);
+      if (id != null) result[id] = record;
+    }
   }
-  final decoded = json.decode(utf8.decode(response.bodyBytes));
-  final records =
-      (decoded['records'] as List?)?.whereType<Map>() ??
-      const Iterable<Map>.empty();
-  return {
-    for (final record in records)
-      if (_asInt(record['id']) != null) _asInt(record['id'])!: record,
-  };
+  return result;
 }
 
 InvoicePaymentReceipt? _normalizeHistoricalReceipt(

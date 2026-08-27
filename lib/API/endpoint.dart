@@ -75,6 +75,9 @@ class EndPoints {
   static String get cAllocationHdr =>
       '${Base.baseURL}/api/v1/models/C_AllocationHdr';
 
+  static String get cAllocationLine =>
+      '${Base.baseURL}/api/v1/models/C_AllocationLine';
+
   static String get cBankAccount =>
       '${Base.baseURL}/api/v1/models/C_BankAccount';
 
