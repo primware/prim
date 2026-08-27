@@ -289,6 +289,7 @@ class AppLocale {
   static const String totalPaid = 'totalPaid';
   static const String outstandingDebt = 'outstandingDebt';
   static const String paymentProgress = 'paymentProgress';
+  static const String quantityShort = 'quantityShort';
   static const String selectCustomerForInvoices = 'selectCustomerForInvoices';
   static const String noCompletedInvoices = 'noCompletedInvoices';
   static const String invoiceLoadError = 'invoiceLoadError';
@@ -313,6 +314,8 @@ class AppLocale {
   static const String invoicePaymentTotalsMismatch =
       'invoicePaymentTotalsMismatch';
   static const String paymentTenderTypeRequired = 'paymentTenderTypeRequired';
+  static const String salesRepRequired = 'salesRepRequired';
+  static const String salesRepLoadError = 'salesRepLoadError';
 
   static const Map<String, dynamic> en = {
     invoicePayment: 'Invoice Payment',
@@ -324,6 +327,7 @@ class AppLocale {
     totalPaid: 'Total paid',
     outstandingDebt: 'Outstanding balance',
     paymentProgress: 'Payment progress',
+    quantityShort: 'Qty.',
     selectCustomerForInvoices: 'Select a customer to view completed invoices.',
     noCompletedInvoices: 'This customer has no completed invoices.',
     invoiceLoadError: 'The invoices could not be loaded.',
@@ -350,6 +354,8 @@ class AppLocale {
         'Payment methods must equal the amount allocated to invoices.',
     paymentTenderTypeRequired:
         'A selected payment method does not have a tender type configured.',
+    salesRepRequired: 'Select a sales representative before processing.',
+    salesRepLoadError: 'Sales representatives could not be loaded.',
     orgProfileTitle: 'Organization\nProfile',
     changePassword: 'Change password',
     organizationInfo: 'Organization information',
@@ -649,6 +655,7 @@ class AppLocale {
     totalPaid: 'Total pagado',
     outstandingDebt: 'Deuda pendiente',
     paymentProgress: 'Progreso del pago',
+    quantityShort: 'Cant.',
     selectCustomerForInvoices:
         'Seleccione un cliente para consultar sus facturas completadas.',
     noCompletedInvoices: 'Este cliente no tiene facturas completadas.',
@@ -678,6 +685,9 @@ class AppLocale {
         'Los métodos de pago deben coincidir con el monto asignado a las facturas.',
     paymentTenderTypeRequired:
         'Un método de pago seleccionado no tiene tipo de tender configurado.',
+    salesRepRequired:
+        'Seleccione un representante comercial antes de procesar.',
+    salesRepLoadError: 'No se pudieron cargar los representantes comerciales.',
     orgProfileTitle: 'Perfil de la\nOrganización',
     changePassword: 'Cambiar contraseña',
     organizationInfo: 'Información de la organización',

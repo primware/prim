@@ -52,6 +52,8 @@ class EndPoints {
 
   static String get cdsCloseCash => '${Base.baseURL}/api/v1/models/CDS_CloseCash';
 
+  static String get cdsPOSPaymentTrace => '${Base.baseURL}/api/v1/models/CDS_POSPaymentTrace';
+
   static String get cOrder => '${Base.baseURL}/api/v1/models/C_Order';
 
   static String get cOrderLine => '${Base.baseURL}/api/v1/models/C_OrderLine';
