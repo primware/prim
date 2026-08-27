@@ -16,8 +16,11 @@ import 'package:primware/shared/footer.dart';
 import 'package:primware/shared/logo.dart';
 import 'package:primware/shared/toast_message.dart';
 import 'package:primware/views/Home/order/order_funtions.dart';
+import 'package:printing/printing.dart';
 
 import 'invoice_funtions.dart';
+import 'invoice_payment_print_generator.dart';
+import 'invoice_payment_receipt.dart';
 
 class InvoicePaymentPage extends StatefulWidget {
   const InvoicePaymentPage({super.key});
@@ -40,6 +43,8 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
   int? _selectedCustomerId;
   int? _selectedSalesRepId;
   String? _selectedCustomerName;
+  String? _selectedCustomerTaxId;
+  String? _selectedCustomerAddress;
   bool _loadingCustomers = false;
   bool _loadingInvoices = false;
   bool _loadingPayments = true;
@@ -108,6 +113,55 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
     return selectDefaultSalesRepId(_salesReps, UserData.id);
   }
 
+  String _selectedSalesRepName() {
+    final selected = _salesReps.where((rep) => rep['id'] == _selectedSalesRepId);
+    if (selected.isEmpty) return 'Representante';
+    return (selected.first['name'] ?? selected.first['Name'] ?? selected.first['identifier'] ?? 'Representante').toString();
+  }
+
+  Future<bool?> _confirmPrintReceipt() => showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: Theme.of(dialogContext).cardColor,
+      title: const Text('Confirmar impresión'),
+      content: const Text('¿Desea imprimir el recibo de pago a facturas?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(AppLocale.no.getString(dialogContext))),
+        ElevatedButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(AppLocale.yes.getString(dialogContext))),
+      ],
+    ),
+  );
+
+  Future<void> _printReceipt(InvoicePaymentReceipt receipt) async {
+    if (!POS.isPOS) {
+      final bytes = await generateInvoicePaymentReceipt(receipt);
+      await _openInvoicePaymentPrintDialog(receipt, bytes);
+      return;
+    }
+    try {
+      final pdfBytes = await generateInvoicePaymentPOSTicket(receipt);
+      try {
+        final printers = await Printing.listPrinters();
+        final defaultPrinter = printers.firstWhere(
+          (printer) => printer.isDefault,
+          orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
+        );
+        await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
+      } catch (_) {
+        await Printing.sharePdf(bytes: pdfBytes, filename: 'Recibo_Pago_${receipt.displayDocumentNo}.pdf');
+      }
+    } catch (_) {
+      try {
+        final pdfBytes = await generateInvoicePaymentPOSTicket(receipt);
+        await Printing.sharePdf(bytes: pdfBytes, filename: 'Recibo_Pago_${receipt.displayDocumentNo}.pdf');
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _openInvoicePaymentPrintDialog(InvoicePaymentReceipt receipt, Uint8List bytes) async {
+    await Printing.layoutPdf(name: 'Recibo_Pago_${receipt.displayDocumentNo}.pdf', dynamicLayout: false, onLayout: (_) => bytes);
+  }
+
   Future<void> _loadSalesReps() async {
     if (!mounted) return;
     setState(() => _loadingSalesReps = true);
@@ -152,6 +206,8 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
     setState(() {
       _selectedCustomerId = id;
       _selectedCustomerName = (customer['name'] ?? '').toString();
+      _selectedCustomerTaxId = (customer['TaxID'] ?? '').toString();
+      _selectedCustomerAddress = (customer['locationName'] ?? '').toString();
       _customerController.text = _selectedCustomerName!;
       _invoices = [];
       _selectedInvoices.clear();
@@ -182,6 +238,8 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
     setState(() {
       _selectedCustomerId = null;
       _selectedCustomerName = null;
+      _selectedCustomerTaxId = null;
+      _selectedCustomerAddress = null;
       _customerController.clear();
       _invoices.clear();
       _selectedInvoices.clear();
@@ -226,7 +284,11 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
       bankAccountId: bankAccountId,
       organizationId: organizationId,
       bPartnerId: customerId,
+      bPartnerName: _selectedCustomerName ?? 'Cliente',
+      bPartnerTaxId: _selectedCustomerTaxId ?? '',
+      bPartnerAddress: _selectedCustomerAddress ?? '',
       salesRepId: salesRepId,
+      salesRepName: _selectedSalesRepName(),
       posId: POS.cPosID,
       payments: payments,
       invoices: invoices,
@@ -234,10 +296,29 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
 
     if (!mounted) return;
     if (result['success'] == true) {
+      final receipt = result['receipt'] as InvoicePaymentReceipt;
+      final printReceipt = await _confirmPrintReceipt();
+      if (!mounted) return;
+      if (printReceipt == true) {
+        try {
+          await _printReceipt(receipt);
+        } catch (error) {
+          if (mounted) {
+            ToastMessage.show(
+              context: context,
+              message: 'El pago fue completado, pero no se pudo imprimir el recibo: $error',
+              type: ToastType.failure,
+            );
+          }
+        }
+      }
+      if (!mounted) return;
       setState(() {
         _processingPayments = false;
         _selectedCustomerId = null;
         _selectedCustomerName = null;
+        _selectedCustomerTaxId = null;
+        _selectedCustomerAddress = null;
         _customerController.clear();
         _invoices.clear();
         _selectedInvoices.clear();
@@ -411,6 +492,7 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                 itemBuilder: (context, index) {
                   final invoice = _invoices[index];
                   final selected = _selectedInvoices.containsKey(invoice['id']);
+                  final description = (invoice['description'] ?? '').toString().trim();
                   return Material(
                     color: selected ? Theme.of(context).colorScheme.primary.withOpacity(0.10) : Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(10),
@@ -421,9 +503,21 @@ class _InvoicePaymentPageState extends State<InvoicePaymentPage> {
                       ),
                       leading: Icon(selected ? Icons.check_circle : Icons.receipt_outlined, color: Theme.of(context).colorScheme.primary),
                       title: Text('${AppLocale.invoice.getString(context)} ${invoice['documentNo']}'),
-                      subtitle: Text(
-                        '${AppLocale.outstandingDebt.getString(context)}: '
-                        '\$${_money(invoice['outstandingDebt']).toStringAsFixed(2)}',
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (description.isNotEmpty)
+                            Text(
+                              description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          Text(
+                            '${AppLocale.outstandingDebt.getString(context)}: '
+                            '\$${_money(invoice['outstandingDebt']).toStringAsFixed(2)}',
+                          ),
+                        ],
                       ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _processingPayments ? null : () => _showInvoiceDialog(invoice),

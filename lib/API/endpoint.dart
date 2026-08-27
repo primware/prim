@@ -17,16 +17,19 @@ class EndPoints {
 
   static String get cBPartner => '${Base.baseURL}/api/v1/models/C_BPartner';
 
-  static String get cBPartnerLocation => '${Base.baseURL}/api/v1/models/C_BPartner_Location';
+  static String get cBPartnerLocation =>
+      '${Base.baseURL}/api/v1/models/C_BPartner_Location';
 
   static String get cLocation => '${Base.baseURL}/api/v1/models/C_Location';
 
-  static String get adUserRoles => '${Base.baseURL}/api/v1/models/AD_User_Roles';
+  static String get adUserRoles =>
+      '${Base.baseURL}/api/v1/models/AD_User_Roles';
 
   static String get salesRep =>
       '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
 
-  static String get getOrganizationsAfterLogin => '${Base.baseURL}/api/v1/models/AD_Org?\$filter=AD_Org_ID ne 0';
+  static String get getOrganizationsAfterLogin =>
+      '${Base.baseURL}/api/v1/models/AD_Org?\$filter=AD_Org_ID ne 0';
 
   static String get cCurrency => '${Base.baseURL}/api/v1/models/C_Currency';
 
@@ -42,17 +45,22 @@ class EndPoints {
 
   static String get mProduct => '${Base.baseURL}/api/v1/models/M_Product';
 
-  static String get mProductPrice => '${Base.baseURL}/api/v1/models/M_ProductPrice';
+  static String get mProductPrice =>
+      '${Base.baseURL}/api/v1/models/M_ProductPrice';
 
-  static String get mProductCategory => '${Base.baseURL}/api/v1/models/M_Product_Category';
+  static String get mProductCategory =>
+      '${Base.baseURL}/api/v1/models/M_Product_Category';
 
   static String get mPriceList => '${Base.baseURL}/api/v1/models/M_PriceList';
 
-  static String get cPaymentTermID => '${Base.baseURL}/api/v1/models/C_PaymentTerm';
+  static String get cPaymentTermID =>
+      '${Base.baseURL}/api/v1/models/C_PaymentTerm';
 
-  static String get cdsCloseCash => '${Base.baseURL}/api/v1/models/CDS_CloseCash';
+  static String get cdsCloseCash =>
+      '${Base.baseURL}/api/v1/models/CDS_CloseCash';
 
-  static String get cdsPOSPaymentTrace => '${Base.baseURL}/api/v1/models/CDS_POSPaymentTrace';
+  static String get cdsPOSPaymentTrace =>
+      '${Base.baseURL}/api/v1/models/CDS_POSPaymentTrace';
 
   static String get cOrder => '${Base.baseURL}/api/v1/models/C_Order';
 
@@ -64,31 +72,44 @@ class EndPoints {
 
   static String get cInvoice => '${Base.baseURL}/api/v1/models/C_Invoice';
 
-  static String get cBankAccount => '${Base.baseURL}/api/v1/models/C_BankAccount';
+  static String get cAllocationHdr =>
+      '${Base.baseURL}/api/v1/models/C_AllocationHdr';
+
+  static String get cBankAccount =>
+      '${Base.baseURL}/api/v1/models/C_BankAccount';
 
   static String get batch => '${Base.baseURL}/api/v1/batch?transaction=true';
 
-  static String get paymentAndReceipt => '${Base.baseURL}/api/v1/windows/payment-and-receipt';
+  static String get paymentAndReceipt =>
+      '${Base.baseURL}/api/v1/windows/payment-and-receipt';
+
+  static String get cPayment => '${Base.baseURL}/api/v1/models/C_Payment';
 
   static String get adSequence => '${Base.baseURL}/api/v1/models/AD_Sequence';
 
-  static String get cTaxCategory => '${Base.baseURL}/api/v1/models/C_TaxCategory';
+  static String get cTaxCategory =>
+      '${Base.baseURL}/api/v1/models/C_TaxCategory';
 
   static String get cDocType => '${Base.baseURL}/api/v1/models/C_DocType';
 
-  static String get lcoTaxIdType => '${Base.baseURL}/api/v1/models/LCO_TaxIdType';
+  static String get lcoTaxIdType =>
+      '${Base.baseURL}/api/v1/models/LCO_TaxIdType';
 
   static String get cBPGroup => '${Base.baseURL}/api/v1/models/C_BP_Group';
 
   static String get adOrgInfo => '${Base.baseURL}/api/v1/models/AD_OrgInfo';
 
-  static String get cdsYappyConf => '${Base.baseURL}/api/v1/models/CDS_YappyConf';
+  static String get cdsYappyConf =>
+      '${Base.baseURL}/api/v1/models/CDS_YappyConf';
 
-  static String get cdsYappyGroup => '${Base.baseURL}/api/v1/models/CDS_YappyGroup';
+  static String get cdsYappyGroup =>
+      '${Base.baseURL}/api/v1/models/CDS_YappyGroup';
 
-  static String get cPOSTenderType => '${Base.baseURL}/api/v1/models/C_POSTenderType';
+  static String get cPOSTenderType =>
+      '${Base.baseURL}/api/v1/models/C_POSTenderType';
 
-  static String get cdsPOSPrinterConfig => '${Base.baseURL}/api/v1/models/CDS_POSPrinterConfig';
+  static String get cdsPOSPrinterConfig =>
+      '${Base.baseURL}/api/v1/models/CDS_POSPrinterConfig';
 
   static String get yappyDevice => '${Base.yappyURL}/session/device';
 
@@ -111,7 +132,8 @@ class GetAttachmentProduct {
 
   GetAttachmentProduct({required this.recordID});
 
-  String get endPoint => '${Base.baseURL}/api/v1/models/AD_Attachment?\$filter=AD_Table_ID eq 208 and record_id eq $recordID';
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/models/AD_Attachment?\$filter=AD_Table_ID eq 208 and record_id eq $recordID';
 }
 
 class GetUserData {
@@ -119,7 +141,8 @@ class GetUserData {
 
   GetUserData({required this.adUserID});
 
-  String get endPoint => '${Base.baseURL}/api/v1/models/AD_User?\$filter=AD_User_ID eq $adUserID';
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/models/AD_User?\$filter=AD_User_ID eq $adUserID';
 }
 
 class GetRol {
@@ -135,16 +158,22 @@ class GetOrganization {
   final int clientID;
   GetOrganization({required this.rolID, required this.clientID});
 
-  String get endPoint => '${Base.baseURL}/api/v1/auth/organizations?client=$clientID&role=$rolID';
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/auth/organizations?client=$clientID&role=$rolID';
 }
 
 class GetWarehouse {
   final int rolID;
   final int clientID;
   final int organizationID;
-  GetWarehouse({required this.rolID, required this.clientID, required this.organizationID});
+  GetWarehouse({
+    required this.rolID,
+    required this.clientID,
+    required this.organizationID,
+  });
 
-  String get endPoint => '${Base.baseURL}/api/v1/auth/warehouses?client=$clientID&role=$rolID&organization=$organizationID';
+  String get endPoint =>
+      '${Base.baseURL}/api/v1/auth/warehouses?client=$clientID&role=$rolID&organization=$organizationID';
 }
 
 class GetProductInPriceList {
@@ -167,12 +196,18 @@ class GetDocumentActions {
 }
 
 class Processes {
-  static String get cdsCloseCashProcess => '${Base.baseURL}/api/v1/processes/cds_closecash_process'; // Action
-  static String get closeCash => '${Base.baseURL}/api/v1/processes/closecash'; // Report
-  static String get syncFE => '${Base.baseURL}/api/v1/processes/factelecsyncinvoice'; // process to sync factura electronica
-  static String get createCreditMemo => '${Base.baseURL}/api/v1/processes/cds-invoicecreatecreditmemo';
-  static String get orderExecuteDocAction => '${Base.baseURL}/api/v1/processes/orderexecutedocaction';
-  static String get changePassword => '${Base.baseURL}/api/v1/processes/setuserpasswordprocesspos';
+  static String get cdsCloseCashProcess =>
+      '${Base.baseURL}/api/v1/processes/cds_closecash_process'; // Action
+  static String get closeCash =>
+      '${Base.baseURL}/api/v1/processes/closecash'; // Report
+  static String get syncFE =>
+      '${Base.baseURL}/api/v1/processes/factelecsyncinvoice'; // process to sync factura electronica
+  static String get createCreditMemo =>
+      '${Base.baseURL}/api/v1/processes/cds-invoicecreatecreditmemo';
+  static String get orderExecuteDocAction =>
+      '${Base.baseURL}/api/v1/processes/orderexecutedocaction';
+  static String get changePassword =>
+      '${Base.baseURL}/api/v1/processes/setuserpasswordprocesspos';
 }
 
 class Charts {
@@ -181,9 +216,17 @@ class Charts {
   static int? salesYTDBySalesRepID;
   static int? salesPerDayByProductCategoryID;
 
-  static String? get salesYTD => salesYTDID != null ? '${Base.baseURL}/api/v1/charts/$salesYTDID/data' : null;
-  static String? get salesPerDay => salesPerDayID != null ? '${Base.baseURL}/api/v1/charts/$salesPerDayID/data' : null;
-  static String? get salesYTDBySalesRep => salesYTDBySalesRepID != null ? '${Base.baseURL}/api/v1/charts/$salesYTDBySalesRepID/data' : null;
+  static String? get salesYTD => salesYTDID != null
+      ? '${Base.baseURL}/api/v1/charts/$salesYTDID/data'
+      : null;
+  static String? get salesPerDay => salesPerDayID != null
+      ? '${Base.baseURL}/api/v1/charts/$salesPerDayID/data'
+      : null;
+  static String? get salesYTDBySalesRep => salesYTDBySalesRepID != null
+      ? '${Base.baseURL}/api/v1/charts/$salesYTDBySalesRepID/data'
+      : null;
   static String? get salesPerDayByProductCategory =>
-      salesPerDayByProductCategoryID != null ? '${Base.baseURL}/api/v1/charts/$salesPerDayByProductCategoryID/data' : null;
+      salesPerDayByProductCategoryID != null
+      ? '${Base.baseURL}/api/v1/charts/$salesPerDayByProductCategoryID/data'
+      : null;
 }

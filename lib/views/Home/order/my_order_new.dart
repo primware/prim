@@ -329,8 +329,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     return _r2(double.tryParse(paymentControllers[methodId]?.text.trim().replaceAll(',', '.') ?? '') ?? 0.0);
   }
 
-  bool get _hasDiscountConfig =>
-      POS.discountChargeID != null && POS.discountTaxID != null && POS.discountTaxRate != null;
+  bool get _hasDiscountConfig => POS.discountChargeID != null && POS.discountTaxID != null && POS.discountTaxRate != null;
 
   Map<int, Map<String, double>> _productTaxGroups() {
     final groups = <int, Map<String, double>>{};
@@ -349,22 +348,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   double _simulatedTotalForDiscountBase(double discountBase) {
-    final groups = _productTaxGroups().map(
-      (taxId, group) => MapEntry(taxId, <String, double>{...group}),
-    );
+    final groups = _productTaxGroups().map((taxId, group) => MapEntry(taxId, <String, double>{...group}));
     final discountTaxId = POS.discountTaxID;
     if (discountTaxId != null) {
-      final group = groups.putIfAbsent(
-        discountTaxId,
-        () => <String, double>{'Base': 0.0, 'Rate': POS.discountTaxRate ?? 0.0},
-      );
+      final group = groups.putIfAbsent(discountTaxId, () => <String, double>{'Base': 0.0, 'Rate': POS.discountTaxRate ?? 0.0});
       group['Base'] = _r2((group['Base'] ?? 0.0) - discountBase);
       group['Rate'] = POS.discountTaxRate ?? group['Rate'] ?? 0.0;
     }
     final tax = _r2(
-      groups.values
-          .map((group) => _r2((group['Base'] ?? 0.0) * (group['Rate'] ?? 0.0) / 100))
-          .fold(0.0, (sum, amount) => sum + amount),
+      groups.values.map((group) => _r2((group['Base'] ?? 0.0) * (group['Rate'] ?? 0.0) / 100)).fold(0.0, (sum, amount) => sum + amount),
     );
     return _r2(subtotal - discountBase + tax);
   }
@@ -420,16 +412,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
     return lines;
   }
 
-  double get totalDiscount => _r2(
-    _buildDiscountLines()
-        .map((line) => (line['EffectiveAmount'] as num).toDouble())
-        .fold(0.0, (sum, amount) => sum + amount),
-  );
+  double get totalDiscount =>
+      _r2(_buildDiscountLines().map((line) => (line['EffectiveAmount'] as num).toDouble()).fold(0.0, (sum, amount) => sum + amount));
 
   double get netTotalAmount {
-    final discountBase = _buildDiscountLines()
-        .map((line) => (line['Amount'] as num).toDouble())
-        .fold(0.0, (sum, amount) => sum + amount);
+    final discountBase = _buildDiscountLines().map((line) => (line['Amount'] as num).toDouble()).fold(0.0, (sum, amount) => sum + amount);
     return _r2(_simulatedTotalForDiscountBase(discountBase).clamp(0.0, totalAmount));
   }
 
@@ -451,16 +438,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
   );
 
   List<Map<String, dynamic>> get specialDiscountSummary {
-    return _orderedDiscountMethods.map((method) {
-      final methodId = method['id'] as int;
-      final amount = _r2(
-        _buildDiscountLines()
-            .where((line) => line['MethodId'] == methodId)
-            .map((line) => (line['EffectiveAmount'] as num).toDouble())
-            .fold(0.0, (sum, value) => sum + value),
-      );
-      return <String, dynamic>{'Name': method['name'] ?? AppLocale.discount.getString(context), 'Amount': amount};
-    }).where((item) => (item['Amount'] as double) > 0).toList();
+    return _orderedDiscountMethods
+        .map((method) {
+          final methodId = method['id'] as int;
+          final amount = _r2(
+            _buildDiscountLines()
+                .where((line) => line['MethodId'] == methodId)
+                .map((line) => (line['EffectiveAmount'] as num).toDouble())
+                .fold(0.0, (sum, value) => sum + value),
+          );
+          return <String, dynamic>{'Name': method['name'] ?? AppLocale.discount.getString(context), 'Amount': amount};
+        })
+        .where((item) => (item['Amount'] as double) > 0)
+        .toList();
   }
 
   double get retireDiscountAmount => _normalizedDiscountAmount(_r2(totalAmount * 0.25));
@@ -720,14 +710,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
       }
       setState(() {
         for (final item in selectedProducts) {
-          final int? selectedTaxID =
-              (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
+          final int? selectedTaxID = (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
           final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
-          final double priceList = _r2(
-            (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble(),
-          );
+          final double priceList = _r2((item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble());
           final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
-          
+
           invoiceLines.add({
             ...item,
             'quantity': 1,
@@ -1499,9 +1486,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 700 ? true : false;
-    final discountPaymentMethods = !_hasDiscountConfig
-        ? <Map<String, dynamic>>[]
-        : _orderedDiscountMethods;
+    final discountPaymentMethods = !_hasDiscountConfig ? <Map<String, dynamic>>[] : _orderedDiscountMethods;
     final standardPaymentMethods = paymentMethods.where((method) => !_isDiscountMethod(method)).toList();
     final orderedPaymentMethods = [...discountPaymentMethods, ...standardPaymentMethods];
 
@@ -1910,110 +1895,110 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                               icon: const Icon(Icons.category),
                                               label: Text(AppLocale.categories.getString(context)),
                                               onPressed: () async {
-                                            Set<int> tempSelected = Set<int>.from(selectedCategories);
-                                            await showModalBottomSheet(
-                                              context: context,
-                                              isScrollControlled: true,
-                                              builder: (context) {
-                                                return StatefulBuilder(
-                                                  builder: (context, setModalState) {
-                                                    return SafeArea(
-                                                      child: Padding(
-                                                        padding: MediaQuery.of(context).viewInsets,
-                                                        child: Container(
-                                                          constraints: const BoxConstraints(maxHeight: 400),
-                                                          child: Column(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                            children: [
-                                                              Padding(
-                                                                padding: const EdgeInsets.all(16.0),
-                                                                child: Text(
-                                                                  AppLocale.selectCategories.getString(context),
-                                                                  style: Theme.of(context).textTheme.bodyLarge,
-                                                                ),
-                                                              ),
-                                                              Expanded(
-                                                                child: ListView.builder(
-                                                                  shrinkWrap: true,
-                                                                  itemCount: categpryOptions.length,
-                                                                  itemBuilder: (context, idx) {
-                                                                    final cat = categpryOptions[idx];
-                                                                    final isSelected = tempSelected.contains(cat['id']);
-                                                                    return ListTile(
-                                                                      title: Text(cat['name']),
-                                                                      selected: isSelected,
-                                                                      onTap: () {
-                                                                        setModalState(() {
-                                                                          if (isSelected) {
-                                                                            tempSelected.remove(cat['id']);
-                                                                          } else {
-                                                                            tempSelected.add(cat['id']);
-                                                                          }
-                                                                        });
-                                                                      },
-                                                                      trailing: isSelected
-                                                                          ? const Icon(Icons.check, color: Colors.blue)
-                                                                          : null,
-                                                                    );
-                                                                  },
-                                                                ),
-                                                              ),
-                                                              Padding(
-                                                                padding: const EdgeInsets.all(16.0),
-                                                                child: Row(
-                                                                  mainAxisAlignment: MainAxisAlignment.end,
-                                                                  children: [
-                                                                    TextButton(
-                                                                      onPressed: () {
-                                                                        Navigator.pop(context);
-                                                                      },
-                                                                      child: Text(AppLocale.cancel.getString(context)),
+                                                Set<int> tempSelected = Set<int>.from(selectedCategories);
+                                                await showModalBottomSheet(
+                                                  context: context,
+                                                  isScrollControlled: true,
+                                                  builder: (context) {
+                                                    return StatefulBuilder(
+                                                      builder: (context, setModalState) {
+                                                        return SafeArea(
+                                                          child: Padding(
+                                                            padding: MediaQuery.of(context).viewInsets,
+                                                            child: Container(
+                                                              constraints: const BoxConstraints(maxHeight: 400),
+                                                              child: Column(
+                                                                mainAxisSize: MainAxisSize.min,
+                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                children: [
+                                                                  Padding(
+                                                                    padding: const EdgeInsets.all(16.0),
+                                                                    child: Text(
+                                                                      AppLocale.selectCategories.getString(context),
+                                                                      style: Theme.of(context).textTheme.bodyLarge,
                                                                     ),
-                                                                    const SizedBox(width: 8),
-                                                                    ElevatedButton(
-                                                                      onPressed: () {
-                                                                        Navigator.pop(context, tempSelected);
+                                                                  ),
+                                                                  Expanded(
+                                                                    child: ListView.builder(
+                                                                      shrinkWrap: true,
+                                                                      itemCount: categpryOptions.length,
+                                                                      itemBuilder: (context, idx) {
+                                                                        final cat = categpryOptions[idx];
+                                                                        final isSelected = tempSelected.contains(cat['id']);
+                                                                        return ListTile(
+                                                                          title: Text(cat['name']),
+                                                                          selected: isSelected,
+                                                                          onTap: () {
+                                                                            setModalState(() {
+                                                                              if (isSelected) {
+                                                                                tempSelected.remove(cat['id']);
+                                                                              } else {
+                                                                                tempSelected.add(cat['id']);
+                                                                              }
+                                                                            });
+                                                                          },
+                                                                          trailing: isSelected
+                                                                              ? const Icon(Icons.check, color: Colors.blue)
+                                                                              : null,
+                                                                        );
                                                                       },
-                                                                      child: Text(AppLocale.apply.getString(context)),
                                                                     ),
-                                                                  ],
-                                                                ),
+                                                                  ),
+                                                                  Padding(
+                                                                    padding: const EdgeInsets.all(16.0),
+                                                                    child: Row(
+                                                                      mainAxisAlignment: MainAxisAlignment.end,
+                                                                      children: [
+                                                                        TextButton(
+                                                                          onPressed: () {
+                                                                            Navigator.pop(context);
+                                                                          },
+                                                                          child: Text(AppLocale.cancel.getString(context)),
+                                                                        ),
+                                                                        const SizedBox(width: 8),
+                                                                        ElevatedButton(
+                                                                          onPressed: () {
+                                                                            Navigator.pop(context, tempSelected);
+                                                                          },
+                                                                          child: Text(AppLocale.apply.getString(context)),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ],
                                                               ),
-                                                            ],
+                                                            ),
                                                           ),
-                                                        ),
-                                                      ),
+                                                        );
+                                                      },
                                                     );
                                                   },
-                                                );
-                                              },
-                                            ).then((result) {
-                                              if (result != null && result is Set<int>) {
-                                                setState(() {
-                                                  selectedCategories = Set<int>.from(result);
+                                                ).then((result) {
+                                                  if (result != null && result is Set<int>) {
+                                                    setState(() {
+                                                      selectedCategories = Set<int>.from(result);
+                                                    });
+                                                    _loadProduct(showLoadingIndicator: true);
+                                                  }
                                                 });
-                                                _loadProduct(showLoadingIndicator: true);
-                                              }
-                                              });
-                                            },
-                                          ),
-                                          Material(
-                                            color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                                            shape: const CircleBorder(),
-                                            clipBehavior: Clip.hardEdge,
-                                            child: IconButton(
-                                              tooltip: "Selección Múltiple",
-                                              icon: const Icon(Icons.grid_view),
-                                              color: Theme.of(context).colorScheme.secondary,
-                                              splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
-                                              highlightColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                                              onPressed: _showProductSelectionPopup,
+                                              },
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (selectedCategories.isNotEmpty)
+                                            Material(
+                                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                              shape: const CircleBorder(),
+                                              clipBehavior: Clip.hardEdge,
+                                              child: IconButton(
+                                                tooltip: "Selección Múltiple",
+                                                icon: const Icon(Icons.grid_view),
+                                                color: Theme.of(context).colorScheme.secondary,
+                                                splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
+                                                highlightColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                                onPressed: _showProductSelectionPopup,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (selectedCategories.isNotEmpty)
                                           Padding(
                                             padding: const EdgeInsets.only(top: 8.0),
                                             child: Wrap(
@@ -2280,8 +2265,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                     final currentSum = paymentControllers.entries
                                                         .where(
                                                           (entry) =>
-                                                              entry.key != method['id'] &&
-                                                              !_isDiscountMethod(_paymentMethod(entry.key)),
+                                                              entry.key != method['id'] && !_isDiscountMethod(_paymentMethod(entry.key)),
                                                         )
                                                         .map((entry) => _controllerAmount(entry.key))
                                                         .fold(0.0, (a, b) => a + b);
@@ -2451,15 +2435,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
                           children: [
                             Text(AppLocale.taxes.getString(context), style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: CustomSpacer.small),
-                            ...getGroupedTaxTotals().entries.where((entry) => entry.value > 0).map(
-                              (entry) => Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(entry.key, style: Theme.of(context).textTheme.bodyMedium),
-                                  Text('\$${entry.value.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
-                                ],
-                              ),
-                            ),
+                            ...getGroupedTaxTotals().entries
+                                .where((entry) => entry.value > 0)
+                                .map(
+                                  (entry) => Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(entry.key, style: Theme.of(context).textTheme.bodyMedium),
+                                      Text('\$${entry.value.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                                    ],
+                                  ),
+                                ),
                             const SizedBox(height: CustomSpacer.small),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

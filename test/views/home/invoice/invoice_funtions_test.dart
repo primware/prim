@@ -27,6 +27,21 @@ void main() {
     expect(selectDefaultSalesRepId(reps, null), isNull);
   });
 
+  test('keeps invoice description when normalizing outstanding invoices', () {
+    final invoice = normalizeCompletedCustomerInvoice({
+      'id': 1,
+      'DocumentNo': 'FAC-1',
+      'Description': 'Matrícula del segundo semestre',
+      'GrandTotal': 91,
+      'AD_Org_ID': {'id': 1000000},
+      'C_Currency_ID': {'id': 197},
+      'C_AllocationLine': const [],
+      'C_InvoiceLine': const [],
+    });
+
+    expect(invoice['description'], 'Matrícula del segundo semestre');
+  });
+
   test('creates one trace per payment with selected sales rep and POS', () {
     final batch = buildInvoicePaymentBatch(
       bankAccountId: 1000004,
@@ -149,5 +164,71 @@ void main() {
       ),
       contains('se esperaban 3'),
     );
+  });
+
+  test('builds a receipt snapshot from all payments and invoices', () {
+    final response = [
+      {
+        'statusCode': 201,
+        'body': {
+          'id': 501,
+          'DocumentNo': 'PAY-501',
+          'DocStatus': {'id': 'CO'},
+        },
+      },
+      {
+        'statusCode': 201,
+        'body': {'id': 601},
+      },
+      {
+        'statusCode': 201,
+        'body': {
+          'id': 502,
+          'DocumentNo': 'PAY-502',
+          'DocStatus': {'id': 'CO'},
+        },
+      },
+      {
+        'statusCode': 201,
+        'body': {'id': 602},
+      },
+      {
+        'statusCode': 201,
+        'body': {
+          'id': 701,
+          'DocumentNo': 'REC-701',
+          'DocStatus': {'id': 'CO'},
+        },
+      },
+    ];
+    final receipt = buildInvoicePaymentReceiptFromBatch(
+      decoded: response,
+      bPartnerId: 10,
+      bPartnerName: 'Cliente de prueba',
+      salesRepId: 20,
+      salesRepName: 'Vendedor',
+      posId: 30,
+      date: DateTime(2026, 8, 27),
+      payments: [
+        {...payments[0], 'name': 'Efectivo'},
+        {...payments[1], 'name': 'ACH'},
+      ],
+      invoices: [
+        {...invoices[0], 'documentNo': 'FAC-1', 'grandTotal': 200.0},
+        {...invoices[1], 'documentNo': 'FAC-2', 'grandTotal': 30.0},
+      ],
+    );
+
+    expect(receipt.allocationId, 701);
+    expect(receipt.documentNo, 'REC-701');
+    expect(receipt.payments.map((item) => item.documentNo), [
+      'PAY-501',
+      'PAY-502',
+    ]);
+    expect(receipt.invoices.map((item) => item.appliedAmount), [110.0, 30.0]);
+    expect(receipt.totalApplied, 140.0);
+    expect(receipt.totalReceived, 140.0);
+    expect(receipt.searchableText, contains('fac-2'));
+    expect(receipt.searchableText, contains('cliente de prueba'));
   });
 }
