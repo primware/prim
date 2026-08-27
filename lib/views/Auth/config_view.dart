@@ -214,6 +214,7 @@ class _ConfigPageState extends State<ConfigPage> {
       Token.adOrgInfoUU = null;
       POS.priceListID = null;
       POS.priceListVersionID = null;
+      POS.bankAccountID = null;
       POS.docTypeID = null;
       POS.docTypeName = null;
       POS.docTypeRefundName = null;

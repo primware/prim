@@ -5,6 +5,7 @@ import 'package:http/http.dart';
 import '../../../localization/app_locale.dart';
 import '../../../API/endpoint.dart';
 import '../../../API/token.api.dart';
+import '../../../API/pos.api.dart';
 import '../../../API/user.api.dart';
 import '../../../shared/button.widget.dart';
 import '../../../shared/custom_container.dart';
@@ -93,6 +94,7 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
     UserData.name = null;
     Token.auth = null;
     Token.adOrgInfoUU = null;
+    POS.bankAccountID = null;
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => const LoginPage()), (Route<dynamic> route) => false);
   }
 

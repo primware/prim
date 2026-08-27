@@ -17,6 +17,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 Future<void> handle401(BuildContext context) async {
   Token.auth = null;
   Token.adOrgInfoUU = null;
+  POS.bankAccountID = null;
   UserData.rolName = null;
   UserData.imageBytes = null;
   claveController.clear();
@@ -377,10 +378,13 @@ Future<void> _loadPOSData(BuildContext context) async {
     POS.discountChargeID = null;
     POS.discountTaxID = null;
     POS.discountTaxRate = null;
+    POS.bankAccountID = null;
     final String filter = 'C_POS_ID eq ${POS.cPosID}';
 
     final response = await get(
-      Uri.parse('${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID,C_DocTypeRefund_ID'),
+      Uri.parse(
+        '${EndPoints.cPos}?\$filter=$filter&\$expand=C_DocType_ID,C_DocTypeRefund_ID,C_BankAccount_ID',
+      ),
       headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
     );
 
@@ -411,6 +415,11 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
       POS.warehouseID = posData['M_Warehouse_ID']?['id'];
+      final dynamic bankAccount = posData['C_BankAccount_ID'];
+      final dynamic rawBankAccountId = bankAccount is Map ? bankAccount['id'] : bankAccount;
+      POS.bankAccountID = rawBankAccountId is num
+          ? rawBankAccountId.toInt()
+          : int.tryParse(rawBankAccountId?.toString() ?? '');
       final dynamic discountChargeId = posData['POS_Discount_Charge_ID']?['id'];
       POS.discountChargeID = discountChargeId is num && discountChargeId.toInt() > 0 ? discountChargeId.toInt() : null;
       await _loadDiscountTaxConfig();

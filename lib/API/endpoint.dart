@@ -22,7 +22,8 @@ class EndPoints {
 
   static String get cLocation => '${Base.baseURL}/api/v1/models/C_Location';
 
-  static String get adUserRoles => '${Base.baseURL}/api/v1/models/AD_User_Roles';
+  static String get adUserRoles =>
+      '${Base.baseURL}/api/v1/models/AD_User_Roles';
 
   static String get salesRep =>
       '${Base.baseURL}/api/v1/models/C_BPartner?\$expand=AD_User(\$select=Name)&\$select=Name,IsSalesRep&\$filter=IsSalesRep eq true';
@@ -44,16 +45,22 @@ class EndPoints {
 
   static String get mProduct => '${Base.baseURL}/api/v1/models/M_Product';
 
-  static String get mProductPrice => '${Base.baseURL}/api/v1/models/M_ProductPrice';
+  static String get mProductPrice =>
+      '${Base.baseURL}/api/v1/models/M_ProductPrice';
 
   static String get mProductCategory =>
       '${Base.baseURL}/api/v1/models/M_Product_Category';
 
   static String get mPriceList => '${Base.baseURL}/api/v1/models/M_PriceList';
 
-  static String get cPaymentTermID => '${Base.baseURL}/api/v1/models/C_PaymentTerm';
+  static String get cPaymentTermID =>
+      '${Base.baseURL}/api/v1/models/C_PaymentTerm';
 
-  static String get cdsCloseCash => '${Base.baseURL}/api/v1/models/CDS_CloseCash';
+  static String get cdsCloseCash =>
+      '${Base.baseURL}/api/v1/models/CDS_CloseCash';
+
+  static String get cdsPOSPaymentTrace =>
+      '${Base.baseURL}/api/v1/models/CDS_POSPaymentTrace';
 
   static String get cOrder => '${Base.baseURL}/api/v1/models/C_Order';
 
@@ -65,21 +72,41 @@ class EndPoints {
 
   static String get cInvoice => '${Base.baseURL}/api/v1/models/C_Invoice';
 
+  static String get cAllocationHdr =>
+      '${Base.baseURL}/api/v1/models/C_AllocationHdr';
+
+  static String get cAllocationLine =>
+      '${Base.baseURL}/api/v1/models/C_AllocationLine';
+
+  static String get cBankAccount =>
+      '${Base.baseURL}/api/v1/models/C_BankAccount';
+
+  static String get batch => '${Base.baseURL}/api/v1/batch?transaction=true';
+
+  static String get paymentAndReceipt =>
+      '${Base.baseURL}/api/v1/windows/payment-and-receipt';
+
+  static String get cPayment => '${Base.baseURL}/api/v1/models/C_Payment';
+
   static String get adSequence => '${Base.baseURL}/api/v1/models/AD_Sequence';
 
-  static String get cTaxCategory => '${Base.baseURL}/api/v1/models/C_TaxCategory';
+  static String get cTaxCategory =>
+      '${Base.baseURL}/api/v1/models/C_TaxCategory';
 
   static String get cDocType => '${Base.baseURL}/api/v1/models/C_DocType';
 
-  static String get lcoTaxIdType => '${Base.baseURL}/api/v1/models/LCO_TaxIdType';
+  static String get lcoTaxIdType =>
+      '${Base.baseURL}/api/v1/models/LCO_TaxIdType';
 
   static String get cBPGroup => '${Base.baseURL}/api/v1/models/C_BP_Group';
 
   static String get adOrgInfo => '${Base.baseURL}/api/v1/models/AD_OrgInfo';
 
-  static String get cdsYappyConf => '${Base.baseURL}/api/v1/models/CDS_YappyConf';
+  static String get cdsYappyConf =>
+      '${Base.baseURL}/api/v1/models/CDS_YappyConf';
 
-  static String get cdsYappyGroup => '${Base.baseURL}/api/v1/models/CDS_YappyGroup';
+  static String get cdsYappyGroup =>
+      '${Base.baseURL}/api/v1/models/CDS_YappyGroup';
 
   static String get cPOSTenderType =>
       '${Base.baseURL}/api/v1/models/C_POSTenderType';

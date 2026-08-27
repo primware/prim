@@ -10,6 +10,7 @@ import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
+import 'package:primware/views/Home/invoice/invoice_new.dart';
 import 'package:primware/views/Home/product/product_view.dart';
 import 'package:primware/views/Home/report/close_cash_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
@@ -183,6 +184,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     // Limpiar datos POS
     POS.priceListID = null;
     POS.priceListVersionID = null;
+    POS.bankAccountID = null;
     POS.docTypeID = null;
     POS.docTypeName = null;
     POS.docTypeRefundName = null;
@@ -219,6 +221,13 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
                 const SizedBox(height: CustomSpacer.medium),
                 _buildSectionTitle(context, 'OPERACIONES COMERCIALES'),
+
+                _buildMenuItem(
+                  context,
+                  icon: Icons.payments_outlined,
+                  title: AppLocale.invoicePayment.getString(context),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicePaymentPage())),
+                ),
 
                 // Pedidos / Ventas Dinámicos de iDempiere
                 if (POS.docTypesComplete.isEmpty)
