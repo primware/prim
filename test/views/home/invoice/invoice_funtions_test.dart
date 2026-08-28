@@ -159,10 +159,24 @@ void main() {
     );
     expect(
       validateInvoicePaymentBatchResponse(
-        response.take(2).toList(),
+        response.take(1).toList(),
         paymentCount: 1,
       ),
       contains('se esperaban 3'),
+    );
+  });
+
+  test('shows the first batch error before reporting a truncated response', () {
+    final response = [
+      {
+        'statusCode': 500,
+        'body': {'summary': 'No se pudo completar el pago'},
+      },
+    ];
+
+    expect(
+      validateInvoicePaymentBatchResponse(response, paymentCount: 1),
+      'Falló el pago 1: No se pudo completar el pago',
     );
   });
 

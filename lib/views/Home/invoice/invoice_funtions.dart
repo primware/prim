@@ -760,11 +760,8 @@ String? validateInvoicePaymentBatchResponse(
     return 'El servidor no devolvió una respuesta batch válida; puede no soportar batch/responseAlias.';
   }
   final expectedOperations = paymentCount * 2 + 1;
-  if (decoded.length != expectedOperations) {
-    return 'El servidor devolvió ${decoded.length} operaciones; se esperaban $expectedOperations.';
-  }
   for (var index = 0; index < decoded.length; index++) {
-    final isAllocation = index == decoded.length - 1;
+    final isAllocation = index == expectedOperations - 1;
     final isPaymentTrace = !isAllocation && index.isOdd;
     final operationName = isAllocation
         ? 'la asignación'
@@ -791,6 +788,9 @@ String? validateInvoicePaymentBatchResponse(
     if (docStatus != 'CO') {
       return '$operationName no completó el documento (estado: ${docStatus ?? 'desconocido'}).';
     }
+  }
+  if (decoded.length != expectedOperations) {
+    return 'El servidor devolvió ${decoded.length} operaciones exitosas; se esperaban $expectedOperations. El batch se detuvo antes de completar todas las operaciones.';
   }
   return null;
 }
