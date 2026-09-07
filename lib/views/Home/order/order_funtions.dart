@@ -10,6 +10,28 @@ import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 import 'history_search_criteria.dart';
 
+int? resolveEffectivePriceListID({
+  required bool isPOS,
+  required int? posPriceListID,
+  int? bPartnerPriceListID,
+}) {
+  if (isPOS) return posPriceListID;
+  return bPartnerPriceListID ?? posPriceListID;
+}
+
+Map<String, dynamic> buildPriceListReference({
+  required bool isPOS,
+  required int? posPriceListID,
+  int? bPartnerPriceListID,
+}) {
+  final priceListID = resolveEffectivePriceListID(
+    isPOS: isPOS,
+    posPriceListID: posPriceListID,
+    bPartnerPriceListID: bPartnerPriceListID,
+  );
+  return priceListID != null ? {'id': priceListID} : {'identifier': 'Standard'};
+}
+
 Future<List<Map<String, dynamic>>> fetchBPartner({
   required BuildContext context,
   String? searchTerm = '',
@@ -116,14 +138,27 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
   int? priceListID,
 }) async {
   try {
-    int? bpartnerPriceListVersionID = POS.priceListVersionID;
-    if (POS.priceListID == null) {
+    final effectivePriceListID = resolveEffectivePriceListID(
+      isPOS: POS.isPOS,
+      posPriceListID: POS.priceListID,
+      bPartnerPriceListID: priceListID,
+    );
+    if (effectivePriceListID == null) {
       return [];
     }
 
-    //? solo si no es modo POS y el tercero tiene un lista de precios asignada, se busca la versión de lista de precios para ese tercero, de lo contrario se asume que es la misma que la del POS o la estándar
-    if (priceListID != null && POS.isPOS == false) {
-      bpartnerPriceListVersionID = await getMPriceListVersion(priceListID);
+    // En POS la lista y su versión pertenecen siempre a la terminal.
+    // Fuera de POS, la lista del tercero tiene precedencia sobre la estándar.
+    int? effectivePriceListVersionID;
+    if (POS.isPOS || effectivePriceListID == POS.priceListID) {
+      effectivePriceListVersionID = POS.priceListVersionID;
+    } else {
+      effectivePriceListVersionID = await getMPriceListVersion(
+        effectivePriceListID,
+      );
+    }
+    if (effectivePriceListVersionID == null) {
+      return [];
     }
 
     String categoryFilter = '';
@@ -136,7 +171,7 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
         '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), \'${searchTerm.toLowerCase()}\') or contains(tolower(SKU), \'${searchTerm.toLowerCase()}\') or contains(tolower(Value), \'${searchTerm.toLowerCase()}\'))' : ''}'
         '$categoryFilter';
     final url =
-        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,PriceList,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq $bpartnerPriceListVersionID)${POS.isPOS ? ',M_Storage(\$select=QtyOnHand,QtyReserved,M_Locator_ID;\$expand=M_Locator_ID(\$select=M_Warehouse_ID))' : ''}';
+        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,PriceList,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq $effectivePriceListVersionID)${POS.isPOS ? ',M_Storage(\$select=QtyOnHand,QtyReserved,M_Locator_ID;\$expand=M_Locator_ID(\$select=M_Warehouse_ID))' : ''}';
     final response = await get(
       Uri.parse(url),
       headers: {
@@ -382,9 +417,11 @@ Future<Map<String, dynamic>> postInvoice({
                 ? "M" //? Múltiples Medios de Pago
                 : "B" //? Caja de Punto de Venta
           : "P", //? Con Término de Pago
-      "M_PriceList_ID": priceListID != null
-          ? {"id": priceListID}
-          : (POS.priceListID ?? {"identifier": "Standard"}),
+      "M_PriceList_ID": buildPriceListReference(
+        isPOS: POS.isPOS,
+        posPriceListID: POS.priceListID,
+        bPartnerPriceListID: priceListID,
+      ),
       "IsSOTrx": true,
       "order-line": [...orderLines, ...discountLines],
       if (POSTenderType.isMultiPayment) "pos-payment": posPayments,

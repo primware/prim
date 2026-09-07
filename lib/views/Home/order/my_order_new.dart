@@ -35,14 +35,22 @@ class OrderNewPage extends StatefulWidget {
   final int? sourceOrderId;
   final String? docSubTypeSO;
 
-  const OrderNewPage({super.key, this.isRefund = false, this.doctypeID, this.orderName, this.sourceOrderId, this.docSubTypeSO});
+  const OrderNewPage({
+    super.key,
+    this.isRefund = false,
+    this.doctypeID,
+    this.orderName,
+    this.sourceOrderId,
+    this.docSubTypeSO,
+  });
 
   @override
   State<OrderNewPage> createState() => _OrderNewPageState();
 }
 
 class _OrderNewPageState extends State<OrderNewPage> {
-  final CustomSearchFieldController customerFieldController = CustomSearchFieldController(),
+  final CustomSearchFieldController customerFieldController =
+          CustomSearchFieldController(),
       productFieldController = CustomSearchFieldController();
 
   String? createAnchorCustomerTerm;
@@ -83,7 +91,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
   bool isFormValid = false;
   bool _isInvoiceValid = false, hasLocationBPartner = false;
 
-  int? selectedBPartnerID, docNoSequenceID, selectedSalesRepID, bpartnerPriceListID;
+  int? selectedBPartnerID,
+      docNoSequenceID,
+      selectedSalesRepID,
+      bpartnerPriceListID;
   String? selectedDocActionCode, yappyTransactionId, docNoSequenceNumber;
   Map<String, dynamic>? selectedTax;
 
@@ -169,7 +180,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   Future<void> _initialPartner() async {
     if (POS.templatePartnerID != null) {
-      final hasLocation = await fetchBPartnerHasLocation(context: context, partnerId: POS.templatePartnerID);
+      final hasLocation = await fetchBPartnerHasLocation(
+        context: context,
+        partnerId: POS.templatePartnerID,
+      );
 
       setState(() {
         selectedBPartnerID = POS.templatePartnerID;
@@ -189,7 +203,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
       setState(() {
         paymentMethods = result;
         for (var method in result) {
-          paymentControllers.putIfAbsent(method['id'], () => TextEditingController());
+          paymentControllers.putIfAbsent(
+            method['id'],
+            () => TextEditingController(),
+          );
         }
         isPaymentMethodsLoading = false;
       });
@@ -218,12 +235,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
         }
       }
 
-      final src = await fetchOrderById(orderId: widget.sourceOrderId!, context: context);
+      final src = await fetchOrderById(
+        orderId: widget.sourceOrderId!,
+        context: context,
+      );
       if (src == null) return;
 
       // Prefill cliente
       final bpId = src['bpartner']?['id'] ?? src['C_BPartner_ID']?['id'];
-      final bpName = src['bpartner']?['name'] ?? src['C_BPartner_ID']?['identifier'] ?? '';
+      final bpName =
+          src['bpartner']?['name'] ?? src['C_BPartner_ID']?['identifier'] ?? '';
 
       setState(() {
         if (bpId != null) selectedBPartnerID = bpId;
@@ -231,24 +252,47 @@ class _OrderNewPageState extends State<OrderNewPage> {
       });
 
       // Prefill productos/lineas
-      final List<dynamic> lines = (src['lines'] ?? src['C_OrderLine'] ?? src['orderLines'] ?? []) as List<dynamic>;
+      final List<dynamic> lines =
+          (src['lines'] ?? src['C_OrderLine'] ?? src['orderLines'] ?? [])
+              as List<dynamic>;
 
       final List<Map<String, dynamic>> mapped = [];
       for (final raw in lines) {
         final Map<String, dynamic> line = Map<String, dynamic>.from(raw as Map);
-        final name = line['Name'] ?? (line['M_Product_ID']?['identifier']?.toString().split('_').skip(1).join(' ') ?? 'Producto');
-        final price = (line['PriceActual'] ?? line['Price'] ?? line['price'] ?? 0) as num;
-        final qty = (line['QtyOrdered'] ?? line['QtyEntered'] ?? line['quantity'] ?? 1) as num;
+        final name =
+            line['Name'] ??
+            (line['M_Product_ID']?['identifier']
+                    ?.toString()
+                    .split('_')
+                    .skip(1)
+                    .join(' ') ??
+                'Producto');
+        final price =
+            (line['PriceActual'] ?? line['Price'] ?? line['price'] ?? 0) as num;
+        final qty =
+            (line['QtyOrdered'] ?? line['QtyEntered'] ?? line['quantity'] ?? 1)
+                as num;
         final dynamic taxField = line['C_Tax_ID'];
-        final taxId = (taxField is Map) ? taxField['id'] : (taxField ?? selectedTax?['id']);
+        final taxId = (taxField is Map)
+            ? taxField['id']
+            : (taxField ?? selectedTax?['id']);
         final dynamic productField = line['M_Product_ID'];
         final dynamic categoryField = line['M_Product_Category_ID'];
-        final dynamic categoryValue = line['Category'] ?? (categoryField is Map ? categoryField['identifier'] : null);
+        final dynamic categoryValue =
+            line['Category'] ??
+            (categoryField is Map ? categoryField['identifier'] : null);
         // Compute PriceList and Discount
-        final priceList = (line['PriceList'] ?? line['priceList'] ?? line['Price'] ?? line['price'] ?? 0);
+        final priceList =
+            (line['PriceList'] ??
+            line['priceList'] ??
+            line['Price'] ??
+            line['price'] ??
+            0);
         final discount = (line['Discount'] ?? 0);
         mapped.add({
-          'id': (productField is Map) ? productField['id'] : (productField ?? line['id']),
+          'id': (productField is Map)
+              ? productField['id']
+              : (productField ?? line['id']),
           'sku': line['SKU'] ?? line['Value'] ?? '',
           'upc': line['upc'] ?? '',
           'category': categoryValue,
@@ -257,8 +301,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
           'quantity': (qty).toInt(),
           'C_Tax_ID': taxId,
           'Description': line['Description'] ?? '',
-          'PriceList': (priceList is num ? priceList.toDouble() : double.tryParse(priceList.toString()) ?? 0.0),
-          'Discount': (discount is num ? discount.toDouble() : double.tryParse(discount.toString()) ?? 0.0),
+          'PriceList': (priceList is num
+              ? priceList.toDouble()
+              : double.tryParse(priceList.toString()) ?? 0.0),
+          'Discount': (discount is num
+              ? discount.toDouble()
+              : double.tryParse(discount.toString()) ?? 0.0),
         });
       }
 
@@ -270,12 +318,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
       }
 
       // Prefill pagos
-      final List<dynamic> pays = (src['payments'] ?? src['C_POSPayment'] ?? []) as List<dynamic>;
+      final List<dynamic> pays =
+          (src['payments'] ?? src['C_POSPayment'] ?? []) as List<dynamic>;
       if (pays.isNotEmpty && POSTenderType.isMultiPayment) {
         for (final raw in pays) {
           final Map<String, dynamic> p = Map<String, dynamic>.from(raw as Map);
           final dynamic tenderField = p['C_POSTenderType_ID'];
-          final tenderId = (tenderField is Map) ? tenderField['id'] : tenderField;
+          final tenderId = (tenderField is Map)
+              ? tenderField['id']
+              : tenderField;
           final amt = (p['PayAmt'] ?? p['Amount'] ?? 0).toString();
           if (tenderId != null && paymentControllers.containsKey(tenderId)) {
             paymentControllers[tenderId]!.text = amt;
@@ -315,10 +366,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
   double get totalAmount => total;
 
   Map<String, dynamic> _paymentMethod(int methodId) {
-    return paymentMethods.firstWhere((method) => method['id'] == methodId, orElse: () => const <String, dynamic>{});
+    return paymentMethods.firstWhere(
+      (method) => method['id'] == methodId,
+      orElse: () => const <String, dynamic>{},
+    );
   }
 
-  bool _isDiscountMethod(Map<String, dynamic> method) => method['isDiscount'] == true;
+  bool _isDiscountMethod(Map<String, dynamic> method) =>
+      method['isDiscount'] == true;
 
   List<Map<String, dynamic>> get _orderedDiscountMethods => [
     ...paymentMethods.where((method) => method['isRetireDiscount'] == true),
@@ -326,10 +381,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
   ];
 
   double _controllerAmount(int methodId) {
-    return _r2(double.tryParse(paymentControllers[methodId]?.text.trim().replaceAll(',', '.') ?? '') ?? 0.0);
+    return _r2(
+      double.tryParse(
+            paymentControllers[methodId]?.text.trim().replaceAll(',', '.') ??
+                '',
+          ) ??
+          0.0,
+    );
   }
 
-  bool get _hasDiscountConfig => POS.discountChargeID != null && POS.discountTaxID != null && POS.discountTaxRate != null;
+  bool get _hasDiscountConfig =>
+      POS.discountChargeID != null &&
+      POS.discountTaxID != null &&
+      POS.discountTaxRate != null;
 
   Map<int, Map<String, double>> _productTaxGroups() {
     final groups = <int, Map<String, double>>{};
@@ -337,43 +401,74 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final dynamic taxIdValue = line['C_Tax_ID'];
       if (taxIdValue is! num) continue;
       final taxId = taxIdValue.toInt();
-      final tax = taxOptions.firstWhere((item) => item['id'] == taxId, orElse: () => const <String, dynamic>{});
+      final tax = taxOptions.firstWhere(
+        (item) => item['id'] == taxId,
+        orElse: () => const <String, dynamic>{},
+      );
       final dynamic rawRate = tax['rate'];
-      final rate = rawRate is num ? rawRate.toDouble() : double.tryParse('${rawRate ?? 0}') ?? 0.0;
-      final base = _r2(((line['price'] ?? 0) as num) * ((line['quantity'] ?? 1) as num));
-      final group = groups.putIfAbsent(taxId, () => <String, double>{'Base': 0.0, 'Rate': rate});
+      final rate = rawRate is num
+          ? rawRate.toDouble()
+          : double.tryParse('${rawRate ?? 0}') ?? 0.0;
+      final base = _r2(
+        ((line['price'] ?? 0) as num) * ((line['quantity'] ?? 1) as num),
+      );
+      final group = groups.putIfAbsent(
+        taxId,
+        () => <String, double>{'Base': 0.0, 'Rate': rate},
+      );
       group['Base'] = _r2((group['Base'] ?? 0.0) + base);
     }
     return groups;
   }
 
   double _simulatedTotalForDiscountBase(double discountBase) {
-    final groups = _productTaxGroups().map((taxId, group) => MapEntry(taxId, <String, double>{...group}));
+    final groups = _productTaxGroups().map(
+      (taxId, group) => MapEntry(taxId, <String, double>{...group}),
+    );
     final discountTaxId = POS.discountTaxID;
     if (discountTaxId != null) {
-      final group = groups.putIfAbsent(discountTaxId, () => <String, double>{'Base': 0.0, 'Rate': POS.discountTaxRate ?? 0.0});
+      final group = groups.putIfAbsent(
+        discountTaxId,
+        () => <String, double>{'Base': 0.0, 'Rate': POS.discountTaxRate ?? 0.0},
+      );
       group['Base'] = _r2((group['Base'] ?? 0.0) - discountBase);
       group['Rate'] = POS.discountTaxRate ?? group['Rate'] ?? 0.0;
     }
     final tax = _r2(
-      groups.values.map((group) => _r2((group['Base'] ?? 0.0) * (group['Rate'] ?? 0.0) / 100)).fold(0.0, (sum, amount) => sum + amount),
+      groups.values
+          .map(
+            (group) =>
+                _r2((group['Base'] ?? 0.0) * (group['Rate'] ?? 0.0) / 100),
+          )
+          .fold(0.0, (sum, amount) => sum + amount),
     );
     return _r2(subtotal - discountBase + tax);
   }
 
   double _effectiveDiscountForBase(double base, double previousBase) {
-    return _r2(_simulatedTotalForDiscountBase(previousBase) - _simulatedTotalForDiscountBase(previousBase + base));
+    return _r2(
+      _simulatedTotalForDiscountBase(previousBase) -
+          _simulatedTotalForDiscountBase(previousBase + base),
+    );
   }
 
   double _baseDiscountForGross(double gross, double previousBase) {
     if (gross <= 0 || POS.discountTaxRate == null) return 0.0;
-    final approximateCents = (gross / (1 + POS.discountTaxRate! / 100) * 100).floor();
+    final approximateCents = (gross / (1 + POS.discountTaxRate! / 100) * 100)
+        .floor();
     double best = 0.0;
     double bestEffective = 0.0;
-    for (var cents = approximateCents - 10; cents <= approximateCents + 10; cents++) {
+    for (
+      var cents = approximateCents - 10;
+      cents <= approximateCents + 10;
+      cents++
+    ) {
       if (cents < 0) continue;
       final candidate = _r2(cents / 100);
-      final candidateEffective = _effectiveDiscountForBase(candidate, previousBase);
+      final candidateEffective = _effectiveDiscountForBase(
+        candidate,
+        previousBase,
+      );
       if (candidateEffective <= gross && candidateEffective > bestEffective) {
         best = candidate;
         bestEffective = candidateEffective;
@@ -382,14 +477,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
     return best;
   }
 
-  double _normalizedDiscountAmount(double requested, {double previousBase = 0.0}) {
+  double _normalizedDiscountAmount(
+    double requested, {
+    double previousBase = 0.0,
+  }) {
     if (!_hasDiscountConfig || requested <= 0) return 0.0;
     final base = _baseDiscountForGross(requested, previousBase);
     return _effectiveDiscountForBase(base, previousBase);
   }
 
   List<Map<String, dynamic>> _buildDiscountLines() {
-    if (!_hasDiscountConfig || invoiceLines.isEmpty) return <Map<String, dynamic>>[];
+    if (!_hasDiscountConfig || invoiceLines.isEmpty) {
+      return <Map<String, dynamic>>[];
+    }
 
     final lines = <Map<String, dynamic>>[];
     var cumulativeBase = 0.0;
@@ -412,27 +512,42 @@ class _OrderNewPageState extends State<OrderNewPage> {
     return lines;
   }
 
-  double get totalDiscount =>
-      _r2(_buildDiscountLines().map((line) => (line['EffectiveAmount'] as num).toDouble()).fold(0.0, (sum, amount) => sum + amount));
+  double get totalDiscount => _r2(
+    _buildDiscountLines()
+        .map((line) => (line['EffectiveAmount'] as num).toDouble())
+        .fold(0.0, (sum, amount) => sum + amount),
+  );
 
   double get netTotalAmount {
-    final discountBase = _buildDiscountLines().map((line) => (line['Amount'] as num).toDouble()).fold(0.0, (sum, amount) => sum + amount);
-    return _r2(_simulatedTotalForDiscountBase(discountBase).clamp(0.0, totalAmount));
+    final discountBase = _buildDiscountLines()
+        .map((line) => (line['Amount'] as num).toDouble())
+        .fold(0.0, (sum, amount) => sum + amount);
+    return _r2(
+      _simulatedTotalForDiscountBase(discountBase).clamp(0.0, totalAmount),
+    );
   }
 
   double get listSubtotal => _r2(
     invoiceLines
-        .map((line) => _r2(((line['PriceList'] ?? line['price'] ?? 0) as num) * ((line['quantity'] ?? 1) as num)))
+        .map(
+          (line) => _r2(
+            ((line['PriceList'] ?? line['price'] ?? 0) as num) *
+                ((line['quantity'] ?? 1) as num),
+          ),
+        )
         .fold(0.0, (sum, amount) => sum + amount),
   );
 
   double get lineDiscountTotal => _r2(
     invoiceLines
         .map((line) {
-          final priceList = ((line['PriceList'] ?? line['price'] ?? 0) as num).toDouble();
+          final priceList = ((line['PriceList'] ?? line['price'] ?? 0) as num)
+              .toDouble();
           final priceActual = ((line['price'] ?? 0) as num).toDouble();
           final quantity = ((line['quantity'] ?? 1) as num).toDouble();
-          return _r2(((priceList - priceActual).clamp(0.0, priceList)) * quantity);
+          return _r2(
+            ((priceList - priceActual).clamp(0.0, priceList)) * quantity,
+          );
         })
         .fold(0.0, (sum, amount) => sum + amount),
   );
@@ -447,18 +562,24 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 .map((line) => (line['EffectiveAmount'] as num).toDouble())
                 .fold(0.0, (sum, value) => sum + value),
           );
-          return <String, dynamic>{'Name': method['name'] ?? AppLocale.discount.getString(context), 'Amount': amount};
+          return <String, dynamic>{
+            'Name': method['name'] ?? AppLocale.discount.getString(context),
+            'Amount': amount,
+          };
         })
         .where((item) => (item['Amount'] as double) > 0)
         .toList();
   }
 
-  double get retireDiscountAmount => _normalizedDiscountAmount(_r2(totalAmount * 0.25));
+  double get retireDiscountAmount =>
+      _normalizedDiscountAmount(_r2(totalAmount * 0.25));
 
   void _clampGlobalDiscount(int methodId, String rawValue) {
     final otherDiscounts = _r2(
       paymentMethods
-          .where((method) => _isDiscountMethod(method) && method['id'] != methodId)
+          .where(
+            (method) => _isDiscountMethod(method) && method['id'] != methodId,
+          )
           .map((method) => _controllerAmount(method['id'] as int))
           .fold(0.0, (sum, amount) => sum + amount),
     );
@@ -466,10 +587,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final current = _controllerAmount(methodId);
     if (current > maximum) {
       paymentControllers[methodId]?.text = maximum.toStringAsFixed(2);
-      paymentControllers[methodId]?.selection = TextSelection.collapsed(offset: paymentControllers[methodId]!.text.length);
+      paymentControllers[methodId]?.selection = TextSelection.collapsed(
+        offset: paymentControllers[methodId]!.text.length,
+      );
     }
     final decimals = rawValue.replaceAll(',', '.').split('.');
-    if (decimals.length == 2 && decimals.last.length >= 2 && _controllerAmount(methodId) > 0) {
+    if (decimals.length == 2 &&
+        decimals.last.length >= 2 &&
+        _controllerAmount(methodId) > 0) {
       final effective = _r2(
         _buildDiscountLines()
             .where((line) => line['MethodId'] == methodId)
@@ -478,7 +603,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
       );
       if (effective != _controllerAmount(methodId)) {
         paymentControllers[methodId]?.text = effective.toStringAsFixed(2);
-        paymentControllers[methodId]?.selection = TextSelection.collapsed(offset: paymentControllers[methodId]!.text.length);
+        paymentControllers[methodId]?.selection = TextSelection.collapsed(
+          offset: paymentControllers[methodId]!.text.length,
+        );
       }
     }
     _validateForm();
@@ -487,12 +614,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
   Future<bool> _resetPaymentsForProductChange() async {
     final transactionId = yappyTransactionId;
     if (transactionId != null) {
-      final wasCancelled = await cancelYappyTransaction(transactionId: transactionId);
+      final wasCancelled = await cancelYappyTransaction(
+        transactionId: transactionId,
+      );
       if (!wasCancelled) {
         if (mounted) {
           ToastMessage.show(
             context: context,
-            message: 'No se pudo anular el pago Yappy. Los productos no fueron modificados.',
+            message:
+                'No se pudo anular el pago Yappy. Los productos no fueron modificados.',
             type: ToastType.failure,
           );
         }
@@ -517,7 +647,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final discount = retireDiscountAmount;
     final otherDiscounts = _r2(
       paymentMethods
-          .where((method) => _isDiscountMethod(method) && method['id'] != methodId)
+          .where(
+            (method) => _isDiscountMethod(method) && method['id'] != methodId,
+          )
           .map((method) => _controllerAmount(method['id'] as int))
           .fold(0.0, (sum, amount) => sum + amount),
     );
@@ -527,17 +659,23 @@ class _OrderNewPageState extends State<OrderNewPage> {
           .map((entry) => _controllerAmount(entry.key))
           .fold(0.0, (sum, amount) => sum + amount),
     );
-    final projectedDiscount = _r2((discount + otherDiscounts).clamp(0.0, totalAmount));
-    final exceedsNetTotal = normalPayments > _r2(totalAmount - projectedDiscount);
+    final projectedDiscount = _r2(
+      (discount + otherDiscounts).clamp(0.0, totalAmount),
+    );
+    final exceedsNetTotal =
+        normalPayments > _r2(totalAmount - projectedDiscount);
 
     if (exceedsNetTotal && yappyTransactionId != null) {
       final transactionId = yappyTransactionId!;
-      final wasCancelled = await cancelYappyTransaction(transactionId: transactionId);
+      final wasCancelled = await cancelYappyTransaction(
+        transactionId: transactionId,
+      );
       if (!wasCancelled) {
         if (mounted) {
           ToastMessage.show(
             context: context,
-            message: 'No se pudo anular el pago Yappy. El descuento no fue aplicado.',
+            message:
+                'No se pudo anular el pago Yappy. El descuento no fue aplicado.',
             type: ToastType.failure,
           );
         }
@@ -557,14 +695,25 @@ class _OrderNewPageState extends State<OrderNewPage> {
             .map((method) => _controllerAmount(method['id'] as int))
             .fold(0.0, (sum, amount) => sum + amount),
       );
-      var globalRemaining = _r2((totalAmount - retireTotal).clamp(0.0, totalAmount));
-      for (final method in paymentMethods.where((method) => method['isGlobalDiscount'] == true)) {
+      var globalRemaining = _r2(
+        (totalAmount - retireTotal).clamp(0.0, totalAmount),
+      );
+      for (final method in paymentMethods.where(
+        (method) => method['isGlobalDiscount'] == true,
+      )) {
         final globalId = method['id'] as int;
         final amount = _controllerAmount(globalId);
         if (amount > globalRemaining) {
-          paymentControllers[globalId]?.text = globalRemaining.toStringAsFixed(2);
+          paymentControllers[globalId]?.text = globalRemaining.toStringAsFixed(
+            2,
+          );
         }
-        globalRemaining = _r2((globalRemaining - _controllerAmount(globalId)).clamp(0.0, globalRemaining));
+        globalRemaining = _r2(
+          (globalRemaining - _controllerAmount(globalId)).clamp(
+            0.0,
+            globalRemaining,
+          ),
+        );
       }
 
       if (exceedsNetTotal) {
@@ -602,10 +751,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final totalCash = _r2(
       paymentControllers.entries
           .where((entry) {
-            final method = paymentMethods.firstWhere((m) => m['id'] == entry.key, orElse: () => {});
+            final method = paymentMethods.firstWhere(
+              (m) => m['id'] == entry.key,
+              orElse: () => {},
+            );
             return method['isCash'] == true;
           })
-          .map((entry) => _r2(double.tryParse((entry.value.text).replaceAll(',', '.')) ?? 0.0))
+          .map(
+            (entry) => _r2(
+              double.tryParse((entry.value.text).replaceAll(',', '.')) ?? 0.0,
+            ),
+          )
           .fold(0.0, (sum, val) => sum + val),
     );
 
@@ -614,11 +770,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final overpay = _r2(totalPayment - amount);
     final hasEnoughPayment = totalPayment >= amount;
     final cashCoversOverpay = overpay <= 0 || totalCash >= overpay;
-    final change = hasEnoughPayment && cashCoversOverpay && overpay > 0 ? overpay : 0.0;
+    final change = hasEnoughPayment && cashCoversOverpay && overpay > 0
+        ? overpay
+        : 0.0;
 
     setState(() {
       if (POS.isPOS && paymentMethods.isNotEmpty) {
-        _isInvoiceValid = clientSelected && products.isNotEmpty && hasEnoughPayment && cashCoversOverpay;
+        _isInvoiceValid =
+            clientSelected &&
+            products.isNotEmpty &&
+            hasEnoughPayment &&
+            cashCoversOverpay;
       } else {
         _isInvoiceValid = clientSelected && products.isNotEmpty;
       }
@@ -635,7 +797,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
       });
     }
 
-    final partner = await fetchBPartner(context: context, searchTerm: clienteController.text.trim());
+    final partner = await fetchBPartner(
+      context: context,
+      searchTerm: clienteController.text.trim(),
+    );
 
     setState(() {
       bPartnerOptions = partner;
@@ -645,7 +810,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
         createAnchorCustomerTerm = null;
       } else {
         canShowCreateCustomerButton = clienteController.text.trim().isNotEmpty;
-        createAnchorCustomerTerm = canShowCreateCustomerButton ? clienteController.text.trim() : null;
+        createAnchorCustomerTerm = canShowCreateCustomerButton
+            ? clienteController.text.trim()
+            : null;
       }
     });
     if (mounted && firtsLoad) {
@@ -670,7 +837,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     final product = await fetchProductInPriceList(
       context: context,
-      categoryID: selectedCategories.isNotEmpty ? selectedCategories.toList() : null,
+      categoryID: selectedCategories.isNotEmpty
+          ? selectedCategories.toList()
+          : null,
       searchTerm: productController.text.trim(),
       priceListID: bpartnerPriceListID,
     );
@@ -687,7 +856,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
       } else {
         // Si no hay resultados y el usuario escribió algo, encendemos el botón
         canShowCreateProductButton = productController.text.trim().isNotEmpty;
-        createAnchorProductTerm = canShowCreateProductButton ? productController.text.trim() : null;
+        createAnchorProductTerm = canShowCreateProductButton
+            ? productController.text.trim()
+            : null;
       }
     });
 
@@ -703,17 +874,29 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _showProductSelectionPopup() async {
-    final selectedProducts = await ProductSelectionPopup.show(context, priceListID: bpartnerPriceListID);
+    final selectedProducts = await ProductSelectionPopup.show(
+      context,
+      priceListID: bpartnerPriceListID,
+    );
     if (selectedProducts != null && selectedProducts.isNotEmpty) {
       if (POS.cPosID != null) {
         if (!await _resetPaymentsForProductChange()) return;
       }
       setState(() {
         for (final item in selectedProducts) {
-          final int? selectedTaxID = (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
-          final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
-          final double priceList = _r2((item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble());
-          final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
+          final int? selectedTaxID =
+              (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id'])
+                  as int?;
+          final double priceActual = _r2(
+            (item['price'] ?? item['Price'] ?? 0).toDouble(),
+          );
+          final double priceList = _r2(
+            (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0)
+                .toDouble(),
+          );
+          final double discount = priceList > 0
+              ? _r2(100 * (1 - (priceActual / priceList)))
+              : 0.0;
 
           invoiceLines.add({
             ...item,
@@ -745,7 +928,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   Future<void> _loadTax() async {
     final tax = await fetchTax();
-    final defaultTax = tax.isNotEmpty ? tax.firstWhere((t) => t['isdefault'] == true, orElse: () => tax.first) : null;
+    final defaultTax = tax.isNotEmpty
+        ? tax.firstWhere((t) => t['isdefault'] == true, orElse: () => tax.first)
+        : null;
     setState(() {
       taxOptions = tax;
       if (defaultTax != null) {
@@ -770,7 +955,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final lineNet = _r2(price * quantity);
       newSubtotal += lineNet;
 
-      final tax = taxOptions.firstWhere((t) => t['id'] == taxID, orElse: () => {});
+      final tax = taxOptions.firstWhere(
+        (t) => t['id'] == taxID,
+        orElse: () => {},
+      );
       final taxPercent = _r2(double.tryParse('${tax['rate'] ?? '0'}') ?? 0.0);
 
       final lineTax = _r2(lineNet * (taxPercent / 100));
@@ -792,16 +980,26 @@ class _OrderNewPageState extends State<OrderNewPage> {
         margin: const EdgeInsets.symmetric(vertical: 8),
         height: 60,
         width: double.infinity,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
       ),
     );
   }
 
-  Future<void> _showQuantityDialog(Map<String, dynamic> product, {int? index}) async {
-    int? selectedTaxID = index != null ? (product['C_Tax_ID'] ?? product['tax']?['id']) : (product['tax']?['id'] ?? selectedTax?['id']);
+  Future<void> _showQuantityDialog(
+    Map<String, dynamic> product, {
+    int? index,
+  }) async {
+    int? selectedTaxID = index != null
+        ? (product['C_Tax_ID'] ?? product['tax']?['id'])
+        : (product['tax']?['id'] ?? selectedTax?['id']);
 
     final quantityController = TextEditingController(
-      text: index != null && product['quantity'] != null ? product['quantity'].toString() : "1",
+      text: index != null && product['quantity'] != null
+          ? product['quantity'].toString()
+          : "1",
     );
 
     // --- Funciones Matemáticas sin la función clamp para permitir negativos ---
@@ -812,31 +1010,51 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
 
     // Si el precio es mayor al de lista, el descuento dará negativo
-    double calcDiscount(double priceList, double priceActual) => priceList <= 0 ? 0 : (100 * (1 - (priceActual / priceList)));
+    double calcDiscount(double priceList, double priceActual) =>
+        priceList <= 0 ? 0 : (100 * (1 - (priceActual / priceList)));
 
-    double calcPrice(double priceList, double discount) => priceList * (1 - (discount / 100));
+    double calcPrice(double priceList, double discount) =>
+        priceList * (1 - (discount / 100));
 
     final double priceList =
         (index != null
-                ? (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0)
-                : (product['PriceList'] ?? product['priceList'] ?? product['price'] ?? 0))
+                ? (product['PriceList'] ??
+                      product['priceList'] ??
+                      product['price'] ??
+                      0)
+                : (product['PriceList'] ??
+                      product['priceList'] ??
+                      product['price'] ??
+                      0))
             .toDouble();
 
     // Valores iniciales
-    double initialPrice = index != null ? (product['price'] ?? product['PriceActual'] ?? 0).toDouble() : (product['price'] ?? 0).toDouble();
+    double initialPrice = index != null
+        ? (product['price'] ?? product['PriceActual'] ?? 0).toDouble()
+        : (product['price'] ?? 0).toDouble();
 
-    double initialDiscount = index != null ? (product['Discount'] ?? 0).toDouble() : calcDiscount(priceList, initialPrice);
+    double initialDiscount = index != null
+        ? (product['Discount'] ?? 0).toDouble()
+        : calcDiscount(priceList, initialPrice);
 
-    final priceController = TextEditingController(text: initialPrice == 0 ? '' : initialPrice.toStringAsFixed(2));
-    final discountController = TextEditingController(text: initialDiscount == 0 ? '' : initialDiscount.toStringAsFixed(2));
+    final priceController = TextEditingController(
+      text: initialPrice == 0 ? '' : initialPrice.toStringAsFixed(2),
+    );
+    final discountController = TextEditingController(
+      text: initialDiscount == 0 ? '' : initialDiscount.toStringAsFixed(2),
+    );
     final descriptionController = TextEditingController(
-      text: index != null && product['Description'] != null ? product['Description'].toString() : '',
+      text: index != null && product['Description'] != null
+          ? product['Description'].toString()
+          : '',
     );
 
     Future<void> onSubmitted(BuildContext dialogContext) async {
       final qty = int.tryParse(quantityController.text) ?? 1;
-      final effectivePrice = double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
-      final effectiveDiscount = double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0;
+      final effectivePrice =
+          double.tryParse(priceController.text.replaceAll(',', '.')) ?? 0.0;
+      final effectiveDiscount =
+          double.tryParse(discountController.text.replaceAll(',', '.')) ?? 0.0;
 
       if (!await _resetPaymentsForProductChange()) {
         return;
@@ -879,9 +1097,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
               return AlertDialog(
                 backgroundColor: Theme.of(context).cardColor,
                 insetPadding: const EdgeInsets.all(16.0),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
 
-                title: Text(product['name'] ?? 'Producto', style: Theme.of(context).textTheme.bodyMedium),
+                title: Text(
+                  product['name'] ?? 'Producto',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
 
                 content: SizedBox(
                   width: 500,
@@ -903,10 +1126,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                   icon: const Icon(Icons.remove),
                                   color: ColorTheme.error,
                                   onPressed: () {
-                                    int current = int.tryParse(quantityController.text) ?? 1;
+                                    int current =
+                                        int.tryParse(quantityController.text) ??
+                                        1;
                                     if (current > 1) {
                                       setModalState(() {
-                                        quantityController.text = (current - 1).toString();
+                                        quantityController.text = (current - 1)
+                                            .toString();
                                       });
                                     }
                                   },
@@ -918,7 +1144,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                   controlador: quantityController,
                                   texto: AppLocale.quantity.getString(context),
                                   inputType: TextInputType.number,
-                                  onSubmitted: (_) => onSubmitted(dialogContext),
+                                  onSubmitted: (_) =>
+                                      onSubmitted(dialogContext),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
@@ -928,9 +1155,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                   icon: const Icon(Icons.add),
                                   color: ColorTheme.success,
                                   onPressed: () {
-                                    int current = int.tryParse(quantityController.text) ?? 1;
+                                    int current =
+                                        int.tryParse(quantityController.text) ??
+                                        1;
                                     setModalState(() {
-                                      quantityController.text = (current + 1).toString();
+                                      quantityController.text = (current + 1)
+                                          .toString();
                                     });
                                   },
                                 ),
@@ -939,34 +1169,57 @@ class _OrderNewPageState extends State<OrderNewPage> {
                           ),
                           const SizedBox(height: CustomSpacer.medium),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                              border: Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.2),
+                              ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.local_offer_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                                    Icon(
+                                      Icons.local_offer_outlined,
+                                      size: 18,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
                                     const SizedBox(width: 8),
                                     Text(
                                       AppLocale.priceList.getString(context),
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                   ],
                                 ),
                                 Text(
                                   '\$${r2local(priceList).toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                   textAlign: TextAlign.right,
                                 ),
                               ],
@@ -980,14 +1233,31 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 flex: 6,
                                 child: TextfieldTheme(
                                   controlador: priceController,
-                                  pista: product['price'] == 0 ? product['price'].toString() : null,
+                                  pista: product['price'] == 0
+                                      ? product['price'].toString()
+                                      : null,
                                   texto: AppLocale.price.getString(context),
-                                  inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
-                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
+                                  inputType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                        signed: false,
+                                      ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                      RegExp(r'[0-9\.,]'),
+                                    ),
+                                  ],
                                   onChanged: (val) {
                                     setModalState(() {
-                                      final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                      discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
+                                      final p =
+                                          double.tryParse(
+                                            val.replaceAll(',', '.'),
+                                          ) ??
+                                          0.0;
+                                      discountController.text = calcDiscount(
+                                        priceList,
+                                        p,
+                                      ).toStringAsFixed(2);
                                     });
                                   },
                                 ),
@@ -998,13 +1268,28 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 child: TextfieldTheme(
                                   controlador: discountController,
                                   texto: '% Desc.',
-                                  inputType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\-0-9\.,]'))],
+                                  inputType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                        signed: true,
+                                      ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                      RegExp(r'[\-0-9\.,]'),
+                                    ),
+                                  ],
                                   onChanged: (val) {
                                     setModalState(() {
                                       if (val == '-') return;
-                                      final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                      priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
+                                      final d =
+                                          double.tryParse(
+                                            val.replaceAll(',', '.'),
+                                          ) ??
+                                          0.0;
+                                      priceController.text = calcPrice(
+                                        priceList,
+                                        d,
+                                      ).toStringAsFixed(2);
                                     });
                                   },
                                 ),
@@ -1013,7 +1298,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
                           ),
 
                           const SizedBox(height: CustomSpacer.small),
-                          Divider(color: Colors.grey.withOpacity(0.3), thickness: 1, height: 24),
+                          Divider(
+                            color: Colors.grey.withOpacity(0.3),
+                            thickness: 1,
+                            height: 24,
+                          ),
 
                           SearchableDropdown<int>(
                             labelText: AppLocale.taxType.getString(context),
@@ -1025,12 +1314,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 selectedTaxID = value;
                               });
                             },
-                            displayItem: (item) => '${item['name']} (${item['rate']}%)',
+                            displayItem: (item) =>
+                                '${item['name']} (${item['rate']}%)',
                           ),
                           const SizedBox(height: CustomSpacer.medium),
                           TextFieldComments(
                             controlador: descriptionController,
-                            texto: AppLocale.descriptionOptional.getString(context),
+                            texto: AppLocale.descriptionOptional.getString(
+                              context,
+                            ),
                             onSubmitted: (_) => onSubmitted(dialogContext),
                           ),
                         ],
@@ -1050,7 +1342,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
                   const SizedBox(width: 10),
                   ElevatedButton(
                     onPressed: () => onSubmitted(dialogContext),
-                    child: Text(index != null ? 'Editar' : AppLocale.add.getString(context)),
+                    child: Text(
+                      index != null
+                          ? 'Editar'
+                          : AppLocale.add.getString(context),
+                    ),
                   ),
                 ],
               );
@@ -1086,7 +1382,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
 
     if (result['success'] != true) {
-      ToastMessage.show(context: context, message: result['message'] ?? 'No se pudo generar el QR', type: ToastType.failure);
+      ToastMessage.show(
+        context: context,
+        message: result['message'] ?? 'No se pudo generar el QR',
+        type: ToastType.failure,
+      );
       setState(() {
         isYappyLoading = false;
       });
@@ -1132,7 +1432,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
                   }
                   closed = true;
                   t.cancel();
-                  ToastMessage.show(context: context, message: 'Pago recibido correctamente', type: ToastType.success);
+                  ToastMessage.show(
+                    context: context,
+                    message: 'Pago recibido correctamente',
+                    type: ToastType.success,
+                  );
                   if (Navigator.of(dialogContext).canPop()) {
                     Navigator.of(dialogContext).pop(true);
                   }
@@ -1146,12 +1450,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
               if (secondsLeft == 0) {
                 closed = true;
                 t.cancel();
-                await cancelYappyTransaction(transactionId: yappyTransactionId!);
+                await cancelYappyTransaction(
+                  transactionId: yappyTransactionId!,
+                );
                 setState(() {
                   yappyTransactionId = null;
                 });
 
-                ToastMessage.show(context: context, message: 'Pago cancelado o tiempo agotado', type: ToastType.failure);
+                ToastMessage.show(
+                  context: context,
+                  message: 'Pago cancelado o tiempo agotado',
+                  type: ToastType.failure,
+                );
                 if (Navigator.of(dialogContext).canPop()) {
                   Navigator.of(dialogContext).pop(false);
                 }
@@ -1174,10 +1484,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(24),
+                            topRight: Radius.circular(24),
+                          ),
                           color: Colors.white,
                         ),
-                        child: Center(child: Image.asset('assets/img/yappyLogo.png', width: 240)),
+                        child: Center(
+                          child: Image.asset(
+                            'assets/img/yappyLogo.png',
+                            width: 240,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: CustomSpacer.xlarge),
 
@@ -1186,33 +1504,60 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         padding: const EdgeInsets.all(8),
                         width: 280,
                         // height: 280,
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.white),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                        ),
                         child: Center(
                           child: Column(
                             children: [
-                              QrImageView(data: hash, version: QrVersions.auto, size: 260),
+                              QrImageView(
+                                data: hash,
+                                version: QrVersions.auto,
+                                size: 260,
+                              ),
                               // Contador
-                              Text('Tiempo restante: $mm:$ss', style: Theme.of(context).textTheme.titleMedium),
+                              Text(
+                                'Tiempo restante: $mm:$ss',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
                               const SizedBox(height: 6),
                               // Id de transacción (pequeño)
-                              Text('Transacción: $yappyTransactionId', style: Theme.of(context).textTheme.labelSmall),
+                              Text(
+                                'Transacción: $yappyTransactionId',
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
                               const SizedBox(height: CustomSpacer.medium),
                               TextButton(
-                                style: TextButton.styleFrom(backgroundColor: ColorTheme.error.withOpacity(0.2)),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: ColorTheme.error.withOpacity(
+                                    0.2,
+                                  ),
+                                ),
                                 onPressed: () {
                                   closed = true;
                                   ticker?.cancel();
-                                  cancelYappyTransaction(transactionId: yappyTransactionId!);
+                                  cancelYappyTransaction(
+                                    transactionId: yappyTransactionId!,
+                                  );
                                   setState(() {
                                     yappyTransactionId = null;
                                   });
 
-                                  ToastMessage.show(context: context, message: 'Pago cancelado o tiempo agotado', type: ToastType.failure);
+                                  ToastMessage.show(
+                                    context: context,
+                                    message: 'Pago cancelado o tiempo agotado',
+                                    type: ToastType.failure,
+                                  );
                                   Navigator.of(dialogContext).pop(false);
                                 },
                                 child: Text(
                                   AppLocale.cancel.getString(context),
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.red, fontWeight: FontWeight.bold),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                               ),
                             ],
@@ -1222,7 +1567,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       const SizedBox(height: CustomSpacer.xlarge),
                       Text(
                         'Escanéalo desde Yappy App o desde Yappy en el App de tu banco',
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.white),
+                        style: Theme.of(context).textTheme.headlineLarge
+                            ?.copyWith(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: CustomSpacer.xlarge),
@@ -1259,19 +1605,30 @@ class _OrderNewPageState extends State<OrderNewPage> {
         title: Text(AppLocale.confirmPrintTicket.getString(context)),
         content: Text(AppLocale.printTicketMessage.getString(context)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _createInvoice({required List<Map<String, dynamic>> product, required int bPartner}) async {
+  Future<void> _createInvoice({
+    required List<Map<String, dynamic>> product,
+    required int bPartner,
+  }) async {
     final String actionLabel = (() {
       try {
         final match = POS.documentActions.firstWhere(
           (a) => a['code'] == (selectedDocActionCode ?? ''),
-          orElse: () => POS.documentActions.isNotEmpty ? POS.documentActions.first : const {'name': ''},
+          orElse: () => POS.documentActions.isNotEmpty
+              ? POS.documentActions.first
+              : const {'name': ''},
         );
         return (match['name'] ?? '').toString();
       } catch (_) {
@@ -1289,14 +1646,30 @@ class _OrderNewPageState extends State<OrderNewPage> {
             widget.isRefund
                 ? AppLocale.confirmCompleteCreditNote
                       .getString(context)
-                      .replaceAll('{action}', actionLabel.isEmpty ? AppLocale.process.getString(context) : actionLabel)
+                      .replaceAll(
+                        '{action}',
+                        actionLabel.isEmpty
+                            ? AppLocale.process.getString(context)
+                            : actionLabel,
+                      )
                 : AppLocale.confirmCompleteOrder
                       .getString(context)
-                      .replaceAll('{action}', actionLabel.isEmpty ? AppLocale.process.getString(context) : actionLabel),
+                      .replaceAll(
+                        '{action}',
+                        actionLabel.isEmpty
+                            ? AppLocale.process.getString(context)
+                            : actionLabel,
+                      ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocale.cancel.getString(context))),
-            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text(AppLocale.confirm.getString(context))),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(AppLocale.cancel.getString(context)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(AppLocale.confirm.getString(context)),
+            ),
           ],
         );
       },
@@ -1307,8 +1680,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
     setState(() => isSending = true);
     final List<Map<String, dynamic>> invoiceLine = product.map((item) {
       final double price = _r2(item['price'] ?? 0);
-      final double priceList = _r2(item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0);
-      final double discount = _r2(item['Discount'] ?? (priceList > 0 ? (100 * (1 - (price / priceList))) : 0));
+      final double priceList = _r2(
+        item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0,
+      );
+      final double discount = _r2(
+        item['Discount'] ??
+            (priceList > 0 ? (100 * (1 - (price / priceList))) : 0),
+      );
       return {
         'M_Product_ID': item['id'],
         'SKU': item['sku'],
@@ -1336,23 +1714,35 @@ class _OrderNewPageState extends State<OrderNewPage> {
           final txt = entry.value.text.trim();
           final originalAmt = double.tryParse(txt.replaceAll(',', '.')) ?? 0.0;
 
-          final method = paymentMethods.firstWhere((m) => m['id'] == entry.key, orElse: () => const <String, dynamic>{});
+          final method = paymentMethods.firstWhere(
+            (m) => m['id'] == entry.key,
+            orElse: () => const <String, dynamic>{},
+          );
 
-          final bool isYappy = (method['name']?.toString().toLowerCase().contains('yappy') == true);
+          final bool isYappy =
+              (method['name']?.toString().toLowerCase().contains('yappy') ==
+              true);
           final bool isCash = (method['isCash'] == true);
 
           // Distribuir el vuelto una sola vez entre los métodos de efectivo.
           double adjustedAmt = _r2(originalAmt);
           if (isCash && remainingChange > 0) {
-            final changeFromThisPayment = adjustedAmt < remainingChange ? adjustedAmt : remainingChange;
+            final changeFromThisPayment = adjustedAmt < remainingChange
+                ? adjustedAmt
+                : remainingChange;
             adjustedAmt = _r2(adjustedAmt - changeFromThisPayment);
             remainingChange = _r2(remainingChange - changeFromThisPayment);
           }
 
-          final Map<String, dynamic> data = {'PayAmt': adjustedAmt, 'C_POSTenderType_ID': entry.key};
+          final Map<String, dynamic> data = {
+            'PayAmt': adjustedAmt,
+            'C_POSTenderType_ID': entry.key,
+          };
 
           // Si es Yappy y hay transacción, incluirla como RoutingNo
-          if (isYappy && yappyTransactionId != null && yappyTransactionId!.isNotEmpty) {
+          if (isYappy &&
+              yappyTransactionId != null &&
+              yappyTransactionId!.isNotEmpty) {
             data['RoutingNo'] = yappyTransactionId;
           }
 
@@ -1383,17 +1773,30 @@ class _OrderNewPageState extends State<OrderNewPage> {
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: Theme.of(context).cardColor,
-            title: Text(AppLocale.change.getString(context), style: Theme.of(context).textTheme.titleMedium),
+            title: Text(
+              AppLocale.change.getString(context),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             content: Text(
               '\$${calculatedChange.toStringAsFixed(2)}',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(AppLocale.close.getString(context)))],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(AppLocale.close.getString(context)),
+              ),
+            ],
           ),
         );
       }
 
-      final Map<String, dynamic>? order = await fetchOrderById(orderId: int.parse(result['Record_ID'].toString()), context: context);
+      final Map<String, dynamic>? order = await fetchOrderById(
+        orderId: int.parse(result['Record_ID'].toString()),
+        context: context,
+      );
 
       if (order != null) {
         if (POS.isPOS == true) {
@@ -1406,7 +1809,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                 final printers = await Printing.listPrinters();
                 final defaultPrinter = printers.firstWhere(
                   (p) => p.isDefault,
-                  orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
+                  orElse: () => printers.isNotEmpty
+                      ? printers.first
+                      : throw Exception('No hay impresoras disponibles'),
                 );
 
                 await Printing.directPrintPdf(
@@ -1416,23 +1821,34 @@ class _OrderNewPageState extends State<OrderNewPage> {
                   onLayout: (_) => pdfBytes,
                 );
               } catch (e) {
-                await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
+                await Printing.sharePdf(
+                  bytes: pdfBytes,
+                  filename: 'Order_${order['DocumentNo']}.pdf',
+                );
               }
             } catch (e) {
               try {
                 final pdfBytes = await generatePOSTicket(order);
-                await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
+                await Printing.sharePdf(
+                  bytes: pdfBytes,
+                  filename: 'Order_${order['DocumentNo']}.pdf',
+                );
               } catch (_) {}
             }
           }
         } else {
           //? Mostrar detalle de la orden [NO Es POS]
-          await Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => OrderDetailPage(order: order)),
+          );
         }
       }
       ToastMessage.show(
         context: context,
-        message: widget.isRefund ? AppLocale.creditNote.getString(context) : AppLocale.newOrder.getString(context),
+        message: widget.isRefund
+            ? AppLocale.creditNote.getString(context)
+            : AppLocale.newOrder.getString(context),
         type: ToastType.success,
       );
 
@@ -1452,7 +1868,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
     } else {
       ToastMessage.show(
         context: context,
-        message: result['message'] ?? AppLocale.errorCompleteOrder.getString(context),
+        message:
+            result['message'] ??
+            AppLocale.errorCompleteOrder.getString(context),
         type: ToastType.failure,
       );
     }
@@ -1466,12 +1884,17 @@ class _OrderNewPageState extends State<OrderNewPage> {
       final price = (line['price'] ?? 0) as num;
       final quantity = (line['quantity'] ?? 1) as num;
       final taxID = line['C_Tax_ID'];
-      final tax = taxOptions.firstWhere((t) => t['id'] == taxID, orElse: () => {});
+      final tax = taxOptions.firstWhere(
+        (t) => t['id'] == taxID,
+        orElse: () => {},
+      );
       final rate = (tax['rate'] ?? 0).toDouble();
       final name = tax['name'] ?? AppLocale.noTax.getString(context);
 
       final taxAmount = price * quantity * (rate / 100);
-      groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] = (groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] ?? 0) + taxAmount;
+      groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] =
+          (groupedTaxes['$name (${rate.toStringAsFixed(2)}%)'] ?? 0) +
+          taxAmount;
     }
 
     groupedTaxes.updateAll((_, amount) => _r2(amount));
@@ -1485,10 +1908,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 700 ? true : false;
-    final discountPaymentMethods = !_hasDiscountConfig ? <Map<String, dynamic>>[] : _orderedDiscountMethods;
-    final standardPaymentMethods = paymentMethods.where((method) => !_isDiscountMethod(method)).toList();
-    final orderedPaymentMethods = [...discountPaymentMethods, ...standardPaymentMethods];
+    final bool isMobile = MediaQuery.of(context).size.width < 700
+        ? true
+        : false;
+    final discountPaymentMethods = !_hasDiscountConfig
+        ? <Map<String, dynamic>>[]
+        : _orderedDiscountMethods;
+    final standardPaymentMethods = paymentMethods
+        .where((method) => !_isDiscountMethod(method))
+        .toList();
+    final orderedPaymentMethods = [
+      ...discountPaymentMethods,
+      ...standardPaymentMethods,
+    ];
 
     return WillPopScope(
       onWillPop: () async {
@@ -1504,7 +1936,11 @@ class _OrderNewPageState extends State<OrderNewPage> {
             children: [
               Text(
                 '${AppLocale.user.getString(context)}: ${UserData.name}',
-                style: TextStyle(fontSize: isMobile ? 12 : 14, fontWeight: FontWeight.w400, color: Colors.white70),
+                style: TextStyle(
+                  fontSize: isMobile ? 12 : 14,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white70,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
@@ -1513,18 +1949,26 @@ class _OrderNewPageState extends State<OrderNewPage> {
                     : widget.isRefund
                     ? '${AppLocale.creditNote.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}'
                     : '${AppLocale.newOrder.getString(context)}${docNoSequenceNumber != null ? ": $docNoSequenceNumber" : ""}',
-                style: TextStyle(fontSize: isMobile ? 16 : 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: isMobile ? 16 : 20,
+                  fontWeight: FontWeight.bold,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
-          backgroundColor: widget.isRefund ? Theme.of(context).colorScheme.error : null,
+          backgroundColor: widget.isRefund
+              ? Theme.of(context).colorScheme.error
+              : null,
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: CustomSpacer.medium),
               child: Center(
                 child: Container(
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(CustomSpacer.small), color: Colors.white),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(CustomSpacer.small),
+                    color: Colors.white,
+                  ),
                   padding: EdgeInsets.all(isMobile ? 4.0 : CustomSpacer.small),
                   child: Logo(width: isMobile ? 45 : 60),
                 ),
@@ -1568,14 +2012,20 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        padding: EdgeInsets.all(selectedBPartnerID == null ? 8.0 : 0.0),
+                        padding: EdgeInsets.all(
+                          selectedBPartnerID == null ? 8.0 : 0.0,
+                        ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: selectedBPartnerID == null ? Colors.red.shade400 : Colors.transparent,
+                            color: selectedBPartnerID == null
+                                ? Colors.red.shade400
+                                : Colors.transparent,
                             width: selectedBPartnerID == null ? 1.5 : 0,
                           ),
-                          color: selectedBPartnerID == null ? Colors.red.withOpacity(0.02) : Colors.transparent,
+                          color: selectedBPartnerID == null
+                              ? Colors.red.withOpacity(0.02)
+                              : Colors.transparent,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1585,28 +2035,54 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 Expanded(
                                   child: CustomSearchField(
                                     options: bPartnerOptions,
-                                    labelText: AppLocale.customer.getString(context),
+                                    labelText: AppLocale.customer.getString(
+                                      context,
+                                    ),
                                     searchBy: "TaxID",
                                     controller: clienteController,
-                                    showCreateButtonIfNotFound: canShowCreateCustomerButton,
+                                    showCreateButtonIfNotFound:
+                                        canShowCreateCustomerButton,
                                     createAnchorTerm: createAnchorCustomerTerm,
                                     fieldController: customerFieldController,
-                                    onSubmit: (_) => _loadBPartner(showLoadingIndicator: true),
+                                    onSubmit: (_) => _loadBPartner(
+                                      showLoadingIndicator: true,
+                                    ),
                                     onCreate: (value) async {
-                                      if (selectedBPartnerID != null && invoiceLines.isNotEmpty) {
+                                      final previousEffectivePriceListID =
+                                          resolveEffectivePriceListID(
+                                            isPOS: POS.isPOS,
+                                            posPriceListID: POS.priceListID,
+                                            bPartnerPriceListID:
+                                                bpartnerPriceListID,
+                                          );
+                                      if (!POS.isPOS &&
+                                          selectedBPartnerID != null &&
+                                          invoiceLines.isNotEmpty) {
                                         final confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                            backgroundColor: Theme.of(context).cardColor,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            backgroundColor: Theme.of(
+                                              context,
+                                            ).cardColor,
                                             title: const Column(
                                               children: [
-                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                Icon(
+                                                  Icons.warning_amber_rounded,
+                                                  size: 45,
+                                                  color: Colors.orange,
+                                                ),
                                                 SizedBox(height: 10),
                                                 Text(
                                                   '¿Cambiar cliente?',
                                                   textAlign: TextAlign.center,
-                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                  ),
                                                 ),
                                               ],
                                             ),
@@ -1615,19 +2091,31 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                               textAlign: TextAlign.center,
                                               style: TextStyle(fontSize: 16),
                                             ),
-                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actionsAlignment:
+                                                MainAxisAlignment.spaceEvenly,
                                             actions: [
                                               TextButton(
-                                                onPressed: () => Navigator.pop(ctx, false),
-                                                child: Text(AppLocale.no.getString(context)),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
+                                                child: Text(
+                                                  AppLocale.no.getString(
+                                                    context,
+                                                  ),
+                                                ),
                                               ),
                                               ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.redAccent,
+                                                  backgroundColor:
+                                                      Colors.redAccent,
                                                   foregroundColor: Colors.white,
                                                 ),
-                                                onPressed: () => Navigator.pop(ctx, true),
-                                                child: Text(AppLocale.yes.getString(context)),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                child: Text(
+                                                  AppLocale.yes.getString(
+                                                    context,
+                                                  ),
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -1643,63 +2131,131 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       }
                                       final result = await Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (_) => BPartnerNewPage(bpartnerName: value)),
+                                        MaterialPageRoute(
+                                          builder: (_) => BPartnerNewPage(
+                                            bpartnerName: value,
+                                          ),
+                                        ),
                                       );
-                                      if (result != null && result?['created'] == true) {
+                                      if (result != null &&
+                                          result?['created'] == true) {
+                                        final dynamic rawPriceListID =
+                                            result['bpartner']['M_PriceList_ID'];
+                                        final int? newBPartnerPriceListID =
+                                            rawPriceListID is Map
+                                            ? rawPriceListID['id'] as int?
+                                            : rawPriceListID as int?;
                                         setState(() {
-                                          clienteController.text = result['bpartner']['Name'];
-                                          selectedBPartnerID = result['bpartner']['id'];
+                                          clienteController.text =
+                                              result['bpartner']['Name'];
+                                          selectedBPartnerID =
+                                              result['bpartner']['id'];
+                                          bpartnerPriceListID =
+                                              newBPartnerPriceListID;
                                           hasLocationBPartner = true;
+                                          _validateForm();
                                         });
-                                        _loadBPartner(showLoadingIndicator: true);
+                                        _loadBPartner(
+                                          showLoadingIndicator: true,
+                                        );
+                                        final nextEffectivePriceListID =
+                                            resolveEffectivePriceListID(
+                                              isPOS: POS.isPOS,
+                                              posPriceListID: POS.priceListID,
+                                              bPartnerPriceListID:
+                                                  newBPartnerPriceListID,
+                                            );
+                                        if (!POS.isPOS &&
+                                            previousEffectivePriceListID !=
+                                                nextEffectivePriceListID) {
+                                          ProductSelectionPopup.clearGlobalCache();
+                                          await _loadProduct(
+                                            showLoadingIndicator: true,
+                                          );
+                                        }
                                       }
                                     },
                                     onItemSelected: (item) async {
-                                      if (selectedBPartnerID != null && selectedBPartnerID != item['id'] && invoiceLines.isNotEmpty) {
+                                      if (!POS.isPOS &&
+                                          selectedBPartnerID != null &&
+                                          selectedBPartnerID != item['id'] &&
+                                          invoiceLines.isNotEmpty) {
                                         final confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                            backgroundColor: Theme.of(context).cardColor,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            backgroundColor: Theme.of(
+                                              context,
+                                            ).cardColor,
                                             title: Column(
                                               children: [
-                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                Icon(
+                                                  Icons.warning_amber_rounded,
+                                                  size: 45,
+                                                  color: Colors.orange,
+                                                ),
                                                 SizedBox(height: 10),
                                                 Text(
-                                                  AppLocale.changeClient.getString(context),
+                                                  AppLocale.changeClient
+                                                      .getString(context),
                                                   textAlign: TextAlign.center,
-                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                  ),
                                                 ),
                                               ],
                                             ),
                                             content: Text(
-                                              AppLocale.changeClientWarning.getString(context),
+                                              AppLocale.changeClientWarning
+                                                  .getString(context),
                                               textAlign: TextAlign.center,
                                               style: TextStyle(fontSize: 16),
                                             ),
-                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actionsAlignment:
+                                                MainAxisAlignment.spaceEvenly,
                                             actions: [
                                               TextButton(
-                                                onPressed: () => Navigator.pop(ctx, false),
-                                                child: Text(AppLocale.no.getString(context)),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
+                                                child: Text(
+                                                  AppLocale.no.getString(
+                                                    context,
+                                                  ),
+                                                ),
                                               ),
                                               ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.redAccent,
+                                                  backgroundColor:
+                                                      Colors.redAccent,
                                                   foregroundColor: Colors.white,
                                                 ),
-                                                onPressed: () => Navigator.pop(ctx, true),
-                                                child: Text(AppLocale.yes.getString(context)),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                child: Text(
+                                                  AppLocale.yes.getString(
+                                                    context,
+                                                  ),
+                                                ),
                                               ),
                                             ],
                                           ),
                                         );
                                         if (confirm != true) {
-                                          final prevCustomer = bPartnerOptions.firstWhere(
-                                            (c) => c['id'] == selectedBPartnerID,
-                                            orElse: () => {'name': ''},
+                                          final prevCustomer = bPartnerOptions
+                                              .firstWhere(
+                                                (c) =>
+                                                    c['id'] ==
+                                                    selectedBPartnerID,
+                                                orElse: () => {'name': ''},
+                                              );
+                                          setState(
+                                            () => clienteController.text =
+                                                prevCustomer['name'],
                                           );
-                                          setState(() => clienteController.text = prevCustomer['name']);
                                           return;
                                         }
                                         if (!await _resetPaymentsForProductChange()) {
@@ -1710,25 +2266,58 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           _recalculateSummary();
                                         });
                                       }
+                                      final previousEffectivePriceListID =
+                                          resolveEffectivePriceListID(
+                                            isPOS: POS.isPOS,
+                                            posPriceListID: POS.priceListID,
+                                            bPartnerPriceListID:
+                                                bpartnerPriceListID,
+                                          );
+                                      final nextBPartnerPriceListID =
+                                          item['M_PriceList_ID'] as int?;
+                                      final nextEffectivePriceListID =
+                                          resolveEffectivePriceListID(
+                                            isPOS: POS.isPOS,
+                                            posPriceListID: POS.priceListID,
+                                            bPartnerPriceListID:
+                                                nextBPartnerPriceListID,
+                                          );
                                       setState(() {
-                                        bpartnerPriceListID = item['M_PriceList_ID'];
+                                        bpartnerPriceListID =
+                                            nextBPartnerPriceListID;
                                         selectedBPartnerID = item['id'];
-                                        hasLocationBPartner = item['C_BPartner_Location_ID'] != null;
-                                        if (POS.priceListID != bpartnerPriceListID) {
-                                          _loadProduct(showLoadingIndicator: true);
-                                        }
+                                        hasLocationBPartner =
+                                            item['C_BPartner_Location_ID'] !=
+                                            null;
                                         _validateForm();
                                       });
+                                      if (!POS.isPOS &&
+                                          previousEffectivePriceListID !=
+                                              nextEffectivePriceListID) {
+                                        ProductSelectionPopup.clearGlobalCache();
+                                        await _loadProduct(
+                                          showLoadingIndicator: true,
+                                        );
+                                      }
                                     },
                                     itemBuilder: (item) => Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(item['name'], style: Theme.of(context).textTheme.bodyMedium, overflow: TextOverflow.ellipsis),
+                                        Text(
+                                          item['name'],
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                         if (item['TaxID'] != null)
                                           Text(
                                             item['TaxID'],
-                                            style: Theme.of(context).textTheme.bodyMedium,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                       ],
@@ -1741,22 +2330,38 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 if (selectedBPartnerID != null)
                                   IconButton(
                                     tooltip: 'Quitar cliente',
-                                    icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                                    icon: const Icon(
+                                      Icons.cancel,
+                                      color: Colors.redAccent,
+                                    ),
                                     onPressed: () async {
-                                      if (invoiceLines.isNotEmpty) {
+                                      if (!POS.isPOS &&
+                                          invoiceLines.isNotEmpty) {
                                         final confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                            backgroundColor: Theme.of(context).cardColor,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            backgroundColor: Theme.of(
+                                              context,
+                                            ).cardColor,
                                             title: const Column(
                                               children: [
-                                                Icon(Icons.warning_amber_rounded, size: 45, color: Colors.orange),
+                                                Icon(
+                                                  Icons.warning_amber_rounded,
+                                                  size: 45,
+                                                  color: Colors.orange,
+                                                ),
                                                 SizedBox(height: 10),
                                                 Text(
                                                   '¿Quitar cliente?',
                                                   textAlign: TextAlign.center,
-                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                  ),
                                                 ),
                                               ],
                                             ),
@@ -1765,76 +2370,129 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                               textAlign: TextAlign.center,
                                               style: TextStyle(fontSize: 16),
                                             ),
-                                            actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                            actionsAlignment:
+                                                MainAxisAlignment.spaceEvenly,
                                             actions: [
                                               TextButton(
-                                                onPressed: () => Navigator.pop(ctx, false),
-                                                child: Text(AppLocale.no.getString(context)),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
+                                                child: Text(
+                                                  AppLocale.no.getString(
+                                                    context,
+                                                  ),
+                                                ),
                                               ),
                                               ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.redAccent,
+                                                  backgroundColor:
+                                                      Colors.redAccent,
                                                   foregroundColor: Colors.white,
                                                 ),
-                                                onPressed: () => Navigator.pop(ctx, true),
-                                                child: Text(AppLocale.yes.getString(context)),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                child: Text(
+                                                  AppLocale.yes.getString(
+                                                    context,
+                                                  ),
+                                                ),
                                               ),
                                             ],
                                           ),
                                         );
                                         if (confirm != true) return;
                                       }
-                                      if (!await _resetPaymentsForProductChange()) {
-                                        return;
+                                      if (!POS.isPOS) {
+                                        if (!await _resetPaymentsForProductChange()) {
+                                          return;
+                                        }
                                       }
                                       setState(() {
                                         selectedBPartnerID = null;
+                                        bpartnerPriceListID = null;
                                         clienteController.clear();
-                                        invoiceLines.clear();
-                                        _recalculateSummary();
+                                        if (!POS.isPOS) {
+                                          invoiceLines.clear();
+                                          _recalculateSummary();
+                                        }
                                         _validateForm();
                                       });
+                                      if (!POS.isPOS) {
+                                        ProductSelectionPopup.clearGlobalCache();
+                                        await _loadProduct(
+                                          showLoadingIndicator: true,
+                                        );
+                                      }
                                     },
                                   )
                                 else
                                   IconButton(
-                                    tooltip: AppLocale.refresh.getString(context),
+                                    tooltip: AppLocale.refresh.getString(
+                                      context,
+                                    ),
                                     icon: const Icon(Icons.search),
-                                    onPressed: () => _loadBPartner(showLoadingIndicator: true),
+                                    onPressed: () => _loadBPartner(
+                                      showLoadingIndicator: true,
+                                    ),
                                   ),
                               ],
                             ),
 
                             if (selectedBPartnerID == null)
                               Padding(
-                                padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                                padding: const EdgeInsets.only(
+                                  top: 8.0,
+                                  left: 4.0,
+                                ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 16),
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: Colors.red.shade400,
+                                      size: 16,
+                                    ),
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        AppLocale.selectCustomer.getString(context),
-                                        style: TextStyle(color: Colors.red.shade400, fontSize: 13, fontWeight: FontWeight.bold),
+                                        AppLocale.selectCustomer.getString(
+                                          context,
+                                        ),
+                                        style: TextStyle(
+                                          color: Colors.red.shade400,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
 
-                            if (hasLocationBPartner == false && selectedBPartnerID != null)
+                            if (hasLocationBPartner == false &&
+                                selectedBPartnerID != null)
                               Padding(
-                                padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+                                padding: const EdgeInsets.only(
+                                  top: 8.0,
+                                  left: 4.0,
+                                ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 16),
+                                    Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: Colors.red.shade400,
+                                      size: 16,
+                                    ),
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        AppLocale.customerNoAddressError.getString(context),
-                                        style: TextStyle(color: Colors.red.shade400, fontSize: 13, fontWeight: FontWeight.bold),
+                                        AppLocale.customerNoAddressError
+                                            .getString(context),
+                                        style: TextStyle(
+                                          color: Colors.red.shade400,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1849,25 +2507,40 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       // --- ANIMACIÓN PARA PRODUCTOS ---
                       AnimatedCrossFade(
                         duration: const Duration(milliseconds: 400),
-                        crossFadeState: (selectedBPartnerID == null || hasLocationBPartner == false)
+                        crossFadeState:
+                            (selectedBPartnerID == null ||
+                                hasLocationBPartner == false)
                             ? CrossFadeState.showFirst
                             : CrossFadeState.showSecond,
                         firstChild: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
+                            color: Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor.withOpacity(0.5),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.withOpacity(0.3), style: BorderStyle.solid),
+                            border: Border.all(
+                              color: Colors.grey.withOpacity(0.3),
+                              style: BorderStyle.solid,
+                            ),
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.shopping_cart_outlined, size: 48, color: Colors.grey.withOpacity(0.6)),
+                              Icon(
+                                Icons.shopping_cart_outlined,
+                                size: 48,
+                                color: Colors.grey.withOpacity(0.6),
+                              ),
                               const SizedBox(height: 12),
                               Text(
-                                AppLocale.selectValidCustomerForProducts.getString(context),
+                                AppLocale.selectValidCustomerForProducts
+                                    .getString(context),
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 14,
+                                ),
                               ),
                             ],
                           ),
@@ -1881,21 +2554,45 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                   if (!isProductCategoryLoading)
                                     Column(
                                       mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             TextButton.icon(
                                               style: ButtonStyle(
-                                                textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.bodyMedium),
-                                                backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.secondary),
-                                                foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onSecondary),
+                                                textStyle:
+                                                    MaterialStateProperty.all(
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.bodyMedium,
+                                                    ),
+                                                backgroundColor:
+                                                    MaterialStateProperty.all(
+                                                      Theme.of(
+                                                        context,
+                                                      ).colorScheme.secondary,
+                                                    ),
+                                                foregroundColor:
+                                                    MaterialStateProperty.all(
+                                                      Theme.of(
+                                                        context,
+                                                      ).colorScheme.onSecondary,
+                                                    ),
                                               ),
                                               icon: const Icon(Icons.category),
-                                              label: Text(AppLocale.categories.getString(context)),
+                                              label: Text(
+                                                AppLocale.categories.getString(
+                                                  context,
+                                                ),
+                                              ),
                                               onPressed: () async {
-                                                Set<int> tempSelected = Set<int>.from(selectedCategories);
+                                                Set<int> tempSelected =
+                                                    Set<int>.from(
+                                                      selectedCategories,
+                                                    );
                                                 await showModalBottomSheet(
                                                   context: context,
                                                   isScrollControlled: true,
@@ -1904,63 +2601,123 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                       builder: (context, setModalState) {
                                                         return SafeArea(
                                                           child: Padding(
-                                                            padding: MediaQuery.of(context).viewInsets,
+                                                            padding:
+                                                                MediaQuery.of(
+                                                                  context,
+                                                                ).viewInsets,
                                                             child: Container(
-                                                              constraints: const BoxConstraints(maxHeight: 400),
+                                                              constraints:
+                                                                  const BoxConstraints(
+                                                                    maxHeight:
+                                                                        400,
+                                                                  ),
                                                               child: Column(
-                                                                mainAxisSize: MainAxisSize.min,
-                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .min,
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
                                                                 children: [
                                                                   Padding(
-                                                                    padding: const EdgeInsets.all(16.0),
+                                                                    padding:
+                                                                        const EdgeInsets.all(
+                                                                          16.0,
+                                                                        ),
                                                                     child: Text(
-                                                                      AppLocale.selectCategories.getString(context),
-                                                                      style: Theme.of(context).textTheme.bodyLarge,
+                                                                      AppLocale
+                                                                          .selectCategories
+                                                                          .getString(
+                                                                            context,
+                                                                          ),
+                                                                      style: Theme.of(
+                                                                        context,
+                                                                      ).textTheme.bodyLarge,
                                                                     ),
                                                                   ),
                                                                   Expanded(
                                                                     child: ListView.builder(
-                                                                      shrinkWrap: true,
-                                                                      itemCount: categpryOptions.length,
-                                                                      itemBuilder: (context, idx) {
-                                                                        final cat = categpryOptions[idx];
-                                                                        final isSelected = tempSelected.contains(cat['id']);
-                                                                        return ListTile(
-                                                                          title: Text(cat['name']),
-                                                                          selected: isSelected,
-                                                                          onTap: () {
-                                                                            setModalState(() {
-                                                                              if (isSelected) {
-                                                                                tempSelected.remove(cat['id']);
-                                                                              } else {
-                                                                                tempSelected.add(cat['id']);
-                                                                              }
-                                                                            });
+                                                                      shrinkWrap:
+                                                                          true,
+                                                                      itemCount:
+                                                                          categpryOptions
+                                                                              .length,
+                                                                      itemBuilder:
+                                                                          (
+                                                                            context,
+                                                                            idx,
+                                                                          ) {
+                                                                            final cat =
+                                                                                categpryOptions[idx];
+                                                                            final isSelected = tempSelected.contains(
+                                                                              cat['id'],
+                                                                            );
+                                                                            return ListTile(
+                                                                              title: Text(
+                                                                                cat['name'],
+                                                                              ),
+                                                                              selected: isSelected,
+                                                                              onTap: () {
+                                                                                setModalState(() {
+                                                                                  if (isSelected) {
+                                                                                    tempSelected.remove(
+                                                                                      cat['id'],
+                                                                                    );
+                                                                                  } else {
+                                                                                    tempSelected.add(
+                                                                                      cat['id'],
+                                                                                    );
+                                                                                  }
+                                                                                });
+                                                                              },
+                                                                              trailing: isSelected
+                                                                                  ? const Icon(
+                                                                                      Icons.check,
+                                                                                      color: Colors.blue,
+                                                                                    )
+                                                                                  : null,
+                                                                            );
                                                                           },
-                                                                          trailing: isSelected
-                                                                              ? const Icon(Icons.check, color: Colors.blue)
-                                                                              : null,
-                                                                        );
-                                                                      },
                                                                     ),
                                                                   ),
                                                                   Padding(
-                                                                    padding: const EdgeInsets.all(16.0),
+                                                                    padding:
+                                                                        const EdgeInsets.all(
+                                                                          16.0,
+                                                                        ),
                                                                     child: Row(
-                                                                      mainAxisAlignment: MainAxisAlignment.end,
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .end,
                                                                       children: [
                                                                         TextButton(
                                                                           onPressed: () {
-                                                                            Navigator.pop(context);
+                                                                            Navigator.pop(
+                                                                              context,
+                                                                            );
                                                                           },
-                                                                          child: Text(AppLocale.cancel.getString(context)),
+                                                                          child: Text(
+                                                                            AppLocale.cancel.getString(
+                                                                              context,
+                                                                            ),
+                                                                          ),
                                                                         ),
-                                                                        const SizedBox(width: 8),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              8,
+                                                                        ),
                                                                         ElevatedButton(
                                                                           onPressed: () {
-                                                                            Navigator.pop(context, tempSelected);
+                                                                            Navigator.pop(
+                                                                              context,
+                                                                              tempSelected,
+                                                                            );
                                                                           },
-                                                                          child: Text(AppLocale.apply.getString(context)),
+                                                                          child: Text(
+                                                                            AppLocale.apply.getString(
+                                                                              context,
+                                                                            ),
+                                                                          ),
                                                                         ),
                                                                       ],
                                                                     ),
@@ -1974,55 +2731,90 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                     );
                                                   },
                                                 ).then((result) {
-                                                  if (result != null && result is Set<int>) {
+                                                  if (result != null &&
+                                                      result is Set<int>) {
                                                     setState(() {
-                                                      selectedCategories = Set<int>.from(result);
+                                                      selectedCategories =
+                                                          Set<int>.from(result);
                                                     });
-                                                    _loadProduct(showLoadingIndicator: true);
+                                                    _loadProduct(
+                                                      showLoadingIndicator:
+                                                          true,
+                                                    );
                                                   }
                                                 });
                                               },
                                             ),
                                             Material(
-                                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .secondary
+                                                  .withOpacity(0.1),
                                               shape: const CircleBorder(),
                                               clipBehavior: Clip.hardEdge,
                                               child: IconButton(
                                                 tooltip: "Selección Múltiple",
-                                                icon: const Icon(Icons.grid_view),
-                                                color: Theme.of(context).colorScheme.secondary,
-                                                splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
-                                                highlightColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                                                onPressed: _showProductSelectionPopup,
+                                                icon: const Icon(
+                                                  Icons.grid_view,
+                                                ),
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.secondary,
+                                                splashColor: Theme.of(context)
+                                                    .colorScheme
+                                                    .secondary
+                                                    .withOpacity(0.4),
+                                                highlightColor:
+                                                    Theme.of(context)
+                                                        .colorScheme
+                                                        .secondary
+                                                        .withOpacity(0.2),
+                                                onPressed:
+                                                    _showProductSelectionPopup,
                                               ),
                                             ),
                                           ],
                                         ),
                                         if (selectedCategories.isNotEmpty)
                                           Padding(
-                                            padding: const EdgeInsets.only(top: 8.0),
+                                            padding: const EdgeInsets.only(
+                                              top: 8.0,
+                                            ),
                                             child: Wrap(
                                               spacing: 6,
                                               runSpacing: 6,
-                                              children: selectedCategories.map((catId) {
-                                                final cat = categpryOptions.firstWhere(
-                                                  (c) => c['id'] == catId,
-                                                  orElse: () => <String, dynamic>{},
-                                                );
-                                                final catName = cat.isNotEmpty ? cat['name'] : 'Categoría';
+                                              children: selectedCategories.map((
+                                                catId,
+                                              ) {
+                                                final cat = categpryOptions
+                                                    .firstWhere(
+                                                      (c) => c['id'] == catId,
+                                                      orElse: () =>
+                                                          <String, dynamic>{},
+                                                    );
+                                                final catName = cat.isNotEmpty
+                                                    ? cat['name']
+                                                    : 'Categoría';
                                                 return Chip(
                                                   label: Text(catName),
                                                   onDeleted: () {
                                                     setState(() {
-                                                      selectedCategories.remove(catId);
+                                                      selectedCategories.remove(
+                                                        catId,
+                                                      );
                                                     });
-                                                    _loadProduct(showLoadingIndicator: true);
+                                                    _loadProduct(
+                                                      showLoadingIndicator:
+                                                          true,
+                                                    );
                                                   },
                                                 );
                                               }).toList(),
                                             ),
                                           ),
-                                        const SizedBox(height: CustomSpacer.medium),
+                                        const SizedBox(
+                                          height: CustomSpacer.medium,
+                                        ),
                                       ],
                                     ),
                                   if (isProductSearchLoading) ...[
@@ -2036,23 +2828,37 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         child: CustomSearchField(
                                           options: productOptions,
                                           controller: productController,
-                                          labelText: AppLocale.product.getString(context),
+                                          labelText: AppLocale.product
+                                              .getString(context),
                                           searchBy: 'UPC',
-                                          fieldController: productFieldController,
+                                          fieldController:
+                                              productFieldController,
 
                                           // --- CREACION DE PRODUCTOS DESDE BUSQUEDA ---
-                                          showCreateButtonIfNotFound: canShowCreateProductButton,
-                                          createAnchorTerm: createAnchorProductTerm,
+                                          showCreateButtonIfNotFound:
+                                              canShowCreateProductButton,
+                                          createAnchorTerm:
+                                              createAnchorProductTerm,
                                           onCreate: (value) async {
                                             final result = await Navigator.push(
                                               context,
-                                              MaterialPageRoute(builder: (_) => ProductNewPage(productName: value)),
+                                              MaterialPageRoute(
+                                                builder: (_) => ProductNewPage(
+                                                  productName: value,
+                                                ),
+                                              ),
                                             );
-                                            if (result != null && result['created'] == true) {
+                                            if (result != null &&
+                                                result['created'] == true) {
                                               setState(() {
-                                                productController.text = result['product']['name'] ?? result['product']['Name'] ?? value;
+                                                productController.text =
+                                                    result['product']['name'] ??
+                                                    result['product']['Name'] ??
+                                                    value;
                                               });
-                                              _loadProduct(showLoadingIndicator: true);
+                                              _loadProduct(
+                                                showLoadingIndicator: true,
+                                              );
                                             }
                                           },
 
@@ -2062,19 +2868,40 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 return;
                                               }
                                               final int? selectedTaxID =
-                                                  (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
-                                              final double priceActual = _r2((item['price'] ?? item['Price'] ?? 0).toDouble());
-                                              final double priceList = _r2(
-                                                (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble(),
+                                                  (item['C_Tax_ID'] ??
+                                                          item['tax']?['id'] ??
+                                                          selectedTax?['id'])
+                                                      as int?;
+                                              final double priceActual = _r2(
+                                                (item['price'] ??
+                                                        item['Price'] ??
+                                                        0)
+                                                    .toDouble(),
                                               );
-                                              final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
+                                              final double priceList = _r2(
+                                                (item['PriceList'] ??
+                                                        item['priceList'] ??
+                                                        item['price'] ??
+                                                        0)
+                                                    .toDouble(),
+                                              );
+                                              final double discount =
+                                                  priceList > 0
+                                                  ? _r2(
+                                                      100 *
+                                                          (1 -
+                                                              (priceActual /
+                                                                  priceList)),
+                                                    )
+                                                  : 0.0;
                                               setState(() {
                                                 invoiceLines.add({
                                                   ...item,
                                                   'quantity': 1,
                                                   'price': priceActual,
                                                   'C_Tax_ID': selectedTaxID,
-                                                  'Description': item['Description'] ?? '',
+                                                  'Description':
+                                                      item['Description'] ?? '',
                                                   'PriceList': priceList,
                                                   'Discount': discount,
                                                 });
@@ -2082,49 +2909,76 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                               _recalculateSummary();
                                               productController.clear();
                                               _validateForm();
-                                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                                if (mounted) {
-                                                  productFieldController.requestFocus();
-                                                }
-                                              });
+                                              WidgetsBinding.instance
+                                                  .addPostFrameCallback((_) {
+                                                    if (mounted) {
+                                                      productFieldController
+                                                          .requestFocus();
+                                                    }
+                                                  });
                                             } else {
                                               _showQuantityDialog(item);
                                             }
                                           },
-                                          onSubmit: (_) => _loadProduct(showLoadingIndicator: true),
+                                          onSubmit: (_) => _loadProduct(
+                                            showLoadingIndicator: true,
+                                          ),
                                           itemBuilder: (item) => Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Expanded(
                                                 child: Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
                                                   children: [
                                                     Text(
                                                       '${item['name'] ?? ''}',
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: Theme.of(context).textTheme.bodySmall,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: Theme.of(
+                                                        context,
+                                                      ).textTheme.bodySmall,
                                                     ),
                                                     if (item['value'] != null)
                                                       Text(
                                                         'Cod: ${item['value'] ?? ''}',
                                                         maxLines: 2,
-                                                        style: Theme.of(context).textTheme.bodySmall,
-                                                        overflow: TextOverflow.ellipsis,
+                                                        style: Theme.of(
+                                                          context,
+                                                        ).textTheme.bodySmall,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
                                                       ),
                                                     if (POS.isPOS)
                                                       Text(
-                                                        item['QtyAvailable'] != null
+                                                        item['QtyAvailable'] !=
+                                                                null
                                                             ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}'
                                                             : '${AppLocale.exist.getString(context)}: 0',
-                                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                                                        style: Theme.of(context)
+                                                            .textTheme
+                                                            .bodySmall
+                                                            ?.copyWith(
+                                                              fontStyle:
+                                                                  FontStyle
+                                                                      .italic,
+                                                            ),
                                                       ),
                                                   ],
                                                 ),
                                               ),
                                               Text(
                                                 '\$${item['price'] ?? '0.00'}',
-                                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
                                               ),
                                             ],
                                           ),
@@ -2132,58 +2986,117 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       ),
                                       const SizedBox(width: CustomSpacer.small),
                                       Material(
-                                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .secondary
+                                            .withOpacity(0.1),
                                         shape: const CircleBorder(),
                                         clipBehavior: Clip.hardEdge,
                                         child: IconButton(
-                                          tooltip: AppLocale.refresh.getString(context),
+                                          tooltip: AppLocale.refresh.getString(
+                                            context,
+                                          ),
                                           icon: const Icon(Icons.search),
-                                          color: Theme.of(context).colorScheme.secondary,
-                                          splashColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
-                                          highlightColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                                          onPressed: () => _loadProduct(showLoadingIndicator: true),
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                          splashColor: Theme.of(context)
+                                              .colorScheme
+                                              .secondary
+                                              .withOpacity(0.4),
+                                          highlightColor: Theme.of(context)
+                                              .colorScheme
+                                              .secondary
+                                              .withOpacity(0.2),
+                                          onPressed: () => _loadProduct(
+                                            showLoadingIndicator: true,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                   if (invoiceLines.isNotEmpty) ...[
                                     const SizedBox(height: CustomSpacer.large),
-                                    Text(AppLocale.productSummary.getString(context), style: Theme.of(context).textTheme.titleLarge),
+                                    Text(
+                                      AppLocale.productSummary.getString(
+                                        context,
+                                      ),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge,
+                                    ),
                                     const SizedBox(height: CustomSpacer.medium),
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
-                                      children: invoiceLines.asMap().entries.map((entry) {
+                                      children: invoiceLines.asMap().entries.map((
+                                        entry,
+                                      ) {
                                         final index = entry.key;
                                         final line = entry.value;
-                                        final tax = taxOptions.firstWhere((t) => t['id'] == line['C_Tax_ID'], orElse: () => {});
-                                        final taxRate = tax['rate'] != null ? '${tax['rate']}%' : AppLocale.noTax.getString(context);
+                                        final tax = taxOptions.firstWhere(
+                                          (t) => t['id'] == line['C_Tax_ID'],
+                                          orElse: () => {},
+                                        );
+                                        final taxRate = tax['rate'] != null
+                                            ? '${tax['rate']}%'
+                                            : AppLocale.noTax.getString(
+                                                context,
+                                              );
                                         return Tooltip(
                                           message: line['name'],
                                           child: InputChip(
-                                            onPressed: () => _showQuantityDialog(line, index: index),
+                                            onPressed: () =>
+                                                _showQuantityDialog(
+                                                  line,
+                                                  index: index,
+                                                ),
                                             deleteIcon: const Icon(Icons.close),
                                             onDeleted: () => _deleteLine(index),
                                             deleteIconColor: ColorTheme.error,
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
                                             label: Column(
                                               mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   line['name'],
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
                                                 ),
-                                                if (line['Description'] != null && line['Description'].toString().isNotEmpty)
-                                                  Text('${line['Description']}', style: Theme.of(context).textTheme.labelSmall),
+                                                if (line['Description'] !=
+                                                        null &&
+                                                    line['Description']
+                                                        .toString()
+                                                        .isNotEmpty)
+                                                  Text(
+                                                    '${line['Description']}',
+                                                    style: Theme.of(
+                                                      context,
+                                                    ).textTheme.labelSmall,
+                                                  ),
                                                 Text(
                                                   '${line['quantity']} x \$${line['price']} + $taxRate',
-                                                  style: Theme.of(context).textTheme.bodySmall,
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall,
                                                 ),
                                               ],
                                             ),
-                                            backgroundColor: Theme.of(context).cardColor,
+                                            backgroundColor: Theme.of(
+                                              context,
+                                            ).cardColor,
                                           ),
                                         );
                                       }).toList(),
@@ -2210,40 +3123,75 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             else ...[
                               ...orderedPaymentMethods.map((method) {
                                 final isFirstDiscount =
-                                    discountPaymentMethods.isNotEmpty && method['id'] == discountPaymentMethods.first['id'];
+                                    discountPaymentMethods.isNotEmpty &&
+                                    method['id'] ==
+                                        discountPaymentMethods.first['id'];
                                 final isFirstStandard =
-                                    standardPaymentMethods.isNotEmpty && method['id'] == standardPaymentMethods.first['id'];
+                                    standardPaymentMethods.isNotEmpty &&
+                                    method['id'] ==
+                                        standardPaymentMethods.first['id'];
 
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     if (isFirstDiscount) ...[
-                                      Text(AppLocale.discounts.getString(context), style: Theme.of(context).textTheme.titleMedium),
+                                      Text(
+                                        AppLocale.discounts.getString(context),
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium,
+                                      ),
                                       const SizedBox(height: 6),
                                     ],
                                     if (isFirstStandard) ...[
-                                      if (discountPaymentMethods.isNotEmpty) const SizedBox(height: CustomSpacer.medium),
-                                      Text(AppLocale.paymentMethods.getString(context), style: Theme.of(context).textTheme.titleMedium),
+                                      if (discountPaymentMethods.isNotEmpty)
+                                        const SizedBox(
+                                          height: CustomSpacer.medium,
+                                        ),
+                                      Text(
+                                        AppLocale.paymentMethods.getString(
+                                          context,
+                                        ),
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium,
+                                      ),
                                       const SizedBox(height: 6),
                                     ],
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 6),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 6,
+                                      ),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             children: [
                                               Expanded(
                                                 child: TextfieldTheme(
-                                                  controlador: paymentControllers[method['id']],
+                                                  controlador:
+                                                      paymentControllers[method['id']],
                                                   texto: method['name'],
-                                                  inputType: TextInputType.number,
-                                                  inputFormatters: [NumericTextFormatterWithDecimal()],
-                                                  readOnly: method['isRetireDiscount'] == true || _lockedPayments.contains(method['id']),
+                                                  inputType:
+                                                      TextInputType.number,
+                                                  inputFormatters: [
+                                                    NumericTextFormatterWithDecimal(),
+                                                  ],
+                                                  readOnly:
+                                                      method['isRetireDiscount'] ==
+                                                          true ||
+                                                      _lockedPayments.contains(
+                                                        method['id'],
+                                                      ),
                                                   onChanged: (value) {
-                                                    if (method['isGlobalDiscount'] == true) {
-                                                      _clampGlobalDiscount(method['id'], value);
+                                                    if (method['isGlobalDiscount'] ==
+                                                        true) {
+                                                      _clampGlobalDiscount(
+                                                        method['id'],
+                                                        value,
+                                                      );
                                                     } else {
                                                       _validateForm();
                                                     }
@@ -2251,34 +3199,76 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
-                                              if (method['isRetireDiscount'] == true)
+                                              if (method['isRetireDiscount'] ==
+                                                  true)
                                                 IconButton(
-                                                  icon: const Icon(Icons.percent_rounded),
-                                                  tooltip: 'Aplicar descuento 25%',
-                                                  onPressed: () => _applyRetireDiscount(method['id']),
+                                                  icon: const Icon(
+                                                    Icons.percent_rounded,
+                                                  ),
+                                                  tooltip:
+                                                      'Aplicar descuento 25%',
+                                                  onPressed: () =>
+                                                      _applyRetireDiscount(
+                                                        method['id'],
+                                                      ),
                                                 )
-                                              else if (!_isDiscountMethod(method))
+                                              else if (!_isDiscountMethod(
+                                                method,
+                                              ))
                                                 IconButton(
-                                                  icon: const Icon(Icons.attach_money_rounded),
-                                                  tooltip: 'Llenar con el máximo disponible',
+                                                  icon: const Icon(
+                                                    Icons.attach_money_rounded,
+                                                  ),
+                                                  tooltip:
+                                                      'Llenar con el máximo disponible',
                                                   onPressed: () {
-                                                    final currentSum = paymentControllers.entries
+                                                    final currentSum = paymentControllers
+                                                        .entries
                                                         .where(
                                                           (entry) =>
-                                                              entry.key != method['id'] && !_isDiscountMethod(_paymentMethod(entry.key)),
+                                                              entry.key !=
+                                                                  method['id'] &&
+                                                              !_isDiscountMethod(
+                                                                _paymentMethod(
+                                                                  entry.key,
+                                                                ),
+                                                              ),
                                                         )
-                                                        .map((entry) => _controllerAmount(entry.key))
-                                                        .fold(0.0, (a, b) => a + b);
+                                                        .map(
+                                                          (entry) =>
+                                                              _controllerAmount(
+                                                                entry.key,
+                                                              ),
+                                                        )
+                                                        .fold(
+                                                          0.0,
+                                                          (a, b) => a + b,
+                                                        );
 
-                                                    final remaining = _r2((netTotalAmount - currentSum).clamp(0.0, netTotalAmount));
-                                                    paymentControllers[method['id']]?.text = remaining.toStringAsFixed(2);
+                                                    final remaining = _r2(
+                                                      (netTotalAmount -
+                                                              currentSum)
+                                                          .clamp(
+                                                            0.0,
+                                                            netTotalAmount,
+                                                          ),
+                                                    );
+                                                    paymentControllers[method['id']]
+                                                        ?.text = remaining
+                                                        .toStringAsFixed(2);
                                                     _validateForm();
                                                   },
                                                 ),
                                               if (_isDiscountMethod(method) &&
                                                   _r2(
                                                         double.tryParse(
-                                                              paymentControllers[method['id']]?.text.replaceAll(',', '.') ?? '0',
+                                                              paymentControllers[method['id']]
+                                                                      ?.text
+                                                                      .replaceAll(
+                                                                        ',',
+                                                                        '.',
+                                                                      ) ??
+                                                                  '0',
                                                             ) ??
                                                             0.0,
                                                       ) >
@@ -2286,58 +3276,132 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 IconButton(
                                                   icon: const Icon(Icons.close),
                                                   color: ColorTheme.error,
-                                                  tooltip: AppLocale.removeDiscount.getString(context),
-                                                  onPressed: () => _clearRetireDiscount(method['id']),
+                                                  tooltip: AppLocale
+                                                      .removeDiscount
+                                                      .getString(context),
+                                                  onPressed: () =>
+                                                      _clearRetireDiscount(
+                                                        method['id'],
+                                                      ),
                                                 ),
-                                              if (method['name'].toString().toLowerCase().contains('yappy') &&
+                                              if (method['name']
+                                                      .toString()
+                                                      .toLowerCase()
+                                                      .contains('yappy') &&
                                                   isYappyConfigAvailable &&
-                                                  paymentControllers[method['id']]?.text != null &&
-                                                  (double.tryParse(paymentControllers[method['id']]?.text ?? '0') ?? 0) > 0 &&
+                                                  paymentControllers[method['id']]
+                                                          ?.text !=
+                                                      null &&
+                                                  (double.tryParse(
+                                                            paymentControllers[method['id']]
+                                                                    ?.text ??
+                                                                '0',
+                                                          ) ??
+                                                          0) >
+                                                      0 &&
                                                   yappyTransactionId == null)
                                                 isYappyLoading
-                                                    ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator())
+                                                    ? SizedBox(
+                                                        width: 24,
+                                                        height: 24,
+                                                        child:
+                                                            CircularProgressIndicator(),
+                                                      )
                                                     : IconButton(
-                                                        icon: const Icon(Icons.qr_code),
-                                                        tooltip: 'Mostrar código QR',
+                                                        icon: const Icon(
+                                                          Icons.qr_code,
+                                                        ),
+                                                        tooltip:
+                                                            'Mostrar código QR',
                                                         onPressed: () {
                                                           _showYappyQRDialog(
                                                             subTotal: double.parse(
-                                                              paymentControllers[method['id']]?.text.toString() ?? '0',
+                                                              paymentControllers[method['id']]
+                                                                      ?.text
+                                                                      .toString() ??
+                                                                  '0',
                                                             ),
                                                             totalTax: 0,
-                                                            total: double.parse(paymentControllers[method['id']]?.text.toString() ?? '0'),
-                                                            methodId: method['id'],
+                                                            total: double.parse(
+                                                              paymentControllers[method['id']]
+                                                                      ?.text
+                                                                      .toString() ??
+                                                                  '0',
+                                                            ),
+                                                            methodId:
+                                                                method['id'],
                                                           );
                                                         },
                                                       ),
                                               if (yappyTransactionId != null &&
-                                                  method['name'].toString().toLowerCase().contains('yappy') &&
-                                                  paymentControllers[method['id']]?.text != null &&
-                                                  (paymentControllers[method['id']]?.text ?? '0.0') != '0.0')
+                                                  method['name']
+                                                      .toString()
+                                                      .toLowerCase()
+                                                      .contains('yappy') &&
+                                                  paymentControllers[method['id']]
+                                                          ?.text !=
+                                                      null &&
+                                                  (paymentControllers[method['id']]
+                                                              ?.text ??
+                                                          '0.0') !=
+                                                      '0.0')
                                                 if (yappyTransactionId != null)
                                                   IconButton(
                                                     icon: Icon(Icons.cancel),
                                                     color: ColorTheme.error,
-                                                    tooltip: 'Anular transacción Yappy',
+                                                    tooltip:
+                                                        'Anular transacción Yappy',
                                                     onPressed: () async {
                                                       final confirm = await showDialog(
                                                         context: context,
                                                         builder: (context) {
                                                           return AlertDialog(
-                                                            backgroundColor: Theme.of(context).cardColor,
-                                                            title: Text(AppLocale.cancelYappyTransaction.getString(context)),
+                                                            backgroundColor:
+                                                                Theme.of(
+                                                                  context,
+                                                                ).cardColor,
+                                                            title: Text(
+                                                              AppLocale
+                                                                  .cancelYappyTransaction
+                                                                  .getString(
+                                                                    context,
+                                                                  ),
+                                                            ),
                                                             actions: [
                                                               TextButton(
-                                                                onPressed: () => Navigator.pop(context, false),
-                                                                child: Text(AppLocale.cancel.getString(context)),
+                                                                onPressed: () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                      false,
+                                                                    ),
+                                                                child: Text(
+                                                                  AppLocale
+                                                                      .cancel
+                                                                      .getString(
+                                                                        context,
+                                                                      ),
+                                                                ),
                                                               ),
                                                               ElevatedButton(
-                                                                onPressed: () => Navigator.pop(context, true),
+                                                                onPressed: () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                      true,
+                                                                    ),
                                                                 child: Text(
-                                                                  AppLocale.confirm.getString(context),
-                                                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                                    color: Theme.of(context).colorScheme.surface,
-                                                                  ),
+                                                                  AppLocale
+                                                                      .confirm
+                                                                      .getString(
+                                                                        context,
+                                                                      ),
+                                                                  style: Theme.of(context)
+                                                                      .textTheme
+                                                                      .bodySmall
+                                                                      ?.copyWith(
+                                                                        color: Theme.of(
+                                                                          context,
+                                                                        ).colorScheme.surface,
+                                                                      ),
                                                                 ),
                                                               ),
                                                             ],
@@ -2345,18 +3409,29 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                         },
                                                       );
 
-                                                      if (confirm != true) return;
+                                                      if (confirm != true) {
+                                                        return;
+                                                      }
 
-                                                      final paid = await cancelYappyTransaction(transactionId: yappyTransactionId!);
+                                                      final paid =
+                                                          await cancelYappyTransaction(
+                                                            transactionId:
+                                                                yappyTransactionId!,
+                                                          );
                                                       if (paid) {
                                                         if (mounted) {
-                                                          paymentControllers[method['id']]?.text = '0.0';
-                                                          yappyTransactionId = null;
+                                                          paymentControllers[method['id']]
+                                                                  ?.text =
+                                                              '0.0';
+                                                          yappyTransactionId =
+                                                              null;
                                                           _validateForm();
                                                           ToastMessage.show(
                                                             context: context,
-                                                            message: 'Pago anulado correctamente',
-                                                            type: ToastType.help,
+                                                            message:
+                                                                'Pago anulado correctamente',
+                                                            type:
+                                                                ToastType.help,
                                                           );
                                                         }
                                                       }
@@ -2364,14 +3439,23 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                   ),
                                             ],
                                           ),
-                                          if (calculatedChange > 0 && method['isCash'])
+                                          if (calculatedChange > 0 &&
+                                              method['isCash'])
                                             Padding(
-                                              padding: const EdgeInsets.only(top: 2, bottom: 4),
+                                              padding: const EdgeInsets.only(
+                                                top: 2,
+                                                bottom: 4,
+                                              ),
                                               child: Text(
                                                 'Vuelto: \$${calculatedChange.toStringAsFixed(2)}',
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color: Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary,
+                                                    ),
                                               ),
                                             ),
                                         ],
@@ -2383,12 +3467,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
                             ],
                           ],
                         ),
-                        if (!_isInvoiceValid && clientSelected && products.isNotEmpty)
+                        if (!_isInvoiceValid &&
+                            clientSelected &&
+                            products.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
-                              AppLocale.paymentSumMustEqualTotal.getString(context),
-                              style: TextStyle(color: ColorTheme.error, fontSize: 13),
+                              AppLocale.paymentSumMustEqualTotal.getString(
+                                context,
+                              ),
+                              style: TextStyle(
+                                color: ColorTheme.error,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                       ],
@@ -2401,13 +3492,24 @@ class _OrderNewPageState extends State<OrderNewPage> {
                   margin: EdgeInsets.only(top: 24, bottom: 36),
                   child: Column(
                     children: [
-                      Center(child: Text(AppLocale.summary.getString(context), style: Theme.of(context).textTheme.titleLarge)),
+                      Center(
+                        child: Text(
+                          AppLocale.summary.getString(context),
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
                       const SizedBox(height: CustomSpacer.medium),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(AppLocale.listSubtotal.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                          Text('\$${listSubtotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            AppLocale.listSubtotal.getString(context),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
+                            '\$${listSubtotal.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ],
                       ),
                       const SizedBox(height: CustomSpacer.medium),
@@ -2415,8 +3517,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(AppLocale.lineDiscounts.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                            Text('-\$${lineDiscountTotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              AppLocale.lineDiscounts.getString(context),
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            Text(
+                              '-\$${lineDiscountTotal.toStringAsFixed(2)}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                           ],
                         ),
                         const SizedBox(height: CustomSpacer.medium),
@@ -2424,25 +3532,46 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(AppLocale.netSubtotal.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                          Text('\$${subtotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            AppLocale.netSubtotal.getString(context),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
+                            '\$${subtotal.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ],
                       ),
                       const SizedBox(height: CustomSpacer.medium),
-                      if (invoiceLines.isNotEmpty && getTotalTaxAmount() > 0) ...[
+                      if (invoiceLines.isNotEmpty &&
+                          getTotalTaxAmount() > 0) ...[
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(AppLocale.taxes.getString(context), style: Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              AppLocale.taxes.getString(context),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             const SizedBox(height: CustomSpacer.small),
                             ...getGroupedTaxTotals().entries
                                 .where((entry) => entry.value > 0)
                                 .map(
                                   (entry) => Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(entry.key, style: Theme.of(context).textTheme.bodyMedium),
-                                      Text('\$${entry.value.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                                      Text(
+                                        entry.key,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                      ),
+                                      Text(
+                                        '\$${entry.value.toStringAsFixed(2)}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -2452,11 +3581,13 @@ class _OrderNewPageState extends State<OrderNewPage> {
                               children: [
                                 Text(
                                   AppLocale.totalTaxes.getString(context),
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
                                   '\$${getTotalTaxAmount().toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -2467,19 +3598,34 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(AppLocale.totalWithTaxes.getString(context), style: Theme.of(context).textTheme.bodyMedium),
-                          Text('\$${totalAmount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            AppLocale.totalWithTaxes.getString(context),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
+                            '\$${totalAmount.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ],
                       ),
                       if (specialDiscountSummary.isNotEmpty) ...[
                         const SizedBox(height: CustomSpacer.medium),
                         ...specialDiscountSummary.map(
                           (discount) => Padding(
-                            padding: const EdgeInsets.only(bottom: CustomSpacer.small),
+                            padding: const EdgeInsets.only(
+                              bottom: CustomSpacer.small,
+                            ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Expanded(child: Text(discount['Name'].toString(), style: Theme.of(context).textTheme.bodyMedium)),
+                                Expanded(
+                                  child: Text(
+                                    discount['Name'].toString(),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ),
                                 Text(
                                   '-\$${(discount['Amount'] as double).toStringAsFixed(2)}',
                                   style: Theme.of(context).textTheme.bodyMedium,
@@ -2493,8 +3639,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(AppLocale.totalToPay.getString(context), style: Theme.of(context).textTheme.titleLarge),
-                          Text('\$${netTotalAmount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.titleLarge),
+                          Text(
+                            AppLocale.totalToPay.getString(context),
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          Text(
+                            '\$${netTotalAmount.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                         ],
                       ),
                       const Divider(),
@@ -2506,7 +3658,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                           options: POS.documentActions,
                           idKey: 'code',
                           nameKey: 'name',
-                          labelText: AppLocale.documentAction.getString(context),
+                          labelText: AppLocale.documentAction.getString(
+                            context,
+                          ),
                           value: selectedDocActionCode,
                           showSearchBox: false,
                           onChanged: (value) {
@@ -2523,8 +3677,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 fullWidth: true,
                                 texto: AppLocale.process.getString(context),
                                 enable: _isInvoiceValid,
-                                onPressed: () =>
-                                    _isInvoiceValid ? _createInvoice(product: invoiceLines, bPartner: selectedBPartnerID ?? 0) : null,
+                                onPressed: () => _isInvoiceValid
+                                    ? _createInvoice(
+                                        product: invoiceLines,
+                                        bPartner: selectedBPartnerID ?? 0,
+                                      )
+                                    : null,
                               ),
                       ),
                     ],
