@@ -1,38 +1,20 @@
 PODS:
   - Flutter (1.0.0)
-  - flutter_localization (0.0.1):
-    - Flutter
-  - fluttertoast (0.0.2):
-    - Flutter
-  - printing (1.0.0):
-    - Flutter
   - protocol_handler_ios (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - flutter_localization (from `.symlinks/plugins/flutter_localization/ios`)
-  - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
-  - printing (from `.symlinks/plugins/printing/ios`)
   - protocol_handler_ios (from `.symlinks/plugins/protocol_handler_ios/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  flutter_localization:
-    :path: ".symlinks/plugins/flutter_localization/ios"
-  fluttertoast:
-    :path: ".symlinks/plugins/fluttertoast/ios"
-  printing:
-    :path: ".symlinks/plugins/printing/ios"
   protocol_handler_ios:
     :path: ".symlinks/plugins/protocol_handler_ios/ios"
 
 SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  flutter_localization: 72299fb6cb4e51cae587bd953ed0b958040b71e6
-  fluttertoast: 2c67e14dce98bbdb200df9e1acf610d7a6264ea1
-  printing: 54ff03f28fe9ba3aa93358afb80a8595a071dd07
   protocol_handler_ios: 59f23ee71f3ec602d67902ca7f669a80957888d5
 
 PODFILE CHECKSUM: 3ba3a73b1b12adcf321a227a745625fe0888cc82
