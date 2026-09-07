@@ -379,6 +379,7 @@ Future<void> _loadPOSData(BuildContext context) async {
     POS.discountTaxID = null;
     POS.discountTaxRate = null;
     POS.bankAccountID = null;
+    POS.isModifyPrice = false;
     final String filter = 'C_POS_ID eq ${POS.cPosID}';
 
     final response = await get(
@@ -415,6 +416,7 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
       POS.warehouseID = posData['M_Warehouse_ID']?['id'];
+      POS.isModifyPrice = posData['IsModifyPrice'] == true;
       final dynamic bankAccount = posData['C_BankAccount_ID'];
       final dynamic rawBankAccountId = bankAccount is Map ? bankAccount['id'] : bankAccount;
       POS.bankAccountID = rawBankAccountId is num

@@ -21,6 +21,7 @@ class POS {
   static String? templatePartnerName;
   static String? currencySymbol = '\$';
   static bool isPOS = false;
+  static bool isModifyPrice = false;
 
   static List<Map<String, dynamic>> docTypesComplete = [];
 

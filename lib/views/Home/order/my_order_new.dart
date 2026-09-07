@@ -992,6 +992,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     Map<String, dynamic> product, {
     int? index,
   }) async {
+    final canModifyPrice = !POS.isPOS || POS.isModifyPrice;
     int? selectedTaxID = index != null
         ? (product['C_Tax_ID'] ?? product['tax']?['id'])
         : (product['tax']?['id'] ?? selectedTax?['id']);
@@ -1233,6 +1234,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 flex: 6,
                                 child: TextfieldTheme(
                                   controlador: priceController,
+                                  readOnly: !canModifyPrice,
                                   pista: product['price'] == 0
                                       ? product['price'].toString()
                                       : null,
@@ -1247,7 +1249,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       RegExp(r'[0-9\.,]'),
                                     ),
                                   ],
-                                  onChanged: (val) {
+                                  onChanged: canModifyPrice ? (val) {
                                     setModalState(() {
                                       final p =
                                           double.tryParse(
@@ -1259,7 +1261,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         p,
                                       ).toStringAsFixed(2);
                                     });
-                                  },
+                                  } : null,
                                 ),
                               ),
                               const SizedBox(width: CustomSpacer.small),
@@ -1267,6 +1269,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 flex: 4,
                                 child: TextfieldTheme(
                                   controlador: discountController,
+                                  readOnly: !canModifyPrice,
                                   texto: '% Desc.',
                                   inputType:
                                       const TextInputType.numberWithOptions(
@@ -1278,7 +1281,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                       RegExp(r'[\-0-9\.,]'),
                                     ),
                                   ],
-                                  onChanged: (val) {
+                                  onChanged: canModifyPrice ? (val) {
                                     setModalState(() {
                                       if (val == '-') return;
                                       final d =
@@ -1291,7 +1294,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         d,
                                       ).toStringAsFixed(2);
                                     });
-                                  },
+                                  } : null,
                                 ),
                               ),
                             ],

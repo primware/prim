@@ -191,6 +191,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     POS.templatePartnerID = null;
     POS.docTypeRefundID = null;
     POS.isPOS = false;
+    POS.isModifyPrice = false;
     POS.documentActions.clear();
     POS.principalTaxs.clear();
     POS.docTypesComplete.clear();
