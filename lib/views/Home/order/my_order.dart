@@ -332,6 +332,21 @@ class _OrderListPageState extends State<OrderListPage> {
       if (!mounted) return;
       final orderPage = results[0] as PagedResult<Map<String, dynamic>>;
       final receiptPage = results[1] as PagedResult<InvoicePaymentReceipt>;
+      Set<int> returnedOrderIds = <int>{};
+      try {
+        returnedOrderIds = await fetchActiveReturnOrderIds(orderPage.records);
+      } catch (error) {
+        CurrentLogMessage.add(
+          'No se pudo enriquecer el historial con devoluciones: $error',
+          level: 'WARNING',
+          tag: 'fetchActiveReturnOrderIds',
+        );
+      }
+      for (final order in orderPage.records) {
+        final orderId = int.tryParse(order['id']?.toString() ?? '');
+        order['hasActiveReturn'] = orderId != null && returnedOrderIds.contains(orderId);
+      }
+      if (!mounted) return;
       final items = <Object>[...orderPage.records, ...receiptPage.records]
         ..sort((left, right) => _historyDate(right).compareTo(_historyDate(left)));
       final unified = UnifiedHistoryPage(items: items, totalCount: orderPage.rowCount + receiptPage.rowCount, pageIndex: page);
@@ -991,21 +1006,32 @@ class _OrderListPageState extends State<OrderListPage> {
         );
         break;
       case 'refund':
+        final orderId = int.tryParse((order['id'] ?? order['C_Order_ID'] ?? order['record_id'])?.toString() ?? '');
+        if (orderId == null) return;
+        try {
+          if (await hasActiveReturnForOrder(orderId: orderId, invoices: order['C_Invoice'] as List? ?? const [])) {
+            if (!mounted) return;
+            ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+            await _loadHistory(page: _currentPage, resetCache: true);
+            return;
+          }
+        } catch (_) {
+          if (!mounted) return;
+          ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+          return;
+        }
         final bool? confirm = await _refundConfirmation(context);
 
         if (confirm == true) {
           if (!mounted) return;
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OrderNewPage(
-                isRefund: true,
-                doctypeID: POS.docTypeRefundID,
-                orderName: POS.docTypeRefundName,
-                sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
-              ),
+              builder: (_) =>
+                  OrderNewPage(isRefund: true, doctypeID: POS.docTypeRefundID, orderName: POS.docTypeRefundName, sourceOrderId: orderId),
             ),
           );
+          if (mounted) await _loadHistory(page: _currentPage, resetCache: true);
         }
         break;
       case 'convertQuote':
@@ -1030,8 +1056,34 @@ class _OrderListPageState extends State<OrderListPage> {
         }
         break;
       case 'arc':
+        final arcOrderId = int.tryParse(order['id']?.toString() ?? '');
+        if (arcOrderId == null) return;
+        try {
+          if (await hasActiveReturnForOrder(orderId: arcOrderId, invoices: order['C_Invoice'] as List? ?? const [])) {
+            if (!mounted) return;
+            ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+            await _loadHistory(page: _currentPage, resetCache: true);
+            return;
+          }
+        } catch (_) {
+          if (!mounted) return;
+          ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+          return;
+        }
         final bool? confirmArc = await _refundConfirmation(context);
         if (confirmArc == true) {
+          try {
+            if (await hasActiveReturnForOrder(orderId: arcOrderId, invoices: order['C_Invoice'] as List? ?? const [])) {
+              if (!mounted) return;
+              ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+              await _loadHistory(page: _currentPage, resetCache: true);
+              return;
+            }
+          } catch (_) {
+            if (!mounted) return;
+            ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+            return;
+          }
           final bool creditMemoSucces = await createCreditMemo(cInvoiceID: order['C_Invoice']?[0]?['id']);
           if (creditMemoSucces) {
             _loadHistory(page: _currentPage, resetCache: true);
@@ -1076,7 +1128,7 @@ class _OrderListPageState extends State<OrderListPage> {
   Widget _buildCreditMemoPill() {
     final Color baseColor = Colors.red;
     final Color bgColor = baseColor.withOpacity(0.12);
-    final String label = AppLocale.creditNote.getString(context);
+    final String label = AppLocale.refundGenerated.getString(context);
     final IconData icon = Icons.receipt_long_outlined;
 
     return Container(
@@ -1175,9 +1227,11 @@ class _OrderListPageState extends State<OrderListPage> {
     final double taxAmount = grandTotal - totalLines;
 
     final List invoices = order['C_Invoice'] ?? [];
-    final bool hasCreditNote = invoices.any((inv) {
-      return inv['RelatedInvoice_ID'] != null;
-    });
+    final bool hasCreditNote =
+        order['hasActiveReturn'] == true ||
+        invoices.any((inv) {
+          return inv['RelatedInvoice_ID'] != null;
+        });
 
     return GestureDetector(
       onTap: () async {
@@ -1288,7 +1342,7 @@ class _OrderListPageState extends State<OrderListPage> {
                           ),
                         ),
                     ];
-                    if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
+                    if (isReturn == false && POS.isPOS == true && isComplete && !hasCreditNote && invoices.isNotEmpty) {
                       items.add(
                         PopupMenuItem<String>(
                           value: 'refund',

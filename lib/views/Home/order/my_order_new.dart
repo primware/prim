@@ -1426,6 +1426,20 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _createInvoice({required List<Map<String, dynamic>> product, required int bPartner}) async {
+    if (widget.isRefund && widget.sourceOrderId != null) {
+      try {
+        final alreadyReturned = await hasActiveReturnForOrder(orderId: widget.sourceOrderId!);
+        if (alreadyReturned) {
+          if (!mounted) return;
+          ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+          return;
+        }
+      } catch (_) {
+        if (!mounted) return;
+        ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+        return;
+      }
+    }
     final String actionLabel = (() {
       try {
         final match = POS.documentActions.firstWhere(
@@ -1462,6 +1476,20 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
 
     if (confirm != true) return;
+
+    if (widget.isRefund && widget.sourceOrderId != null) {
+      try {
+        if (await hasActiveReturnForOrder(orderId: widget.sourceOrderId!)) {
+          if (!mounted) return;
+          ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+          return;
+        }
+      } catch (_) {
+        if (!mounted) return;
+        ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+        return;
+      }
+    }
 
     setState(() => isSending = true);
     final List<Map<String, dynamic>> invoiceLine = product.map((item) {

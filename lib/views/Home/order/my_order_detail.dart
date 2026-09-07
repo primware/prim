@@ -22,14 +22,46 @@ class OrderDetailPage extends StatelessWidget {
 
   static const Map<String, Map<String, Object>> _docStatusMap = {
     'DR': {'label': 'Borrador', 'color': Colors.grey, 'icon': Icons.edit_note},
-    'CO': {'label': 'Completado', 'color': Colors.green, 'icon': Icons.check_circle_outline},
-    'CL': {'label': 'Cerrado', 'color': Colors.blueGrey, 'icon': Icons.lock_outline},
-    'VO': {'label': 'Anulado', 'color': Colors.red, 'icon': Icons.cancel_outlined},
-    'IP': {'label': 'En proceso', 'color': Colors.orange, 'icon': Icons.hourglass_bottom},
-    'PR': {'label': 'Preparado', 'color': Colors.orange, 'icon': Icons.hourglass_bottom},
-    'WC': {'label': 'Esperando completar', 'color': Colors.orangeAccent, 'icon': Icons.hourglass_top},
-    'AP': {'label': 'Aprobado', 'color': Colors.blue, 'icon': Icons.thumb_up_outlined},
-    'RJ': {'label': 'Rechazado', 'color': Colors.redAccent, 'icon': Icons.thumb_down_outlined},
+    'CO': {
+      'label': 'Completado',
+      'color': Colors.green,
+      'icon': Icons.check_circle_outline,
+    },
+    'CL': {
+      'label': 'Cerrado',
+      'color': Colors.blueGrey,
+      'icon': Icons.lock_outline,
+    },
+    'VO': {
+      'label': 'Anulado',
+      'color': Colors.red,
+      'icon': Icons.cancel_outlined,
+    },
+    'IP': {
+      'label': 'En proceso',
+      'color': Colors.orange,
+      'icon': Icons.hourglass_bottom,
+    },
+    'PR': {
+      'label': 'Preparado',
+      'color': Colors.orange,
+      'icon': Icons.hourglass_bottom,
+    },
+    'WC': {
+      'label': 'Esperando completar',
+      'color': Colors.orangeAccent,
+      'icon': Icons.hourglass_top,
+    },
+    'AP': {
+      'label': 'Aprobado',
+      'color': Colors.blue,
+      'icon': Icons.thumb_up_outlined,
+    },
+    'RJ': {
+      'label': 'Rechazado',
+      'color': Colors.redAccent,
+      'icon': Icons.thumb_down_outlined,
+    },
   };
 
   const OrderDetailPage({super.key, required this.order});
@@ -43,7 +75,11 @@ class OrderDetailPage extends StatelessWidget {
         backgroundColor: Theme.of(context).cardColor,
         title: Column(
           children: [
-            Icon(Icons.print_outlined, size: 45, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.print_outlined,
+              size: 45,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 10),
             Text(
               AppLocale.confirmPrintTicket.getString(context),
@@ -52,11 +88,21 @@ class OrderDetailPage extends StatelessWidget {
             ),
           ],
         ),
-        content: Text(AppLocale.printTicketMessage.getString(context), textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+        content: Text(
+          AppLocale.printTicketMessage.getString(context),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16),
+        ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
         ],
       ),
     );
@@ -70,7 +116,11 @@ class OrderDetailPage extends StatelessWidget {
         backgroundColor: Theme.of(context).cardColor,
         title: const Column(
           children: [
-            Icon(Icons.warning_amber_rounded, size: 45, color: Colors.redAccent),
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 45,
+              color: Colors.redAccent,
+            ),
             SizedBox(height: 10),
             Text(
               'Confirmar Devolución',
@@ -79,11 +129,21 @@ class OrderDetailPage extends StatelessWidget {
             ),
           ],
         ),
-        content: Text('¿Seguro que quiere hacer una devolución?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+        content: Text(
+          '¿Seguro que quiere hacer una devolución?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
         ],
       ),
     );
@@ -98,7 +158,11 @@ class OrderDetailPage extends StatelessWidget {
         backgroundColor: Theme.of(context).cardColor,
         title: const Column(
           children: [
-            Icon(Icons.warning_amber_rounded, size: 45, color: Colors.redAccent),
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 45,
+              color: Colors.redAccent,
+            ),
             SizedBox(height: 10),
             Text(
               'Confirmar Nota de Crédito',
@@ -110,19 +174,33 @@ class OrderDetailPage extends StatelessWidget {
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('¿Seguro que quiere convertir a nota de crédito?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+            Text(
+              '¿Seguro que quiere convertir a nota de crédito?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
             SizedBox(height: 12),
             Text(
               'Recuerde que esta acción no se puede deshacer.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
         ],
       ),
     );
@@ -146,11 +224,21 @@ class OrderDetailPage extends StatelessWidget {
             ),
           ],
         ),
-        content: Text(AppLocale.completeOrderBody.getString(context), textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+        content: Text(
+          AppLocale.completeOrderBody.getString(context),
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
         ],
       ),
     );
@@ -174,11 +262,21 @@ class OrderDetailPage extends StatelessWidget {
             ),
           ],
         ),
-        content: Text(AppLocale.syncFEBody.getString(context), textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+        content: Text(
+          AppLocale.syncFEBody.getString(context),
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
         ],
       ),
     );
@@ -186,7 +284,8 @@ class OrderDetailPage extends StatelessWidget {
 
   Widget _buildSubtypePill(BuildContext context, Map<String, dynamic> order) {
     final sub = order['doctypetarget']?['subtype']?['id'];
-    final bool isReturn = (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+    final bool isReturn =
+        (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
     final String? docName = order['doctypetarget']?['name'];
 
     return Padding(
@@ -195,7 +294,7 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCreditMemoPill() {
+  Widget _buildCreditMemoPill(BuildContext context) {
     const Color baseColor = Colors.red;
     final Color bgColor = baseColor.withOpacity(0.12);
 
@@ -212,9 +311,13 @@ class OrderDetailPage extends StatelessWidget {
         children: [
           Icon(Icons.receipt_long_outlined, size: 14, color: baseColor),
           const SizedBox(width: 6),
-          const Text(
-            'Nota de Crédito',
-            style: TextStyle(fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
+          Text(
+            AppLocale.refundGenerated.getString(context),
+            style: TextStyle(
+              fontSize: 12,
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -237,7 +340,9 @@ class OrderDetailPage extends StatelessWidget {
               return SizedBox(
                 width: dashWidth,
                 height: dashHeight,
-                child: DecoratedBox(decoration: BoxDecoration(color: color.withOpacity(0.5))),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: color.withOpacity(0.5)),
+                ),
               );
             }),
           );
@@ -251,7 +356,9 @@ class OrderDetailPage extends StatelessWidget {
     final lines = (order['C_OrderLine'] as List?) ?? [];
     final taxSummary = _calculateTaxSummary([order]);
     final int? orderId = (order['id'] as int?);
-    final Future<Map<String, dynamic>?> feFuture = orderId != null ? fetchElectronicInvoiceInfo(orderId: orderId) : Future.value(null);
+    final Future<Map<String, dynamic>?> feFuture = orderId != null
+        ? fetchElectronicInvoiceInfo(orderId: orderId)
+        : Future.value(null);
 
     final dynamic subField = order['doctypetarget']?['subtype'];
     final String? subId = (subField is Map) ? subField['id'] : subField;
@@ -260,12 +367,15 @@ class OrderDetailPage extends StatelessWidget {
     // --- Validaciones de Estado y Nota de Crédito ---
     final bool isComplete = (order['DocStatus'] == 'CO');
     final List invoices = order['C_Invoice'] ?? [];
-    final bool hasCreditNote = invoices.any((inv) {
-      return inv['RelatedInvoice_ID'] != null;
-    });
+    final bool hasCreditNote =
+        order['hasActiveReturn'] == true ||
+        invoices.any((inv) {
+          return inv['RelatedInvoice_ID'] != null;
+        });
 
     // Obtener métodos de pago
-    final List<dynamic> payments = (order['C_POSPayment'] ?? order['payments'] ?? []) as List<dynamic>;
+    final List<dynamic> payments =
+        (order['C_POSPayment'] ?? order['payments'] ?? []) as List<dynamic>;
 
     // Colores para el "Ticket"
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
@@ -273,20 +383,30 @@ class OrderDetailPage extends StatelessWidget {
     final Color textColor = isDark ? Colors.grey.shade300 : Colors.black87;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF0F2F5), // Fondo de la app (gris claro/oscuro)
+      backgroundColor: isDark
+          ? const Color(0xFF121212)
+          : const Color(0xFFF0F2F5), // Fondo de la app (gris claro/oscuro)
       appBar: AppBar(
-        backgroundColor: (isReturn) ? Colors.red : Theme.of(context).primaryColor,
+        backgroundColor: (isReturn)
+            ? Colors.red
+            : Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text('${order['doctypetarget']['name']} #${order['DocumentNo']}'),
+        title: Text(
+          '${order['doctypetarget']['name']} #${order['DocumentNo']}',
+        ),
         actions: [
           Builder(
             builder: (context) {
-              final bool isMobileVertical = MediaQuery.of(context).size.width < 600;
+              final bool isMobileVertical =
+                  MediaQuery.of(context).size.width < 600;
 
               void actionShare() async {
                 final pdfBytes = await generateOrderTicket(order);
-                await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
+                await Printing.sharePdf(
+                  bytes: pdfBytes,
+                  filename: 'Order_${order['DocumentNo']}.pdf',
+                );
               }
 
               void actionDuplicate() {
@@ -296,7 +416,8 @@ class OrderDetailPage extends StatelessWidget {
                     builder: (_) => OrderNewPage(
                       isRefund: false,
                       doctypeID: order['doctypetarget']?['id'] ?? POS.docTypeID,
-                      orderName: order['doctypetarget']?['name'] ?? POS.docTypeName,
+                      orderName:
+                          order['doctypetarget']?['name'] ?? POS.docTypeName,
                       sourceOrderId: order['id'],
                     ),
                   ),
@@ -307,7 +428,8 @@ class OrderDetailPage extends StatelessWidget {
                 if (POS.docTypesComplete.isEmpty) {
                   ToastMessage.show(
                     context: context,
-                    message: 'No hay tipos de documento disponibles para convertir.',
+                    message:
+                        'No hay tipos de documento disponibles para convertir.',
                     type: ToastType.failure,
                   );
                   return;
@@ -316,7 +438,11 @@ class OrderDetailPage extends StatelessWidget {
                 showModalBottomSheet(
                   context: context,
                   backgroundColor: Theme.of(context).cardColor,
-                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
                   builder: (BuildContext context) {
                     return SafeArea(
                       child: Padding(
@@ -326,14 +452,19 @@ class OrderDetailPage extends StatelessWidget {
                           children: [
                             Text(
                               'Convertir documento a...',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),
                             const Divider(),
                             ...POS.docTypesComplete.map((doc) {
                               final dynamic rawId = doc['id'];
-                              final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
-                              final String docName = (doc['name'] ?? doc['Name'] ?? 'Documento').toString();
+                              final int? docTypeId = rawId is int
+                                  ? rawId
+                                  : int.tryParse(rawId?.toString() ?? '');
+                              final String docName =
+                                  (doc['name'] ?? doc['Name'] ?? 'Documento')
+                                      .toString();
 
                               // Excluir notas de crédito (RM) y el MISMO tipo de documento actual
                               if (doc['DocSubTypeSO'] == 'RM' ||
@@ -345,11 +476,25 @@ class OrderDetailPage extends StatelessWidget {
                               return ListTile(
                                 leading: Container(
                                   padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(color: Theme.of(context).primaryColor.withOpacity(0.1), shape: BoxShape.circle),
-                                  child: Icon(Icons.transform_outlined, color: Theme.of(context).primaryColor),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.transform_outlined,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
                                 ),
-                                title: Text(docName, style: Theme.of(context).textTheme.bodyLarge),
-                                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                                title: Text(
+                                  docName,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                                trailing: const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.grey,
+                                ),
                                 onTap: () {
                                   Navigator.pop(context);
                                   Navigator.push(
@@ -375,26 +520,107 @@ class OrderDetailPage extends StatelessWidget {
               }
 
               void actionRefund() async {
+                if (orderId == null) return;
+                try {
+                  if (await hasActiveReturnForOrder(
+                    orderId: orderId,
+                    invoices: invoices,
+                  )) {
+                    if (!context.mounted) return;
+                    ToastMessage.show(
+                      context: context,
+                      message: AppLocale.returnAlreadyExists.getString(context),
+                      type: ToastType.warning,
+                    );
+                    Navigator.pop(context, true);
+                    return;
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  ToastMessage.show(
+                    context: context,
+                    message: AppLocale.returnValidationError.getString(context),
+                    type: ToastType.failure,
+                  );
+                  return;
+                }
                 final bool? confirm = await _refundConfirmation(context);
                 if (confirm == true) {
-                  Navigator.push(
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => OrderNewPage(
                         isRefund: true,
                         doctypeID: POS.docTypeRefundID,
                         orderName: POS.docTypeRefundName,
-                        sourceOrderId: order['id'] ?? order['C_Order_ID'] ?? order['record_id'],
+                        sourceOrderId:
+                            order['id'] ??
+                            order['C_Order_ID'] ??
+                            order['record_id'],
                       ),
                     ),
                   );
+                  if (context.mounted) Navigator.pop(context, true);
                 }
               }
 
               void actionArc() async {
+                if (orderId == null) return;
+                try {
+                  if (await hasActiveReturnForOrder(
+                    orderId: orderId,
+                    invoices: invoices,
+                  )) {
+                    if (!context.mounted) return;
+                    ToastMessage.show(
+                      context: context,
+                      message: AppLocale.returnAlreadyExists.getString(context),
+                      type: ToastType.warning,
+                    );
+                    Navigator.pop(context, true);
+                    return;
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  ToastMessage.show(
+                    context: context,
+                    message: AppLocale.returnValidationError.getString(context),
+                    type: ToastType.failure,
+                  );
+                  return;
+                }
                 final bool? confirm = await _creditMemoConfirmation(context);
                 if (confirm == true) {
-                  final bool creditMemoSucces = await createCreditMemo(cInvoiceID: order['C_Invoice']?[0]?['id']);
+                  try {
+                    if (await hasActiveReturnForOrder(
+                      orderId: orderId,
+                      invoices: invoices,
+                    )) {
+                      if (!context.mounted) return;
+                      ToastMessage.show(
+                        context: context,
+                        message: AppLocale.returnAlreadyExists.getString(
+                          context,
+                        ),
+                        type: ToastType.warning,
+                      );
+                      Navigator.pop(context, true);
+                      return;
+                    }
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    ToastMessage.show(
+                      context: context,
+                      message: AppLocale.returnValidationError.getString(
+                        context,
+                      ),
+                      type: ToastType.failure,
+                    );
+                    return;
+                  }
+                  final bool creditMemoSucces = await createCreditMemo(
+                    cInvoiceID: order['C_Invoice']?[0]?['id'],
+                  );
                   if (creditMemoSucces) {
                     Navigator.pop(context, true);
                   }
@@ -402,15 +628,21 @@ class OrderDetailPage extends StatelessWidget {
               }
 
               void actionPrint() async {
-                final bool? confirmPrintTicket = await _printTicketConfirmation(context);
+                final bool? confirmPrintTicket = await _printTicketConfirmation(
+                  context,
+                );
                 if (confirmPrintTicket == true) {
                   try {
-                    final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order) : await generateOrderTicket(order);
+                    final pdfBytes = POS.isPOS == true
+                        ? await generatePOSTicket(order)
+                        : await generateOrderTicket(order);
                     try {
                       final printers = await Printing.listPrinters();
                       final defaultPrinter = printers.firstWhere(
                         (p) => p.isDefault,
-                        orElse: () => printers.isNotEmpty ? printers.first : throw Exception('No hay impresoras disponibles'),
+                        orElse: () => printers.isNotEmpty
+                            ? printers.first
+                            : throw Exception('No hay impresoras disponibles'),
                       );
                       await Printing.directPrintPdf(
                         printer: defaultPrinter,
@@ -419,26 +651,39 @@ class OrderDetailPage extends StatelessWidget {
                         onLayout: (_) => pdfBytes,
                       );
                     } catch (e) {
-                      await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
+                      await Printing.sharePdf(
+                        bytes: pdfBytes,
+                        filename: 'Order_${order['DocumentNo']}.pdf',
+                      );
                     }
                   } catch (e) {
                     try {
                       final pdfBytes = await generateOrderTicket(order);
-                      await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
+                      await Printing.sharePdf(
+                        bytes: pdfBytes,
+                        filename: 'Order_${order['DocumentNo']}.pdf',
+                      );
                     } catch (_) {}
                   }
                 }
               }
 
               void actionComplete() async {
-                final bool? confirmComplete = await _completeConfirmation(context);
+                final bool? confirmComplete = await _completeConfirmation(
+                  context,
+                );
                 if (confirmComplete == true) {
-                  final Map<String, dynamic> completeResult = await docComplete(cOrderID: order['id']);
-                  if (completeResult['success'] == true && completeResult['isError'] != true) {
+                  final Map<String, dynamic> completeResult = await docComplete(
+                    cOrderID: order['id'],
+                  );
+                  if (completeResult['success'] == true &&
+                      completeResult['isError'] != true) {
                     if (context.mounted) {
                       ToastMessage.show(
                         context: context,
-                        message: completeResult['summary'] ?? 'Orden completada con éxito',
+                        message:
+                            completeResult['summary'] ??
+                            'Orden completada con éxito',
                         type: ToastType.success,
                       );
                       Navigator.pop(context, true);
@@ -447,7 +692,9 @@ class OrderDetailPage extends StatelessWidget {
                     if (context.mounted) {
                       ToastMessage.show(
                         context: context,
-                        message: completeResult['summary'] ?? 'Error al completar la orden',
+                        message:
+                            completeResult['summary'] ??
+                            'Error al completar la orden',
                         type: ToastType.failure,
                       );
                     }
@@ -501,7 +748,10 @@ class OrderDetailPage extends StatelessWidget {
                           value: 'printTicket',
                           child: Row(
                             children: [
-                              const Icon(Icons.print_outlined, color: Colors.green),
+                              const Icon(
+                                Icons.print_outlined,
+                                color: Colors.green,
+                              ),
                               const SizedBox(width: 8),
                               Text(AppLocale.printTicket.getString(context)),
                             ],
@@ -511,7 +761,10 @@ class OrderDetailPage extends StatelessWidget {
                           value: 'duplicate',
                           child: Row(
                             children: [
-                              Icon(Icons.copy, color: Theme.of(context).primaryColor),
+                              Icon(
+                                Icons.copy,
+                                color: Theme.of(context).primaryColor,
+                              ),
                               const SizedBox(width: 8),
                               Text(AppLocale.duplicate.getString(context)),
                             ],
@@ -521,7 +774,10 @@ class OrderDetailPage extends StatelessWidget {
                           value: 'convert',
                           child: Row(
                             children: [
-                              Icon(Icons.transform_outlined, color: Colors.purple.shade400),
+                              Icon(
+                                Icons.transform_outlined,
+                                color: Colors.purple.shade400,
+                              ),
                               const SizedBox(width: 8),
                               const Text('Convertir'),
                             ],
@@ -544,7 +800,11 @@ class OrderDetailPage extends StatelessWidget {
                         );
                       }
 
-                      if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
+                      if (isReturn == false &&
+                          POS.isPOS == true &&
+                          isComplete &&
+                          !hasCreditNote &&
+                          invoices.isNotEmpty) {
                         items.add(
                           PopupMenuItem<String>(
                             value: 'refund',
@@ -558,13 +818,19 @@ class OrderDetailPage extends StatelessWidget {
                           ),
                         );
                       }
-                      if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
+                      if (POS.isPOS == false &&
+                          isComplete == true &&
+                          !hasCreditNote &&
+                          invoices.isNotEmpty) {
                         items.add(
                           PopupMenuItem<String>(
                             value: 'arc',
                             child: Row(
                               children: [
-                                const Icon(Icons.receipt_long_rounded, color: Colors.blue),
+                                const Icon(
+                                  Icons.receipt_long_rounded,
+                                  color: Colors.blue,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(AppLocale.arc.getString(context)),
                               ],
@@ -580,9 +846,21 @@ class OrderDetailPage extends StatelessWidget {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(icon: const Icon(Icons.share), tooltip: AppLocale.exportPdf.getString(context), onPressed: actionShare),
-                    IconButton(icon: const Icon(Icons.copy), tooltip: AppLocale.duplicate.getString(context), onPressed: actionDuplicate),
-                    IconButton(icon: const Icon(Icons.transform_outlined), tooltip: 'Convertir Documento', onPressed: actionConvert),
+                    IconButton(
+                      icon: const Icon(Icons.share),
+                      tooltip: AppLocale.exportPdf.getString(context),
+                      onPressed: actionShare,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy),
+                      tooltip: AppLocale.duplicate.getString(context),
+                      onPressed: actionDuplicate,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.transform_outlined),
+                      tooltip: 'Convertir Documento',
+                      onPressed: actionConvert,
+                    ),
 
                     if (order['DocStatus'] == 'DR')
                       IconButton(
@@ -591,16 +869,26 @@ class OrderDetailPage extends StatelessWidget {
                         onPressed: actionComplete,
                       ),
 
-                    if (isReturn == false && POS.isPOS == true && !hasCreditNote)
+                    if (isReturn == false &&
+                        POS.isPOS == true &&
+                        isComplete &&
+                        !hasCreditNote &&
+                        invoices.isNotEmpty)
                       IconButton(
                         icon: const Icon(Icons.undo, color: Colors.redAccent),
                         tooltip: AppLocale.refund.getString(context),
                         onPressed: actionRefund,
                       ),
 
-                    if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty)
+                    if (POS.isPOS == false &&
+                        isComplete == true &&
+                        !hasCreditNote &&
+                        invoices.isNotEmpty)
                       IconButton(
-                        icon: const Icon(Icons.receipt_long_outlined, color: Colors.redAccent),
+                        icon: const Icon(
+                          Icons.receipt_long_outlined,
+                          color: Colors.redAccent,
+                        ),
                         tooltip: AppLocale.arc.getString(context),
                         onPressed: actionArc,
                       ),
@@ -627,14 +915,25 @@ class OrderDetailPage extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           child: Center(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 600), // Ancho máximo para que parezca ticket en Desktop/Tablet
+              constraints: const BoxConstraints(
+                maxWidth: 600,
+              ), // Ancho máximo para que parezca ticket en Desktop/Tablet
               decoration: BoxDecoration(
                 color: ticketBgColor,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 5))],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 24.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -644,28 +943,55 @@ class OrderDetailPage extends StatelessWidget {
                       child: Column(
                         children: [
                           if (POSPrinter.logo != null) ...[
-                            Image.memory(POSPrinter.logo!, height: 60, fit: BoxFit.contain),
+                            Image.memory(
+                              POSPrinter.logo!,
+                              height: 60,
+                              fit: BoxFit.contain,
+                            ),
                             const SizedBox(height: 12),
                           ],
                           Text(
-                            POSPrinter.headerName ?? order['doctypetarget']['name'] ?? 'Documento',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: textColor),
+                            POSPrinter.headerName ??
+                                order['doctypetarget']['name'] ??
+                                'Documento',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
                             textAlign: TextAlign.center,
                           ),
                           if (POSPrinter.headerTaxID != null)
-                            Text('RUC: ${POSPrinter.headerTaxID}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                            Text(
+                              'RUC: ${POSPrinter.headerTaxID}',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
+                            ),
                           const SizedBox(height: 16),
                         ],
                       ),
                     ),
 
-                    _buildHeader(order: order, context: context, feFuture: feFuture, hasCreditNote: hasCreditNote, textColor: textColor),
+                    _buildHeader(
+                      order: order,
+                      context: context,
+                      feFuture: feFuture,
+                      hasCreditNote: hasCreditNote,
+                      textColor: textColor,
+                    ),
 
                     _buildDashedDivider(),
 
                     Text(
                       AppLocale.productSummary.getString(context).toUpperCase(),
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade600, letterSpacing: 1.2, fontSize: 12),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade600,
+                        letterSpacing: 1.2,
+                        fontSize: 12,
+                      ),
                     ),
                     const SizedBox(height: 12),
 
@@ -680,16 +1006,24 @@ class OrderDetailPage extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final line = lines[index];
                         final String name = orderLineDisplayName(line as Map);
-                        final double qty = (line['QtyOrdered'] as num).toDouble();
-                        final double price = (line['PriceActual'] as num).toDouble();
-                        final double net = (line['LineNetAmt'] as num).toDouble();
-                        final double rate = (line['C_Tax_ID']['Rate'] as num).toDouble();
+                        final double qty = (line['QtyOrdered'] as num)
+                            .toDouble();
+                        final double price = (line['PriceActual'] as num)
+                            .toDouble();
+                        final double net = (line['LineNetAmt'] as num)
+                            .toDouble();
+                        final double rate = (line['C_Tax_ID']['Rate'] as num)
+                            .toDouble();
                         final double tax = net * (rate / 100);
                         final double total = net + tax;
 
-                        final double priceList = (line['PriceList'] as num?)?.toDouble() ?? price;
+                        final double priceList =
+                            (line['PriceList'] as num?)?.toDouble() ?? price;
                         final double discountPct =
-                            (line['Discount'] as num?)?.toDouble() ?? ((priceList > 0) ? (1 - (price / priceList)) * 100 : 0.0);
+                            (line['Discount'] as num?)?.toDouble() ??
+                            ((priceList > 0)
+                                ? (1 - (price / priceList)) * 100
+                                : 0.0);
 
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -701,17 +1035,27 @@ class OrderDetailPage extends StatelessWidget {
                                 children: [
                                   Text(
                                     name,
-                                    style: TextStyle(fontWeight: FontWeight.w600, color: textColor),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: textColor,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     "${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)} x \$${price.toStringAsFixed(2)}",
-                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                   if (discountPct > 0.0)
                                     Text(
                                       "Desc: ${discountPct.toStringAsFixed(0)}%",
-                                      style: TextStyle(color: Colors.red.shade400, fontSize: 12, fontStyle: FontStyle.italic),
+                                      style: TextStyle(
+                                        color: Colors.red.shade400,
+                                        fontSize: 12,
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
                                 ],
                               ),
@@ -723,12 +1067,18 @@ class OrderDetailPage extends StatelessWidget {
                                 children: [
                                   Text(
                                     "\$${total.toStringAsFixed(2)}",
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: textColor,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     "${line['C_Tax_ID']['Name']} (${rate.toStringAsFixed(0)}%)",
-                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 11,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -742,30 +1092,49 @@ class OrderDetailPage extends StatelessWidget {
 
                     Text(
                       AppLocale.paymentMethods.getString(context).toUpperCase(),
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade600, letterSpacing: 1.2, fontSize: 12),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade600,
+                        letterSpacing: 1.2,
+                        fontSize: 12,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (payments.isEmpty)
                       Text(
                         AppLocale.noData.getString(context),
-                        style: TextStyle(color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontStyle: FontStyle.italic,
+                        ),
                       )
                     else
                       ...payments.map((p) {
                         final dynamic tenderField = p['C_POSTenderType_ID'];
                         final String tenderName = (tenderField is Map)
-                            ? (tenderField['identifier'] ?? tenderField['name'] ?? '---').toString()
+                            ? (tenderField['identifier'] ??
+                                      tenderField['name'] ??
+                                      '---')
+                                  .toString()
                             : tenderField?.toString() ?? '---';
-                        final double payAmt = ((p['PayAmt'] ?? p['Amount'] ?? 0) as num).toDouble();
+                        final double payAmt =
+                            ((p['PayAmt'] ?? p['Amount'] ?? 0) as num)
+                                .toDouble();
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(tenderName, style: TextStyle(color: textColor)),
+                              Text(
+                                tenderName,
+                                style: TextStyle(color: textColor),
+                              ),
                               Text(
                                 "\$${payAmt.toStringAsFixed(2)}",
-                                style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
@@ -785,7 +1154,11 @@ class OrderDetailPage extends StatelessWidget {
                     Center(
                       child: Text(
                         "",
-                        style: TextStyle(color: Colors.grey.shade400, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -805,9 +1178,15 @@ class OrderDetailPage extends StatelessWidget {
     }
 
     final meta =
-        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
+        _docStatusMap[statusCode] ??
+        {
+          'label': statusCode,
+          'color': Theme.of(context).colorScheme.primary,
+          'icon': Icons.flag_outlined,
+        };
 
-    final Color baseColor = (meta['color'] as Color?) ?? Theme.of(context).colorScheme.primary;
+    final Color baseColor =
+        (meta['color'] as Color?) ?? Theme.of(context).colorScheme.primary;
     final Color bgColor = baseColor.withOpacity(0.12);
     final String label = meta['label'] as String? ?? statusCode;
     final IconData icon = (meta['icon'] as IconData?) ?? Icons.flag_outlined;
@@ -827,7 +1206,11 @@ class OrderDetailPage extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 12,
+              color: baseColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -847,12 +1230,18 @@ class OrderDetailPage extends StatelessWidget {
 
           final taxKey = "$taxName (${taxRate.toStringAsFixed(0)}%)";
 
-          taxSummary.putIfAbsent(taxKey, () => {"net": 0.0, "tax": 0.0, "total": 0.0});
+          taxSummary.putIfAbsent(
+            taxKey,
+            () => {"net": 0.0, "tax": 0.0, "total": 0.0},
+          );
 
-          final double taxAmount = double.parse((lineNetAmt * (taxRate / 100)).toStringAsFixed(2));
+          final double taxAmount = double.parse(
+            (lineNetAmt * (taxRate / 100)).toStringAsFixed(2),
+          );
           taxSummary[taxKey]!["net"] = taxSummary[taxKey]!["net"]! + lineNetAmt;
           taxSummary[taxKey]!["tax"] = taxSummary[taxKey]!["tax"]! + taxAmount;
-          taxSummary[taxKey]!["total"] = taxSummary[taxKey]!["total"]! + lineNetAmt + taxAmount;
+          taxSummary[taxKey]!["total"] =
+              taxSummary[taxKey]!["total"]! + lineNetAmt + taxAmount;
         }
       }
     }
@@ -870,11 +1259,15 @@ class OrderDetailPage extends StatelessWidget {
     void syncFE({required int cInvoiceID}) async {
       final bool? confirmComplete = await _syncFEConfirmation(context);
       if (confirmComplete == true) {
-        final Map<String, dynamic> syncResult = await syncFEProcess(cInvoiceID: cInvoiceID);
+        final Map<String, dynamic> syncResult = await syncFEProcess(
+          cInvoiceID: cInvoiceID,
+        );
         if (syncResult['success'] == true && syncResult['isError'] != true) {
           if (context.mounted) {
             Fluttertoast.showToast(
-              msg: syncResult['summary'] ?? AppLocale.invoiceSentSuccess.getString(context),
+              msg:
+                  syncResult['summary'] ??
+                  AppLocale.invoiceSentSuccess.getString(context),
               backgroundColor: Colors.green,
               textColor: Colors.white,
               gravity: ToastGravity.BOTTOM,
@@ -885,7 +1278,9 @@ class OrderDetailPage extends StatelessWidget {
         } else {
           if (context.mounted) {
             Fluttertoast.showToast(
-              msg: syncResult['summary'] ?? AppLocale.invoiceSendError.getString(context),
+              msg:
+                  syncResult['summary'] ??
+                  AppLocale.invoiceSendError.getString(context),
               backgroundColor: Colors.red,
               textColor: Colors.white,
               gravity: ToastGravity.BOTTOM,
@@ -909,16 +1304,27 @@ class OrderDetailPage extends StatelessWidget {
               order['bpartner']['name'],
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 4),
-            Text(formatDateUI(order['DateOrdered']), style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+            Text(
+              formatDateUI(order['DateOrdered']),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            ),
 
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 4,
-              children: [_buildSubtypePill(context, order), _buildDocStatusPill(context, order), if (hasCreditNote) _buildCreditMemoPill()],
+              children: [
+                _buildSubtypePill(context, order),
+                _buildDocStatusPill(context, order),
+                if (hasCreditNote) _buildCreditMemoPill(context),
+              ],
             ),
           ],
         );
@@ -927,21 +1333,39 @@ class OrderDetailPage extends StatelessWidget {
         if (fe != null && (fe['url']?.isNotEmpty ?? false)) {
           final qrUrlData = fe['url']!;
           right = Column(
-            crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+            crossAxisAlignment: isMobile
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.end,
             children: [
-              Text(AppLocale.electronicBill.getString(context), style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+              Text(
+                AppLocale.electronicBill.getString(context),
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+              ),
               const SizedBox(height: 6),
-              if (fe['responseCode'] != null && fe['responseCode']!.isNotEmpty && fe['responseCode'] != '200') ...[
-                Text(fe['responseMessage']!, style: const TextStyle(fontSize: 10, color: Colors.red)),
+              if (fe['responseCode'] != null &&
+                  fe['responseCode']!.isNotEmpty &&
+                  fe['responseCode'] != '200') ...[
+                Text(
+                  fe['responseMessage']!,
+                  style: const TextStyle(fontSize: 10, color: Colors.red),
+                ),
                 const SizedBox(height: 6),
                 ElevatedButton(
                   onPressed: () => syncFE(cInvoiceID: fe['cInvoiceID']),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorTheme.info,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
-                  child: Text(AppLocale.retryFE.getString(context), style: const TextStyle(fontSize: 10, color: Colors.white)),
+                  child: Text(
+                    AppLocale.retryFE.getString(context),
+                    style: const TextStyle(fontSize: 10, color: Colors.white),
+                  ),
                 ),
               ],
 
@@ -968,7 +1392,10 @@ class OrderDetailPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               left,
-              if (right != null) ...[const SizedBox(height: 16), Center(child: right)],
+              if (right != null) ...[
+                const SizedBox(height: 16),
+                Center(child: right),
+              ],
             ],
           );
         }
@@ -992,8 +1419,12 @@ class OrderDetailPage extends StatelessWidget {
     required BuildContext context,
     required Color textColor,
   }) {
-    final double totalNeto = taxSummary.values.map((e) => e['net'] ?? 0.0).fold(0.0, (a, b) => a + b);
-    final double totalImpuesto = taxSummary.values.map((e) => e['tax'] ?? 0.0).fold(0.0, (a, b) => a + b);
+    final double totalNeto = taxSummary.values
+        .map((e) => e['net'] ?? 0.0)
+        .fold(0.0, (a, b) => a + b);
+    final double totalImpuesto = taxSummary.values
+        .map((e) => e['tax'] ?? 0.0)
+        .fold(0.0, (a, b) => a + b);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1001,7 +1432,10 @@ class OrderDetailPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(AppLocale.grossTotal.getString(context), style: TextStyle(color: Colors.grey.shade600)),
+            Text(
+              AppLocale.grossTotal.getString(context),
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
             Text(
               "\$${totalNeto.toStringAsFixed(2)}",
               style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
@@ -1018,7 +1452,10 @@ class OrderDetailPage extends StatelessWidget {
                 Text(entry.key, style: TextStyle(color: Colors.grey.shade600)),
                 Text(
                   "\$${entry.value['tax']!.toStringAsFixed(2)}",
-                  style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -1028,7 +1465,10 @@ class OrderDetailPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(AppLocale.taxTotal.getString(context), style: TextStyle(color: Colors.grey.shade600)),
+              Text(
+                AppLocale.taxTotal.getString(context),
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
               Text(
                 "\$${totalImpuesto.toStringAsFixed(2)}",
                 style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
@@ -1041,18 +1481,28 @@ class OrderDetailPage extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
+            border: Border.all(
+              color: Theme.of(context).primaryColor.withOpacity(0.3),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 AppLocale.finalTotal.getString(context).toUpperCase(),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).primaryColor),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Theme.of(context).primaryColor,
+                ),
               ),
               Text(
                 "\$${grandTotal.toStringAsFixed(2)}",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Theme.of(context).primaryColor),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Theme.of(context).primaryColor,
+                ),
               ),
             ],
           ),

@@ -374,6 +374,9 @@ class AppLocale {
   static const String resumeHeldTicket = 'resumeHeldTicket';
   static const String deleteCannotBeUndone = 'deleteCannotBeUndone';
   static const String paymentMethod = 'paymentMethod';
+  static const String refundGenerated = 'refundGenerated';
+  static const String returnAlreadyExists = 'returnAlreadyExists';
+  static const String returnValidationError = 'returnValidationError';
 
   static const Map<String, dynamic> en = {
     heldTickets: 'Held tickets',
@@ -388,6 +391,10 @@ class AppLocale {
     resumeHeldTicket: 'Resume',
     deleteCannotBeUndone: 'This action cannot be undone.',
     paymentMethod: 'Payment method',
+    refundGenerated: 'Return generated',
+    returnAlreadyExists: 'This order already has an active return.',
+    returnValidationError:
+        'The return status could not be verified. Please try again.',
     advancedSearch: 'Advanced search',
     customerOrIdentification: 'Customer or identification',
     orderReceiptInvoiceNumber: 'Order, receipt, or invoice number',
@@ -777,6 +784,10 @@ class AppLocale {
     resumeHeldTicket: 'Reanudar',
     deleteCannotBeUndone: 'Esta acción no se puede deshacer.',
     paymentMethod: 'Método de pago',
+    refundGenerated: 'Devolución generada',
+    returnAlreadyExists: 'Esta orden ya tiene una devolución activa.',
+    returnValidationError:
+        'No se pudo verificar el estado de la devolución. Intente nuevamente.',
     advancedSearch: 'Búsqueda avanzada',
     customerOrIdentification: 'Cliente o identificación',
     orderReceiptInvoiceNumber: 'N.º de orden, recibo o factura',
