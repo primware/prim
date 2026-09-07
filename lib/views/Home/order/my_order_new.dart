@@ -1562,6 +1562,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isRefund: widget.isRefund,
       doctypeID: widget.doctypeID,
       priceListID: bpartnerPriceListID,
+      sourceOrderId: widget.sourceOrderId,
     );
 
     if (result['success'] == true) {
@@ -2460,7 +2461,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     ],
                                     if (isFirstStandard) ...[
                                       if (discountPaymentMethods.isNotEmpty) const SizedBox(height: CustomSpacer.medium),
-                                      Text(AppLocale.paymentMethods.getString(context), style: Theme.of(context).textTheme.titleMedium),
+                                      Text(
+                                        (widget.isRefund ? AppLocale.refundMethods : AppLocale.paymentMethods).getString(context),
+                                        style: Theme.of(context).textTheme.titleMedium,
+                                      ),
                                       const SizedBox(height: 6),
                                     ],
                                     Padding(

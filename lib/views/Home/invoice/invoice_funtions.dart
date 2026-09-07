@@ -466,7 +466,7 @@ Future<PagedResult<InvoicePaymentReceipt>> fetchInvoicePaymentReceiptsPage({
       '&\$filter=DocStatus eq \'CO\' and IsManual eq true '
       'and C_DocType_ID eq $allocationDocTypeId'
       '$organizationFilter'
-      '&\$orderby=DateTrx desc'
+      '&\$orderby=Created desc'
       '&\$expand=C_AllocationLine',
     );
     final response = await get(uri, headers: _headers());
@@ -732,10 +732,8 @@ InvoicePaymentReceipt? _normalizeHistoricalReceipt(
     allocationId: _asInt(record['id']) ?? 0,
     documentNo: _optionalText(record['DocumentNo']),
     date:
-        DateTime.tryParse(
-          (record['DateTrx'] ?? record['Created'] ?? '').toString(),
-        ) ??
-        DateTime.now(),
+        DateTime.tryParse((record['Created'] ?? '').toString()) ??
+        DateTime.fromMillisecondsSinceEpoch(0),
     customerId: customerId,
     customerName: customerName.isEmpty ? 'Cliente' : customerName,
     customerTaxId: customerTaxId,

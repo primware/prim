@@ -408,7 +408,7 @@ class _OrderListPageState extends State<OrderListPage> {
   DateTime _historyDate(Object item) {
     if (item is InvoicePaymentReceipt) return item.date;
     if (item is Map) {
-      return DateTime.tryParse((item['DateOrdered'] ?? item['Created'] ?? '').toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return DateTime.tryParse((item['Created'] ?? '').toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
     }
     return DateTime.fromMillisecondsSinceEpoch(0);
   }
@@ -1227,11 +1227,7 @@ class _OrderListPageState extends State<OrderListPage> {
     final double taxAmount = grandTotal - totalLines;
 
     final List invoices = order['C_Invoice'] ?? [];
-    final bool hasCreditNote =
-        order['hasActiveReturn'] == true ||
-        invoices.any((inv) {
-          return inv['RelatedInvoice_ID'] != null;
-        });
+    final bool hasCreditNote = !isReturn && order['hasActiveReturn'] == true;
 
     return GestureDetector(
       onTap: () async {
@@ -1356,7 +1352,7 @@ class _OrderListPageState extends State<OrderListPage> {
                         ),
                       );
                     }
-                    if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
+                    if (!isReturn && POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
                       items.add(
                         PopupMenuItem<String>(
                           value: 'arc',
@@ -1403,7 +1399,7 @@ class _OrderListPageState extends State<OrderListPage> {
                       Icon(Icons.calendar_today_outlined, color: Colors.grey.shade500, size: 16),
                       const SizedBox(width: 6),
                       Text(
-                        formatDateUI(order['DateOrdered']),
+                        formatDateUI(order['Created']?.toString() ?? ''),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                       ),
                     ],

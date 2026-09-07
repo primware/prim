@@ -271,6 +271,7 @@ Future<Map<String, dynamic>> postInvoice({
   int? doctypeID,
   int? orderId,
   int? priceListID,
+  int? sourceOrderId,
 }) async {
   try {
     if (discounts.isNotEmpty && (POS.discountChargeID == null || POS.discountTaxID == null || POS.discountTaxRate == null)) {
@@ -336,6 +337,7 @@ Future<Map<String, dynamic>> postInvoice({
           : "P", //? Con Término de Pago
       "M_PriceList_ID": buildPriceListReference(isPOS: POS.isPOS, posPriceListID: POS.priceListID, bPartnerPriceListID: priceListID),
       "IsSOTrx": true,
+      if (isRefund && sourceOrderId != null) "Ref_Order_ID": {"id": sourceOrderId},
       "order-line": [...orderLines, ...discountLines],
       if (POSTenderType.isMultiPayment) "pos-payment": posPayments,
       "doc-action": docAction,
@@ -378,7 +380,7 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId, required Bui
   try {
     final response = await get(
       Uri.parse(
-        '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID,M_Product_ID,C_Charge_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID,C_Invoice(\$select=C_Invoice_ID,RelatedInvoice_ID,DocStatus,C_DocType_ID)',
+        '${EndPoints.cOrder}?\$filter=C_Order_ID eq $orderId&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID,M_Product_ID,C_Charge_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID,Ref_Order_ID,C_Invoice(\$select=C_Invoice_ID,RelatedInvoice_ID,DocStatus,C_DocType_ID)',
       ),
       headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
     );
@@ -394,6 +396,7 @@ Future<Map<String, dynamic>?> fetchOrderById({required int orderId, required Bui
         'DateOrdered': record['DateOrdered'],
         'GrandTotal': record['GrandTotal'],
         'TotalLines': record['TotalLines'],
+        'refOrderId': _referenceId(record['Ref_Order_ID']),
         'DocStatus': record['DocStatus'] is Map ? record['DocStatus']['id'] : record['DocStatus'],
         'bpartner': {
           'id': record['C_BPartner_ID']?['id'],
@@ -472,13 +475,63 @@ Future<Set<int>> fetchReturnInvoiceDocTypeIds() async {
   return ids;
 }
 
+bool _isReturnOrderRecord(Map record) {
+  final docType = record['C_DocTypeTarget_ID'];
+  if (docType is! Map) return false;
+  final subtype = docType['DocSubTypeSO'];
+  final subtypeCode = subtype is Map ? subtype['id'] : subtype;
+  final docTypeId = _referenceId(docType);
+  return subtypeCode?.toString() == 'RM' || (POS.docTypeRefundID != null && docTypeId == POS.docTypeRefundID);
+}
+
+Future<Set<int>> _fetchReferencedReturnOrderIds(Set<int> orderIds) async {
+  if (orderIds.isEmpty) return <int>{};
+  final referenceFilter = orderIds.map((orderId) => 'Ref_Order_ID eq $orderId').join(' or ');
+  final result = <int>{};
+  var skip = 0;
+  var rowCount = 0;
+  do {
+    final response = await get(
+      Uri.parse(
+        '${EndPoints.cOrder}?\$top=100&\$skip=$skip&\$expand=C_DocTypeTarget_ID'
+        '&\$filter=($referenceFilter)',
+      ),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
+    if (response.statusCode != 200) {
+      CurrentLogMessage.add(
+        'Validación de órdenes de devolución ${response.statusCode}: ${response.body}',
+        level: 'ERROR',
+        tag: 'fetchActiveReturnOrderIds',
+      );
+      throw Exception('No se pudieron validar las órdenes de devolución (${response.statusCode}).');
+    }
+
+    final decoded = json.decode(utf8.decode(response.bodyBytes));
+    final records = (decoded['records'] as List?) ?? const [];
+    rowCount = int.tryParse((decoded['row-count'] ?? records.length).toString()) ?? records.length;
+    for (final record in records.whereType<Map>()) {
+      final sourceOrderId = _referenceId(record['Ref_Order_ID']);
+      if (sourceOrderId != null &&
+          orderIds.contains(sourceOrderId) &&
+          _isReturnOrderRecord(record) &&
+          _isActiveReturnStatus(record['DocStatus'])) {
+        result.add(sourceOrderId);
+      }
+    }
+    if (records.isEmpty) break;
+    skip += records.length;
+  } while (skip < rowCount);
+  return result;
+}
+
 Future<Set<int>> fetchActiveReturnOrderIds(Iterable<Map<String, dynamic>> orders) async {
   final orderList = orders.toList();
   final orderIds = orderList.map((order) => _referenceId(order['id'] ?? order['C_Order_ID'])).whereType<int>().toSet();
   if (orderIds.isEmpty) return <int>{};
 
   final returnDocTypeIds = await fetchReturnInvoiceDocTypeIds();
-  final result = <int>{};
+  final result = await _fetchReferencedReturnOrderIds(orderIds);
   final invoiceToOrder = <int, int>{};
   for (final order in orderList) {
     final orderId = _referenceId(order['id'] ?? order['C_Order_ID']);
@@ -489,9 +542,7 @@ Future<Set<int>> fetchActiveReturnOrderIds(Iterable<Map<String, dynamic>> orders
       final invoiceId = _referenceId(invoice['id'] ?? invoice['C_Invoice_ID']);
       final docTypeId = _referenceId(invoice['C_DocType_ID']);
       final isReturn = docTypeId != null && returnDocTypeIds.contains(docTypeId);
-      if (isReturn && _isActiveReturnStatus(invoice['DocStatus'])) {
-        result.add(orderId);
-      } else if (invoiceId != null) {
+      if (!isReturn && invoiceId != null) {
         invoiceToOrder[invoiceId] = orderId;
       }
     }
@@ -615,8 +666,8 @@ Future<PagedResult<Map<String, dynamic>>> fetchOrdersPage({
     final response = await get(
       Uri.parse(
         '${EndPoints.cOrder}?\$top=$top&\$skip=$skip&\$filter=${filters.join(' and ')}'
-        '&\$orderby=DateOrdered desc'
-        '&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID,M_Product_ID,C_Charge_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID,C_Invoice(\$select=C_Invoice_ID,RelatedInvoice_ID,DocStatus,C_DocType_ID)',
+        '&\$orderby=Created desc'
+        '&\$expand=C_OrderLine(\$orderby=Created;\$expand=C_Tax_ID,M_Product_ID,C_Charge_ID),Bill_Location_ID,C_BPartner_ID,Bill_User_ID,C_POSPayment,C_DocTypeTarget_ID,Ref_Order_ID,C_Invoice(\$select=C_Invoice_ID,RelatedInvoice_ID,DocStatus,C_DocType_ID)',
       ),
       headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
     );
@@ -639,6 +690,7 @@ Future<PagedResult<Map<String, dynamic>>> fetchOrdersPage({
       'DateOrdered': record['DateOrdered'],
       'GrandTotal': record['GrandTotal'],
       'TotalLines': record['TotalLines'],
+      'refOrderId': _referenceId(record['Ref_Order_ID']),
       'bpartner': {
         'id': record['C_BPartner_ID']?['id'],
         'name': record['C_BPartner_ID']?['Name'],

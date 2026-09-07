@@ -209,6 +209,7 @@ class AppLocale {
   static const String apply = 'apply';
   static const String product = 'product';
   static const String paymentMethods = 'paymentMethods';
+  static const String refundMethods = 'refundMethods';
   static const String paymentSumMustEqualTotal = 'paymentSumMustEqualTotal';
   static const String summary = 'summary';
   static const String taxes = 'taxes';
@@ -766,6 +767,7 @@ class AppLocale {
     apply: 'Apply',
     product: 'Product',
     paymentMethods: 'Payment methods',
+    refundMethods: 'Refund methods',
     discounts: 'Discounts',
     removeDiscount: 'Remove discount',
     paymentSumMustEqualTotal:
@@ -1183,6 +1185,7 @@ class AppLocale {
     terminal: 'Terminal',
     product: 'Producto',
     paymentMethods: 'Métodos de pago',
+    refundMethods: 'Métodos de devolución',
     discounts: 'Descuentos',
     removeDiscount: 'Quitar descuento',
     paymentSumMustEqualTotal:
