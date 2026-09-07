@@ -268,6 +268,39 @@ class AppLocale {
   static const String production = 'production';
   static const String instance = 'instance';
   static const String isPointOfSale = 'isPointOfSale';
+  static const String operatingMode = 'operatingMode';
+  static const String pointOfSaleMode = 'pointOfSaleMode';
+  static const String salesForceMode = 'salesForceMode';
+  static const String pointOfSaleModeDescription = 'pointOfSaleModeDescription';
+  static const String salesForceModeDescription = 'salesForceModeDescription';
+  static const String sessionParameters = 'sessionParameters';
+  static const String terminalParameters = 'terminalParameters';
+  static const String userParameters = 'userParameters';
+  static const String organizationParameters = 'organizationParameters';
+  static const String printingParameters = 'printingParameters';
+  static const String systemLogs = 'systemLogs';
+  static const String notApplicable = 'notApplicable';
+  static const String enabled = 'enabled';
+  static const String disabled = 'disabled';
+  static const String posTerminal = 'posTerminal';
+  static const String modifyPricePermission = 'modifyPricePermission';
+  static const String defaultCustomer = 'defaultCustomer';
+  static const String priceListVersion = 'priceListVersion';
+  static const String warehouse = 'warehouse';
+  static const String paymentTerm = 'paymentTerm';
+  static const String bankAccount = 'bankAccount';
+  static const String salesDocumentType = 'salesDocumentType';
+  static const String refundDocumentType = 'refundDocumentType';
+  static const String discountCharge = 'discountCharge';
+  static const String discountTax = 'discountTax';
+  static const String multiplePayments = 'multiplePayments';
+  static const String identifier = 'identifier';
+  static const String printerName = 'printerName';
+  static const String printerAddress = 'printerAddress';
+  static const String printerTaxId = 'printerTaxId';
+  static const String printerDv = 'printerDv';
+  static const String printerPhone = 'printerPhone';
+  static const String printerEmail = 'printerEmail';
   static const String noOrdersRegistered = 'noOrdersRegistered';
   static const String readyForFirstOrder = 'readyForFirstOrder';
   static const String orgProfileTitle = 'orgProfileTitle';
@@ -514,11 +547,45 @@ class AppLocale {
     settingsSaveError: 'An error occurred while saving. Check the console.',
     noOrdersRegistered: 'No orders registered',
     readyForFirstOrder: 'Ready to place your first order?',
-    systemParameters: 'Parámetros del Sistema',
-    urlNotAvailable: 'URL no disponible',
-    production: 'Producción:',
-    instance: 'Instancia:',
-    isPointOfSale: 'Es Punto de Venta:',
+    systemParameters: 'System parameters',
+    urlNotAvailable: 'URL not available',
+    production: 'Production',
+    instance: 'Instance',
+    isPointOfSale: 'Point of sale',
+    operatingMode: 'Operating mode',
+    pointOfSaleMode: 'Point of sale mode',
+    salesForceMode: 'Sales force mode',
+    pointOfSaleModeDescription:
+        'This session uses the configured POS terminal.',
+    salesForceModeDescription: 'This session operates without a POS terminal.',
+    sessionParameters: 'Session',
+    terminalParameters: 'POS terminal',
+    userParameters: 'User',
+    organizationParameters: 'Organization',
+    printingParameters: 'Printing',
+    systemLogs: 'System logs',
+    notApplicable: 'Not applicable',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    posTerminal: 'POS Terminal',
+    modifyPricePermission: 'Modify prices',
+    defaultCustomer: 'Default customer',
+    priceListVersion: 'Price list version',
+    warehouse: 'Warehouse',
+    paymentTerm: 'Payment term',
+    bankAccount: 'Bank account',
+    salesDocumentType: 'Sales document type',
+    refundDocumentType: 'Refund document type',
+    discountCharge: 'Discount charge',
+    discountTax: 'Discount tax',
+    multiplePayments: 'Multiple payments',
+    identifier: 'ID',
+    printerName: 'Header name',
+    printerAddress: 'Header address',
+    printerTaxId: 'Header Tax ID',
+    printerDv: 'Header DV',
+    printerPhone: 'Header phone',
+    printerEmail: 'Header email',
     selectValidCustomerForProducts:
         'Please select a valid customer to add products to the order.',
     selectCustomer: 'Please select a customer',
@@ -911,6 +978,45 @@ class AppLocale {
     settingsSaveError: 'Ocurrió un error al guardar. Revisa la consola.',
     noOrdersRegistered: 'Sin órdenes registradas',
     readyForFirstOrder: '¿Listo para realizar tu primera orden?',
+    systemParameters: 'Parámetros del sistema',
+    urlNotAvailable: 'URL no disponible',
+    production: 'Producción',
+    instance: 'Instancia',
+    isPointOfSale: 'Punto de venta',
+    operatingMode: 'Modo operativo',
+    pointOfSaleMode: 'Modo Punto de venta',
+    salesForceMode: 'Modo Fuerza de venta',
+    pointOfSaleModeDescription:
+        'Esta sesión utiliza la terminal PDV configurada.',
+    salesForceModeDescription: 'Esta sesión opera sin una terminal PDV.',
+    sessionParameters: 'Sesión',
+    terminalParameters: 'Terminal PDV',
+    userParameters: 'Usuario',
+    organizationParameters: 'Organización',
+    printingParameters: 'Impresión',
+    systemLogs: 'Logs del sistema',
+    notApplicable: 'No aplica',
+    enabled: 'Habilitado',
+    disabled: 'Deshabilitado',
+    posTerminal: 'Terminal PDV',
+    modifyPricePermission: 'Modificar precios',
+    defaultCustomer: 'Tercero predeterminado',
+    priceListVersion: 'Versión de lista de precios',
+    warehouse: 'Almacén',
+    paymentTerm: 'Término de pago',
+    bankAccount: 'Cuenta bancaria',
+    salesDocumentType: 'Tipo de documento de venta',
+    refundDocumentType: 'Tipo de documento de devolución',
+    discountCharge: 'Cargo de descuento',
+    discountTax: 'Impuesto de descuento',
+    multiplePayments: 'Múltiples pagos',
+    identifier: 'ID',
+    printerName: 'Nombre del encabezado',
+    printerAddress: 'Dirección del encabezado',
+    printerTaxId: 'RUC del encabezado',
+    printerDv: 'DV del encabezado',
+    printerPhone: 'Teléfono del encabezado',
+    printerEmail: 'Correo del encabezado',
     selectValidCustomerForProducts:
         'Seleccione un cliente válido para poder agregar productos a la orden.',
     selectCustomer: 'Seleccione un cliente',
