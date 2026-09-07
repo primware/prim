@@ -363,8 +363,31 @@ class AppLocale {
   static const String paymentTenderTypeRequired = 'paymentTenderTypeRequired';
   static const String salesRepRequired = 'salesRepRequired';
   static const String salesRepLoadError = 'salesRepLoadError';
+  static const String heldTickets = 'heldTickets';
+  static const String putOnHold = 'putOnHold';
+  static const String heldTicketSaved = 'heldTicketSaved';
+  static const String noHeldTickets = 'noHeldTickets';
+  static const String heldTicketsLoadError = 'heldTicketsLoadError';
+  static const String deleteHeldTicket = 'deleteHeldTicket';
+  static const String deleteHeldTicketMessage = 'deleteHeldTicketMessage';
+  static const String heldTicketProducts = 'heldTicketProducts';
+  static const String resumeHeldTicket = 'resumeHeldTicket';
+  static const String deleteCannotBeUndone = 'deleteCannotBeUndone';
+  static const String paymentMethod = 'paymentMethod';
 
   static const Map<String, dynamic> en = {
+    heldTickets: 'Held tickets',
+    putOnHold: 'Put on hold',
+    heldTicketSaved: 'The ticket was placed on hold.',
+    noHeldTickets: 'There are no held tickets.',
+    heldTicketsLoadError: 'Held tickets could not be loaded.',
+    deleteHeldTicket: 'Delete held ticket',
+    deleteHeldTicketMessage:
+        'Are you sure you want to permanently delete this held ticket?',
+    heldTicketProducts: '{count} products',
+    resumeHeldTicket: 'Resume',
+    deleteCannotBeUndone: 'This action cannot be undone.',
+    paymentMethod: 'Payment method',
     advancedSearch: 'Advanced search',
     customerOrIdentification: 'Customer or identification',
     orderReceiptInvoiceNumber: 'Order, receipt, or invoice number',
@@ -374,7 +397,8 @@ class AppLocale {
     onlyMyMovements: 'Only my activity',
     onlyMyMovementsSubtitle: 'Orders and payments registered under my name',
     pinnedFilters: 'Pinned filters',
-    pinnedFiltersInfo: 'Pinned filters remain applied when you leave and return to My Orders. They are stored only on this device.',
+    pinnedFiltersInfo:
+        'Pinned filters remain applied when you leave and return to My Orders. They are stored only on this device.',
     updatePinnedFilters: 'Update pinned filters',
     pinAndApply: 'Pin and apply',
     reset: 'Reset',
@@ -385,7 +409,8 @@ class AppLocale {
     documentTypeFilter: 'Document type:',
     all: 'All',
     historyUpdateError: 'The history could not be updated. {error}',
-    showingFilteredHistory: 'Showing {visible} of {loaded} loaded on this page · {total} search results',
+    showingFilteredHistory:
+        'Showing {visible} of {loaded} loaded on this page · {total} search results',
     showingHistory: 'Showing {start}–{end} of {total} activities',
     previous: 'Previous',
     next: 'Next',
@@ -740,6 +765,18 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    heldTickets: 'Tickets en espera',
+    putOnHold: 'Poner en espera',
+    heldTicketSaved: 'El ticket fue puesto en espera.',
+    noHeldTickets: 'No hay tickets en espera.',
+    heldTicketsLoadError: 'No se pudieron cargar los tickets en espera.',
+    deleteHeldTicket: 'Eliminar ticket en espera',
+    deleteHeldTicketMessage:
+        '¿Está seguro de que desea eliminar permanentemente este ticket en espera?',
+    heldTicketProducts: '{count} productos',
+    resumeHeldTicket: 'Reanudar',
+    deleteCannotBeUndone: 'Esta acción no se puede deshacer.',
+    paymentMethod: 'Método de pago',
     advancedSearch: 'Búsqueda avanzada',
     customerOrIdentification: 'Cliente o identificación',
     orderReceiptInvoiceNumber: 'N.º de orden, recibo o factura',
@@ -749,7 +786,8 @@ class AppLocale {
     onlyMyMovements: 'Solo mis movimientos',
     onlyMyMovementsSubtitle: 'Órdenes y pagos registrados a mi nombre',
     pinnedFilters: 'Filtros fijos',
-    pinnedFiltersInfo: 'Los filtros fijados se mantendrán aunque salga y vuelva a entrar a Mis órdenes. Se guardan únicamente en este dispositivo.',
+    pinnedFiltersInfo:
+        'Los filtros fijados se mantendrán aunque salga y vuelva a entrar a Mis órdenes. Se guardan únicamente en este dispositivo.',
     updatePinnedFilters: 'Actualizar filtros fijos',
     pinAndApply: 'Fijar y aplicar',
     reset: 'Restablecer',
@@ -760,7 +798,8 @@ class AppLocale {
     documentTypeFilter: 'Tipo de documento:',
     all: 'Todos',
     historyUpdateError: 'No se pudo actualizar el historial. {error}',
-    showingFilteredHistory: 'Mostrando {visible} de {loaded} cargados en esta página · {total} resultados de búsqueda',
+    showingFilteredHistory:
+        'Mostrando {visible} de {loaded} cargados en esta página · {total} resultados de búsqueda',
     showingHistory: 'Mostrando {start}–{end} de {total} movimientos',
     previous: 'Anterior',
     next: 'Siguiente',

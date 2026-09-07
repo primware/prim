@@ -10,6 +10,8 @@ import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
+import 'package:primware/views/Home/order/held_ticket.dart';
+import 'package:primware/views/Home/order/held_ticket_page.dart';
 import 'package:primware/views/Home/invoice/invoice_new.dart';
 import 'package:primware/views/Home/product/product_view.dart';
 import 'package:primware/views/Home/report/close_cash_view.dart';
@@ -34,7 +36,10 @@ class CustomAppMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, constraints) => (constraints.maxWidth > 750) ? _TableDesktopMenu() : _MobileMenu());
+    return LayoutBuilder(
+      builder: (_, constraints) =>
+          (constraints.maxWidth > 750) ? _TableDesktopMenu() : _MobileMenu(),
+    );
   }
 }
 
@@ -51,7 +56,14 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 2, blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       width: double.maxFinite,
       child: Center(
@@ -64,13 +76,20 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
               if (!Base.prod) ...[
                 const SizedBox(width: CustomSpacer.large),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.error, borderRadius: BorderRadius.circular(20)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.error,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Text(
                     'Entorno de pruebas',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.surface, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.surface,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -80,7 +99,11 @@ class _TableDesktopMenuState extends State<_TableDesktopMenu> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Token.auth != null ? const DashboardPage() : const LoginPage()),
+                    MaterialPageRoute(
+                      builder: (context) => Token.auth != null
+                          ? const DashboardPage()
+                          : const LoginPage(),
+                    ),
                   );
                 },
               ),
@@ -99,7 +122,14 @@ class _MobileMenu extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 2, blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Padding(
         padding: EdgeInsets.only(right: CustomSpacer.medium),
@@ -135,6 +165,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
   void initState() {
     super.initState();
     _loadTheme();
+    HeldTicketStore.instance.refresh();
   }
 
   Future<void> _loadTheme() async {
@@ -151,8 +182,14 @@ class _MenuDrawerState extends State<MenuDrawer> {
         title: Text(AppLocale.confirmLogout.getString(context)),
         content: Text(AppLocale.logoutMessage.getString(context)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocale.no.getString(context))),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocale.yes.getString(context))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(AppLocale.no.getString(context)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(AppLocale.yes.getString(context)),
+          ),
         ],
       ),
     );
@@ -218,7 +255,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   context,
                   icon: Icons.dashboard_outlined,
                   title: AppLocale.dashboard.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DashboardPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardPage()),
+                  ),
                 ),
 
                 const SizedBox(height: CustomSpacer.medium),
@@ -228,7 +268,12 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   context,
                   icon: Icons.payments_outlined,
                   title: AppLocale.invoicePayment.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicePaymentPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const InvoicePaymentPage(),
+                    ),
+                  ),
                 ),
 
                 // Pedidos / Ventas Dinámicos de iDempiere
@@ -237,18 +282,28 @@ class _MenuDrawerState extends State<MenuDrawer> {
                     context,
                     icon: Icons.add_circle_outline,
                     title: AppLocale.newOrder.getString(context),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderNewPage())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const OrderNewPage()),
+                    ),
                   ),
 
                 if (POS.docTypesComplete.isNotEmpty)
                   ...POS.docTypesComplete.map((doc) {
                     final dynamic rawId = doc['id'];
-                    final int? docTypeId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
-                    final bool isRefund = doc['DocSubTypeSO'] == 'RM' || docTypeId == POS.docTypeRefundID;
+                    final int? docTypeId = rawId is int
+                        ? rawId
+                        : int.tryParse(rawId?.toString() ?? '');
+                    final bool isRefund =
+                        doc['DocSubTypeSO'] == 'RM' ||
+                        docTypeId == POS.docTypeRefundID;
                     return _buildMenuItem(
                       context,
-                      icon: isRefund ? Icons.assignment_return_outlined : Icons.add_circle_outline,
-                      title: (doc['name'] ?? doc['Name'] ?? 'Documento').toString(),
+                      icon: isRefund
+                          ? Icons.assignment_return_outlined
+                          : Icons.add_circle_outline,
+                      title: (doc['name'] ?? doc['Name'] ?? 'Documento')
+                          .toString(),
                       iconColor: isRefund ? Colors.redAccent : null,
                       onTap: () => Navigator.push(
                         context,
@@ -268,7 +323,28 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   context,
                   icon: Icons.receipt_long_outlined,
                   title: AppLocale.myOrders.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OrderListPage()),
+                  ),
+                ),
+
+                ValueListenableBuilder<int>(
+                  valueListenable: HeldTicketStore.instance.count,
+                  builder: (context, count, _) => count == 0
+                      ? const SizedBox.shrink()
+                      : _buildMenuItem(
+                          context,
+                          icon: Icons.pause_circle_outline,
+                          title:
+                              '${AppLocale.heldTickets.getString(context)} ($count)',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const HeldTicketPage(),
+                            ),
+                          ),
+                        ),
                 ),
 
                 // Sección Punto de Venta
@@ -286,7 +362,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
                     context,
                     icon: Icons.history_outlined,
                     title: AppLocale.mycloseCashs.getString(context),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CloseCashPage())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CloseCashPage()),
+                    ),
                   ),
                 ],
 
@@ -296,13 +375,19 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   context,
                   icon: Icons.inventory_2_outlined,
                   title: AppLocale.products.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductListPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProductListPage()),
+                  ),
                 ),
                 _buildMenuItem(
                   context,
                   icon: Icons.people_alt_outlined,
                   title: AppLocale.customers.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BPartnerListPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BPartnerListPage()),
+                  ),
                 ),
                 const SizedBox(height: CustomSpacer.medium),
                 _buildSectionTitle(context, 'SISTEMA'),
@@ -323,7 +408,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   title: AppLocale.settings.getString(context),
                   onTap: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsPage()),
+                    );
                   },
                 ),
 
@@ -339,7 +427,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
                     context,
                     icon: Icons.terminal,
                     title: AppLocale.console.getString(context),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DebugPage())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DebugPage()),
+                    ),
                   ),
               ],
             ),
@@ -369,18 +460,35 @@ class _MenuDrawerState extends State<MenuDrawer> {
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor,
         borderRadius: const BorderRadius.only(bottomRight: Radius.circular(40)),
-        boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))],
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: Colors.white24,
+              shape: BoxShape.circle,
+            ),
             child: CircleAvatar(
               radius: 35,
               backgroundColor: Colors.white,
-              backgroundImage: POSPrinter.logo != null ? MemoryImage(POSPrinter.logo!) : null,
-              child: POSPrinter.logo == null ? Icon(Icons.business, color: Theme.of(context).primaryColor, size: 35) : null,
+              backgroundImage: POSPrinter.logo != null
+                  ? MemoryImage(POSPrinter.logo!)
+                  : null,
+              child: POSPrinter.logo == null
+                  ? Icon(
+                      Icons.business,
+                      color: Theme.of(context).primaryColor,
+                      size: 35,
+                    )
+                  : null,
             ),
           ),
           const SizedBox(width: 15),
@@ -390,13 +498,20 @@ class _MenuDrawerState extends State<MenuDrawer> {
               children: [
                 Text(
                   UserData.name ?? 'Usuario',
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   UserData.rolName ?? 'LIRION ERP',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 13,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -413,7 +528,12 @@ class _MenuDrawerState extends State<MenuDrawer> {
       padding: const EdgeInsets.only(left: 12, bottom: 8, top: 12),
       child: Text(
         title,
-        style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        style: TextStyle(
+          color: Colors.grey.shade500,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+        ),
       ),
     );
   }
@@ -434,11 +554,24 @@ class _MenuDrawerState extends State<MenuDrawer> {
         dense: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: isLoading
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-            : Icon(icon, color: iconColor ?? Theme.of(context).primaryColor.withOpacity(0.8)),
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(
+                icon,
+                color:
+                    iconColor ??
+                    Theme.of(context).primaryColor.withOpacity(0.8),
+              ),
         title: Text(
           title,
-          style: TextStyle(color: textColor ?? Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500, fontSize: 14),
+          style: TextStyle(
+            color: textColor ?? Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
         ),
       ),
     );
@@ -455,11 +588,20 @@ class _MenuDrawerState extends State<MenuDrawer> {
 
     if (authData != null) {
       // Si el usuario le da a "Volver", la sesión intacta sigue ahí.
-      Navigator.push(context, MaterialPageRoute(builder: (_) => ConfigPage(clients: authData['clients'])));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ConfigPage(clients: authData['clients']),
+        ),
+      );
     } else {
       // Fallback por si la contraseña cambió o el token expiró
       await cleanSessionData();
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginPage()), (Route<dynamic> route) => false);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (Route<dynamic> route) => false,
+      );
     }
   }
 
@@ -468,7 +610,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
     if (confirmed == true) {
       await cleanSessionData();
       if (!mounted) return;
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
     }
   }
 
@@ -484,27 +629,54 @@ class _MenuDrawerState extends State<MenuDrawer> {
       if (!mounted) return;
       setState(() => _isCreatingCloseCash = false);
 
-      Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: {'success': true, 'Record_ID': closeCashId})));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CloseCashDetailPage(
+            record: {'success': true, 'Record_ID': closeCashId},
+          ),
+        ),
+      );
       return;
     }
 
-    final String nowText = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    final String nowText = DateFormat(
+      'yyyy-MM-dd HH:mm:ss',
+    ).format(DateTime.now());
 
     try {
-      final result = await postNewCloseCash(context: context, salesRepID: UserData.id, terminalID: POS.cPosID!, dateTrx: nowText);
+      final result = await postNewCloseCash(
+        context: context,
+        salesRepID: UserData.id,
+        terminalID: POS.cPosID!,
+        dateTrx: nowText,
+      );
 
       if (!mounted) return;
       setState(() => _isCreatingCloseCash = false);
 
       if (result['success'] == true) {
-        await Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: result)));
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CloseCashDetailPage(record: result),
+          ),
+        );
       } else {
-        ToastMessage.show(context: context, message: 'No se pudo crear el cierre de caja', type: ToastType.failure);
+        ToastMessage.show(
+          context: context,
+          message: 'No se pudo crear el cierre de caja',
+          type: ToastType.failure,
+        );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isCreatingCloseCash = false);
-      ToastMessage.show(context: context, message: 'Error al crear el cierre de caja', type: ToastType.failure);
+      ToastMessage.show(
+        context: context,
+        message: 'Error al crear el cierre de caja',
+        type: ToastType.failure,
+      );
     }
   }
 }
