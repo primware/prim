@@ -206,6 +206,40 @@ class _OrderListPageState extends State<OrderListPage> {
     }
   }
 
+  GiftInvoiceLabels get _giftInvoiceLabels => GiftInvoiceLabels(
+    title: AppLocale.giftInvoice.getString(context),
+    orderNumber: AppLocale.orderNumber.getString(context),
+    date: AppLocale.dateLabel.getString(context),
+    servedBy: AppLocale.servedBy.getString(context),
+    identification: AppLocale.identification.getString(context),
+    customer: AppLocale.customer.getString(context),
+    address: AppLocale.address.getString(context),
+    phone: AppLocale.phoneLabel.getString(context),
+    product: AppLocale.product.getString(context),
+    description: AppLocale.description.getString(context),
+    quantity: AppLocale.quantity.getString(context),
+  );
+
+  Future<void> _printGiftInvoice(Map<String, dynamic> order) async {
+    final bool? confirm = await _printTicketConfirmation(context);
+    if (confirm != true) return;
+    try {
+      final pdfBytes = POS.isPOS
+          ? await generateGiftPOSTicket(order, labels: _giftInvoiceLabels)
+          : await generateGiftOrderTicket(order, labels: _giftInvoiceLabels);
+      try {
+        final printers = await Printing.listPrinters();
+        final defaultPrinter = printers.firstWhere(
+          (printer) => printer.isDefault,
+          orElse: () => printers.isNotEmpty ? printers.first : throw Exception(AppLocale.noPrintersAvailable.getString(context)),
+        );
+        await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
+      } catch (_) {
+        await Printing.sharePdf(bytes: pdfBytes, filename: 'Factura_Regalo_${order['DocumentNo']}.pdf');
+      }
+    } catch (_) {}
+  }
+
   @override
   void initState() {
     super.initState();
@@ -990,6 +1024,11 @@ class _OrderListPageState extends State<OrderListPage> {
       case 'printTicket':
         _printTicket(order);
         break;
+      case 'printGiftInvoice':
+        if (order['DocStatus'] == 'CO' && !_isReturnOrder(order)) {
+          _printGiftInvoice(order);
+        }
+        break;
       case 'arc':
         final bool? confirmArc = await _refundConfirmation(context);
         if (confirmArc == true) {
@@ -1022,11 +1061,16 @@ class _OrderListPageState extends State<OrderListPage> {
   }
 
   Widget _buildSubtypePill(Map<String, dynamic> order) {
-    final sub = order['doctypetarget']?['subtype']?['id'];
-    final bool isReturn = (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+    final bool isReturn = _isReturnOrder(order);
     final String? docName = order['doctypetarget']?['name'];
 
     return DocTypeChip(docTypeName: docName, isReturn: isReturn);
+  }
+
+  bool _isReturnOrder(Map<String, dynamic> order) {
+    final subtype = order['doctypetarget']?['subtype'];
+    final subtypeCode = subtype is Map ? subtype['id'] : subtype;
+    return subtypeCode == 'RM' || order['doctypetarget']?['id'] == POS.docTypeRefundID;
   }
 
   Widget _buildCreditMemoPill() {
@@ -1125,7 +1169,7 @@ class _OrderListPageState extends State<OrderListPage> {
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final bool isComplete = (order['DocStatus'] == 'CO');
-    final bool isReturn = (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+    final bool isReturn = _isReturnOrder(order);
     final double totalLines = double.tryParse(order['TotalLines']?.toString() ?? '0') ?? 0;
     final double grandTotal = double.tryParse(order['GrandTotal']?.toString() ?? '0') ?? 0;
     final double taxAmount = grandTotal - totalLines;
@@ -1201,6 +1245,17 @@ class _OrderListPageState extends State<OrderListPage> {
                           ],
                         ),
                       ),
+                      if (isComplete && !isReturn && !hasCreditNote)
+                        PopupMenuItem<String>(
+                          value: 'printGiftInvoice',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.card_giftcard, color: Colors.deepOrange),
+                              const SizedBox(width: 8),
+                              Text(AppLocale.giftInvoice.getString(context)),
+                            ],
+                          ),
+                        ),
                       PopupMenuItem<String>(
                         value: 'duplicate',
                         child: Row(

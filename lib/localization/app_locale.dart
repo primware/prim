@@ -131,6 +131,13 @@ class AppLocale {
   static const String statusWaitingCompletion = 'statusWaitingCompletion';
   static const String statusApproved = 'statusApproved';
   static const String statusRejected = 'statusRejected';
+  static const String giftInvoice = 'giftInvoice';
+  static const String orderNumber = 'orderNumber';
+  static const String dateLabel = 'dateLabel';
+  static const String servedBy = 'servedBy';
+  static const String identification = 'identification';
+  static const String address = 'address';
+  static const String phoneLabel = 'phoneLabel';
 
   static const String searchOrder = 'searchOrder';
   static const String errorNoOrders = 'errorNoOrders';
@@ -398,6 +405,13 @@ class AppLocale {
     statusWaitingCompletion: 'Waiting for completion',
     statusApproved: 'Approved',
     statusRejected: 'Rejected',
+    giftInvoice: 'Gift receipt',
+    orderNumber: 'Order no.',
+    dateLabel: 'Date',
+    servedBy: 'Served by',
+    identification: 'Identification',
+    address: 'Address',
+    phoneLabel: 'Phone',
     invoicePayment: 'Invoice Payment',
     customerInvoices: 'Customer invoices',
     invoice: 'Invoice',
@@ -766,6 +780,13 @@ class AppLocale {
     statusWaitingCompletion: 'Esperando completar',
     statusApproved: 'Aprobado',
     statusRejected: 'Rechazado',
+    giftInvoice: 'Factura de regalo',
+    orderNumber: 'Orden Nro.',
+    dateLabel: 'Fecha',
+    servedBy: 'Atendido por',
+    identification: 'Identificación',
+    address: 'Dirección',
+    phoneLabel: 'Teléfono',
     invoicePayment: 'Pago a Factura',
     customerInvoices: 'Facturas del cliente',
     invoice: 'Factura',

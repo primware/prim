@@ -17,6 +17,191 @@ bool _hasHeaderValue(dynamic value) {
   return text.isNotEmpty && text != '?';
 }
 
+class GiftInvoiceLabels {
+  const GiftInvoiceLabels({
+    required this.title,
+    required this.orderNumber,
+    required this.date,
+    required this.servedBy,
+    required this.identification,
+    required this.customer,
+    required this.address,
+    required this.phone,
+    required this.product,
+    required this.description,
+    required this.quantity,
+  });
+
+  final String title;
+  final String orderNumber;
+  final String date;
+  final String servedBy;
+  final String identification;
+  final String customer;
+  final String address;
+  final String phone;
+  final String product;
+  final String description;
+  final String quantity;
+}
+
+Future<Uint8List> generateGiftOrderTicket(
+  Map<String, dynamic> order, {
+  required GiftInvoiceLabels labels,
+}) => _generateGiftInvoice(order, labels: labels, isPOS: false);
+
+Future<Uint8List> generateGiftPOSTicket(
+  Map<String, dynamic> order, {
+  required GiftInvoiceLabels labels,
+}) => _generateGiftInvoice(order, labels: labels, isPOS: true);
+
+Future<Uint8List> _generateGiftInvoice(
+  Map<String, dynamic> order, {
+  required GiftInvoiceLabels labels,
+  required bool isPOS,
+}) async {
+  final pdf = pw.Document();
+  final lines = (order['C_OrderLine'] as List?) ?? const [];
+  String str(dynamic value) => value?.toString() ?? '';
+  final docNo = str(order['DocumentNo']);
+  final date = formatDateUI(str(order['DateOrdered']));
+  final servedBy = str(order['SalesRep_ID']?['name']);
+  final taxID = str(order['bpartner']?['taxID']);
+  final phone = str(order['bpartner']?['phone']);
+  final customerName = str(order['bpartner']?['name']);
+  final customerLocation = str(order['bpartner']?['location']);
+  final baseTextStyle = pw.TextStyle(fontSize: isPOS ? 8 : 10);
+
+  List<pw.Widget> merchantHeader() => [
+    if (POSPrinter.logo != null)
+      pw.Center(
+        child: pw.Image(
+          pw.MemoryImage(POSPrinter.logo!),
+          width: isPOS ? 60 : 100,
+          height: isPOS ? 60 : 100,
+          fit: pw.BoxFit.contain,
+        ),
+      ),
+    if (_hasHeaderValue(POSPrinter.headerName))
+      pw.Text(POSPrinter.headerName!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.headerAddress))
+      pw.Text(POSPrinter.headerAddress!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.headerTaxID))
+      pw.Text('RUC: ${POSPrinter.headerTaxID}', textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.headerDV))
+      pw.Text('DV: ${POSPrinter.headerDV}', textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.headerPhone))
+      pw.Text('${labels.phone}: ${POSPrinter.headerPhone}', textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.headerEmail))
+      pw.Text(POSPrinter.headerEmail!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.header1))
+      pw.Text(POSPrinter.header1!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.header2))
+      pw.Text(POSPrinter.header2!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.header3))
+      pw.Text(POSPrinter.header3!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.header4))
+      pw.Text(POSPrinter.header4!, textAlign: pw.TextAlign.center),
+  ];
+
+  List<pw.Widget> customerDetails() => [
+    pw.Text('${labels.orderNumber}: $docNo'),
+    pw.Text('${labels.date}: $date'),
+    if (servedBy.isNotEmpty) pw.Text('${labels.servedBy}: $servedBy'),
+    if (taxID.isNotEmpty) pw.Text('${labels.identification}: $taxID'),
+    if (customerName.isNotEmpty) pw.Text('${labels.customer}: $customerName'),
+    if (customerLocation.isNotEmpty) pw.Text('${labels.address}: $customerLocation'),
+    if (phone.isNotEmpty) pw.Text('${labels.phone}: $phone'),
+  ];
+
+  List<pw.Widget> footer() => [
+    if (_hasHeaderValue(POSPrinter.footer1))
+      pw.Text(POSPrinter.footer1!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.footer2))
+      pw.Text(POSPrinter.footer2!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.footer3))
+      pw.Text(POSPrinter.footer3!, textAlign: pw.TextAlign.center),
+    if (_hasHeaderValue(POSPrinter.footer4))
+      pw.Text(POSPrinter.footer4!, textAlign: pw.TextAlign.center),
+  ];
+
+  final content = <pw.Widget>[
+    ...merchantHeader(),
+    pw.SizedBox(height: 12),
+    pw.Text(
+      labels.title,
+      textAlign: pw.TextAlign.center,
+      style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: isPOS ? 12 : 16),
+    ),
+    pw.SizedBox(height: 14),
+    ...customerDetails(),
+    pw.SizedBox(height: 12),
+    if (lines.isNotEmpty)
+      pw.Table.fromTextArray(
+        headers: [labels.product, labels.description, labels.quantity],
+        data: lines.map((rawLine) {
+          final line = rawLine as Map;
+          final name = orderLineDisplayName(line);
+          final description = line['Description']?.toString() ?? '';
+          final rawQuantity = line['QtyOrdered'] ?? line['QtyEntered'] ?? 0;
+          final quantity = rawQuantity is num
+              ? rawQuantity.toDouble()
+              : double.tryParse(rawQuantity.toString()) ?? 0.0;
+          return [
+            name,
+            description == name ? '' : description,
+            quantity.toStringAsFixed(quantity % 1 == 0 ? 0 : 2),
+          ];
+        }).toList(),
+        headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: isPOS ? 8 : 11),
+        cellStyle: pw.TextStyle(fontSize: isPOS ? 7 : 10),
+        columnWidths: {
+          0: const pw.FlexColumnWidth(3),
+          1: const pw.FlexColumnWidth(3),
+          2: const pw.FlexColumnWidth(1),
+        },
+        cellAlignments: {
+          0: pw.Alignment.centerLeft,
+          1: pw.Alignment.centerLeft,
+          2: pw.Alignment.centerRight,
+        },
+      ),
+    pw.SizedBox(height: 14),
+    ...footer(),
+    if (isPOS) pw.SizedBox(height: 56),
+  ];
+
+  final theme = pw.ThemeData.withFont(
+    base: pw.Font.helvetica(),
+    bold: pw.Font.helveticaBold(),
+  ).copyWith(defaultTextStyle: baseTextStyle);
+
+  if (isPOS) {
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.roll80.copyWith(
+          marginTop: 8,
+          marginBottom: 8,
+          width: 75 * PdfPageFormat.mm,
+        ),
+        theme: theme,
+        build: (_) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: content,
+        ),
+      ),
+    );
+  } else {
+    pdf.addPage(
+      pw.MultiPage(
+        theme: theme,
+        build: (_) => content,
+      ),
+    );
+  }
+  return pdf.save();
+}
+
 Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   // Currency formatter
   final NumberFormat nf = NumberFormat.currency(locale: 'es_PA', symbol: 'B/.');
