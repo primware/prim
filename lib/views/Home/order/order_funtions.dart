@@ -587,6 +587,9 @@ Future<PagedResult<Map<String, dynamic>>> fetchOrdersPage({
   if (criteria.onlyMyMovements) {
     filters.add('SalesRep_ID eq ${UserData.id}');
   }
+  if (criteria.organizationId != null) {
+    filters.add('AD_Org_ID eq ${criteria.organizationId}');
+  }
   if (criteria.docStatus != null) {
     filters.add("DocStatus eq '${escapeODataText(criteria.docStatus!)}'");
   }

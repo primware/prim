@@ -458,10 +458,14 @@ Future<PagedResult<InvoicePaymentReceipt>> fetchInvoicePaymentReceiptsPage({
   var recordsSize = 0;
   var skipRecords = skip;
   {
+    final organizationFilter = criteria.organizationId == null
+        ? ''
+        : ' and AD_Org_ID eq ${criteria.organizationId}';
     final uri = Uri.parse(
       '${EndPoints.cAllocationHdr}?\$top=$top&\$skip=$skip'
       '&\$filter=DocStatus eq \'CO\' and IsManual eq true '
       'and C_DocType_ID eq $allocationDocTypeId'
+      '$organizationFilter'
       '&\$orderby=DateTrx desc'
       '&\$expand=C_AllocationLine',
     );
@@ -545,6 +549,14 @@ Future<PagedResult<InvoicePaymentReceipt>> fetchInvoicePaymentReceiptsPage({
       '&\$expand=C_Payment_ID,SalesRep_ID,C_POS_ID',
     );
     final traceResponse = await get(traceUri, headers: _headers());
+    if (traceResponse.statusCode == 404) {
+      return PagedResult(
+        records: const [],
+        rowCount: 0,
+        recordsSize: 0,
+        skipRecords: skip,
+      );
+    }
     if (traceResponse.statusCode != 200) {
       throw Exception(
         'No se pudieron cargar las trazas de pagos (${traceResponse.statusCode}).',

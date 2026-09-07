@@ -180,6 +180,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     UserData.phone = null;
     UserData.imageBytes = null;
     UserData.rolName = null;
+    UserData.organizations = [];
 
     // Limpiar datos POS
     POS.priceListID = null;

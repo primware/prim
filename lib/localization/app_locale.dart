@@ -91,6 +91,46 @@ class AppLocale {
   static const String noDataForFilter = 'noDataForFilter';
   static const String pressAgainToLogout = 'pressAgainToLogout';
   static const String myOrders = 'myOrders';
+  static const String advancedSearch = 'advancedSearch';
+  static const String customerOrIdentification = 'customerOrIdentification';
+  static const String orderReceiptInvoiceNumber = 'orderReceiptInvoiceNumber';
+  static const String documentStatus = 'documentStatus';
+  static const String allStatuses = 'allStatuses';
+  static const String allOrganizations = 'allOrganizations';
+  static const String onlyMyMovements = 'onlyMyMovements';
+  static const String onlyMyMovementsSubtitle = 'onlyMyMovementsSubtitle';
+  static const String pinnedFilters = 'pinnedFilters';
+  static const String pinnedFiltersInfo = 'pinnedFiltersInfo';
+  static const String updatePinnedFilters = 'updatePinnedFilters';
+  static const String pinAndApply = 'pinAndApply';
+  static const String reset = 'reset';
+  static const String clear = 'clear';
+  static const String search = 'search';
+  static const String filterThisPage = 'filterThisPage';
+  static const String customerOrderReceipt = 'customerOrderReceipt';
+  static const String documentTypeFilter = 'documentTypeFilter';
+  static const String all = 'all';
+  static const String historyUpdateError = 'historyUpdateError';
+  static const String showingFilteredHistory = 'showingFilteredHistory';
+  static const String showingHistory = 'showingHistory';
+  static const String previous = 'previous';
+  static const String next = 'next';
+  static const String pageOf = 'pageOf';
+  static const String receiptNumber = 'receiptNumber';
+  static const String amountLabel = 'amountLabel';
+  static const String invoicePayments = 'invoicePayments';
+  static const String noPrintersAvailable = 'noPrintersAvailable';
+  static const String genericDocument = 'genericDocument';
+  static const String noMatchesThisPage = 'noMatchesThisPage';
+  static const String statusDraft = 'statusDraft';
+  static const String statusCompleted = 'statusCompleted';
+  static const String statusClosed = 'statusClosed';
+  static const String statusVoided = 'statusVoided';
+  static const String statusInProgress = 'statusInProgress';
+  static const String statusPrepared = 'statusPrepared';
+  static const String statusWaitingCompletion = 'statusWaitingCompletion';
+  static const String statusApproved = 'statusApproved';
+  static const String statusRejected = 'statusRejected';
 
   static const String searchOrder = 'searchOrder';
   static const String errorNoOrders = 'errorNoOrders';
@@ -318,6 +358,46 @@ class AppLocale {
   static const String salesRepLoadError = 'salesRepLoadError';
 
   static const Map<String, dynamic> en = {
+    advancedSearch: 'Advanced search',
+    customerOrIdentification: 'Customer or identification',
+    orderReceiptInvoiceNumber: 'Order, receipt, or invoice number',
+    documentStatus: 'Document status',
+    allStatuses: 'All statuses',
+    allOrganizations: 'All organizations',
+    onlyMyMovements: 'Only my activity',
+    onlyMyMovementsSubtitle: 'Orders and payments registered under my name',
+    pinnedFilters: 'Pinned filters',
+    pinnedFiltersInfo: 'Pinned filters remain applied when you leave and return to My Orders. They are stored only on this device.',
+    updatePinnedFilters: 'Update pinned filters',
+    pinAndApply: 'Pin and apply',
+    reset: 'Reset',
+    clear: 'Clear',
+    search: 'Search',
+    filterThisPage: 'Filter this page',
+    customerOrderReceipt: 'Customer, order, or receipt',
+    documentTypeFilter: 'Document type:',
+    all: 'All',
+    historyUpdateError: 'The history could not be updated. {error}',
+    showingFilteredHistory: 'Showing {visible} of {loaded} loaded on this page · {total} search results',
+    showingHistory: 'Showing {start}–{end} of {total} activities',
+    previous: 'Previous',
+    next: 'Next',
+    pageOf: 'Page {page} of {total}',
+    receiptNumber: 'Receipt #{number}',
+    amountLabel: 'Amount:',
+    invoicePayments: 'Invoice payments',
+    noPrintersAvailable: 'No printers are available',
+    genericDocument: 'Document',
+    noMatchesThisPage: 'No matches on this page.',
+    statusDraft: 'Draft',
+    statusCompleted: 'Completed',
+    statusClosed: 'Closed',
+    statusVoided: 'Voided',
+    statusInProgress: 'In progress',
+    statusPrepared: 'Prepared',
+    statusWaitingCompletion: 'Waiting for completion',
+    statusApproved: 'Approved',
+    statusRejected: 'Rejected',
     invoicePayment: 'Invoice Payment',
     customerInvoices: 'Customer invoices',
     invoice: 'Invoice',
@@ -646,6 +726,46 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    advancedSearch: 'Búsqueda avanzada',
+    customerOrIdentification: 'Cliente o identificación',
+    orderReceiptInvoiceNumber: 'N.º de orden, recibo o factura',
+    documentStatus: 'Estado del documento',
+    allStatuses: 'Todos los estados',
+    allOrganizations: 'Todas las organizaciones',
+    onlyMyMovements: 'Solo mis movimientos',
+    onlyMyMovementsSubtitle: 'Órdenes y pagos registrados a mi nombre',
+    pinnedFilters: 'Filtros fijos',
+    pinnedFiltersInfo: 'Los filtros fijados se mantendrán aunque salga y vuelva a entrar a Mis órdenes. Se guardan únicamente en este dispositivo.',
+    updatePinnedFilters: 'Actualizar filtros fijos',
+    pinAndApply: 'Fijar y aplicar',
+    reset: 'Restablecer',
+    clear: 'Limpiar',
+    search: 'Buscar',
+    filterThisPage: 'Filtrar esta página',
+    customerOrderReceipt: 'Cliente, orden o recibo',
+    documentTypeFilter: 'Tipo de documento:',
+    all: 'Todos',
+    historyUpdateError: 'No se pudo actualizar el historial. {error}',
+    showingFilteredHistory: 'Mostrando {visible} de {loaded} cargados en esta página · {total} resultados de búsqueda',
+    showingHistory: 'Mostrando {start}–{end} de {total} movimientos',
+    previous: 'Anterior',
+    next: 'Siguiente',
+    pageOf: 'Página {page} de {total}',
+    receiptNumber: 'Recibo #{number}',
+    amountLabel: 'Monto:',
+    invoicePayments: 'Pagos a facturas',
+    noPrintersAvailable: 'No hay impresoras disponibles',
+    genericDocument: 'Documento',
+    noMatchesThisPage: 'No hay coincidencias en esta página.',
+    statusDraft: 'Borrador',
+    statusCompleted: 'Completado',
+    statusClosed: 'Cerrado',
+    statusVoided: 'Anulado',
+    statusInProgress: 'En proceso',
+    statusPrepared: 'Preparado',
+    statusWaitingCompletion: 'Esperando completar',
+    statusApproved: 'Aprobado',
+    statusRejected: 'Rechazado',
     invoicePayment: 'Pago a Factura',
     customerInvoices: 'Facturas del cliente',
     invoice: 'Factura',

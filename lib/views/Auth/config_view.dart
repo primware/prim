@@ -79,6 +79,7 @@ class _ConfigPageState extends State<ConfigPage> {
       roles = [];
       selectedRoleId = null;
       organizations = [];
+      UserData.organizations = [];
       selectedOrganizationId = null;
       isLoading = true;
     });
@@ -125,6 +126,7 @@ class _ConfigPageState extends State<ConfigPage> {
     setState(() {
       selectedRoleId = roleId;
       organizations = [];
+      UserData.organizations = [];
       selectedOrganizationId = null;
       isLoading = true;
     });
@@ -134,6 +136,7 @@ class _ConfigPageState extends State<ConfigPage> {
       if (_cachedOrgs.containsKey(cacheKey)) {
         setState(() {
           organizations = _cachedOrgs[cacheKey]!;
+          UserData.organizations = List<Map<String, dynamic>>.from(organizations);
           if (organizations.length == 1) {
             selectedOrganizationId = organizations[0]['id'];
             _onOrganizationSelected(selectedOrganizationId);
@@ -147,6 +150,7 @@ class _ConfigPageState extends State<ConfigPage> {
           _cachedOrgs[cacheKey] = fetchedOrganizations;
           setState(() {
             organizations = fetchedOrganizations;
+            UserData.organizations = List<Map<String, dynamic>>.from(organizations);
 
             if (organizations.length == 1) {
               selectedOrganizationId = organizations[0]['id'];
