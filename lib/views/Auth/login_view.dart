@@ -17,7 +17,6 @@ import '../../shared/toast_message.dart';
 import '../../theme/colors.dart';
 import 'auth_funtions.dart';
 import 'config_view.dart';
-import 'dart:ui';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -31,8 +30,7 @@ TextEditingController claveController = TextEditingController();
 
 class _LoginPageState extends State<LoginPage> {
   bool isLoading = false, isConfigLoaded = false;
-  final TextEditingController baseURLController = TextEditingController(),
-      cPosController = TextEditingController();
+  final TextEditingController baseURLController = TextEditingController(), cPosController = TextEditingController();
   bool rememberUser = false;
   String version = '';
 
@@ -109,18 +107,11 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            AppLocale.server.getString(context),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          title: Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.bodyLarge),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextfieldTheme(
-                texto: 'URL',
-                controlador: baseURLController,
-                pista: 'Ej: https://test.idempiere.org',
-              ),
+              TextfieldTheme(texto: 'URL', controlador: baseURLController, pista: 'Ej: https://test.idempiere.org'),
               const SizedBox(height: CustomSpacer.medium),
               TextfieldTheme(
                 texto: 'POS ID',
@@ -163,14 +154,8 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            AppLocale.server.getString(context),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          content: Text(
-            AppLocale.serverSaved.getString(context),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          title: Text(AppLocale.server.getString(context), style: Theme.of(context).textTheme.titleMedium),
+          content: Text(AppLocale.serverSaved.getString(context), style: Theme.of(context).textTheme.bodyLarge),
           actions: [
             IconButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -204,18 +189,9 @@ class _LoginPageState extends State<LoginPage> {
       }
       _saveConfig();
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ConfigPage(clients: authData['clients']),
-        ),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (context) => ConfigPage(clients: authData['clients'])));
     } else {
-      ToastMessage.show(
-        context: context,
-        message: AppLocale.invalidCredentials.getString(context),
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: AppLocale.invalidCredentials.getString(context), type: ToastType.failure);
     }
 
     setState(() {
@@ -228,36 +204,23 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok && mounted) {
-        ToastMessage.show(
-          context: context,
-          message: 'No se pudo abrir el navegador.',
-          type: ToastType.failure,
-        );
+        ToastMessage.show(context: context, message: 'No se pudo abrir el navegador.', type: ToastType.failure);
       }
     } catch (e) {
       if (mounted) {
-        ToastMessage.show(
-          context: context,
-          message: 'No se pudo abrir el navegador.',
-          type: ToastType.failure,
-        );
+        ToastMessage.show(context: context, message: 'No se pudo abrir el navegador.', type: ToastType.failure);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 750
-        ? true
-        : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
 
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showBaseURLDialog,
-          child: Icon(Icons.settings),
-        ),
+        floatingActionButton: FloatingActionButton(onPressed: _showBaseURLDialog, child: Icon(Icons.settings)),
         body: Center(
           child: SingleChildScrollView(
             child: Column(
@@ -270,11 +233,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Center(child: Logo(width: isMobile ? 200 : 320)),
-                      SizedBox(
-                        height:
-                            CustomSpacer.medium +
-                            (!isMobile ? CustomSpacer.xlarge : 10),
-                      ),
+                      SizedBox(height: CustomSpacer.medium + (!isMobile ? CustomSpacer.xlarge : 10)),
                       TextfieldTheme(
                         icono: Icons.mail_outline,
                         texto: AppLocale.user.getString(context),
@@ -288,23 +247,16 @@ class _LoginPageState extends State<LoginPage> {
                         obscure: true,
                         showSubIcon: true,
                         controlador: claveController,
-                        onSubmitted: (_) => _funcionLogin(
-                          usuarioController.text.trim(),
-                          claveController.text.trim(),
-                        ),
+                        onSubmitted: (_) => _funcionLogin(usuarioController.text.trim(), claveController.text.trim()),
                       ),
                       const SizedBox(height: CustomSpacer.medium),
                       SearchableDropdown<String>(
-                        value: FlutterLocalization
-                            .instance
-                            .currentLocale
-                            ?.languageCode,
+                        value: FlutterLocalization.instance.currentLocale?.languageCode,
                         onChanged: (String? lang) async {
                           if (lang != null) {
                             FlutterLocalization.instance.translate(lang);
                             if (rememberUser) {
-                              SharedPreferences prefs =
-                                  await SharedPreferences.getInstance();
+                              SharedPreferences prefs = await SharedPreferences.getInstance();
                               await prefs.setString('languageCode', lang);
                             }
                           }
@@ -319,20 +271,13 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: CustomSpacer.small),
                       // 👇 Tarjeta Premium para "Recuérdame"
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark
                               ? Colors.black.withOpacity(0.2)
                               : Colors.white.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Theme.of(
-                              context,
-                            ).dividerColor.withOpacity(0.1),
-                          ),
+                          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -342,23 +287,16 @@ class _LoginPageState extends State<LoginPage> {
                                 Icon(
                                   Icons.verified_user_outlined,
                                   size: 22,
-                                  color: rememberUser
-                                      ? Theme.of(context).primaryColor
-                                      : Colors.grey.shade600,
+                                  color: rememberUser ? Theme.of(context).primaryColor : Colors.grey.shade600,
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
                                   AppLocale.rememberMe.getString(context),
                                   style: TextStyle(
                                     fontSize: 15,
-                                    fontWeight: rememberUser
-                                        ? FontWeight.bold
-                                        : FontWeight.w500,
+                                    fontWeight: rememberUser ? FontWeight.bold : FontWeight.w500,
                                     color: rememberUser
-                                        ? (Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? Colors.white
-                                              : Colors.black87)
+                                        ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)
                                         : Colors.grey.shade600,
                                   ),
                                 ),
@@ -383,10 +321,7 @@ class _LoginPageState extends State<LoginPage> {
                                 texto: AppLocale.login.getString(context),
                                 fullWidth: true,
                                 onPressed: () {
-                                  _funcionLogin(
-                                    usuarioController.text.trim(),
-                                    claveController.text.trim(),
-                                  );
+                                  _funcionLogin(usuarioController.text.trim(), claveController.text.trim());
                                 },
                               ),
                       ),
@@ -396,22 +331,15 @@ class _LoginPageState extends State<LoginPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                AppLocale.noAccount.getString(context),
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
+                              Text(AppLocale.noAccount.getString(context), style: Theme.of(context).textTheme.bodyLarge),
                               const SizedBox(height: CustomSpacer.small),
                               InkWell(
-                                onTap: () => _openExternal(
-                                  'https://primware.net/validacion-app/',
-                                ),
+                                onTap: () => _openExternal('https://primware.net/validacion-app/'),
                                 child: Text(
                                   AppLocale.register.getString(context),
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline,
-                                      ),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
                                 ),
                               ),
                             ],
@@ -422,9 +350,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 if (version != 'No es web') ...[
-                  const SizedBox(
-                    height: CustomSpacer.xlarge + CustomSpacer.medium,
-                  ),
+                  const SizedBox(height: CustomSpacer.xlarge + CustomSpacer.medium),
                   Text(version, style: Theme.of(context).textTheme.labelMedium),
                 ],
               ],
