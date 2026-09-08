@@ -17,12 +17,35 @@ class AppLocale {
   static const String salesYTDBySalesRepDescription = 'salesYTDBySalesRep';
   static const String products = 'products';
   static const String searchProducts = 'searchProducts';
+  static const String filterProduct = 'filterProduct';
   static const String productCode = 'productCode';
   static const String productName = 'productName';
   static const String myProfile = 'myProfile';
   static const String productPrice = 'productPrice';
   static const String productStock = 'productStock';
   static const String noProductsFound = 'noProductsFound';
+  static const String selectProducts = 'selectProducts';
+  static const String selectedProductsCount = 'selectedProductsCount';
+  static const String addToOrder = 'addToOrder';
+  static const String favorites = 'favorites';
+  static const String noCategories = 'noCategories';
+  static const String loadMoreProducts = 'loadMoreProducts';
+  static const String noMoreProducts = 'noMoreProducts';
+  static const String refineProductSearch = 'refineProductSearch';
+  static const String syncProducts = 'syncProducts';
+  static const String syncingProducts = 'syncingProducts';
+  static const String preparingSync = 'preparingSync';
+  static const String productSyncError = 'productSyncError';
+  static const String stop = 'stop';
+  static const String stopping = 'stopping';
+  static const String page = 'page';
+  static const String cachedStock = 'cachedStock';
+  static const String updatingStock = 'updatingStock';
+  static const String serverPriceChanged = 'serverPriceChanged';
+  static const String updatePrice = 'updatePrice';
+  static const String priceValidationRequired = 'priceValidationRequired';
+  static const String priceValidationFailed = 'priceValidationFailed';
+  static const String retry = 'retry';
   static const String user = 'user';
   static const String pass = 'pass';
   static const String rememberMe = 'remenberLogin';
@@ -132,6 +155,7 @@ class AppLocale {
   static const String statusApproved = 'statusApproved';
   static const String statusRejected = 'statusRejected';
   static const String giftInvoice = 'giftInvoice';
+  static const String giftQuantityShort = 'giftQuantityShort';
   static const String orderNumber = 'orderNumber';
   static const String dateLabel = 'dateLabel';
   static const String servedBy = 'servedBy';
@@ -279,6 +303,13 @@ class AppLocale {
   static const String userParameters = 'userParameters';
   static const String organizationParameters = 'organizationParameters';
   static const String printingParameters = 'printingParameters';
+  static const String cacheParameters = 'cacheParameters';
+  static const String productCacheSize = 'productCacheSize';
+  static const String calculating = 'calculating';
+  static const String clearProductCache = 'clearProductCache';
+  static const String clearProductCacheTitle = 'clearProductCacheTitle';
+  static const String clearProductCacheMessage = 'clearProductCacheMessage';
+  static const String productCacheCleared = 'productCacheCleared';
   static const String systemLogs = 'systemLogs';
   static const String notApplicable = 'notApplicable';
   static const String enabled = 'enabled';
@@ -472,6 +503,7 @@ class AppLocale {
     statusApproved: 'Approved',
     statusRejected: 'Rejected',
     giftInvoice: 'Gift receipt',
+    giftQuantityShort: 'Qty',
     orderNumber: 'Order no.',
     dateLabel: 'Date',
     servedBy: 'Served by',
@@ -564,6 +596,14 @@ class AppLocale {
     userParameters: 'User',
     organizationParameters: 'Organization',
     printingParameters: 'Printing',
+    cacheParameters: 'Cache',
+    productCacheSize: 'Product cache (product_cache_v1)',
+    calculating: 'Calculating…',
+    clearProductCache: 'Clear product cache',
+    clearProductCacheTitle: 'Clear product cache?',
+    clearProductCacheMessage:
+        'All locally synchronized product data will be deleted from this device. This action cannot be undone.',
+    productCacheCleared: 'The product cache was cleared.',
     systemLogs: 'System logs',
     notApplicable: 'Not applicable',
     enabled: 'Enabled',
@@ -635,11 +675,37 @@ class AppLocale {
     dec: 'Dec',
     products: 'Products',
     searchProducts: 'Search products',
+    filterProduct: 'Filter product',
     productCode: 'Code',
     productName: 'Name',
     productPrice: 'Price',
     productStock: 'Stock',
     noProductsFound: 'No products found.',
+    selectProducts: 'Select products',
+    selectedProductsCount: '{count} selected',
+    addToOrder: 'Add to order',
+    favorites: 'Favorites',
+    noCategories: 'No categories',
+    loadMoreProducts: 'Load more products',
+    noMoreProducts: 'No more products',
+    refineProductSearch:
+        'There are more results. Refine the search or category filters.',
+    syncProducts: 'Sync products',
+    syncingProducts: 'Syncing products',
+    preparingSync: 'Preparing synchronization…',
+    productSyncError: 'Some products could not be synchronized.',
+    stop: 'Stop',
+    stopping: 'Stopping…',
+    page: 'Page',
+    cachedStock: 'Last known stock',
+    updatingStock: 'Updating stock…',
+    serverPriceChanged: 'The price changed on the server',
+    updatePrice: 'Update price',
+    priceValidationRequired:
+        'Update changed prices before processing the order.',
+    priceValidationFailed:
+        'Product prices could not be validated. Please retry.',
+    retry: 'Retry',
     retryFE: 'Retry Electronic Bill',
     login: 'Login',
     user: 'User',
@@ -900,6 +966,7 @@ class AppLocale {
     statusApproved: 'Aprobado',
     statusRejected: 'Rechazado',
     giftInvoice: 'Factura de regalo',
+    giftQuantityShort: 'Cant',
     orderNumber: 'Orden Nro.',
     dateLabel: 'Fecha',
     servedBy: 'Atendido por',
@@ -996,6 +1063,14 @@ class AppLocale {
     userParameters: 'Usuario',
     organizationParameters: 'Organización',
     printingParameters: 'Impresión',
+    cacheParameters: 'Caché',
+    productCacheSize: 'Caché de productos (product_cache_v1)',
+    calculating: 'Calculando…',
+    clearProductCache: 'Eliminar caché de productos',
+    clearProductCacheTitle: '¿Eliminar el caché de productos?',
+    clearProductCacheMessage:
+        'Se eliminarán de este dispositivo todos los productos sincronizados localmente. Esta acción no se puede deshacer.',
+    productCacheCleared: 'El caché de productos fue eliminado.',
     systemLogs: 'Logs del sistema',
     notApplicable: 'No aplica',
     enabled: 'Habilitado',
@@ -1055,6 +1130,7 @@ class AppLocale {
     edit: 'Editar',
     products: 'Productos',
     searchProducts: 'Buscar productos',
+    filterProduct: 'Filtrar producto',
     productCode: 'Código',
     productName: 'Nombre',
     salesYTDBySalesRepDescription:
@@ -1062,6 +1138,31 @@ class AppLocale {
     productPrice: 'Precio',
     productStock: 'Stock',
     noProductsFound: 'No se encontraron productos.',
+    selectProducts: 'Selección de productos',
+    selectedProductsCount: '{count} seleccionados',
+    addToOrder: 'Añadir a la orden',
+    favorites: 'Favoritos',
+    noCategories: 'No hay categorías',
+    loadMoreProducts: 'Cargar más productos',
+    noMoreProducts: 'No hay más productos',
+    refineProductSearch:
+        'Hay más resultados. Refine la búsqueda o las categorías.',
+    syncProducts: 'Sincronizar productos',
+    syncingProducts: 'Sincronizando productos',
+    preparingSync: 'Preparando sincronización…',
+    productSyncError: 'No se pudieron sincronizar algunos productos.',
+    stop: 'Detener',
+    stopping: 'Deteniendo…',
+    page: 'Página',
+    cachedStock: 'Última existencia conocida',
+    updatingStock: 'Actualizando existencia…',
+    serverPriceChanged: 'El precio cambió en el servidor',
+    updatePrice: 'Actualizar precio',
+    priceValidationRequired:
+        'Actualice los precios modificados antes de procesar la orden.',
+    priceValidationFailed:
+        'No se pudieron validar los precios de los productos. Intente nuevamente.',
+    retry: 'Reintentar',
     login: 'Iniciar Sesión',
     user: 'Usuario',
     pass: 'Contraseña',

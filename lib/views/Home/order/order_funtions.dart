@@ -9,6 +9,7 @@ import 'dart:convert';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 import 'history_search_criteria.dart';
+import '../product/product_repository.dart';
 
 int? resolveEffectivePriceListID({required bool isPOS, required int? posPriceListID, int? bPartnerPriceListID}) {
   if (isPOS) return posPriceListID;
@@ -100,101 +101,33 @@ Future<List<Map<String, dynamic>>> fetchProductInPriceList({
   int? priceListID,
 }) async {
   try {
-    final effectivePriceListID = resolveEffectivePriceListID(
-      isPOS: POS.isPOS,
-      posPriceListID: POS.priceListID,
-      bPartnerPriceListID: priceListID,
+    final page = await ProductRepository.instance.getPage(
+      searchTerm: searchTerm ?? '',
+      categoryIDs: categoryID ?? const [],
+      partnerPriceListID: priceListID,
     );
-    if (effectivePriceListID == null) {
-      return [];
-    }
-
-    // En POS la lista y su versión pertenecen siempre a la terminal.
-    // Fuera de POS, la lista del tercero tiene precedencia sobre la estándar.
-    int? effectivePriceListVersionID;
-    if (POS.isPOS || effectivePriceListID == POS.priceListID) {
-      effectivePriceListVersionID = POS.priceListVersionID;
-    } else {
-      effectivePriceListVersionID = await getMPriceListVersion(effectivePriceListID);
-    }
-    if (effectivePriceListVersionID == null) {
-      return [];
-    }
-
-    String categoryFilter = '';
-    if (categoryID != null && categoryID.isNotEmpty) {
-      categoryFilter = ' and (${categoryID.map((id) => 'M_Product_Category_ID eq $id').join(' or ')})';
-    }
-    final filterQuery =
-        'IsSold eq true'
-        '${searchTerm!.isNotEmpty ? ' and (contains(tolower(Name), \'${searchTerm.toLowerCase()}\') or contains(tolower(SKU), \'${searchTerm.toLowerCase()}\') or contains(tolower(Value), \'${searchTerm.toLowerCase()}\'))' : ''}'
-        '$categoryFilter';
-    final url =
-        '${EndPoints.mProduct}?\$filter=$filterQuery&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID&\$expand=M_ProductPrice(\$select=PriceStd,PriceList,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq $effectivePriceListVersionID)${POS.isPOS ? ',M_Storage(\$select=QtyOnHand,QtyReserved,M_Locator_ID;\$expand=M_Locator_ID(\$select=M_Warehouse_ID))' : ''}';
-    final response = await get(Uri.parse(url), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
-
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-      final records = jsonResponse['records'] as List;
-
-      List<Map<String, dynamic>> productList = [];
-
-      for (var record in records) {
-        final taxCategoryID = record['C_TaxCategory_ID']?['id'];
-        if (taxCategoryID == null || record['M_ProductPrice'] == null) continue;
-
-        Map<String, dynamic>? assignedTax;
-
-        if (POS.principalTaxs.containsKey(taxCategoryID)) {
-          assignedTax = POS.principalTaxs[taxCategoryID];
-        }
-
-        double? qtyAvailable;
-        if (POS.isPOS && record['M_Storage'] != null) {
-          double sum = 0;
-          final storages = record['M_Storage'] as List;
-          for (final storage in storages) {
-            final locator = storage['M_Locator_ID'];
-            final wh = locator != null ? locator['M_Warehouse_ID'] : null;
-            final whId = wh != null ? wh['id'] : null;
-            if (whId != null && POS.warehouseID != null && whId == POS.warehouseID) {
-              final onHand = (storage['QtyOnHand'] ?? 0).toDouble();
-
-              sum += onHand;
-            }
-          }
-          qtyAvailable = sum;
-        } else {
-          qtyAvailable = null;
-        }
-
-        productList.add({
-          'id': record['id'],
-          'name': record['Name'],
-          'value': record['Value'],
-          'sku': record['SKU'],
-          'upc': record['UPC'],
-          'category': record['M_Product_Category_ID'] != null ? record['M_Product_Category_ID']['id'] : null,
-          'price': record['M_ProductPrice'] != null && record['M_ProductPrice'].isNotEmpty ? record['M_ProductPrice'][0]['PriceStd'] : null,
-          'priceList': record['M_ProductPrice'] != null && record['M_ProductPrice'].isNotEmpty
-              ? record['M_ProductPrice'][0]['PriceList']
-              : null,
-          'C_TaxCategory_ID': taxCategoryID,
-          'tax': assignedTax,
-          'ProductType': record['ProductType']['id'],
-          'QtyAvailable': qtyAvailable,
-        });
-      }
-
-      return productList;
-    } else {
-      throw Exception('Error al cargar los productos: ${response.statusCode}');
-    }
+    return page.records;
   } catch (e) {
     CurrentLogMessage.add('Excepción al obtener productos: $e', level: 'ERROR', tag: 'fetchProductInPriceList');
     return [];
   }
 }
+
+Future<ProductPage> fetchProductPage({
+  int pageIndex = 0,
+  List<int> categoryID = const [],
+  String searchTerm = '',
+  int? priceListID,
+  bool preferCache = true,
+  bool waitForStock = false,
+}) => ProductRepository.instance.getPage(
+  pageIndex: pageIndex,
+  searchTerm: searchTerm,
+  categoryIDs: categoryID,
+  partnerPriceListID: priceListID,
+  preferCache: preferCache,
+  waitForStock: waitForStock,
+);
 
 Future<List<Map<String, dynamic>>> fetchTax() async {
   try {

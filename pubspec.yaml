@@ -12,6 +12,7 @@ dependencies:
   camera: ^0.11.1
   google_fonts: ^8.0.2
   shared_preferences: ^2.5.3
+  hive_ce_flutter: ^2.3.4
   top_snackbar_flutter: ^3.2.0
   intl: ^0.20.2
   dropdown_search: ^6.0.2

@@ -19,6 +19,7 @@ import '../../API/user.api.dart';
 import 'login_view.dart';
 import 'loading_dialog.dart';
 import '../Home/order/product_selection_popup.dart';
+import '../Home/product/product_sync_controller.dart';
 import 'dart:ui';
 import '../../shared/glass_switch.dart';
 
@@ -93,9 +94,7 @@ class _ConfigPageState extends State<ConfigPage> {
             selectedRoleId = roles[0]['id'];
             _onRoleSelected(selectedRoleId);
           }
-          final selectClient = clients.firstWhere(
-            (client) => client['id'] == clientId,
-          );
+          final selectClient = clients.firstWhere((client) => client['id'] == clientId);
           UserData.clientName = selectClient['name'];
         });
       } else {
@@ -111,9 +110,7 @@ class _ConfigPageState extends State<ConfigPage> {
               _onRoleSelected(selectedRoleId);
             }
 
-            final selectClient = clients.firstWhere(
-              (client) => client['id'] == clientId,
-            );
+            final selectClient = clients.firstWhere((client) => client['id'] == clientId);
             UserData.clientName = selectClient['name'];
           });
         }
@@ -140,29 +137,21 @@ class _ConfigPageState extends State<ConfigPage> {
       if (_cachedOrgs.containsKey(cacheKey)) {
         setState(() {
           organizations = _cachedOrgs[cacheKey]!;
-          UserData.organizations = List<Map<String, dynamic>>.from(
-            organizations,
-          );
+          UserData.organizations = List<Map<String, dynamic>>.from(organizations);
           if (organizations.length == 1) {
             selectedOrganizationId = organizations[0]['id'];
             _onOrganizationSelected(selectedOrganizationId);
           }
         });
       } else {
-        final fetchedOrganizations = await getOrganizations(
-          selectedClientId!,
-          roleId,
-          context,
-        );
+        final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);
         if (!mounted) return;
         if (fetchedOrganizations != null) {
           fetchedOrganizations.removeWhere((org) => org['id'] == 0);
           _cachedOrgs[cacheKey] = fetchedOrganizations;
           setState(() {
             organizations = fetchedOrganizations;
-            UserData.organizations = List<Map<String, dynamic>>.from(
-              organizations,
-            );
+            UserData.organizations = List<Map<String, dynamic>>.from(organizations);
 
             if (organizations.length == 1) {
               selectedOrganizationId = organizations[0]['id'];
@@ -213,9 +202,7 @@ class _ConfigPageState extends State<ConfigPage> {
   }
 
   Future<void> _onContinue() async {
-    if (selectedClientId != null &&
-        selectedRoleId != null &&
-        selectedOrganizationId != null) {
+    if (selectedClientId != null && selectedRoleId != null && selectedOrganizationId != null) {
       Token.client = selectedClientId!;
       Token.rol = selectedRoleId;
       Token.organitation = selectedOrganizationId!;
@@ -253,6 +240,7 @@ class _ConfigPageState extends State<ConfigPage> {
       POS.docTypesComplete.clear();
       clearDashboardRawCache();
       ProductSelectionPopup.clearGlobalCache();
+      ProductSyncController.instance.cancelForSessionChange();
 
       bool login = await usuarioAuth(context: context, forceNewToken: true);
 
@@ -266,10 +254,7 @@ class _ConfigPageState extends State<ConfigPage> {
           String usuario = usuarioController.text.trim();
           await prefs.setInt('clientId_$usuario', selectedClientId!);
           await prefs.setInt('roleId_$usuario', selectedRoleId!);
-          await prefs.setInt(
-            'organizationId_$usuario',
-            selectedOrganizationId!,
-          );
+          await prefs.setInt('organizationId_$usuario', selectedOrganizationId!);
           await prefs.setString('roleName_$usuario', UserData.rolName!);
         }
 
@@ -279,11 +264,7 @@ class _ConfigPageState extends State<ConfigPage> {
           context,
           MaterialPageRoute(
             builder: (context) => POS.isPOS
-                ? OrderNewPage(
-                    doctypeID: POS.docTypeID,
-                    orderName: POS.docTypeName,
-                    isRefund: POS.docSubType == 'RM',
-                  )
+                ? OrderNewPage(doctypeID: POS.docTypeID, orderName: POS.docTypeName, isRefund: POS.docSubType == 'RM')
                 : DashboardPage(),
           ),
           (Route<dynamic> route) => false,
@@ -298,19 +279,13 @@ class _ConfigPageState extends State<ConfigPage> {
         });
       }
     } else {
-      ToastMessage.show(
-        context: context,
-        message: AppLocale.selectCompanyRoleOrganization.getString(context),
-        type: ToastType.failure,
-      );
+      ToastMessage.show(context: context, message: AppLocale.selectCompanyRoleOrganization.getString(context), type: ToastType.failure);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 750
-        ? true
-        : false;
+    final bool isMobile = MediaQuery.of(context).size.width < 750 ? true : false;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -322,12 +297,7 @@ class _ConfigPageState extends State<ConfigPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Center(
-                  child: Text(
-                    AppLocale.selectRole.getString(context),
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                ),
+                Center(child: Text(AppLocale.selectRole.getString(context), style: Theme.of(context).textTheme.headlineSmall)),
                 const SizedBox(height: CustomSpacer.medium),
                 SearchableDropdown<int>(
                   value: selectedClientId,
@@ -355,18 +325,11 @@ class _ConfigPageState extends State<ConfigPage> {
                 const SizedBox(height: CustomSpacer.medium),
                 const SizedBox(height: CustomSpacer.medium),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.black.withOpacity(0.2)
-                        : Colors.white.withOpacity(0.3),
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withOpacity(0.2) : Colors.white.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
-                    ),
+                    border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -376,23 +339,16 @@ class _ConfigPageState extends State<ConfigPage> {
                           Icon(
                             Icons.save_as_outlined,
                             size: 24,
-                            color: rememberConfig
-                                ? Theme.of(context).primaryColor
-                                : Colors.grey.shade600,
+                            color: rememberConfig ? Theme.of(context).primaryColor : Colors.grey.shade600,
                           ),
                           const SizedBox(width: 12),
                           Text(
                             AppLocale.rememberMe.getString(context),
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: rememberConfig
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
+                              fontWeight: rememberConfig ? FontWeight.bold : FontWeight.w500,
                               color: rememberConfig
-                                  ? (Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white
-                                        : Colors.black87)
+                                  ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87)
                                   : Colors.grey.shade600,
                             ),
                           ),
@@ -413,11 +369,7 @@ class _ConfigPageState extends State<ConfigPage> {
                 Container(
                   child: isLoading
                       ? ButtonLoading(fullWidth: true)
-                      : ButtonPrimary(
-                          texto: AppLocale.continueKey.getString(context),
-                          fullWidth: true,
-                          onPressed: _onContinue,
-                        ),
+                      : ButtonPrimary(texto: AppLocale.continueKey.getString(context), fullWidth: true, onPressed: _onContinue),
                 ),
                 const SizedBox(height: 12),
                 ButtonSecondary(

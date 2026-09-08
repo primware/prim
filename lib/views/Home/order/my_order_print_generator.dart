@@ -52,7 +52,6 @@ class GiftInvoiceLabels {
     required this.address,
     required this.phone,
     required this.product,
-    required this.description,
     required this.quantity,
   });
 
@@ -65,7 +64,6 @@ class GiftInvoiceLabels {
   final String address;
   final String phone;
   final String product;
-  final String description;
   final String quantity;
 }
 
@@ -135,19 +133,18 @@ Future<Uint8List> _generateGiftInvoice(Map<String, dynamic> order, {required Gif
     pw.SizedBox(height: 12),
     if (lines.isNotEmpty)
       pw.Table.fromTextArray(
-        headers: [labels.product, labels.description, labels.quantity],
+        headers: [labels.product, labels.quantity],
         data: lines.map((rawLine) {
           final line = rawLine as Map;
           final name = orderLineDisplayName(line);
-          final description = line['Description']?.toString() ?? '';
           final rawQuantity = line['QtyOrdered'] ?? line['QtyEntered'] ?? 0;
           final quantity = rawQuantity is num ? rawQuantity.toDouble() : double.tryParse(rawQuantity.toString()) ?? 0.0;
-          return [name, description == name ? '' : description, quantity.toStringAsFixed(quantity % 1 == 0 ? 0 : 2)];
+          return [name, quantity.toStringAsFixed(quantity % 1 == 0 ? 0 : 2)];
         }).toList(),
         headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: isPOS ? 8 : 11),
         cellStyle: pw.TextStyle(fontSize: isPOS ? 7 : 10),
-        columnWidths: {0: const pw.FlexColumnWidth(3), 1: const pw.FlexColumnWidth(3), 2: const pw.FlexColumnWidth(1)},
-        cellAlignments: {0: pw.Alignment.centerLeft, 1: pw.Alignment.centerLeft, 2: pw.Alignment.centerRight},
+        columnWidths: {0: const pw.FlexColumnWidth(5), 1: pw.FixedColumnWidth(isPOS ? 32 : 55)},
+        cellAlignments: {0: pw.Alignment.centerLeft, 1: pw.Alignment.centerRight},
       ),
     pw.SizedBox(height: 14),
     _documentNumberBarcode(docNo, isPOS: isPOS),
