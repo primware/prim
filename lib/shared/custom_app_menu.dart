@@ -237,12 +237,13 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 const SizedBox(height: CustomSpacer.medium),
                 _buildSectionTitle(context, 'OPERACIONES COMERCIALES'),
 
-                _buildMenuItem(
-                  context,
-                  icon: Icons.payments_outlined,
-                  title: AppLocale.invoicePayment.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicePaymentPage())),
-                ),
+                if (POS.isPOS)
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.payments_outlined,
+                    title: AppLocale.invoicePayment.getString(context),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicePaymentPage())),
+                  ),
 
                 // Pedidos / Ventas Dinámicos de iDempiere
                 if (POS.docTypesComplete.isEmpty)

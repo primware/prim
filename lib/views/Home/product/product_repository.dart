@@ -47,15 +47,21 @@ class ProductRepository extends ChangeNotifier {
 
   static const _boxName = 'product_cache_v1';
   static const _schemaVersion = 1;
+  static const _stockSemanticsMigrationKey =
+      'meta:rv_pos_product_search_stock_v1';
   Box<dynamic>? _box;
   final Map<String, Future<ProductPage>> _inFlight = {};
   final Map<String, ProductPage> _memoryPages = {};
+  final Map<String, int?> _priceListVersionCache = {};
+  String? _viewCapabilityScope;
+  bool? _viewAvailable;
   int _cacheGeneration = 0;
 
   Future<void> initialize() async {
     if (_box != null) return;
     await Hive.initFlutter();
     _box = await Hive.openBox<dynamic>(_boxName);
+    await _migrateCachedStock();
     await _cleanupExpired();
   }
 
@@ -86,7 +92,15 @@ class ProductRepository extends ChangeNotifier {
         partnerPriceListID == POS.priceListID) {
       return POS.priceListVersionID;
     }
-    return getMPriceListVersion(partnerPriceListID);
+    final key = '$_catalogScope|pl:$partnerPriceListID';
+    if (_priceListVersionCache.containsKey(key)) {
+      return _priceListVersionCache[key];
+    }
+    final versionID = await getMPriceListVersion(partnerPriceListID);
+    if (versionID != null) {
+      _priceListVersionCache[key] = versionID;
+    }
+    return versionID;
   }
 
   Future<String> syncContextKey(int? partnerPriceListID) async =>
@@ -211,21 +225,23 @@ class ProductRepository extends ChangeNotifier {
     final inFlightKey = '$key|generation:$cacheGeneration';
     return _inFlight.putIfAbsent(inFlightKey, () async {
       try {
-        var page = await _fetchRemotePage(
+        final remote = await _fetchPreferredRemotePage(
           versionID: versionID,
           pageIndex: pageIndex,
           searchTerm: searchTerm,
           categoryIDs: categoryIDs,
-          includeStock: false,
           warehouseID: warehouseID,
         );
+        var page = remote.page;
         _ensureContext(catalogScope, warehouseID, cacheGeneration);
-        page = _mergeLastKnownStock(
-          page,
-          versionID,
-          catalogScope: catalogScope,
-          warehouseID: warehouseID,
-        );
+        if (!remote.usesView) {
+          page = _mergeLastKnownStock(
+            page,
+            versionID,
+            catalogScope: catalogScope,
+            warehouseID: warehouseID,
+          );
+        }
         _memoryPages[key] = page;
         await _writePage(
           key,
@@ -236,7 +252,7 @@ class ProductRepository extends ChangeNotifier {
           warehouseID: warehouseID,
         );
         notifyListeners();
-        if (includeStock && POS.isPOS) {
+        if (!remote.usesView && includeStock && POS.isPOS) {
           final stockFuture = _refreshPageStock(
             key: key,
             versionID: versionID,
@@ -272,7 +288,7 @@ class ProductRepository extends ChangeNotifier {
     required int warehouseID,
     required int cacheGeneration,
   }) async {
-    final page = await _fetchRemotePage(
+    final page = await _fetchLegacyRemotePage(
       versionID: versionID,
       pageIndex: pageIndex,
       searchTerm: searchTerm,
@@ -334,15 +350,26 @@ class ProductRepository extends ChangeNotifier {
     final catalogScope = _catalogScope;
     final warehouseID = _warehouseID;
     final cacheGeneration = _cacheGeneration;
-    final page = await _fetchRemotePage(
+    final remote = await _fetchPreferredRemotePage(
       versionID: versionID,
       pageIndex: 0,
       searchTerm: '',
       categoryIDs: const [],
-      includeStock: true,
       productID: productID,
       warehouseID: warehouseID,
     );
+    var page = remote.page;
+    if (!remote.usesView && POS.isPOS) {
+      page = await _fetchLegacyRemotePage(
+        versionID: versionID,
+        pageIndex: 0,
+        searchTerm: '',
+        categoryIDs: const [],
+        includeStock: true,
+        productID: productID,
+        warehouseID: warehouseID,
+      );
+    }
     _ensureContext(catalogScope, warehouseID, cacheGeneration);
     if (page.records.isEmpty) return null;
     final product = page.records.first;
@@ -357,7 +384,101 @@ class ProductRepository extends ChangeNotifier {
     return product;
   }
 
-  Future<ProductPage> _fetchRemotePage({
+  Future<_RemoteProductPage> _fetchPreferredRemotePage({
+    required int versionID,
+    required int pageIndex,
+    required String searchTerm,
+    required List<int> categoryIDs,
+    int? productID,
+    required int warehouseID,
+  }) async {
+    _syncViewCapabilityScope();
+    if (_viewAvailable != false) {
+      try {
+        final page = await _fetchViewPage(
+          versionID: versionID,
+          pageIndex: pageIndex,
+          searchTerm: searchTerm,
+          categoryIDs: categoryIDs,
+          productID: productID,
+          warehouseID: warehouseID,
+        );
+        _viewAvailable = true;
+        return _RemoteProductPage(page: page, usesView: true);
+      } on _ProductViewUnavailable {
+        _viewAvailable = false;
+      }
+    }
+    final page = await _fetchLegacyRemotePage(
+      versionID: versionID,
+      pageIndex: pageIndex,
+      searchTerm: searchTerm,
+      categoryIDs: categoryIDs,
+      includeStock: false,
+      productID: productID,
+      warehouseID: warehouseID,
+    );
+    return _RemoteProductPage(page: page, usesView: false);
+  }
+
+  Future<ProductPage> _fetchViewPage({
+    required int versionID,
+    required int pageIndex,
+    required String searchTerm,
+    required List<int> categoryIDs,
+    int? productID,
+    required int warehouseID,
+  }) async {
+    final filters = <String>['M_PriceList_Version_ID eq $versionID'];
+    if (productID != null) {
+      filters.add('M_Product_ID eq $productID');
+    } else if (searchTerm.trim().isNotEmpty) {
+      final escaped = searchTerm.trim().toLowerCase().replaceAll("'", "''");
+      filters.add(
+        "(tolower(UPC) eq '$escaped' or tolower(SKU) eq '$escaped' or tolower(Value) eq '$escaped' or "
+        "contains(tolower(Name), '$escaped') or contains(tolower(SKU), '$escaped') or contains(tolower(Value), '$escaped'))",
+      );
+    }
+    if (categoryIDs.isNotEmpty) {
+      filters.add(
+        '(${categoryIDs.map((id) => 'M_Product_Category_ID eq $id').join(' or ')})',
+      );
+    }
+    final top = productID == null ? productPageSize : 1;
+    final skip = productID == null ? pageIndex * productPageSize : 0;
+    final uri = Uri.parse(
+      '${EndPoints.rvPosProductSearch}?\$top=$top&\$skip=$skip'
+      '&\$filter=${filters.join(' and ')}&\$orderby=Name,M_Product_ID'
+      '&\$select=M_ProductPrice_ID,M_Product_ID,M_PriceList_Version_ID,Value,Name,SKU,UPC,ProductType,M_Product_Category_ID,C_TaxCategory_ID,PriceStd,PriceList,qtyavailablebywarehouse',
+    );
+    final response = await http.get(uri, headers: _headers);
+    if (response.statusCode != 200) {
+      if (_isMissingProductView(response)) {
+        throw const _ProductViewUnavailable();
+      }
+      throw Exception('Product view query failed (${response.statusCode})');
+    }
+    final decoded =
+        json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final rawRecords = (decoded['records'] as List?) ?? const [];
+    final products = rawRecords
+        .whereType<Map>()
+        .map((record) => _normalizeViewProduct(record, versionID, warehouseID))
+        .whereType<Map<String, dynamic>>()
+        .toList();
+    final rowCount =
+        int.tryParse((decoded['row-count'] ?? products.length).toString()) ??
+        products.length;
+    return ProductPage(
+      records: products,
+      rowCount: productID == null ? rowCount : products.length,
+      pageIndex: pageIndex,
+      pageSize: productPageSize,
+      fromCache: false,
+    );
+  }
+
+  Future<ProductPage> _fetchLegacyRemotePage({
     required int versionID,
     required int pageIndex,
     required String searchTerm,
@@ -390,13 +511,7 @@ class ProductRepository extends ChangeNotifier {
       '&\$select=Value,Name,C_TaxCategory_ID,SKU,UPC,ProductType,M_Product_Category_ID'
       '&\$expand=M_ProductPrice(\$select=PriceStd,PriceList,M_PriceList_Version_ID;\$filter=M_PriceList_Version_ID eq $versionID)$stockExpand',
     );
-    final response = await http.get(
-      uri,
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
-    );
+    final response = await http.get(uri, headers: _headers);
     if (response.statusCode != 200) {
       throw Exception('Product query failed (${response.statusCode})');
     }
@@ -446,7 +561,10 @@ class ProductRepository extends ChangeNotifier {
             ? _referenceID(locator['M_Warehouse_ID'])
             : null;
         if (locatorWarehouseID == warehouseID) {
-          quantity = quantity! + _number(storage['QtyOnHand']);
+          quantity =
+              quantity! +
+              _number(storage['QtyOnHand']) -
+              _number(storage['QtyReserved']);
         }
       }
     }
@@ -470,6 +588,85 @@ class ProductRepository extends ChangeNotifier {
       'priceListVersionID': versionID,
       'fromCache': false,
     };
+  }
+
+  Map<String, dynamic>? _normalizeViewProduct(
+    Map record,
+    int versionID,
+    int warehouseID,
+  ) {
+    final productID = _referenceID(record['M_Product_ID']);
+    final recordVersionID = _referenceID(record['M_PriceList_Version_ID']);
+    final taxCategoryID = _referenceID(record['C_TaxCategory_ID']);
+    if (productID == null ||
+        taxCategoryID == null ||
+        (recordVersionID != null && recordVersionID != versionID)) {
+      return null;
+    }
+    final now = DateTime.now().toIso8601String();
+    final stockByWarehouse = _stockByWarehouse(
+      record['qtyavailablebywarehouse'] ?? record['QtyAvailableByWarehouse'],
+    );
+    return <String, dynamic>{
+      'id': productID,
+      'productPriceID': _referenceID(record['M_ProductPrice_ID']),
+      'name': record['Name']?.toString() ?? '',
+      'value': record['Value']?.toString(),
+      'sku': record['SKU']?.toString(),
+      'upc': record['UPC']?.toString(),
+      'category': _referenceID(record['M_Product_Category_ID']),
+      'price': _number(record['PriceStd']),
+      'priceList': _number(record['PriceList']),
+      'C_TaxCategory_ID': taxCategoryID,
+      'tax': POS.principalTaxs[taxCategoryID],
+      'ProductType': _referenceValue(record['ProductType']),
+      'QtyAvailable': _number(
+        stockByWarehouse[warehouseID.toString()] ??
+            stockByWarehouse[warehouseID],
+      ),
+      'stockByWarehouse': stockByWarehouse,
+      'stockLoading': false,
+      'priceValidatedAt': now,
+      'stockValidatedAt': now,
+      'priceListVersionID': versionID,
+      'fromCache': false,
+    };
+  }
+
+  Map<dynamic, dynamic> _stockByWarehouse(dynamic raw) {
+    if (raw is Map) return Map<dynamic, dynamic>.from(raw);
+    if (raw is String && raw.trim().isNotEmpty) {
+      try {
+        final decoded = json.decode(raw);
+        if (decoded is Map) return Map<dynamic, dynamic>.from(decoded);
+      } catch (_) {
+        // Invalid inventory JSON is treated as an empty warehouse map.
+      }
+    }
+    return <dynamic, dynamic>{};
+  }
+
+  Map<String, String> get _headers => {
+    'Content-Type': 'application/json; charset=UTF-8',
+    'Authorization': Token.auth!,
+  };
+
+  void _syncViewCapabilityScope() {
+    if (_viewCapabilityScope == _catalogScope) return;
+    _viewCapabilityScope = _catalogScope;
+    _viewAvailable = null;
+  }
+
+  bool _isMissingProductView(http.Response response) {
+    if (response.statusCode == 404) return true;
+    if (response.statusCode != 500) return false;
+    final body = utf8.decode(response.bodyBytes).toLowerCase();
+    if (!body.contains('rv_pos_product_search')) return false;
+    return body.contains('not found') ||
+        body.contains('does not exist') ||
+        body.contains('unknown table') ||
+        body.contains('no table') ||
+        body.contains('not registered');
   }
 
   ProductPage? _readCachedPage(String key, int versionID) {
@@ -595,7 +792,29 @@ class ProductRepository extends ChangeNotifier {
   void clearMemory() {
     _memoryPages.clear();
     _inFlight.clear();
+    _priceListVersionCache.clear();
+    _viewCapabilityScope = null;
+    _viewAvailable = null;
     notifyListeners();
+  }
+
+  Future<void> _migrateCachedStock() async {
+    if (_box?.get(_stockSemanticsMigrationKey) == true) return;
+    final updates = <dynamic, dynamic>{};
+    for (final key in _box!.keys) {
+      if (!key.toString().startsWith('product:')) continue;
+      final value = _box!.get(key);
+      if (value is! Map) continue;
+      final product = Map<String, dynamic>.from(value);
+      product
+        ..remove('QtyAvailable')
+        ..remove('stockByWarehouse')
+        ..remove('stockValidatedAt')
+        ..['stockLoading'] = true;
+      updates[key] = product;
+    }
+    if (updates.isNotEmpty) await _box!.putAll(updates);
+    await _box!.put(_stockSemanticsMigrationKey, true);
   }
 
   Future<void> _cleanupExpired() async {
@@ -622,4 +841,15 @@ class ProductRepository extends ChangeNotifier {
   double _number(dynamic value) => value is num
       ? value.toDouble()
       : double.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+class _RemoteProductPage {
+  const _RemoteProductPage({required this.page, required this.usesView});
+
+  final ProductPage page;
+  final bool usesView;
+}
+
+class _ProductViewUnavailable implements Exception {
+  const _ProductViewUnavailable();
 }
