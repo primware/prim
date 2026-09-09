@@ -458,11 +458,15 @@ Future<PagedResult<InvoicePaymentReceipt>> fetchInvoicePaymentReceiptsPage({
   var recordsSize = 0;
   var skipRecords = skip;
   {
+    final organizationFilter = criteria.organizationId == null
+        ? ''
+        : ' and AD_Org_ID eq ${criteria.organizationId}';
     final uri = Uri.parse(
       '${EndPoints.cAllocationHdr}?\$top=$top&\$skip=$skip'
       '&\$filter=DocStatus eq \'CO\' and IsManual eq true '
       'and C_DocType_ID eq $allocationDocTypeId'
-      '&\$orderby=DateTrx desc'
+      '$organizationFilter'
+      '&\$orderby=Created desc'
       '&\$expand=C_AllocationLine',
     );
     final response = await get(uri, headers: _headers());
@@ -545,6 +549,14 @@ Future<PagedResult<InvoicePaymentReceipt>> fetchInvoicePaymentReceiptsPage({
       '&\$expand=C_Payment_ID,SalesRep_ID,C_POS_ID',
     );
     final traceResponse = await get(traceUri, headers: _headers());
+    if (traceResponse.statusCode == 404) {
+      return PagedResult(
+        records: const [],
+        rowCount: 0,
+        recordsSize: 0,
+        skipRecords: skip,
+      );
+    }
     if (traceResponse.statusCode != 200) {
       throw Exception(
         'No se pudieron cargar las trazas de pagos (${traceResponse.statusCode}).',
@@ -720,10 +732,8 @@ InvoicePaymentReceipt? _normalizeHistoricalReceipt(
     allocationId: _asInt(record['id']) ?? 0,
     documentNo: _optionalText(record['DocumentNo']),
     date:
-        DateTime.tryParse(
-          (record['DateTrx'] ?? record['Created'] ?? '').toString(),
-        ) ??
-        DateTime.now(),
+        DateTime.tryParse((record['Created'] ?? '').toString()) ??
+        DateTime.fromMillisecondsSinceEpoch(0),
     customerId: customerId,
     customerName: customerName.isEmpty ? 'Cliente' : customerName,
     customerTaxId: customerTaxId,
@@ -760,11 +770,8 @@ String? validateInvoicePaymentBatchResponse(
     return 'El servidor no devolvió una respuesta batch válida; puede no soportar batch/responseAlias.';
   }
   final expectedOperations = paymentCount * 2 + 1;
-  if (decoded.length != expectedOperations) {
-    return 'El servidor devolvió ${decoded.length} operaciones; se esperaban $expectedOperations.';
-  }
   for (var index = 0; index < decoded.length; index++) {
-    final isAllocation = index == decoded.length - 1;
+    final isAllocation = index == expectedOperations - 1;
     final isPaymentTrace = !isAllocation && index.isOdd;
     final operationName = isAllocation
         ? 'la asignación'
@@ -791,6 +798,9 @@ String? validateInvoicePaymentBatchResponse(
     if (docStatus != 'CO') {
       return '$operationName no completó el documento (estado: ${docStatus ?? 'desconocido'}).';
     }
+  }
+  if (decoded.length != expectedOperations) {
+    return 'El servidor devolvió ${decoded.length} operaciones exitosas; se esperaban $expectedOperations. El batch se detuvo antes de completar todas las operaciones.';
   }
   return null;
 }

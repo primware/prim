@@ -27,6 +27,8 @@ import 'package:printing/printing.dart';
 import '../product/product_new.dart';
 import 'package:primware/shared/shimmer_list.dart';
 import 'product_selection_popup.dart';
+import 'held_ticket.dart';
+import '../product/product_repository.dart';
 
 class OrderNewPage extends StatefulWidget {
   final bool isRefund;
@@ -34,14 +36,26 @@ class OrderNewPage extends StatefulWidget {
   final String? orderName;
   final int? sourceOrderId;
   final String? docSubTypeSO;
+  final HeldTicket? heldTicket;
 
-  const OrderNewPage({super.key, this.isRefund = false, this.doctypeID, this.orderName, this.sourceOrderId, this.docSubTypeSO});
+  const OrderNewPage({
+    super.key,
+    this.isRefund = false,
+    this.doctypeID,
+    this.orderName,
+    this.sourceOrderId,
+    this.docSubTypeSO,
+    this.heldTicket,
+  });
 
   @override
   State<OrderNewPage> createState() => _OrderNewPageState();
 }
 
 class _OrderNewPageState extends State<OrderNewPage> {
+  late final Future<void> Function() _activeOrderSaver;
+  String? _resumedTicketId;
+  DateTime? _resumedTicketCreatedAt;
   final CustomSearchFieldController customerFieldController = CustomSearchFieldController(),
       productFieldController = CustomSearchFieldController();
 
@@ -68,6 +82,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isDocActionsLoading = true;
 
   final Set<int> _lockedPayments = {};
+  final Map<int, Future<void>> _priceValidations = {};
+  bool _applyingProductRepositoryUpdate = false;
+  bool _productRepositoryUpdatePending = false;
   List<Map<String, dynamic>> bPartnerOptions = [];
   List<Map<String, dynamic>> productOptions = [];
   List<Map<String, dynamic>> categpryOptions = [];
@@ -115,6 +132,14 @@ class _OrderNewPageState extends State<OrderNewPage> {
   void initState() {
     super.initState();
 
+    _resumedTicketId = widget.heldTicket?.id;
+    _resumedTicketCreatedAt = widget.heldTicket?.createdAt;
+    HeldTicketStore.instance.activeTicketId = _resumedTicketId;
+
+    _activeOrderSaver = () => _putOnHold(showConfirmation: false);
+    HeldTicketStore.instance.activeOrderSaver = _activeOrderSaver;
+    ProductRepository.instance.addListener(_onProductRepositoryChanged);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBPartner(showLoadingIndicator: true);
       _loadSalesRep();
@@ -125,7 +150,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
       if (POSTenderType.isMultiPayment) {
         _loadPayment();
       }
-      _initialPartner();
+      if (widget.heldTicket == null) _initialPartner();
+      if (widget.heldTicket != null) _restoreHeldTicket(widget.heldTicket!);
     });
 
     if (Yappy.apiKey != null && Yappy.secretKey != null) {
@@ -135,9 +161,134 @@ class _OrderNewPageState extends State<OrderNewPage> {
     if (widget.doctypeID != null) {
       _loadSequence();
     }
-    if (widget.sourceOrderId != null) {
+    if (widget.sourceOrderId != null && widget.heldTicket == null) {
       _prefillFromExistingOrder();
     }
+  }
+
+  bool get _hasMeaningfulContent {
+    if (invoiceLines.isNotEmpty) return true;
+    return paymentControllers.values.any((controller) => (double.tryParse(controller.text.trim().replaceAll(',', '.')) ?? 0) != 0);
+  }
+
+  Map<String, dynamic> _heldTicketData() => {
+    'isRefund': widget.isRefund,
+    'doctypeID': widget.doctypeID,
+    'orderName': widget.orderName,
+    'sourceOrderId': widget.sourceOrderId,
+    'docSubTypeSO': widget.docSubTypeSO,
+    'customerId': selectedBPartnerID,
+    'customerName': clienteController.text,
+    'hasLocationBPartner': hasLocationBPartner,
+    'bpartnerPriceListID': bpartnerPriceListID,
+    'salesRepID': selectedSalesRepID,
+    'docActionCode': selectedDocActionCode,
+    'invoiceLines': invoiceLines,
+    'selectedCategories': selectedCategories.toList(),
+    'selectedTax': selectedTax,
+    'payments': {for (final entry in paymentControllers.entries) entry.key.toString(): entry.value.text},
+    'paymentDetails': paymentControllers.entries
+        .where((entry) => (double.tryParse(entry.value.text.trim().replaceAll(',', '.')) ?? 0) != 0)
+        .map(
+          (entry) => {
+            'id': entry.key,
+            'name': _paymentMethod(entry.key)['name'] ?? _paymentMethod(entry.key)['identifier'],
+            'amount': entry.value.text,
+          },
+        )
+        .toList(),
+    'lockedPayments': _lockedPayments.toList(),
+    'subtotal': subtotal,
+    'iva': iva,
+    'total': netTotalAmount,
+  };
+
+  Future<void> _putOnHold({bool showConfirmation = true}) async {
+    if (!_hasMeaningfulContent || isSending) return;
+    final now = DateTime.now();
+    final ticket = HeldTicket(
+      id: _resumedTicketId ?? '${now.microsecondsSinceEpoch}_${UserData.id ?? 0}',
+      createdAt: _resumedTicketCreatedAt ?? now,
+      updatedAt: now,
+      data: _heldTicketData(),
+    );
+    await HeldTicketStore.instance.save(ticket);
+    if (!mounted) return;
+    _resumedTicketId = null;
+    _resumedTicketCreatedAt = null;
+    HeldTicketStore.instance.activeTicketId = null;
+    _resetForNewOrder();
+    if (showConfirmation) {
+      ToastMessage.show(context: context, message: AppLocale.heldTicketSaved.getString(context), type: ToastType.success);
+    }
+  }
+
+  void _resetForNewOrder() {
+    setState(() {
+      clearInvoiceFields();
+      invoiceLines.clear();
+      selectedCategories.clear();
+      bpartnerPriceListID = null;
+      selectedTax = taxOptions.isEmpty ? null : taxOptions.firstWhere((tax) => tax['isdefault'] == true, orElse: () => taxOptions.first);
+      taxController.text = selectedTax?['name']?.toString() ?? '';
+      subtotal = 0;
+      iva = 0;
+      total = 0;
+      calculatedChange = 0;
+      for (final controller in paymentControllers.values) {
+        controller.clear();
+      }
+      _lockedPayments.clear();
+      selectedDocActionCode = POS.documentActions.isEmpty ? null : POS.documentActions.first['code'];
+      selectedSalesRepID = UserData.id;
+    });
+    _validateForm();
+    if (widget.doctypeID != null) _loadSequence();
+    _initialPartner();
+  }
+
+  Future<void> _restoreHeldTicket(HeldTicket ticket) async {
+    while (mounted &&
+        (isTaxLoading || isSalesRepLoading || isDocActionsLoading || (POSTenderType.isMultiPayment && isPaymentMethodsLoading))) {
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+    if (!mounted) return;
+    final data = ticket.data;
+    final rawLines = data['invoiceLines'];
+    final rawPayments = data['payments'];
+    setState(() {
+      selectedBPartnerID = data['customerId'] as int?;
+      clienteController.text = data['customerName']?.toString() ?? '';
+      hasLocationBPartner = data['hasLocationBPartner'] == true;
+      bpartnerPriceListID = data['bpartnerPriceListID'] as int?;
+      selectedSalesRepID = data['salesRepID'] as int? ?? UserData.id;
+      selectedDocActionCode = data['docActionCode']?.toString();
+      invoiceLines = rawLines is List ? rawLines.whereType<Map>().map((line) => Map<String, dynamic>.from(line)).toList() : [];
+      selectedCategories = data['selectedCategories'] is List
+          ? (data['selectedCategories'] as List).whereType<num>().map((id) => id.toInt()).toSet()
+          : <int>{};
+      if (data['selectedTax'] is Map) {
+        final savedTax = Map<String, dynamic>.from(data['selectedTax'] as Map);
+        final savedTaxId = savedTax['id'];
+        selectedTax = taxOptions.firstWhere((tax) => tax['id'] == savedTaxId, orElse: () => savedTax);
+        taxController.text = selectedTax?['name']?.toString() ?? '';
+      }
+      if (rawPayments is Map) {
+        for (final entry in rawPayments.entries) {
+          final methodId = int.tryParse(entry.key.toString());
+          if (methodId != null && paymentControllers.containsKey(methodId)) {
+            paymentControllers[methodId]!.text = entry.value?.toString() ?? '';
+          }
+        }
+      }
+      _lockedPayments
+        ..clear()
+        ..addAll(
+          data['lockedPayments'] is List ? (data['lockedPayments'] as List).whereType<num>().map((id) => id.toInt()) : const <int>[],
+        );
+    });
+    _recalculateSummary();
+    _validateForm();
   }
 
   Future<void> _loadSalesRep() async {
@@ -314,11 +465,41 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
   @override
   void dispose() {
+    ProductRepository.instance.removeListener(_onProductRepositoryChanged);
+    if (identical(HeldTicketStore.instance.activeOrderSaver, _activeOrderSaver)) {
+      HeldTicketStore.instance.activeOrderSaver = null;
+      HeldTicketStore.instance.activeTicketId = null;
+    }
     for (final controller in paymentControllers.values) {
       controller.dispose();
     }
 
     super.dispose();
+  }
+
+  Future<void> _onProductRepositoryChanged() async {
+    if (!mounted || productOptions.isEmpty) {
+      return;
+    }
+    if (_applyingProductRepositoryUpdate) {
+      _productRepositoryUpdatePending = true;
+      return;
+    }
+    _applyingProductRepositoryUpdate = true;
+    try {
+      final page = await fetchProductPage(
+        categoryID: selectedCategories.toList(),
+        searchTerm: productController.text.trim(),
+        priceListID: bpartnerPriceListID,
+      );
+      if (mounted) setState(() => productOptions = page.records);
+    } finally {
+      _applyingProductRepositoryUpdate = false;
+      if (_productRepositoryUpdatePending && mounted) {
+        _productRepositoryUpdatePending = false;
+        unawaited(_onProductRepositoryChanged());
+      }
+    }
   }
 
   bool get clientSelected => selectedBPartnerID != null;
@@ -400,7 +581,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   List<Map<String, dynamic>> _buildDiscountLines() {
-    if (!_hasDiscountConfig || invoiceLines.isEmpty) return <Map<String, dynamic>>[];
+    if (!_hasDiscountConfig || invoiceLines.isEmpty) {
+      return <Map<String, dynamic>>[];
+    }
 
     final lines = <Map<String, dynamic>>[];
     var cumulativeBase = 0.0;
@@ -628,13 +811,94 @@ class _OrderNewPageState extends State<OrderNewPage> {
     final change = hasEnoughPayment && cashCoversOverpay && overpay > 0 ? overpay : 0.0;
 
     setState(() {
+      final hasPriceConflict = invoiceLines.any((line) => line['priceSyncState'] == 'changed');
       if (POS.isPOS && paymentMethods.isNotEmpty) {
-        _isInvoiceValid = clientSelected && products.isNotEmpty && hasEnoughPayment && cashCoversOverpay;
+        _isInvoiceValid = clientSelected && products.isNotEmpty && hasEnoughPayment && cashCoversOverpay && !hasPriceConflict;
       } else {
-        _isInvoiceValid = clientSelected && products.isNotEmpty;
+        _isInvoiceValid = clientSelected && products.isNotEmpty && !hasPriceConflict;
       }
       calculatedChange = change > 0 ? change : 0.0;
     });
+  }
+
+  void _startPriceValidation(Map<String, dynamic> line) {
+    final id = line['id'] as int?;
+    if (id == null || line['fromCache'] != true) {
+      line['priceSyncState'] = 'valid';
+      return;
+    }
+    line['priceSyncState'] = 'pending';
+    final validation = _validateProductPrice(id);
+    _priceValidations[id] = validation;
+    validation.whenComplete(() => _priceValidations.remove(id));
+  }
+
+  Future<void> _validateProductPrice(int productID) async {
+    try {
+      final serverProduct = await ProductRepository.instance.refreshProduct(productID: productID, partnerPriceListID: bpartnerPriceListID);
+      if (!mounted || serverProduct == null) {
+        throw Exception('Product unavailable');
+      }
+      final serverPrice = _r2(serverProduct['price'] ?? 0);
+      final serverListPrice = _r2(serverProduct['priceList'] ?? serverPrice);
+      setState(() {
+        for (final line in invoiceLines.where((item) => item['id'] == productID)) {
+          final baseline = _r2(line['catalogPriceAtAdd'] ?? line['price'] ?? 0);
+          line['serverPrice'] = serverPrice;
+          line['serverPriceList'] = serverListPrice;
+          line['priceSyncState'] = baseline == serverPrice ? 'valid' : 'changed';
+          if (baseline == serverPrice) {
+            line['fromCache'] = false;
+            line['QtyAvailable'] = serverProduct['QtyAvailable'];
+          }
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        for (final line in invoiceLines.where((item) => item['id'] == productID)) {
+          line['priceSyncState'] = 'error';
+        }
+      });
+    }
+    _validateForm();
+  }
+
+  void _acceptServerPrice(Map<String, dynamic> line) {
+    final serverPrice = _r2(line['serverPrice'] ?? line['price'] ?? 0);
+    final serverListPrice = _r2(line['serverPriceList'] ?? serverPrice);
+    final manual = line['manualPriceOverride'] == true && (!POS.isPOS || POS.isModifyPrice);
+    setState(() {
+      if (!manual) line['price'] = serverPrice;
+      line['PriceList'] = serverListPrice;
+      line['priceList'] = serverListPrice;
+      line['catalogPriceAtAdd'] = serverPrice;
+      line['Discount'] = serverListPrice > 0 ? _r2(100 * (1 - (_r2(line['price'] ?? 0) / serverListPrice))) : 0.0;
+      line['priceSyncState'] = 'valid';
+      line['fromCache'] = false;
+    });
+    _recalculateSummary();
+    _validateForm();
+  }
+
+  Future<bool> _ensurePricesValid() async {
+    for (final line in invoiceLines.where((item) => item['priceSyncState'] == 'error').toList()) {
+      final id = line['id'] as int?;
+      if (id != null) _startPriceValidation(line);
+    }
+    if (_priceValidations.isNotEmpty) {
+      await Future.wait(_priceValidations.values.toList());
+    }
+    if (!mounted) return false;
+    if (invoiceLines.any((line) => line['priceSyncState'] == 'changed')) {
+      ToastMessage.show(context: context, message: AppLocale.priceValidationRequired.getString(context), type: ToastType.warning);
+      return false;
+    }
+    if (invoiceLines.any((line) => line['priceSyncState'] == 'error' || line['priceSyncState'] == 'pending')) {
+      ToastMessage.show(context: context, message: AppLocale.priceValidationFailed.getString(context), type: ToastType.failure);
+      return false;
+    }
+    return true;
   }
 
   Future<void> _loadBPartner({bool showLoadingIndicator = false}) async {
@@ -670,7 +934,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
   }
 
-  Future<void> _loadProduct({bool showLoadingIndicator = false}) async {
+  Future<void> _loadProduct({bool showLoadingIndicator = false, bool requestFieldFocus = true}) async {
     if (showLoadingIndicator) {
       setState(() {
         isProductSearchLoading = true;
@@ -679,13 +943,18 @@ class _OrderNewPageState extends State<OrderNewPage> {
       });
     }
 
-    final product = await fetchProductInPriceList(
-      context: context,
-      categoryID: selectedCategories.isNotEmpty ? selectedCategories.toList() : null,
-      searchTerm: productController.text.trim(),
+    final searchTerm = productController.text.trim();
+    final filtered = searchTerm.isNotEmpty || selectedCategories.isNotEmpty;
+    final page = await fetchProductPage(
+      categoryID: selectedCategories.toList(),
+      searchTerm: searchTerm,
       priceListID: bpartnerPriceListID,
+      preferCache: !filtered,
+      waitForStock: filtered,
     );
+    final product = page.records;
 
+    if (!mounted) return;
     setState(() {
       productOptions = product;
       isProductLoading = false;
@@ -702,7 +971,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
       }
     });
 
-    if (mounted && firtsLoad) {
+    if (mounted && firtsLoad && requestFieldFocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         productFieldController.requestFocus();
@@ -713,12 +982,38 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _searchProductSuggestions(String query) async {
+    final page = await fetchProductPage(
+      categoryID: selectedCategories.toList(),
+      searchTerm: query.trim(),
+      priceListID: bpartnerPriceListID,
+      preferCache: false,
+      waitForStock: true,
+    );
+    return page.records;
+  }
+
   Future<void> _showProductSelectionPopup() async {
-    final selectedProducts = await ProductSelectionPopup.show(context, priceListID: bpartnerPriceListID);
-    if (selectedProducts != null && selectedProducts.isNotEmpty) {
+    final selection = await ProductSelectionPopup.show(
+      context,
+      priceListID: bpartnerPriceListID,
+      initialSearch: productController.text.trim(),
+      initialCategoryIDs: selectedCategories,
+      onCategoriesChanged: (categories) {
+        if (mounted) {
+          setState(() => selectedCategories = categories);
+          unawaited(_loadProduct(showLoadingIndicator: true, requestFieldFocus: false));
+        }
+      },
+    );
+    if (selection != null) {
+      setState(() => selectedCategories = {...selection.categoryIDs});
+      final selectedProducts = selection.products;
+      if (selectedProducts.isEmpty) return;
       if (POS.cPosID != null) {
         if (!await _resetPaymentsForProductChange()) return;
       }
+      final addedLines = <Map<String, dynamic>>[];
       setState(() {
         for (final item in selectedProducts) {
           final int? selectedTaxID = (item['C_Tax_ID'] ?? item['tax']?['id'] ?? selectedTax?['id']) as int?;
@@ -726,7 +1021,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
           final double priceList = _r2((item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble());
           final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
 
-          invoiceLines.add({
+          final line = <String, dynamic>{
             ...item,
             'quantity': 1,
             'price': priceActual,
@@ -734,9 +1029,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
             'Description': item['Description'] ?? '',
             'PriceList': priceList,
             'Discount': discount,
-          });
+            'catalogPriceAtAdd': priceActual,
+            'priceSyncState': item['fromCache'] == true ? 'pending' : 'valid',
+          };
+          invoiceLines.add(line);
+          addedLines.add(line);
         }
       });
+      for (final line in addedLines) {
+        _startPriceValidation(line);
+      }
       if (POS.cPosID != null) {
         _recalculateSummary();
         _validateForm();
@@ -809,6 +1111,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _showQuantityDialog(Map<String, dynamic> product, {int? index}) async {
+    final canModifyPrice = !POS.isPOS || POS.isModifyPrice;
     int? selectedTaxID = index != null ? (product['C_Tax_ID'] ?? product['tax']?['id']) : (product['tax']?['id'] ?? selectedTax?['id']);
 
     final quantityController = TextEditingController(
@@ -857,8 +1160,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
         invoiceLines.removeAt(index);
       }
 
+      late Map<String, dynamic> addedLine;
       setState(() {
-        invoiceLines.insert(index ?? invoiceLines.length, {
+        addedLine = <String, dynamic>{
           ...product,
           'quantity': qty,
           'price': r2local(effectivePrice),
@@ -866,8 +1170,15 @@ class _OrderNewPageState extends State<OrderNewPage> {
           'Description': descriptionController.text,
           'PriceList': r2local(priceList),
           'Discount': r2local(effectiveDiscount),
-        });
+          'catalogPriceAtAdd': product['catalogPriceAtAdd'] ?? initialPrice,
+          'manualPriceOverride':
+              product['manualPriceOverride'] == true || (canModifyPrice && r2local(effectivePrice) != r2local(initialPrice)),
+          'priceSyncState': product['priceSyncState'] ?? (product['fromCache'] == true ? 'pending' : 'valid'),
+        };
+        invoiceLines.insert(index ?? invoiceLines.length, addedLine);
       });
+
+      _startPriceValidation(addedLine);
 
       _recalculateSummary();
       productController.clear();
@@ -991,16 +1302,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 flex: 6,
                                 child: TextfieldTheme(
                                   controlador: priceController,
+                                  readOnly: !canModifyPrice,
                                   pista: product['price'] == 0 ? product['price'].toString() : null,
                                   texto: AppLocale.price.getString(context),
                                   inputType: const TextInputType.numberWithOptions(decimal: true, signed: false),
                                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
-                                  onChanged: (val) {
-                                    setModalState(() {
-                                      final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                      discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
-                                    });
-                                  },
+                                  onChanged: canModifyPrice
+                                      ? (val) {
+                                          setModalState(() {
+                                            final p = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                            discountController.text = calcDiscount(priceList, p).toStringAsFixed(2);
+                                          });
+                                        }
+                                      : null,
                                 ),
                               ),
                               const SizedBox(width: CustomSpacer.small),
@@ -1008,16 +1322,19 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                 flex: 4,
                                 child: TextfieldTheme(
                                   controlador: discountController,
+                                  readOnly: !canModifyPrice,
                                   texto: '% Desc.',
                                   inputType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\-0-9\.,]'))],
-                                  onChanged: (val) {
-                                    setModalState(() {
-                                      if (val == '-') return;
-                                      final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                                      priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
-                                    });
-                                  },
+                                  onChanged: canModifyPrice
+                                      ? (val) {
+                                          setModalState(() {
+                                            if (val == '-') return;
+                                            final d = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                                            priceController.text = calcPrice(priceList, d).toStringAsFixed(2);
+                                          });
+                                        }
+                                      : null,
                                 ),
                               ),
                             ],
@@ -1278,6 +1595,21 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<void> _createInvoice({required List<Map<String, dynamic>> product, required int bPartner}) async {
+    if (!await _ensurePricesValid()) return;
+    if (widget.isRefund && widget.sourceOrderId != null) {
+      try {
+        final alreadyReturned = await hasActiveReturnForOrder(orderId: widget.sourceOrderId!);
+        if (alreadyReturned) {
+          if (!mounted) return;
+          ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+          return;
+        }
+      } catch (_) {
+        if (!mounted) return;
+        ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+        return;
+      }
+    }
     final String actionLabel = (() {
       try {
         final match = POS.documentActions.firstWhere(
@@ -1314,6 +1646,20 @@ class _OrderNewPageState extends State<OrderNewPage> {
     );
 
     if (confirm != true) return;
+
+    if (widget.isRefund && widget.sourceOrderId != null) {
+      try {
+        if (await hasActiveReturnForOrder(orderId: widget.sourceOrderId!)) {
+          if (!mounted) return;
+          ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+          return;
+        }
+      } catch (_) {
+        if (!mounted) return;
+        ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+        return;
+      }
+    }
 
     setState(() => isSending = true);
     final List<Map<String, dynamic>> invoiceLine = product.map((item) {
@@ -1386,9 +1732,16 @@ class _OrderNewPageState extends State<OrderNewPage> {
       isRefund: widget.isRefund,
       doctypeID: widget.doctypeID,
       priceListID: bpartnerPriceListID,
+      sourceOrderId: widget.sourceOrderId,
     );
 
     if (result['success'] == true) {
+      if (_resumedTicketId != null) {
+        await HeldTicketStore.instance.delete(_resumedTicketId!);
+        _resumedTicketId = null;
+        _resumedTicketCreatedAt = null;
+        HeldTicketStore.instance.activeTicketId = null;
+      }
       if (calculatedChange > 0) {
         await showDialog(
           context: context,
@@ -1604,7 +1957,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     fieldController: customerFieldController,
                                     onSubmit: (_) => _loadBPartner(showLoadingIndicator: true),
                                     onCreate: (value) async {
-                                      if (selectedBPartnerID != null && invoiceLines.isNotEmpty) {
+                                      final previousEffectivePriceListID = resolveEffectivePriceListID(
+                                        isPOS: POS.isPOS,
+                                        posPriceListID: POS.priceListID,
+                                        bPartnerPriceListID: bpartnerPriceListID,
+                                      );
+                                      if (!POS.isPOS && selectedBPartnerID != null && invoiceLines.isNotEmpty) {
                                         final confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
@@ -1657,16 +2015,34 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         MaterialPageRoute(builder: (_) => BPartnerNewPage(bpartnerName: value)),
                                       );
                                       if (result != null && result?['created'] == true) {
+                                        final dynamic rawPriceListID = result['bpartner']['M_PriceList_ID'];
+                                        final int? newBPartnerPriceListID = rawPriceListID is Map
+                                            ? rawPriceListID['id'] as int?
+                                            : rawPriceListID as int?;
                                         setState(() {
                                           clienteController.text = result['bpartner']['Name'];
                                           selectedBPartnerID = result['bpartner']['id'];
+                                          bpartnerPriceListID = newBPartnerPriceListID;
                                           hasLocationBPartner = true;
+                                          _validateForm();
                                         });
                                         _loadBPartner(showLoadingIndicator: true);
+                                        final nextEffectivePriceListID = resolveEffectivePriceListID(
+                                          isPOS: POS.isPOS,
+                                          posPriceListID: POS.priceListID,
+                                          bPartnerPriceListID: newBPartnerPriceListID,
+                                        );
+                                        if (!POS.isPOS && previousEffectivePriceListID != nextEffectivePriceListID) {
+                                          ProductSelectionPopup.clearGlobalCache();
+                                          await _loadProduct(showLoadingIndicator: true);
+                                        }
                                       }
                                     },
                                     onItemSelected: (item) async {
-                                      if (selectedBPartnerID != null && selectedBPartnerID != item['id'] && invoiceLines.isNotEmpty) {
+                                      if (!POS.isPOS &&
+                                          selectedBPartnerID != null &&
+                                          selectedBPartnerID != item['id'] &&
+                                          invoiceLines.isNotEmpty) {
                                         final confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
@@ -1721,15 +2097,27 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           _recalculateSummary();
                                         });
                                       }
+                                      final previousEffectivePriceListID = resolveEffectivePriceListID(
+                                        isPOS: POS.isPOS,
+                                        posPriceListID: POS.priceListID,
+                                        bPartnerPriceListID: bpartnerPriceListID,
+                                      );
+                                      final nextBPartnerPriceListID = item['M_PriceList_ID'] as int?;
+                                      final nextEffectivePriceListID = resolveEffectivePriceListID(
+                                        isPOS: POS.isPOS,
+                                        posPriceListID: POS.priceListID,
+                                        bPartnerPriceListID: nextBPartnerPriceListID,
+                                      );
                                       setState(() {
-                                        bpartnerPriceListID = item['M_PriceList_ID'];
+                                        bpartnerPriceListID = nextBPartnerPriceListID;
                                         selectedBPartnerID = item['id'];
                                         hasLocationBPartner = item['C_BPartner_Location_ID'] != null;
-                                        if (POS.priceListID != bpartnerPriceListID) {
-                                          _loadProduct(showLoadingIndicator: true);
-                                        }
                                         _validateForm();
                                       });
+                                      if (!POS.isPOS && previousEffectivePriceListID != nextEffectivePriceListID) {
+                                        ProductSelectionPopup.clearGlobalCache();
+                                        await _loadProduct(showLoadingIndicator: true);
+                                      }
                                     },
                                     itemBuilder: (item) => Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1754,7 +2142,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     tooltip: 'Quitar cliente',
                                     icon: const Icon(Icons.cancel, color: Colors.redAccent),
                                     onPressed: () async {
-                                      if (invoiceLines.isNotEmpty) {
+                                      if (!POS.isPOS && invoiceLines.isNotEmpty) {
                                         final confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
@@ -1795,16 +2183,25 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         );
                                         if (confirm != true) return;
                                       }
-                                      if (!await _resetPaymentsForProductChange()) {
-                                        return;
+                                      if (!POS.isPOS) {
+                                        if (!await _resetPaymentsForProductChange()) {
+                                          return;
+                                        }
                                       }
                                       setState(() {
                                         selectedBPartnerID = null;
+                                        bpartnerPriceListID = null;
                                         clienteController.clear();
-                                        invoiceLines.clear();
-                                        _recalculateSummary();
+                                        if (!POS.isPOS) {
+                                          invoiceLines.clear();
+                                          _recalculateSummary();
+                                        }
                                         _validateForm();
                                       });
+                                      if (!POS.isPOS) {
+                                        ProductSelectionPopup.clearGlobalCache();
+                                        await _loadProduct(showLoadingIndicator: true);
+                                      }
                                     },
                                   )
                                 else
@@ -1989,7 +2386,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                     setState(() {
                                                       selectedCategories = Set<int>.from(result);
                                                     });
-                                                    _loadProduct(showLoadingIndicator: true);
+                                                    _loadProduct(showLoadingIndicator: true, requestFieldFocus: false);
                                                   }
                                                 });
                                               },
@@ -2027,7 +2424,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                     setState(() {
                                                       selectedCategories.remove(catId);
                                                     });
-                                                    _loadProduct(showLoadingIndicator: true);
+                                                    _loadProduct(showLoadingIndicator: true, requestFieldFocus: false);
                                                   },
                                                 );
                                               }).toList(),
@@ -2049,6 +2446,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                           controller: productController,
                                           labelText: AppLocale.product.getString(context),
                                           searchBy: 'UPC',
+                                          searchByText: 'UPC, SKU',
+                                          onSearch: _searchProductSuggestions,
                                           fieldController: productFieldController,
 
                                           // --- CREACION DE PRODUCTOS DESDE BUSQUEDA ---
@@ -2079,8 +2478,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                 (item['PriceList'] ?? item['priceList'] ?? item['price'] ?? 0).toDouble(),
                                               );
                                               final double discount = priceList > 0 ? _r2(100 * (1 - (priceActual / priceList))) : 0.0;
+                                              late Map<String, dynamic> addedLine;
                                               setState(() {
-                                                invoiceLines.add({
+                                                addedLine = <String, dynamic>{
                                                   ...item,
                                                   'quantity': 1,
                                                   'price': priceActual,
@@ -2088,8 +2488,12 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                   'Description': item['Description'] ?? '',
                                                   'PriceList': priceList,
                                                   'Discount': discount,
-                                                });
+                                                  'catalogPriceAtAdd': priceActual,
+                                                  'priceSyncState': item['fromCache'] == true ? 'pending' : 'valid',
+                                                };
+                                                invoiceLines.add(addedLine);
                                               });
+                                              _startPriceValidation(addedLine);
                                               _recalculateSummary();
                                               productController.clear();
                                               _validateForm();
@@ -2124,11 +2528,26 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                         overflow: TextOverflow.ellipsis,
                                                       ),
                                                     if (POS.isPOS)
-                                                      Text(
-                                                        item['QtyAvailable'] != null
-                                                            ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable'].toString()}'
-                                                            : '${AppLocale.exist.getString(context)}: 0',
-                                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                                                      Row(
+                                                        children: [
+                                                          if (item['stockLoading'] == true)
+                                                            const Padding(
+                                                              padding: EdgeInsets.only(right: 5),
+                                                              child: SizedBox(
+                                                                width: 12,
+                                                                height: 12,
+                                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                                              ),
+                                                            ),
+                                                          Text(
+                                                            item['QtyAvailable'] != null
+                                                                ? '${AppLocale.exist.getString(context)}: ${item['QtyAvailable']}'
+                                                                : AppLocale.updatingStock.getString(context),
+                                                            style: Theme.of(
+                                                              context,
+                                                            ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                                                          ),
+                                                        ],
                                                       ),
                                                   ],
                                                 ),
@@ -2169,33 +2588,70 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                         final line = entry.value;
                                         final tax = taxOptions.firstWhere((t) => t['id'] == line['C_Tax_ID'], orElse: () => {});
                                         final taxRate = tax['rate'] != null ? '${tax['rate']}%' : AppLocale.noTax.getString(context);
-                                        return Tooltip(
-                                          message: line['name'],
-                                          child: InputChip(
-                                            onPressed: () => _showQuantityDialog(line, index: index),
-                                            deleteIcon: const Icon(Icons.close),
-                                            onDeleted: () => _deleteLine(index),
-                                            deleteIconColor: ColorTheme.error,
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            label: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  line['name'],
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                        final priceChanged = line['priceSyncState'] == 'changed';
+                                        return Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            if (priceChanged)
+                                              Container(
+                                                margin: const EdgeInsets.only(bottom: 4),
+                                                padding: const EdgeInsets.only(left: 10),
+                                                decoration: BoxDecoration(
+                                                  color: Theme.of(context).colorScheme.errorContainer,
+                                                  borderRadius: BorderRadius.circular(10),
                                                 ),
-                                                if (line['Description'] != null && line['Description'].toString().isNotEmpty)
-                                                  Text('${line['Description']}', style: Theme.of(context).textTheme.labelSmall),
-                                                Text(
-                                                  '${line['quantity']} x \$${line['price']} + $taxRate',
-                                                  style: Theme.of(context).textTheme.bodySmall,
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        '${AppLocale.serverPriceChanged.getString(context)}: \$${_r2(line['serverPrice'] ?? 0).toStringAsFixed(2)}',
+                                                        style: TextStyle(
+                                                          color: Theme.of(context).colorScheme.onErrorContainer,
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    IconButton(
+                                                      tooltip: AppLocale.updatePrice.getString(context),
+                                                      onPressed: () => _acceptServerPrice(line),
+                                                      icon: const Icon(Icons.refresh, size: 18),
+                                                      color: Theme.of(context).colorScheme.onErrorContainer,
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
+                                              ),
+                                            Tooltip(
+                                              message: line['name'],
+                                              child: InputChip(
+                                                onPressed: () => _showQuantityDialog(line, index: index),
+                                                deleteIcon: const Icon(Icons.close),
+                                                onDeleted: () => _deleteLine(index),
+                                                deleteIconColor: ColorTheme.error,
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                label: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      line['name'],
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                                    ),
+                                                    if (line['Description'] != null && line['Description'].toString().isNotEmpty)
+                                                      Text('${line['Description']}', style: Theme.of(context).textTheme.labelSmall),
+                                                    Text(
+                                                      '${line['quantity']} x \$${line['price']} + $taxRate',
+                                                      style: Theme.of(context).textTheme.bodySmall,
+                                                    ),
+                                                  ],
+                                                ),
+                                                backgroundColor: Theme.of(context).cardColor,
+                                              ),
                                             ),
-                                            backgroundColor: Theme.of(context).cardColor,
-                                          ),
+                                          ],
                                         );
                                       }).toList(),
                                     ),
@@ -2234,7 +2690,10 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                     ],
                                     if (isFirstStandard) ...[
                                       if (discountPaymentMethods.isNotEmpty) const SizedBox(height: CustomSpacer.medium),
-                                      Text(AppLocale.paymentMethods.getString(context), style: Theme.of(context).textTheme.titleMedium),
+                                      Text(
+                                        (widget.isRefund ? AppLocale.refundMethods : AppLocale.paymentMethods).getString(context),
+                                        style: Theme.of(context).textTheme.titleMedium,
+                                      ),
                                       const SizedBox(height: 6),
                                     ],
                                     Padding(
@@ -2356,7 +2815,9 @@ class _OrderNewPageState extends State<OrderNewPage> {
                                                         },
                                                       );
 
-                                                      if (confirm != true) return;
+                                                      if (confirm != true) {
+                                                        return;
+                                                      }
 
                                                       final paid = await cancelYappyTransaction(transactionId: yappyTransactionId!);
                                                       if (paid) {
@@ -2527,6 +2988,38 @@ class _OrderNewPageState extends State<OrderNewPage> {
                           },
                         ),
                       const SizedBox(height: CustomSpacer.small),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColor,
+                            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.08),
+                            disabledForegroundColor: Colors.grey.shade500,
+                            disabledBackgroundColor: Colors.grey.withOpacity(0.06),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(
+                                color: _hasMeaningfulContent && !isSending
+                                    ? Theme.of(context).primaryColor.withOpacity(0.35)
+                                    : Colors.grey.withOpacity(0.2),
+                              ),
+                            ),
+                          ),
+                          icon: const Icon(Icons.pause_circle_outline, size: 20),
+                          label: Text(AppLocale.putOnHold.getString(context), style: const TextStyle(fontWeight: FontWeight.w600)),
+                          onPressed: _hasMeaningfulContent && !isSending ? _putOnHold : null,
+                        ),
+                      ),
+                      const SizedBox(height: CustomSpacer.small),
+                      if (invoiceLines.any((line) => line['priceSyncState'] == 'changed')) ...[
+                        Text(
+                          AppLocale.priceValidationRequired.getString(context),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Theme.of(context).colorScheme.error, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: CustomSpacer.small),
+                      ],
                       Container(
                         child: isSending
                             ? ButtonLoading(fullWidth: true)

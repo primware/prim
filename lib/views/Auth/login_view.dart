@@ -17,7 +17,6 @@ import '../../shared/toast_message.dart';
 import '../../theme/colors.dart';
 import 'auth_funtions.dart';
 import 'config_view.dart';
-import 'dart:ui';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -123,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: CustomSpacer.medium),
               TextfieldTheme(
-                texto: 'POS ID',
+                texto: AppLocale.posTerminal.getString(context),
                 controlador: cPosController,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 inputType: TextInputType.number,
@@ -390,7 +389,9 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
                       ),
-                      if (isConfigLoaded && Base.allowCreateAccount && POS.cPosID == null) ...[
+                      if (isConfigLoaded &&
+                          Base.allowCreateAccount &&
+                          POS.cPosID == null) ...[
                         const SizedBox(height: CustomSpacer.medium),
                         Center(
                           child: Column(

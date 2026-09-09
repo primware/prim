@@ -1,34 +1,22 @@
 PODS:
-  - flutter_localization (0.0.1):
-    - FlutterMacOS
   - FlutterMacOS (1.0.0)
-  - printing (1.0.0):
-    - FlutterMacOS
   - protocol_handler_macos (0.0.1):
     - FlutterMacOS
 
 DEPENDENCIES:
-  - flutter_localization (from `Flutter/ephemeral/.symlinks/plugins/flutter_localization/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
-  - printing (from `Flutter/ephemeral/.symlinks/plugins/printing/macos`)
   - protocol_handler_macos (from `Flutter/ephemeral/.symlinks/plugins/protocol_handler_macos/macos`)
 
 EXTERNAL SOURCES:
-  flutter_localization:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_localization/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
-  printing:
-    :path: Flutter/ephemeral/.symlinks/plugins/printing/macos
   protocol_handler_macos:
     :path: Flutter/ephemeral/.symlinks/plugins/protocol_handler_macos/macos
 
 SPEC CHECKSUMS:
-  flutter_localization: 3cda759884c7dab4466fe963d97fba723a492666
   FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
-  printing: c4cf83c78fd684f9bc318e6aadc18972aa48f617
   protocol_handler_macos: f9cd7b13bcaf6b0425f7410cbe52376cb843a936
 
 PODFILE CHECKSUM: 1e95c36afbfd1cb6423ceca4de7a8e1b256fb6ac
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0

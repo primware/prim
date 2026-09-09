@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:primware/API/pos.api.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
 import 'package:primware/localization/app_locale.dart';
@@ -14,6 +15,8 @@ import 'product_new.dart';
 import 'product_details.dart';
 import 'product_funtions.dart';
 import '../../../shared/toast_message.dart';
+import 'product_repository.dart';
+import 'product_sync_controller.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({super.key});
@@ -24,19 +27,60 @@ class ProductListPage extends StatefulWidget {
 
 class _ProductListPageState extends State<ProductListPage> {
   List<Map<String, dynamic>> _products = [];
-  bool _isLoading = true, isProductSearchLoading = false, isProductCategoryLoading = true;
+  int _currentPage = 0;
+  int _rowCount = 0;
+  bool _isLoading = true,
+      isProductSearchLoading = false,
+      isProductCategoryLoading = true;
   bool _isFabExpanded = false;
   // ignore: prefer_final_fields
   String _searchQuery = '';
   Set<int> selectedCategories = {};
   List<Map<String, dynamic>> categpryOptions = [];
   TextEditingController productController = TextEditingController();
+  bool _applyingRepositoryUpdate = false;
+  bool _repositoryUpdatePending = false;
 
   @override
   void initState() {
     super.initState();
     _loadProductCategory();
+    ProductRepository.instance.addListener(_onRepositoryChanged);
     _fetchProducts();
+  }
+
+  @override
+  void dispose() {
+    ProductRepository.instance.removeListener(_onRepositoryChanged);
+    productController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onRepositoryChanged() async {
+    if (!mounted) return;
+    if (_applyingRepositoryUpdate) {
+      _repositoryUpdatePending = true;
+      return;
+    }
+    _applyingRepositoryUpdate = true;
+    try {
+      final page = await fetchProductPage(
+        pageIndex: _currentPage,
+        categoryID: selectedCategories.toList(),
+        searchTerm: productController.text.trim(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _products = page.records;
+        _rowCount = page.rowCount;
+      });
+    } finally {
+      _applyingRepositoryUpdate = false;
+      if (_repositoryUpdatePending && mounted) {
+        _repositoryUpdatePending = false;
+        unawaited(_onRepositoryChanged());
+      }
+    }
   }
 
   Future<void> _loadProductCategory() async {
@@ -49,38 +93,60 @@ class _ProductListPageState extends State<ProductListPage> {
 
   Future<void> _fetchProducts() async {
     setState(() => _isLoading = true);
-    final result = await fetchProductInPriceList(context: context);
+    final result = await fetchProductPage(pageIndex: _currentPage);
+    if (!mounted) return;
     setState(() {
-      _products = result;
+      _products = result.records;
+      _rowCount = result.rowCount;
       _isLoading = false;
     });
   }
 
-  Future<void> _loadProduct({bool showLoadingIndicator = false}) async {
+  Future<void> _loadProduct({
+    bool showLoadingIndicator = false,
+    int page = 0,
+  }) async {
     if (showLoadingIndicator) {
       setState(() {
         isProductSearchLoading = true;
       });
     }
-    final product = await fetchProductInPriceList(
-      context: context,
-      categoryID: selectedCategories.isNotEmpty ? selectedCategories.toList() : null,
+    final result = await fetchProductPage(
+      pageIndex: page,
+      categoryID: selectedCategories.toList(),
       searchTerm: productController.text.trim(),
+      preferCache: productController.text.trim().isEmpty,
     );
+    if (!mounted) return;
     setState(() {
-      _products = product;
+      _products = result.records;
+      _rowCount = result.rowCount;
+      _currentPage = page;
+      _isLoading = false;
       isProductSearchLoading = false;
     });
   }
 
   List<Map<String, dynamic>> _getFilteredOrders() {
-    return _products.where((product) => product['name'].toString().toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    return _products
+        .where(
+          (product) => product['name'].toString().toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
+        )
+        .toList();
   }
+
+  int get _totalPages =>
+      _rowCount == 0 ? 1 : (_rowCount / productPageSize).ceil();
 
   Widget _buildProductCard(Map<String, dynamic> record) {
     return GestureDetector(
       onTap: () async {
-        final refreshed = await Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailPage(product: record)));
+        final refreshed = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ProductDetailPage(product: record)),
+        );
         if (refreshed == true) _loadProduct(showLoadingIndicator: true);
       },
       child: Container(
@@ -89,16 +155,30 @@ class _ProductListPageState extends State<ProductListPage> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
-          border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+          ),
         ),
         child: Row(
           children: [
             // Ícono principal (Estilo inventario)
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Theme.of(context).primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-              child: Icon(Icons.inventory_2_outlined, color: Theme.of(context).primaryColor),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.inventory_2_outlined,
+                color: Theme.of(context).primaryColor,
+              ),
             ),
             const SizedBox(width: 16),
             // Información central
@@ -108,35 +188,73 @@ class _ProductListPageState extends State<ProductListPage> {
                 children: [
                   Text(
                     record['name'],
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  if (record['sku'] != null && record['sku'].toString().isNotEmpty)
+                  if (record['sku'] != null &&
+                      record['sku'].toString().isNotEmpty)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Theme.of(context).dividerColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         'SKU: ${record['sku']}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11, fontWeight: FontWeight.w600),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.attach_money_rounded, color: Theme.of(context).colorScheme.secondary, size: 18),
+                      Icon(
+                        Icons.attach_money_rounded,
+                        color: Theme.of(context).colorScheme.secondary,
+                        size: 18,
+                      ),
                       Text(
                         record['price'].toString(),
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
+                  if (POS.isPOS) ...[
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        if (record['stockLoading'] == true)
+                          const SizedBox(
+                            width: 13,
+                            height: 13,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else
+                          const Icon(Icons.inventory_outlined, size: 15),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            record['QtyAvailable'] == null
+                                ? AppLocale.updatingStock.getString(context)
+                                : '${AppLocale.exist.getString(context)}: ${record['QtyAvailable']}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -161,10 +279,16 @@ class _ProductListPageState extends State<ProductListPage> {
             return Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
               ),
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.65),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.65,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -172,23 +296,32 @@ class _ProductListPageState extends State<ProductListPage> {
                   Container(
                     width: 40,
                     height: 5,
-                    decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
                   Text(
                     AppLocale.selectCategories.getString(context),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
                   Expanded(
                     child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
                       physics: const BouncingScrollPhysics(),
                       itemCount: categpryOptions.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
                       itemBuilder: (context, idx) {
                         final cat = categpryOptions[idx];
                         final isSelected = tempSelected.contains(cat['id']);
@@ -206,12 +339,21 @@ class _ProductListPageState extends State<ProductListPage> {
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
                             decoration: BoxDecoration(
-                              color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Theme.of(context).cardColor,
+                              color: isSelected
+                                  ? Theme.of(
+                                      context,
+                                    ).primaryColor.withOpacity(0.1)
+                                  : Theme.of(context).cardColor,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isSelected ? Theme.of(context).primaryColor : Colors.grey.withOpacity(0.2),
+                                color: isSelected
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.grey.withOpacity(0.2),
                                 width: isSelected ? 1.5 : 1.0,
                               ),
                             ),
@@ -223,15 +365,25 @@ class _ProductListPageState extends State<ProductListPage> {
                                     cat['name'],
                                     style: TextStyle(
                                       fontSize: 16,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                      color: isSelected ? Theme.of(context).primaryColor : null,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? Theme.of(context).primaryColor
+                                          : null,
                                     ),
                                   ),
                                 ),
                                 if (isSelected)
-                                  Icon(Icons.check_circle, color: Theme.of(context).primaryColor)
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: Theme.of(context).primaryColor,
+                                  )
                                 else
-                                  Icon(Icons.circle_outlined, color: Colors.grey.withOpacity(0.4)),
+                                  Icon(
+                                    Icons.circle_outlined,
+                                    color: Colors.grey.withOpacity(0.4),
+                                  ),
                               ],
                             ),
                           ),
@@ -243,7 +395,13 @@ class _ProductListPageState extends State<ProductListPage> {
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor,
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -253,14 +411,21 @@ class _ProductListPageState extends State<ProductListPage> {
                           height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               backgroundColor: Theme.of(context).primaryColor,
                               elevation: 0,
                             ),
-                            onPressed: () => Navigator.pop(context, tempSelected),
+                            onPressed: () =>
+                                Navigator.pop(context, tempSelected),
                             child: Text(
                               AppLocale.apply.getString(context),
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -269,9 +434,19 @@ class _ProductListPageState extends State<ProductListPage> {
                           width: double.infinity,
                           height: 50,
                           child: TextButton(
-                            style: TextButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                            style: TextButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                             onPressed: () => Navigator.pop(context),
-                            child: Text(AppLocale.cancel.getString(context), style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+                            child: Text(
+                              AppLocale.cancel.getString(context),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -305,8 +480,15 @@ class _ProductListPageState extends State<ProductListPage> {
             return AlertDialog(
               backgroundColor: Theme.of(context).cardColor,
               insetPadding: const EdgeInsets.all(16.0),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('Nueva Categoría', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Text(
+                'Nueva Categoría',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
               content: SizedBox(
                 width: 400,
                 child: Column(
@@ -329,7 +511,10 @@ class _ProductListPageState extends State<ProductListPage> {
               actionsAlignment: MainAxisAlignment.center,
               actions: [
                 if (!isCreating)
-                  TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(AppLocale.cancel.getString(context))),
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: Text(AppLocale.cancel.getString(context)),
+                  ),
                 if (!isCreating)
                   ElevatedButton(
                     onPressed: isCatNameValid
@@ -337,34 +522,54 @@ class _ProductListPageState extends State<ProductListPage> {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                                 backgroundColor: Theme.of(context).cardColor,
                                 title: Column(
                                   children: [
-                                    Icon(Icons.help_outline, size: 45, color: Colors.blueAccent),
+                                    Icon(
+                                      Icons.help_outline,
+                                      size: 45,
+                                      color: Colors.blueAccent,
+                                    ),
                                     SizedBox(height: 10),
                                     Text(
                                       AppLocale.newCategory.getString(context),
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
                                     ),
                                   ],
                                 ),
                                 content: Text(
-                                  AppLocale.confirmCreateCategory.getString(context),
+                                  AppLocale.confirmCreateCategory.getString(
+                                    context,
+                                  ),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 actionsAlignment: MainAxisAlignment.spaceEvenly,
                                 actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocale.no.getString(context))),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: Text(
+                                      AppLocale.no.getString(context),
+                                    ),
+                                  ),
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      backgroundColor: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                       foregroundColor: Colors.white,
                                     ),
                                     onPressed: () => Navigator.pop(ctx, true),
-                                    child: Text(AppLocale.yes.getString(context)),
+                                    child: Text(
+                                      AppLocale.yes.getString(context),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -375,16 +580,27 @@ class _ProductListPageState extends State<ProductListPage> {
                             // Pasamos a modo cargando
                             setModalState(() => isCreating = true);
 
-                            final result = await postProductCategory(name: catNameController.text, context: context);
+                            final result = await postProductCategory(
+                              name: catNameController.text,
+                              context: context,
+                            );
                             if (!mounted) return;
 
                             if (result['success'] == true) {
                               Navigator.pop(dialogContext);
-                              ToastMessage.show(context: context, message: 'Categoría creada con éxito', type: ToastType.success);
+                              ToastMessage.show(
+                                context: context,
+                                message: 'Categoría creada con éxito',
+                                type: ToastType.success,
+                              );
                               _loadProductCategory();
                             } else {
                               setModalState(() => isCreating = false);
-                              ToastMessage.show(context: context, message: result['message'] ?? 'Error al crear', type: ToastType.failure);
+                              ToastMessage.show(
+                                context: context,
+                                message: result['message'] ?? 'Error al crear',
+                                type: ToastType.failure,
+                              );
                             }
                           }
                         : null,
@@ -403,7 +619,10 @@ class _ProductListPageState extends State<ProductListPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const DashboardPage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
+        );
         return Future.value(false);
       },
       child: Scaffold(
@@ -442,7 +661,12 @@ class _ProductListPageState extends State<ProductListPage> {
                         heroTag: 'prodBtn',
                         onPressed: () async {
                           setState(() => _isFabExpanded = false);
-                          final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductNewPage()));
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ProductNewPage(),
+                            ),
+                          );
 
                           if (result != null && result['created'] == true) {
                             _loadProduct(showLoadingIndicator: true);
@@ -485,23 +709,102 @@ class _ProductListPageState extends State<ProductListPage> {
                         child: TextfieldTheme(
                           texto: AppLocale.searchProducts.getString(context),
                           controlador: productController,
-                          onSubmitted: (_) => _loadProduct(showLoadingIndicator: true),
+                          onSubmitted: (_) =>
+                              _loadProduct(showLoadingIndicator: true),
                         ),
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       Container(
                         height: 55,
-                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         child: IconButton(
                           icon: const Icon(Icons.search, color: Colors.white),
                           tooltip: 'Buscar',
-                          onPressed: () => _loadProduct(showLoadingIndicator: true),
+                          onPressed: () =>
+                              _loadProduct(showLoadingIndicator: true),
                         ),
+                      ),
+                      const SizedBox(width: CustomSpacer.small),
+                      IconButton.filledTonal(
+                        tooltip: AppLocale.syncProducts.getString(context),
+                        onPressed: ProductSyncController.instance.isRunning
+                            ? null
+                            : () => ProductSyncController.instance.start(),
+                        icon: const Icon(Icons.sync),
                       ),
                     ],
                   ),
 
-                  if (isProductSearchLoading) ...[const SizedBox(height: CustomSpacer.small), const LinearProgressIndicator()],
+                  if (isProductSearchLoading) ...[
+                    const SizedBox(height: CustomSpacer.small),
+                    const LinearProgressIndicator(),
+                  ],
+
+                  AnimatedBuilder(
+                    animation: ProductSyncController.instance,
+                    builder: (context, _) {
+                      final sync = ProductSyncController.instance;
+                      if (!sync.isRunning && sync.error == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return Card(
+                        margin: const EdgeInsets.only(top: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      AppLocale.syncingProducts.getString(
+                                        context,
+                                      ),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  Text('${sync.processed} / ${sync.total}'),
+                                  IconButton(
+                                    tooltip: AppLocale.stop.getString(context),
+                                    onPressed: sync.isStopping
+                                        ? null
+                                        : sync.stop,
+                                    color: Theme.of(context).colorScheme.error,
+                                    icon: const Icon(
+                                      Icons.stop_circle_outlined,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              LinearProgressIndicator(
+                                value: sync.total > 0 ? sync.progress : null,
+                              ),
+                              if (sync.error != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(
+                                    AppLocale.productSyncError.getString(
+                                      context,
+                                    ),
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
 
                   const SizedBox(height: CustomSpacer.medium),
 
@@ -511,36 +814,70 @@ class _ProductListPageState extends State<ProductListPage> {
                     child: Row(
                       children: [
                         ActionChip(
-                          avatar: Icon(Icons.tune, color: Theme.of(context).colorScheme.onSecondary, size: 18),
+                          avatar: Icon(
+                            Icons.tune,
+                            color: Theme.of(context).colorScheme.onSecondary,
+                            size: 18,
+                          ),
                           label: Text(
                             AppLocale.categories.getString(context),
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSecondary, fontWeight: FontWeight.bold),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
-                          backgroundColor: Theme.of(context).colorScheme.secondary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.secondary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           side: BorderSide.none,
                           onPressed: _openCategoryFilter,
                         ),
 
                         if (selectedCategories.isNotEmpty) ...[
                           const SizedBox(width: 12),
-                          Container(width: 1, height: 24, color: Colors.grey.withOpacity(0.4)),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: Colors.grey.withOpacity(0.4),
+                          ),
                           const SizedBox(width: 12),
                           ...selectedCategories.map((catId) {
-                            final cat = categpryOptions.firstWhere((c) => c['id'] == catId, orElse: () => <String, dynamic>{});
-                            final catName = cat.isNotEmpty ? cat['name'] : 'Categoría';
+                            final cat = categpryOptions.firstWhere(
+                              (c) => c['id'] == catId,
+                              orElse: () => <String, dynamic>{},
+                            );
+                            final catName = cat.isNotEmpty
+                                ? cat['name']
+                                : 'Categoría';
                             return Padding(
                               padding: const EdgeInsets.only(right: 8.0),
                               child: Chip(
-                                label: Text(catName, style: const TextStyle(fontSize: 12)),
-                                backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                label: Text(
+                                  catName,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.1),
                                 deleteIconColor: Theme.of(context).primaryColor,
-                                side: BorderSide(color: Theme.of(context).primaryColor.withOpacity(0.3)),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                side: BorderSide(
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withOpacity(0.3),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                                 onDeleted: () {
-                                  setState(() => selectedCategories.remove(catId));
+                                  setState(
+                                    () => selectedCategories.remove(catId),
+                                  );
                                   _loadProduct(showLoadingIndicator: true);
                                 },
                               ),
@@ -560,7 +897,8 @@ class _ProductListPageState extends State<ProductListPage> {
                         ? Center(
                             child: Text(
                               AppLocale.noProductsFound.getString(context),
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: Colors.grey),
                             ),
                           )
                         : ListView.builder(
@@ -571,6 +909,44 @@ class _ProductListPageState extends State<ProductListPage> {
                               return _buildProductCard(record);
                             },
                           ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton.filledTonal(
+                        tooltip: AppLocale.previous.getString(context),
+                        onPressed: _currentPage > 0 && !isProductSearchLoading
+                            ? () => _loadProduct(
+                                showLoadingIndicator: true,
+                                page: _currentPage - 1,
+                              )
+                            : null,
+                        icon: const Icon(Icons.chevron_left),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          AppLocale.pageOf
+                              .getString(context)
+                              .replaceAll('{page}', '${_currentPage + 1}')
+                              .replaceAll('{total}', '$_totalPages'),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      IconButton.filledTonal(
+                        tooltip: AppLocale.next.getString(context),
+                        onPressed:
+                            _currentPage + 1 < _totalPages &&
+                                !isProductSearchLoading
+                            ? () => _loadProduct(
+                                showLoadingIndicator: true,
+                                page: _currentPage + 1,
+                              )
+                            : null,
+                        icon: const Icon(Icons.chevron_right),
+                      ),
+                    ],
                   ),
                 ],
               ),

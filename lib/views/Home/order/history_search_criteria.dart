@@ -4,18 +4,21 @@ class HistorySearchCriteria {
     this.documentText = '',
     this.docStatus,
     this.onlyMyMovements = false,
+    this.organizationId,
   });
 
   final String customerText;
   final String documentText;
   final String? docStatus;
   final bool onlyMyMovements;
+  final int? organizationId;
 
   bool get isEmpty =>
       customerText.trim().isEmpty &&
       documentText.trim().isEmpty &&
       docStatus == null &&
-      !onlyMyMovements;
+      !onlyMyMovements &&
+      organizationId == null;
 
   HistorySearchCriteria copyWith({
     String? customerText,
@@ -23,12 +26,38 @@ class HistorySearchCriteria {
     String? docStatus,
     bool clearDocStatus = false,
     bool? onlyMyMovements,
+    int? organizationId,
+    bool clearOrganization = false,
   }) {
     return HistorySearchCriteria(
       customerText: customerText ?? this.customerText,
       documentText: documentText ?? this.documentText,
       docStatus: clearDocStatus ? null : docStatus ?? this.docStatus,
       onlyMyMovements: onlyMyMovements ?? this.onlyMyMovements,
+      organizationId: clearOrganization
+          ? null
+          : organizationId ?? this.organizationId,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'customerText': customerText.trim(),
+    'documentText': documentText.trim(),
+    'docStatus': docStatus,
+    'onlyMyMovements': onlyMyMovements,
+    'organizationId': organizationId,
+  };
+
+  factory HistorySearchCriteria.fromJson(Map<String, dynamic> json) {
+    final rawOrganizationId = json['organizationId'];
+    return HistorySearchCriteria(
+      customerText: (json['customerText'] ?? '').toString(),
+      documentText: (json['documentText'] ?? '').toString(),
+      docStatus: json['docStatus']?.toString(),
+      onlyMyMovements: json['onlyMyMovements'] == true,
+      organizationId: rawOrganizationId is num
+          ? rawOrganizationId.toInt()
+          : int.tryParse(rawOrganizationId?.toString() ?? ''),
     );
   }
 
@@ -39,7 +68,8 @@ class HistorySearchCriteria {
           other.customerText.trim() == customerText.trim() &&
           other.documentText.trim() == documentText.trim() &&
           other.docStatus == docStatus &&
-          other.onlyMyMovements == onlyMyMovements;
+          other.onlyMyMovements == onlyMyMovements &&
+          other.organizationId == organizationId;
 
   @override
   int get hashCode => Object.hash(
@@ -47,6 +77,7 @@ class HistorySearchCriteria {
     documentText.trim(),
     docStatus,
     onlyMyMovements,
+    organizationId,
   );
 }
 

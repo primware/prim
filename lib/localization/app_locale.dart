@@ -17,12 +17,35 @@ class AppLocale {
   static const String salesYTDBySalesRepDescription = 'salesYTDBySalesRep';
   static const String products = 'products';
   static const String searchProducts = 'searchProducts';
+  static const String filterProduct = 'filterProduct';
   static const String productCode = 'productCode';
   static const String productName = 'productName';
   static const String myProfile = 'myProfile';
   static const String productPrice = 'productPrice';
   static const String productStock = 'productStock';
   static const String noProductsFound = 'noProductsFound';
+  static const String selectProducts = 'selectProducts';
+  static const String selectedProductsCount = 'selectedProductsCount';
+  static const String addToOrder = 'addToOrder';
+  static const String favorites = 'favorites';
+  static const String noCategories = 'noCategories';
+  static const String loadMoreProducts = 'loadMoreProducts';
+  static const String noMoreProducts = 'noMoreProducts';
+  static const String refineProductSearch = 'refineProductSearch';
+  static const String syncProducts = 'syncProducts';
+  static const String syncingProducts = 'syncingProducts';
+  static const String preparingSync = 'preparingSync';
+  static const String productSyncError = 'productSyncError';
+  static const String stop = 'stop';
+  static const String stopping = 'stopping';
+  static const String page = 'page';
+  static const String cachedStock = 'cachedStock';
+  static const String updatingStock = 'updatingStock';
+  static const String serverPriceChanged = 'serverPriceChanged';
+  static const String updatePrice = 'updatePrice';
+  static const String priceValidationRequired = 'priceValidationRequired';
+  static const String priceValidationFailed = 'priceValidationFailed';
+  static const String retry = 'retry';
   static const String user = 'user';
   static const String pass = 'pass';
   static const String rememberMe = 'remenberLogin';
@@ -91,6 +114,54 @@ class AppLocale {
   static const String noDataForFilter = 'noDataForFilter';
   static const String pressAgainToLogout = 'pressAgainToLogout';
   static const String myOrders = 'myOrders';
+  static const String advancedSearch = 'advancedSearch';
+  static const String customerOrIdentification = 'customerOrIdentification';
+  static const String orderReceiptInvoiceNumber = 'orderReceiptInvoiceNumber';
+  static const String documentStatus = 'documentStatus';
+  static const String allStatuses = 'allStatuses';
+  static const String allOrganizations = 'allOrganizations';
+  static const String onlyMyMovements = 'onlyMyMovements';
+  static const String onlyMyMovementsSubtitle = 'onlyMyMovementsSubtitle';
+  static const String pinnedFilters = 'pinnedFilters';
+  static const String pinnedFiltersInfo = 'pinnedFiltersInfo';
+  static const String updatePinnedFilters = 'updatePinnedFilters';
+  static const String pinAndApply = 'pinAndApply';
+  static const String reset = 'reset';
+  static const String clear = 'clear';
+  static const String search = 'search';
+  static const String filterThisPage = 'filterThisPage';
+  static const String customerOrderReceipt = 'customerOrderReceipt';
+  static const String documentTypeFilter = 'documentTypeFilter';
+  static const String all = 'all';
+  static const String historyUpdateError = 'historyUpdateError';
+  static const String showingFilteredHistory = 'showingFilteredHistory';
+  static const String showingHistory = 'showingHistory';
+  static const String previous = 'previous';
+  static const String next = 'next';
+  static const String pageOf = 'pageOf';
+  static const String receiptNumber = 'receiptNumber';
+  static const String amountLabel = 'amountLabel';
+  static const String invoicePayments = 'invoicePayments';
+  static const String noPrintersAvailable = 'noPrintersAvailable';
+  static const String genericDocument = 'genericDocument';
+  static const String noMatchesThisPage = 'noMatchesThisPage';
+  static const String statusDraft = 'statusDraft';
+  static const String statusCompleted = 'statusCompleted';
+  static const String statusClosed = 'statusClosed';
+  static const String statusVoided = 'statusVoided';
+  static const String statusInProgress = 'statusInProgress';
+  static const String statusPrepared = 'statusPrepared';
+  static const String statusWaitingCompletion = 'statusWaitingCompletion';
+  static const String statusApproved = 'statusApproved';
+  static const String statusRejected = 'statusRejected';
+  static const String giftInvoice = 'giftInvoice';
+  static const String giftQuantityShort = 'giftQuantityShort';
+  static const String orderNumber = 'orderNumber';
+  static const String dateLabel = 'dateLabel';
+  static const String servedBy = 'servedBy';
+  static const String identification = 'identification';
+  static const String address = 'address';
+  static const String phoneLabel = 'phoneLabel';
 
   static const String searchOrder = 'searchOrder';
   static const String errorNoOrders = 'errorNoOrders';
@@ -162,6 +233,7 @@ class AppLocale {
   static const String apply = 'apply';
   static const String product = 'product';
   static const String paymentMethods = 'paymentMethods';
+  static const String refundMethods = 'refundMethods';
   static const String paymentSumMustEqualTotal = 'paymentSumMustEqualTotal';
   static const String summary = 'summary';
   static const String taxes = 'taxes';
@@ -221,6 +293,46 @@ class AppLocale {
   static const String production = 'production';
   static const String instance = 'instance';
   static const String isPointOfSale = 'isPointOfSale';
+  static const String operatingMode = 'operatingMode';
+  static const String pointOfSaleMode = 'pointOfSaleMode';
+  static const String salesForceMode = 'salesForceMode';
+  static const String pointOfSaleModeDescription = 'pointOfSaleModeDescription';
+  static const String salesForceModeDescription = 'salesForceModeDescription';
+  static const String sessionParameters = 'sessionParameters';
+  static const String terminalParameters = 'terminalParameters';
+  static const String userParameters = 'userParameters';
+  static const String organizationParameters = 'organizationParameters';
+  static const String printingParameters = 'printingParameters';
+  static const String cacheParameters = 'cacheParameters';
+  static const String productCacheSize = 'productCacheSize';
+  static const String calculating = 'calculating';
+  static const String clearProductCache = 'clearProductCache';
+  static const String clearProductCacheTitle = 'clearProductCacheTitle';
+  static const String clearProductCacheMessage = 'clearProductCacheMessage';
+  static const String productCacheCleared = 'productCacheCleared';
+  static const String systemLogs = 'systemLogs';
+  static const String notApplicable = 'notApplicable';
+  static const String enabled = 'enabled';
+  static const String disabled = 'disabled';
+  static const String posTerminal = 'posTerminal';
+  static const String modifyPricePermission = 'modifyPricePermission';
+  static const String defaultCustomer = 'defaultCustomer';
+  static const String priceListVersion = 'priceListVersion';
+  static const String warehouse = 'warehouse';
+  static const String paymentTerm = 'paymentTerm';
+  static const String bankAccount = 'bankAccount';
+  static const String salesDocumentType = 'salesDocumentType';
+  static const String refundDocumentType = 'refundDocumentType';
+  static const String discountCharge = 'discountCharge';
+  static const String discountTax = 'discountTax';
+  static const String multiplePayments = 'multiplePayments';
+  static const String identifier = 'identifier';
+  static const String printerName = 'printerName';
+  static const String printerAddress = 'printerAddress';
+  static const String printerTaxId = 'printerTaxId';
+  static const String printerDv = 'printerDv';
+  static const String printerPhone = 'printerPhone';
+  static const String printerEmail = 'printerEmail';
   static const String noOrdersRegistered = 'noOrdersRegistered';
   static const String readyForFirstOrder = 'readyForFirstOrder';
   static const String orgProfileTitle = 'orgProfileTitle';
@@ -316,8 +428,88 @@ class AppLocale {
   static const String paymentTenderTypeRequired = 'paymentTenderTypeRequired';
   static const String salesRepRequired = 'salesRepRequired';
   static const String salesRepLoadError = 'salesRepLoadError';
+  static const String heldTickets = 'heldTickets';
+  static const String putOnHold = 'putOnHold';
+  static const String heldTicketSaved = 'heldTicketSaved';
+  static const String noHeldTickets = 'noHeldTickets';
+  static const String heldTicketsLoadError = 'heldTicketsLoadError';
+  static const String deleteHeldTicket = 'deleteHeldTicket';
+  static const String deleteHeldTicketMessage = 'deleteHeldTicketMessage';
+  static const String heldTicketProducts = 'heldTicketProducts';
+  static const String resumeHeldTicket = 'resumeHeldTicket';
+  static const String deleteCannotBeUndone = 'deleteCannotBeUndone';
+  static const String paymentMethod = 'paymentMethod';
+  static const String refundGenerated = 'refundGenerated';
+  static const String returnAlreadyExists = 'returnAlreadyExists';
+  static const String returnValidationError = 'returnValidationError';
 
   static const Map<String, dynamic> en = {
+    heldTickets: 'Held tickets',
+    putOnHold: 'Put on hold',
+    heldTicketSaved: 'The ticket was placed on hold.',
+    noHeldTickets: 'There are no held tickets.',
+    heldTicketsLoadError: 'Held tickets could not be loaded.',
+    deleteHeldTicket: 'Delete held ticket',
+    deleteHeldTicketMessage:
+        'Are you sure you want to permanently delete this held ticket?',
+    heldTicketProducts: '{count} products',
+    resumeHeldTicket: 'Resume',
+    deleteCannotBeUndone: 'This action cannot be undone.',
+    paymentMethod: 'Payment method',
+    refundGenerated: 'Return generated',
+    returnAlreadyExists: 'This order already has an active return.',
+    returnValidationError:
+        'The return status could not be verified. Please try again.',
+    advancedSearch: 'Advanced search',
+    customerOrIdentification: 'Customer or identification',
+    orderReceiptInvoiceNumber: 'Order, receipt, or invoice number',
+    documentStatus: 'Document status',
+    allStatuses: 'All statuses',
+    allOrganizations: 'All organizations',
+    onlyMyMovements: 'Only my activity',
+    onlyMyMovementsSubtitle: 'Orders and payments registered under my name',
+    pinnedFilters: 'Pinned filters',
+    pinnedFiltersInfo:
+        'Pinned filters remain applied when you leave and return to My Orders. They are stored only on this device.',
+    updatePinnedFilters: 'Update pinned filters',
+    pinAndApply: 'Pin and apply',
+    reset: 'Reset',
+    clear: 'Clear',
+    search: 'Search',
+    filterThisPage: 'Filter this page',
+    customerOrderReceipt: 'Customer, order, or receipt',
+    documentTypeFilter: 'Document type:',
+    all: 'All',
+    historyUpdateError: 'The history could not be updated. {error}',
+    showingFilteredHistory:
+        'Showing {visible} of {loaded} loaded on this page · {total} search results',
+    showingHistory: 'Showing {start}–{end} of {total} activities',
+    previous: 'Previous',
+    next: 'Next',
+    pageOf: 'Page {page} of {total}',
+    receiptNumber: 'Receipt #{number}',
+    amountLabel: 'Amount:',
+    invoicePayments: 'Invoice payments',
+    noPrintersAvailable: 'No printers are available',
+    genericDocument: 'Document',
+    noMatchesThisPage: 'No matches on this page.',
+    statusDraft: 'Draft',
+    statusCompleted: 'Completed',
+    statusClosed: 'Closed',
+    statusVoided: 'Voided',
+    statusInProgress: 'In progress',
+    statusPrepared: 'Prepared',
+    statusWaitingCompletion: 'Waiting for completion',
+    statusApproved: 'Approved',
+    statusRejected: 'Rejected',
+    giftInvoice: 'Gift receipt',
+    giftQuantityShort: 'Qty',
+    orderNumber: 'Order no.',
+    dateLabel: 'Date',
+    servedBy: 'Served by',
+    identification: 'Identification',
+    address: 'Address',
+    phoneLabel: 'Phone',
     invoicePayment: 'Invoice Payment',
     customerInvoices: 'Customer invoices',
     invoice: 'Invoice',
@@ -388,11 +580,53 @@ class AppLocale {
     settingsSaveError: 'An error occurred while saving. Check the console.',
     noOrdersRegistered: 'No orders registered',
     readyForFirstOrder: 'Ready to place your first order?',
-    systemParameters: 'Parámetros del Sistema',
-    urlNotAvailable: 'URL no disponible',
-    production: 'Producción:',
-    instance: 'Instancia:',
-    isPointOfSale: 'Es Punto de Venta:',
+    systemParameters: 'System parameters',
+    urlNotAvailable: 'URL not available',
+    production: 'Production',
+    instance: 'Instance',
+    isPointOfSale: 'Point of sale',
+    operatingMode: 'Operating mode',
+    pointOfSaleMode: 'Point of sale mode',
+    salesForceMode: 'Sales force mode',
+    pointOfSaleModeDescription:
+        'This session uses the configured POS terminal.',
+    salesForceModeDescription: 'This session operates without a POS terminal.',
+    sessionParameters: 'Session',
+    terminalParameters: 'POS terminal',
+    userParameters: 'User',
+    organizationParameters: 'Organization',
+    printingParameters: 'Printing',
+    cacheParameters: 'Cache',
+    productCacheSize: 'Product cache (product_cache_v1)',
+    calculating: 'Calculating…',
+    clearProductCache: 'Clear product cache',
+    clearProductCacheTitle: 'Clear product cache?',
+    clearProductCacheMessage:
+        'All locally synchronized product data will be deleted from this device. This action cannot be undone.',
+    productCacheCleared: 'The product cache was cleared.',
+    systemLogs: 'System logs',
+    notApplicable: 'Not applicable',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    posTerminal: 'POS Terminal',
+    modifyPricePermission: 'Modify prices',
+    defaultCustomer: 'Default customer',
+    priceListVersion: 'Price list version',
+    warehouse: 'Warehouse',
+    paymentTerm: 'Payment term',
+    bankAccount: 'Bank account',
+    salesDocumentType: 'Sales document type',
+    refundDocumentType: 'Refund document type',
+    discountCharge: 'Discount charge',
+    discountTax: 'Discount tax',
+    multiplePayments: 'Multiple payments',
+    identifier: 'ID',
+    printerName: 'Header name',
+    printerAddress: 'Header address',
+    printerTaxId: 'Header Tax ID',
+    printerDv: 'Header DV',
+    printerPhone: 'Header phone',
+    printerEmail: 'Header email',
     selectValidCustomerForProducts:
         'Please select a valid customer to add products to the order.',
     selectCustomer: 'Please select a customer',
@@ -441,11 +675,37 @@ class AppLocale {
     dec: 'Dec',
     products: 'Products',
     searchProducts: 'Search products',
+    filterProduct: 'Filter product',
     productCode: 'Code',
     productName: 'Name',
     productPrice: 'Price',
     productStock: 'Stock',
     noProductsFound: 'No products found.',
+    selectProducts: 'Select products',
+    selectedProductsCount: '{count} selected',
+    addToOrder: 'Add to order',
+    favorites: 'Favorites',
+    noCategories: 'No categories',
+    loadMoreProducts: 'Load more products',
+    noMoreProducts: 'No more products',
+    refineProductSearch:
+        'There are more results. Refine the search or category filters.',
+    syncProducts: 'Sync products',
+    syncingProducts: 'Syncing products',
+    preparingSync: 'Preparing synchronization…',
+    productSyncError: 'Some products could not be synchronized.',
+    stop: 'Stop',
+    stopping: 'Stopping…',
+    page: 'Page',
+    cachedStock: 'Last known stock',
+    updatingStock: 'Updating stock…',
+    serverPriceChanged: 'The price changed on the server',
+    updatePrice: 'Update price',
+    priceValidationRequired:
+        'Update changed prices before processing the order.',
+    priceValidationFailed:
+        'Product prices could not be validated. Please retry.',
+    retry: 'Retry',
     retryFE: 'Retry Electronic Bill',
     login: 'Login',
     user: 'User',
@@ -573,6 +833,7 @@ class AppLocale {
     apply: 'Apply',
     product: 'Product',
     paymentMethods: 'Payment methods',
+    refundMethods: 'Refund methods',
     discounts: 'Discounts',
     removeDiscount: 'Remove discount',
     paymentSumMustEqualTotal:
@@ -646,6 +907,72 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    heldTickets: 'Tickets en espera',
+    putOnHold: 'Poner en espera',
+    heldTicketSaved: 'El ticket fue puesto en espera.',
+    noHeldTickets: 'No hay tickets en espera.',
+    heldTicketsLoadError: 'No se pudieron cargar los tickets en espera.',
+    deleteHeldTicket: 'Eliminar ticket en espera',
+    deleteHeldTicketMessage:
+        '¿Está seguro de que desea eliminar permanentemente este ticket en espera?',
+    heldTicketProducts: '{count} productos',
+    resumeHeldTicket: 'Reanudar',
+    deleteCannotBeUndone: 'Esta acción no se puede deshacer.',
+    paymentMethod: 'Método de pago',
+    refundGenerated: 'Devolución generada',
+    returnAlreadyExists: 'Esta orden ya tiene una devolución activa.',
+    returnValidationError:
+        'No se pudo verificar el estado de la devolución. Intente nuevamente.',
+    advancedSearch: 'Búsqueda avanzada',
+    customerOrIdentification: 'Cliente o identificación',
+    orderReceiptInvoiceNumber: 'N.º de orden, recibo o factura',
+    documentStatus: 'Estado del documento',
+    allStatuses: 'Todos los estados',
+    allOrganizations: 'Todas las organizaciones',
+    onlyMyMovements: 'Solo mis movimientos',
+    onlyMyMovementsSubtitle: 'Órdenes y pagos registrados a mi nombre',
+    pinnedFilters: 'Filtros fijos',
+    pinnedFiltersInfo:
+        'Los filtros fijados se mantendrán aunque salga y vuelva a entrar a Mis órdenes. Se guardan únicamente en este dispositivo.',
+    updatePinnedFilters: 'Actualizar filtros fijos',
+    pinAndApply: 'Fijar y aplicar',
+    reset: 'Restablecer',
+    clear: 'Limpiar',
+    search: 'Buscar',
+    filterThisPage: 'Filtrar esta página',
+    customerOrderReceipt: 'Cliente, orden o recibo',
+    documentTypeFilter: 'Tipo de documento:',
+    all: 'Todos',
+    historyUpdateError: 'No se pudo actualizar el historial. {error}',
+    showingFilteredHistory:
+        'Mostrando {visible} de {loaded} cargados en esta página · {total} resultados de búsqueda',
+    showingHistory: 'Mostrando {start}–{end} de {total} movimientos',
+    previous: 'Anterior',
+    next: 'Siguiente',
+    pageOf: 'Página {page} de {total}',
+    receiptNumber: 'Recibo #{number}',
+    amountLabel: 'Monto:',
+    invoicePayments: 'Pagos a facturas',
+    noPrintersAvailable: 'No hay impresoras disponibles',
+    genericDocument: 'Documento',
+    noMatchesThisPage: 'No hay coincidencias en esta página.',
+    statusDraft: 'Borrador',
+    statusCompleted: 'Completado',
+    statusClosed: 'Cerrado',
+    statusVoided: 'Anulado',
+    statusInProgress: 'En proceso',
+    statusPrepared: 'Preparado',
+    statusWaitingCompletion: 'Esperando completar',
+    statusApproved: 'Aprobado',
+    statusRejected: 'Rechazado',
+    giftInvoice: 'Factura de regalo',
+    giftQuantityShort: 'Cant',
+    orderNumber: 'Orden Nro.',
+    dateLabel: 'Fecha',
+    servedBy: 'Atendido por',
+    identification: 'Identificación',
+    address: 'Dirección',
+    phoneLabel: 'Teléfono',
     invoicePayment: 'Pago a Factura',
     customerInvoices: 'Facturas del cliente',
     invoice: 'Factura',
@@ -720,6 +1047,53 @@ class AppLocale {
     settingsSaveError: 'Ocurrió un error al guardar. Revisa la consola.',
     noOrdersRegistered: 'Sin órdenes registradas',
     readyForFirstOrder: '¿Listo para realizar tu primera orden?',
+    systemParameters: 'Parámetros del sistema',
+    urlNotAvailable: 'URL no disponible',
+    production: 'Producción',
+    instance: 'Instancia',
+    isPointOfSale: 'Punto de venta',
+    operatingMode: 'Modo operativo',
+    pointOfSaleMode: 'Modo Punto de venta',
+    salesForceMode: 'Modo Fuerza de venta',
+    pointOfSaleModeDescription:
+        'Esta sesión utiliza la terminal PDV configurada.',
+    salesForceModeDescription: 'Esta sesión opera sin una terminal PDV.',
+    sessionParameters: 'Sesión',
+    terminalParameters: 'Terminal PDV',
+    userParameters: 'Usuario',
+    organizationParameters: 'Organización',
+    printingParameters: 'Impresión',
+    cacheParameters: 'Caché',
+    productCacheSize: 'Caché de productos (product_cache_v1)',
+    calculating: 'Calculando…',
+    clearProductCache: 'Eliminar caché de productos',
+    clearProductCacheTitle: '¿Eliminar el caché de productos?',
+    clearProductCacheMessage:
+        'Se eliminarán de este dispositivo todos los productos sincronizados localmente. Esta acción no se puede deshacer.',
+    productCacheCleared: 'El caché de productos fue eliminado.',
+    systemLogs: 'Logs del sistema',
+    notApplicable: 'No aplica',
+    enabled: 'Habilitado',
+    disabled: 'Deshabilitado',
+    posTerminal: 'Terminal PDV',
+    modifyPricePermission: 'Modificar precios',
+    defaultCustomer: 'Tercero predeterminado',
+    priceListVersion: 'Versión de lista de precios',
+    warehouse: 'Almacén',
+    paymentTerm: 'Término de pago',
+    bankAccount: 'Cuenta bancaria',
+    salesDocumentType: 'Tipo de documento de venta',
+    refundDocumentType: 'Tipo de documento de devolución',
+    discountCharge: 'Cargo de descuento',
+    discountTax: 'Impuesto de descuento',
+    multiplePayments: 'Múltiples pagos',
+    identifier: 'ID',
+    printerName: 'Nombre del encabezado',
+    printerAddress: 'Dirección del encabezado',
+    printerTaxId: 'RUC del encabezado',
+    printerDv: 'DV del encabezado',
+    printerPhone: 'Teléfono del encabezado',
+    printerEmail: 'Correo del encabezado',
     selectValidCustomerForProducts:
         'Seleccione un cliente válido para poder agregar productos a la orden.',
     selectCustomer: 'Seleccione un cliente',
@@ -756,6 +1130,7 @@ class AppLocale {
     edit: 'Editar',
     products: 'Productos',
     searchProducts: 'Buscar productos',
+    filterProduct: 'Filtrar producto',
     productCode: 'Código',
     productName: 'Nombre',
     salesYTDBySalesRepDescription:
@@ -763,6 +1138,31 @@ class AppLocale {
     productPrice: 'Precio',
     productStock: 'Stock',
     noProductsFound: 'No se encontraron productos.',
+    selectProducts: 'Selección de productos',
+    selectedProductsCount: '{count} seleccionados',
+    addToOrder: 'Añadir a la orden',
+    favorites: 'Favoritos',
+    noCategories: 'No hay categorías',
+    loadMoreProducts: 'Cargar más productos',
+    noMoreProducts: 'No hay más productos',
+    refineProductSearch:
+        'Hay más resultados. Refine la búsqueda o las categorías.',
+    syncProducts: 'Sincronizar productos',
+    syncingProducts: 'Sincronizando productos',
+    preparingSync: 'Preparando sincronización…',
+    productSyncError: 'No se pudieron sincronizar algunos productos.',
+    stop: 'Detener',
+    stopping: 'Deteniendo…',
+    page: 'Página',
+    cachedStock: 'Última existencia conocida',
+    updatingStock: 'Actualizando existencia…',
+    serverPriceChanged: 'El precio cambió en el servidor',
+    updatePrice: 'Actualizar precio',
+    priceValidationRequired:
+        'Actualice los precios modificados antes de procesar la orden.',
+    priceValidationFailed:
+        'No se pudieron validar los precios de los productos. Intente nuevamente.',
+    retry: 'Reintentar',
     login: 'Iniciar Sesión',
     user: 'Usuario',
     pass: 'Contraseña',
@@ -886,6 +1286,7 @@ class AppLocale {
     terminal: 'Terminal',
     product: 'Producto',
     paymentMethods: 'Métodos de pago',
+    refundMethods: 'Métodos de devolución',
     discounts: 'Descuentos',
     removeDiscount: 'Quitar descuento',
     paymentSumMustEqualTotal:

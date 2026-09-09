@@ -5,9 +5,7 @@ import '../../../API/endpoint.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 
-Future<Map<String, double>> fetchSalesYTDData({
-  required BuildContext context,
-}) async {
+Future<Map<String, double>> fetchSalesYTDData({required BuildContext context}) async {
   try {
     await usuarioAuth(context: context);
 
@@ -18,44 +16,23 @@ Future<Map<String, double>> fetchSalesYTDData({
 
     final response = await get(
       Uri.parse(chartUrl),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
     );
-    //TODO TRADUCIR
     if (response.statusCode != 200) {
-      debugPrint(
-        'Error al obtener datos del gráfico mensual (status ${response.statusCode}): ${response.body}',
-      );
+      debugPrint('Error al obtener datos del gráfico mensual (status ${response.statusCode}): ${response.body}');
       return {};
     }
 
     final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
     final List data = (jsonResponse['data'] as List?) ?? [];
 
-    const monthNames = <String>[
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ];
+    const monthNames = <String>['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     final Map<String, double> groupedTotals = {};
 
     for (final item in data) {
       final String? x = item['x']?.toString();
-      final num? yNum = item['y'] is num
-          ? item['y'] as num
-          : num.tryParse(item['y']?.toString() ?? '');
+      final num? yNum = item['y'] is num ? item['y'] as num : num.tryParse(item['y']?.toString() ?? '');
       if (x == null || yNum == null) continue;
 
       DateTime? date;
@@ -70,8 +47,7 @@ Future<Map<String, double>> fetchSalesYTDData({
         }
       }
 
-      final key =
-          '${date.year.toString()}-${date.month.toString().padLeft(2, '0')}';
+      final key = '${date.year.toString()}-${date.month.toString().padLeft(2, '0')}';
       groupedTotals[key] = (groupedTotals[key] ?? 0) + yNum.toDouble();
     }
 
@@ -100,10 +76,7 @@ Future<Map<String, double>> fetchSalesYTDData({
   }
 }
 
-Future<Map<String, double>> fetchSalesPerDay({
-  required BuildContext context,
-  int monthOffset = 0,
-}) async {
+Future<Map<String, double>> fetchSalesPerDay({required BuildContext context, int monthOffset = 0}) async {
   try {
     await usuarioAuth(context: context);
 
@@ -114,16 +87,11 @@ Future<Map<String, double>> fetchSalesPerDay({
 
     final response = await get(
       Uri.parse(chartUrl),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': Token.auth!,
-      },
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
     );
 
     if (response.statusCode != 200) {
-      debugPrint(
-        'Error al obtener datos del gráfico por día (status ${response.statusCode}): ${response.body}',
-      );
+      debugPrint('Error al obtener datos del gráfico por día (status ${response.statusCode}): ${response.body}');
       return {};
     }
 
@@ -132,21 +100,15 @@ Future<Map<String, double>> fetchSalesPerDay({
 
     final now = DateTime.now();
     final targetDate = DateTime(now.year, now.month + monthOffset, 1);
-    final targetMonthKey =
-        '${targetDate.year.toString().padLeft(4, '0')}-${targetDate.month.toString().padLeft(2, '0')}';
+    final targetMonthKey = '${targetDate.year.toString().padLeft(4, '0')}-${targetDate.month.toString().padLeft(2, '0')}';
 
     final Map<String, double> totalsByDate = {};
 
     for (final item in data) {
       final String? xStr = item['x']?.toString();
-      final num? yNum = item['y'] is num
-          ? item['y'] as num
-          : num.tryParse(item['y']?.toString() ?? '');
+      final num? yNum = item['y'] is num ? item['y'] as num : num.tryParse(item['y']?.toString() ?? '');
       final String? series = item['series']?.toString();
-      if (xStr == null ||
-          yNum == null ||
-          series == null ||
-          series.trim().isEmpty) {
+      if (xStr == null || yNum == null || series == null || series.trim().isEmpty) {
         continue;
       }
 
@@ -162,8 +124,7 @@ Future<Map<String, double>> fetchSalesPerDay({
         }
       }
 
-      final itemMonthKey =
-          '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}';
+      final itemMonthKey = '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}';
       if (itemMonthKey != targetMonthKey) continue;
 
       final dOnly = DateTime(dt.year, dt.month, dt.day);
@@ -172,35 +133,17 @@ Future<Map<String, double>> fetchSalesPerDay({
           '${dOnly.month.toString().padLeft(2, '0')}-'
           '${dOnly.day.toString().padLeft(2, '0')}';
 
-      totalsByDate[storageKey] =
-          (totalsByDate[storageKey] ?? 0) + yNum.toDouble();
+      totalsByDate[storageKey] = (totalsByDate[storageKey] ?? 0) + yNum.toDouble();
     }
 
-    const monthNames = <String>[
-      'Ene',
-      'Feb',
-      'Mar',
-      'Abr',
-      'May',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dic',
-    ];
+    const monthNames = <String>['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     final List<DateTime> sortedDates =
         totalsByDate.keys
             .map((k) {
               try {
                 final parts = k.split('-');
-                return DateTime(
-                  int.parse(parts[0]),
-                  int.parse(parts[1]),
-                  int.parse(parts[2]),
-                );
+                return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
               } catch (_) {
                 return null;
               }
@@ -215,8 +158,7 @@ Future<Map<String, double>> fetchSalesPerDay({
           '${d.year.toString().padLeft(4, '0')}-'
           '${d.month.toString().padLeft(2, '0')}-'
           '${d.day.toString().padLeft(2, '0')}';
-      final label =
-          '${d.day.toString().padLeft(2, '0')} ${monthNames[d.month - 1]}';
+      final label = '${d.day.toString().padLeft(2, '0')} ${monthNames[d.month - 1]}';
       ordered[label] = totalsByDate[storageKey] ?? 0.0;
     }
 
@@ -251,20 +193,12 @@ Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({
 
       final response = await get(
         Uri.parse(chartUrl),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': Token.auth!,
-        },
+        headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
       );
 
-      debugPrint(
-        'Respuesta del servidor (status ${response.statusCode}): ${response.body}',
-      );
-      //TODO TRADUCIR
+      debugPrint('Respuesta del servidor (status ${response.statusCode}): ${response.body}');
       if (response.statusCode != 200) {
-        debugPrint(
-          'Error al obtener datos del gráfico Sales YTD By SalesRep (status ${response.statusCode}): ${response.body}',
-        );
+        debugPrint('Error al obtener datos del gráfico Sales YTD By SalesRep (status ${response.statusCode}): ${response.body}');
         return {};
       }
 
@@ -275,8 +209,7 @@ Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({
     final List data = _cachedRawSalesYTDBySalesRep ?? [];
     final now = DateTime.now();
     final targetDate = DateTime(now.year, now.month + monthOffset, 1);
-    final currentMonthKey =
-        '${targetDate.year.toString().padLeft(4, '0')}-${targetDate.month.toString().padLeft(2, '0')}';
+    final currentMonthKey = '${targetDate.year.toString().padLeft(4, '0')}-${targetDate.month.toString().padLeft(2, '0')}';
 
     final Map<String, double> salesByRep = {};
 
@@ -285,17 +218,11 @@ Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({
       final String? columnDate = item['column']?.toString();
       final dynamic rawValue = item['value'];
 
-      if (salesRep == null ||
-          salesRep.trim().isEmpty ||
-          columnDate == null ||
-          columnDate.trim().isEmpty ||
-          rawValue == null) {
+      if (salesRep == null || salesRep.trim().isEmpty || columnDate == null || columnDate.trim().isEmpty || rawValue == null) {
         continue;
       }
 
-      final num? value = rawValue is num
-          ? rawValue
-          : num.tryParse(rawValue.toString());
+      final num? value = rawValue is num ? rawValue : num.tryParse(rawValue.toString());
       if (value == null) continue;
 
       DateTime? parsedDate;
@@ -310,15 +237,13 @@ Future<Map<String, double>> fetchSalesYTDBySalesRepCurrentMonth({
         }
       }
 
-      final itemMonthKey =
-          '${parsedDate.year.toString().padLeft(4, '0')}-${parsedDate.month.toString().padLeft(2, '0')}';
+      final itemMonthKey = '${parsedDate.year.toString().padLeft(4, '0')}-${parsedDate.month.toString().padLeft(2, '0')}';
       if (itemMonthKey != currentMonthKey) continue;
 
       salesByRep[salesRep] = (salesByRep[salesRep] ?? 0) + value.toDouble();
     }
 
-    final orderedEntries = salesByRep.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final orderedEntries = salesByRep.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
     return {for (final entry in orderedEntries) entry.key: entry.value};
   } catch (e) {
@@ -343,10 +268,7 @@ Future<Map<String, double>> fetchSalesPerDayByProductCategory({
 
       final response = await get(
         Uri.parse(chartUrl),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': Token.auth!,
-        },
+        headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
       );
 
       if (response.statusCode != 200) {
@@ -363,17 +285,12 @@ Future<Map<String, double>> fetchSalesPerDayByProductCategory({
       }
 
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
-      _cachedRawSalesPerDayByProductCategory =
-          (jsonResponse['data'] as List?) ?? [];
+      _cachedRawSalesPerDayByProductCategory = (jsonResponse['data'] as List?) ?? [];
     }
 
     final List data = _cachedRawSalesPerDayByProductCategory ?? [];
     final now = DateTime.now();
-    final targetDate = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).add(Duration(days: dayOffset));
+    final targetDate = DateTime(now.year, now.month, now.day).add(Duration(days: dayOffset));
 
     final Map<String, double> salesByCategory = {};
 
@@ -382,17 +299,11 @@ Future<Map<String, double>> fetchSalesPerDayByProductCategory({
       final String? columnDate = item['column']?.toString();
       final dynamic rawValue = item['value'];
 
-      if (categoryName == null ||
-          categoryName.trim().isEmpty ||
-          columnDate == null ||
-          columnDate.trim().isEmpty ||
-          rawValue == null) {
+      if (categoryName == null || categoryName.trim().isEmpty || columnDate == null || columnDate.trim().isEmpty || rawValue == null) {
         continue;
       }
 
-      final num? value = rawValue is num
-          ? rawValue
-          : num.tryParse(rawValue.toString());
+      final num? value = rawValue is num ? rawValue : num.tryParse(rawValue.toString());
       if (value == null) continue;
 
       DateTime? parsedDate;
@@ -407,32 +318,20 @@ Future<Map<String, double>> fetchSalesPerDayByProductCategory({
         }
       }
 
-      final itemDate = DateTime(
-        parsedDate.year,
-        parsedDate.month,
-        parsedDate.day,
-      );
+      final itemDate = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
 
-      if (itemDate.year != targetDate.year ||
-          itemDate.month != targetDate.month ||
-          itemDate.day != targetDate.day) {
+      if (itemDate.year != targetDate.year || itemDate.month != targetDate.month || itemDate.day != targetDate.day) {
         continue;
       }
 
-      salesByCategory[categoryName] =
-          (salesByCategory[categoryName] ?? 0) + value.toDouble();
+      salesByCategory[categoryName] = (salesByCategory[categoryName] ?? 0) + value.toDouble();
     }
 
-    final orderedEntries = salesByCategory.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final orderedEntries = salesByCategory.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
     return {for (final entry in orderedEntries) entry.key: entry.value};
   } catch (e) {
-    CurrentLogMessage.add(
-      'Excepción en fetchSalesPerDayByProductCategory: $e',
-      level: 'ERROR',
-      tag: 'fetchSalesPerDayByProductCategory',
-    );
+    CurrentLogMessage.add('Excepción en fetchSalesPerDayByProductCategory: $e', level: 'ERROR', tag: 'fetchSalesPerDayByProductCategory');
     debugPrint('Error en fetchSalesPerDayByProductCategory: $e');
     return {};
   }

@@ -19,7 +19,7 @@ import '../../API/user.api.dart';
 import 'login_view.dart';
 import 'loading_dialog.dart';
 import '../Home/order/product_selection_popup.dart';
-import 'dart:ui';
+import '../Home/product/product_sync_controller.dart';
 import '../../shared/glass_switch.dart';
 
 class ConfigPage extends StatefulWidget {
@@ -40,7 +40,7 @@ class _ConfigPageState extends State<ConfigPage> {
   List<Map<String, dynamic>> clients = [];
   List<Map<String, dynamic>> roles = [];
   List<Map<String, dynamic>> organizations = [];
-  
+
   // Cachés locales para evitar volver a consultar si el usuario cambia de opción y regresa
   final Map<int, List<Map<String, dynamic>>> _cachedRoles = {};
   final Map<String, List<Map<String, dynamic>>> _cachedOrgs = {};
@@ -79,6 +79,7 @@ class _ConfigPageState extends State<ConfigPage> {
       roles = [];
       selectedRoleId = null;
       organizations = [];
+      UserData.organizations = [];
       selectedOrganizationId = null;
       isLoading = true;
     });
@@ -125,6 +126,7 @@ class _ConfigPageState extends State<ConfigPage> {
     setState(() {
       selectedRoleId = roleId;
       organizations = [];
+      UserData.organizations = [];
       selectedOrganizationId = null;
       isLoading = true;
     });
@@ -134,6 +136,7 @@ class _ConfigPageState extends State<ConfigPage> {
       if (_cachedOrgs.containsKey(cacheKey)) {
         setState(() {
           organizations = _cachedOrgs[cacheKey]!;
+          UserData.organizations = List<Map<String, dynamic>>.from(organizations);
           if (organizations.length == 1) {
             selectedOrganizationId = organizations[0]['id'];
             _onOrganizationSelected(selectedOrganizationId);
@@ -147,6 +150,7 @@ class _ConfigPageState extends State<ConfigPage> {
           _cachedOrgs[cacheKey] = fetchedOrganizations;
           setState(() {
             organizations = fetchedOrganizations;
+            UserData.organizations = List<Map<String, dynamic>>.from(organizations);
 
             if (organizations.length == 1) {
               selectedOrganizationId = organizations[0]['id'];
@@ -215,17 +219,27 @@ class _ConfigPageState extends State<ConfigPage> {
       POS.priceListID = null;
       POS.priceListVersionID = null;
       POS.bankAccountID = null;
+      POS.cPaymentTermID = null;
       POS.docTypeID = null;
       POS.docTypeName = null;
+      POS.docSubType = null;
       POS.docTypeRefundName = null;
+      POS.docSubTypeRefund = null;
       POS.templatePartnerID = null;
+      POS.templatePartnerName = null;
       POS.docTypeRefundID = null;
+      POS.warehouseID = null;
+      POS.discountChargeID = null;
+      POS.discountTaxID = null;
+      POS.discountTaxRate = null;
       POS.isPOS = false;
+      POS.isModifyPrice = false;
       POS.documentActions.clear();
       POS.principalTaxs.clear();
       POS.docTypesComplete.clear();
       clearDashboardRawCache();
       ProductSelectionPopup.clearGlobalCache();
+      ProductSyncController.instance.cancelForSessionChange();
 
       bool login = await usuarioAuth(context: context, forceNewToken: true);
 

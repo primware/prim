@@ -45,8 +45,13 @@ class EndPoints {
 
   static String get mProduct => '${Base.baseURL}/api/v1/models/M_Product';
 
+  static String get rvPosProductSearch =>
+      '${Base.baseURL}/api/v1/models/RV_POS_Product_Search';
+
   static String get mProductPrice =>
       '${Base.baseURL}/api/v1/models/M_ProductPrice';
+
+  static String get mStorage => '${Base.baseURL}/api/v1/models/M_Storage';
 
   static String get mProductCategory =>
       '${Base.baseURL}/api/v1/models/M_Product_Category';

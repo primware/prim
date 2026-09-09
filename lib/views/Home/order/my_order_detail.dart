@@ -34,6 +34,12 @@ class OrderDetailPage extends StatelessWidget {
 
   const OrderDetailPage({super.key, required this.order});
 
+  bool _isReturnOrder(Map<String, dynamic> value) {
+    final subtype = value['doctypetarget']?['subtype'];
+    final subtypeCode = subtype is Map ? subtype['id'] : subtype;
+    return subtypeCode?.toString() == 'RM' || value['doctypetarget']?['id'] == POS.docTypeRefundID;
+  }
+
   // Función para mostrar la confirmación de imprimir ticket
   Future<bool?> _printTicketConfirmation(BuildContext context) {
     return showDialog<bool>(
@@ -185,8 +191,7 @@ class OrderDetailPage extends StatelessWidget {
   }
 
   Widget _buildSubtypePill(BuildContext context, Map<String, dynamic> order) {
-    final sub = order['doctypetarget']?['subtype']?['id'];
-    final bool isReturn = (sub == 'RM') || (order['doctypetarget']?['id'] == POS.docTypeRefundID);
+    final bool isReturn = _isReturnOrder(order);
     final String? docName = order['doctypetarget']?['name'];
 
     return Padding(
@@ -195,7 +200,7 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCreditMemoPill() {
+  Widget _buildCreditMemoPill(BuildContext context) {
     const Color baseColor = Colors.red;
     final Color bgColor = baseColor.withOpacity(0.12);
 
@@ -212,8 +217,8 @@ class OrderDetailPage extends StatelessWidget {
         children: [
           Icon(Icons.receipt_long_outlined, size: 14, color: baseColor),
           const SizedBox(width: 6),
-          const Text(
-            'Nota de Crédito',
+          Text(
+            AppLocale.refundGenerated.getString(context),
             style: TextStyle(fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
           ),
         ],
@@ -253,16 +258,12 @@ class OrderDetailPage extends StatelessWidget {
     final int? orderId = (order['id'] as int?);
     final Future<Map<String, dynamic>?> feFuture = orderId != null ? fetchElectronicInvoiceInfo(orderId: orderId) : Future.value(null);
 
-    final dynamic subField = order['doctypetarget']?['subtype'];
-    final String? subId = (subField is Map) ? subField['id'] : subField;
-    final bool isReturn = subId == 'RM';
+    final bool isReturn = _isReturnOrder(order);
 
     // --- Validaciones de Estado y Nota de Crédito ---
     final bool isComplete = (order['DocStatus'] == 'CO');
     final List invoices = order['C_Invoice'] ?? [];
-    final bool hasCreditNote = invoices.any((inv) {
-      return inv['RelatedInvoice_ID'] != null;
-    });
+    final bool hasCreditNote = !isReturn && order['hasActiveReturn'] == true;
 
     // Obtener métodos de pago
     final List<dynamic> payments = (order['C_POSPayment'] ?? order['payments'] ?? []) as List<dynamic>;
@@ -375,9 +376,22 @@ class OrderDetailPage extends StatelessWidget {
               }
 
               void actionRefund() async {
+                if (orderId == null) return;
+                try {
+                  if (await hasActiveReturnForOrder(orderId: orderId, invoices: invoices)) {
+                    if (!context.mounted) return;
+                    ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+                    Navigator.pop(context, true);
+                    return;
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+                  return;
+                }
                 final bool? confirm = await _refundConfirmation(context);
                 if (confirm == true) {
-                  Navigator.push(
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => OrderNewPage(
@@ -388,12 +402,46 @@ class OrderDetailPage extends StatelessWidget {
                       ),
                     ),
                   );
+                  if (context.mounted) Navigator.pop(context, true);
                 }
               }
 
               void actionArc() async {
+                if (orderId == null) return;
+                try {
+                  if (await hasActiveReturnForOrder(orderId: orderId, invoices: invoices)) {
+                    if (!context.mounted) return;
+                    ToastMessage.show(context: context, message: AppLocale.returnAlreadyExists.getString(context), type: ToastType.warning);
+                    Navigator.pop(context, true);
+                    return;
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  ToastMessage.show(context: context, message: AppLocale.returnValidationError.getString(context), type: ToastType.failure);
+                  return;
+                }
                 final bool? confirm = await _creditMemoConfirmation(context);
                 if (confirm == true) {
+                  try {
+                    if (await hasActiveReturnForOrder(orderId: orderId, invoices: invoices)) {
+                      if (!context.mounted) return;
+                      ToastMessage.show(
+                        context: context,
+                        message: AppLocale.returnAlreadyExists.getString(context),
+                        type: ToastType.warning,
+                      );
+                      Navigator.pop(context, true);
+                      return;
+                    }
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    ToastMessage.show(
+                      context: context,
+                      message: AppLocale.returnValidationError.getString(context),
+                      type: ToastType.failure,
+                    );
+                    return;
+                  }
                   final bool creditMemoSucces = await createCreditMemo(cInvoiceID: order['C_Invoice']?[0]?['id']);
                   if (creditMemoSucces) {
                     Navigator.pop(context, true);
@@ -544,7 +592,7 @@ class OrderDetailPage extends StatelessWidget {
                         );
                       }
 
-                      if (isReturn == false && POS.isPOS == true && !hasCreditNote) {
+                      if (isReturn == false && POS.isPOS == true && isComplete && !hasCreditNote && invoices.isNotEmpty) {
                         items.add(
                           PopupMenuItem<String>(
                             value: 'refund',
@@ -558,7 +606,7 @@ class OrderDetailPage extends StatelessWidget {
                           ),
                         );
                       }
-                      if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
+                      if (isReturn == false && POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty) {
                         items.add(
                           PopupMenuItem<String>(
                             value: 'arc',
@@ -591,14 +639,14 @@ class OrderDetailPage extends StatelessWidget {
                         onPressed: actionComplete,
                       ),
 
-                    if (isReturn == false && POS.isPOS == true && !hasCreditNote)
+                    if (isReturn == false && POS.isPOS == true && isComplete && !hasCreditNote && invoices.isNotEmpty)
                       IconButton(
                         icon: const Icon(Icons.undo, color: Colors.redAccent),
                         tooltip: AppLocale.refund.getString(context),
                         onPressed: actionRefund,
                       ),
 
-                    if (POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty)
+                    if (isReturn == false && POS.isPOS == false && isComplete == true && !hasCreditNote && invoices.isNotEmpty)
                       IconButton(
                         icon: const Icon(Icons.receipt_long_outlined, color: Colors.redAccent),
                         tooltip: AppLocale.arc.getString(context),
@@ -912,13 +960,17 @@ class OrderDetailPage extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
             ),
             const SizedBox(height: 4),
-            Text(formatDateUI(order['DateOrdered']), style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+            Text(formatIdempiereDateUI(order['Created']?.toString() ?? ''), style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
 
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 4,
-              children: [_buildSubtypePill(context, order), _buildDocStatusPill(context, order), if (hasCreditNote) _buildCreditMemoPill()],
+              children: [
+                _buildSubtypePill(context, order),
+                _buildDocStatusPill(context, order),
+                if (hasCreditNote) _buildCreditMemoPill(context),
+              ],
             ),
           ],
         );

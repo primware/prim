@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:searchfield/searchfield.dart';
 
@@ -53,12 +52,11 @@ class CustomSearchField extends StatefulWidget {
 
 class _CustomSearchFieldState extends State<CustomSearchField> {
   late final TextEditingController _controller = widget.controller ?? TextEditingController();
-  Timer? _debounce;
+  int _searchGeneration = 0;
   final FocusNode _internalFocusNode = FocusNode();
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _controller.removeListener(_handleTextChange);
     if (widget.controller == null) {
       _controller.dispose();
@@ -86,67 +84,64 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
   }
 
   Future<List<SearchFieldListItem<Map<String, dynamic>>>> _onSearchItems(String query) async {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-
-    final completer = Completer<List<SearchFieldListItem<Map<String, dynamic>>>>();
-
-    _debounce = Timer(const Duration(milliseconds: 0), () async {
-      List<Map<String, dynamic>> results;
-      if (widget.onSearch != null) {
-        results = await widget.onSearch!(query);
-      } else {
-        results = widget.options.where((item) {
-          final name = (item['name'] ?? '').toString().toLowerCase();
-          final customField = (item[widget.searchBy] ?? '').toString().toLowerCase();
-          return name.contains(query.toLowerCase()) || customField.contains(query.toLowerCase());
-        }).toList();
-      }
-
-      final suggestions = results.map((item) {
-        return SearchFieldListItem<Map<String, dynamic>>((item['name'] ?? '').toString(), item: item, child: widget.itemBuilder != null ? widget.itemBuilder!(item) : _defaultItemBuilder(item));
+    final generation = ++_searchGeneration;
+    final normalized = query.trim().toLowerCase();
+    List<Map<String, dynamic>> results;
+    if (widget.onSearch != null && normalized.length >= 2) {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      if (generation != _searchGeneration) return const [];
+      results = await widget.onSearch!(query);
+      if (generation != _searchGeneration) return const [];
+    } else {
+      results = widget.options.where((item) {
+        final name = (item['name'] ?? '').toString().toLowerCase();
+        final customField = (item[widget.searchBy] ?? '').toString().toLowerCase();
+        return name.contains(normalized) || customField.contains(normalized);
       }).toList();
+    }
 
-      if (suggestions.isEmpty && widget.showCreateButtonIfNotFound && _controller.text.trim().isNotEmpty) {
-        suggestions.add(
-          SearchFieldListItem<Map<String, dynamic>>(
-            _controller.text,
-            item: {},
-            child: GestureDetector(
-              onTap: () {
-                if (widget.onCreate != null) {
-                  widget.onCreate!(_controller.text);
-                }
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.add_circle_outline, color: Colors.blueAccent),
-                    const SizedBox(width: CustomSpacer.small),
-                    Expanded(
-                      child: Text(
-                        'Crear ${widget.labelText} "${_controller.text}"',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.blueAccent),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+    final suggestions = results
+        .map(
+          (item) => SearchFieldListItem<Map<String, dynamic>>(
+            (item['name'] ?? '').toString(),
+            item: item,
+            child: widget.itemBuilder != null ? widget.itemBuilder!(item) : _defaultItemBuilder(item),
+          ),
+        )
+        .toList();
+    if (suggestions.isEmpty && widget.showCreateButtonIfNotFound && _controller.text.trim().isNotEmpty) {
+      suggestions.add(
+        SearchFieldListItem<Map<String, dynamic>>(
+          _controller.text,
+          item: {},
+          child: GestureDetector(
+            onTap: () => widget.onCreate?.call(_controller.text),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.add_circle_outline, color: Colors.blueAccent),
+                  const SizedBox(width: CustomSpacer.small),
+                  Expanded(
+                    child: Text(
+                      'Crear ${widget.labelText} "${_controller.text}"',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.blueAccent),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-        );
-      }
-
-      completer.complete(suggestions);
-    });
-
-    return completer.future;
+        ),
+      );
+    }
+    return suggestions;
   }
 
   Widget _defaultItemBuilder(Map<String, dynamic> item) {
@@ -166,7 +161,11 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
   Widget build(BuildContext context) {
     // Build the local items list from widget.options
     List<SearchFieldListItem<Map<String, dynamic>>> items = widget.options.map((item) {
-      return SearchFieldListItem<Map<String, dynamic>>((item['name'] ?? '').toString(), item: item, child: widget.itemBuilder != null ? widget.itemBuilder!(item) : _defaultItemBuilder(item));
+      return SearchFieldListItem<Map<String, dynamic>>(
+        (item['name'] ?? '').toString(),
+        item: item,
+        child: widget.itemBuilder != null ? widget.itemBuilder!(item) : _defaultItemBuilder(item),
+      );
     }).toList();
 
     if (items.isEmpty && widget.showCreateButtonIfNotFound && _controller.text.trim().isNotEmpty) {
@@ -218,7 +217,12 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
         }
       },
       suggestions: items,
-      suggestionsDecoration: SuggestionDecoration(color: Theme.of(context).cardColor, hoverColor: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(8), selectionColor: Theme.of(context).cardColor),
+      suggestionsDecoration: SuggestionDecoration(
+        color: Theme.of(context).cardColor,
+        hoverColor: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(8),
+        selectionColor: Theme.of(context).cardColor,
+      ),
       searchInputDecoration: SearchInputDecoration(
         labelText: widget.labelText,
         labelStyle: Theme.of(context).textTheme.bodyMedium,

@@ -10,8 +10,11 @@ import 'package:primware/shared/custom_spacer.dart';
 import 'package:primware/views/Auth/login_view.dart';
 import 'package:primware/views/Home/dashboard/dashboard_view.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
+import 'package:primware/views/Home/order/held_ticket.dart';
+import 'package:primware/views/Home/order/held_ticket_page.dart';
 import 'package:primware/views/Home/invoice/invoice_new.dart';
 import 'package:primware/views/Home/product/product_view.dart';
+import 'package:primware/views/Home/product/product_sync_controller.dart';
 import 'package:primware/views/Home/report/close_cash_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -135,6 +138,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
   void initState() {
     super.initState();
     _loadTheme();
+    HeldTicketStore.instance.refresh();
   }
 
   Future<void> _loadTheme() async {
@@ -159,6 +163,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
   }
 
   Future<void> cleanSessionData() async {
+    ProductSyncController.instance.cancelForSessionChange();
     // Limpiar controladores
     usuarioController.clear();
     claveController.clear();
@@ -180,17 +185,27 @@ class _MenuDrawerState extends State<MenuDrawer> {
     UserData.phone = null;
     UserData.imageBytes = null;
     UserData.rolName = null;
+    UserData.organizations = [];
 
     // Limpiar datos POS
     POS.priceListID = null;
     POS.priceListVersionID = null;
     POS.bankAccountID = null;
+    POS.cPaymentTermID = null;
     POS.docTypeID = null;
     POS.docTypeName = null;
+    POS.docSubType = null;
     POS.docTypeRefundName = null;
+    POS.docSubTypeRefund = null;
     POS.templatePartnerID = null;
+    POS.templatePartnerName = null;
     POS.docTypeRefundID = null;
+    POS.warehouseID = null;
+    POS.discountChargeID = null;
+    POS.discountTaxID = null;
+    POS.discountTaxRate = null;
     POS.isPOS = false;
+    POS.isModifyPrice = false;
     POS.documentActions.clear();
     POS.principalTaxs.clear();
     POS.docTypesComplete.clear();
@@ -222,12 +237,13 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 const SizedBox(height: CustomSpacer.medium),
                 _buildSectionTitle(context, 'OPERACIONES COMERCIALES'),
 
-                _buildMenuItem(
-                  context,
-                  icon: Icons.payments_outlined,
-                  title: AppLocale.invoicePayment.getString(context),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicePaymentPage())),
-                ),
+                if (POS.isPOS)
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.payments_outlined,
+                    title: AppLocale.invoicePayment.getString(context),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InvoicePaymentPage())),
+                  ),
 
                 // Pedidos / Ventas Dinámicos de iDempiere
                 if (POS.docTypesComplete.isEmpty)
@@ -267,6 +283,18 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   icon: Icons.receipt_long_outlined,
                   title: AppLocale.myOrders.getString(context),
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderListPage())),
+                ),
+
+                ValueListenableBuilder<int>(
+                  valueListenable: HeldTicketStore.instance.count,
+                  builder: (context, count, _) => count == 0
+                      ? const SizedBox.shrink()
+                      : _buildMenuItem(
+                          context,
+                          icon: Icons.pause_circle_outline,
+                          title: '${AppLocale.heldTickets.getString(context)} ($count)',
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HeldTicketPage())),
+                        ),
                 ),
 
                 // Sección Punto de Venta
@@ -476,8 +504,29 @@ class _MenuDrawerState extends State<MenuDrawer> {
     // Verificar si ya hay un cierre de caja abierto
     int? closeCashId = await currentCloseCash();
     if (closeCashId != null) {
-      await updateCloseCashDateTrx(cdsCloseCashID: closeCashId);
-      await refreshCloseCash(cdsCloseCashID: closeCashId);
+      final updateResult = await updateCloseCashDateTrx(cdsCloseCashID: closeCashId);
+      if (updateResult['success'] != true) {
+        if (!mounted) return;
+        setState(() => _isCreatingCloseCash = false);
+        ToastMessage.show(
+          context: context,
+          message: updateResult['message']?.toString() ?? 'No se pudo actualizar la fecha del cierre de caja.',
+          type: ToastType.failure,
+        );
+        return;
+      }
+
+      final processResult = await refreshCloseCash(cdsCloseCashID: closeCashId);
+      if (processResult['success'] != true) {
+        if (!mounted) return;
+        setState(() => _isCreatingCloseCash = false);
+        ToastMessage.show(
+          context: context,
+          message: processResult['message']?.toString() ?? 'No se pudo calcular el cierre de caja.',
+          type: ToastType.failure,
+        );
+        return;
+      }
 
       if (!mounted) return;
       setState(() => _isCreatingCloseCash = false);
@@ -497,7 +546,11 @@ class _MenuDrawerState extends State<MenuDrawer> {
       if (result['success'] == true) {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: result)));
       } else {
-        ToastMessage.show(context: context, message: 'No se pudo crear el cierre de caja', type: ToastType.failure);
+        ToastMessage.show(
+          context: context,
+          message: result['message']?.toString() ?? 'No se pudo crear el cierre de caja.',
+          type: ToastType.failure,
+        );
       }
     } catch (e) {
       if (!mounted) return;

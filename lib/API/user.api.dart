@@ -10,4 +10,5 @@ class UserData {
   static String? phone;
   static Uint8List? imageBytes;
   static List<dynamic>? clients;
+  static List<Map<String, dynamic>> organizations = [];
 }

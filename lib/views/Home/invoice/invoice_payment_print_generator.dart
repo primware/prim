@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:primware/API/pos.api.dart';
 
 import 'invoice_payment_receipt.dart';
+import '../../../shared/document_number_barcode.dart';
 
 String _money(num value) => 'B/.${value.toStringAsFixed(2)}';
 
@@ -82,6 +83,7 @@ List<pw.Widget> _body(InvoicePaymentReceipt receipt, {required bool compact}) =>
     textAlign: pw.TextAlign.center,
     style: pw.TextStyle(fontSize: compact ? 7 : 9),
   ),
+  documentNumberBarcode(receipt.displayDocumentNo, isPOS: compact),
 ];
 
 Future<Uint8List> generateInvoicePaymentPOSTicket(InvoicePaymentReceipt receipt) async {
@@ -95,7 +97,8 @@ Future<Uint8List> generateInvoicePaymentPOSTicket(InvoicePaymentReceipt receipt)
     POSPrinter.headerPhone,
     POSPrinter.headerEmail,
   ].where((value) => (value ?? '').trim().isNotEmpty).length;
-  final heightMm = 165 + rowCount * 9 + configuredHeaderLines * 6 + (POSPrinter.logo == null ? 0 : 32);
+  // Reserva 25 mm para el código de barras y sus espacios superior e inferior.
+  final heightMm = 190 + rowCount * 9 + configuredHeaderLines * 6 + (POSPrinter.logo == null ? 0 : 32);
   final pageFormat = PdfPageFormat.roll80.copyWith(
     width: 75 * PdfPageFormat.mm,
     height: heightMm * PdfPageFormat.mm,

@@ -21,6 +21,7 @@ class POS {
   static String? templatePartnerName;
   static String? currencySymbol = '\$';
   static bool isPOS = false;
+  static bool isModifyPrice = false;
 
   static List<Map<String, dynamic>> docTypesComplete = [];
 
@@ -66,7 +67,7 @@ class POSPrinter {
   static String? footer4;
 }
 
-class docSubTypeSO {
+class DocSubTypeSO {
   static String factura = 'WI';
   static String pedido = 'SO';
   static String cotizacion = 'OB';
