@@ -67,7 +67,7 @@ class POSPrinter {
   static String? footer4;
 }
 
-class docSubTypeSO {
+class DocSubTypeSO {
   static String factura = 'WI';
   static String pedido = 'SO';
   static String cotizacion = 'OB';

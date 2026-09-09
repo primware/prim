@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:primware/API/pos.api.dart';
-import '../../../shared/format_date.dart';
+import 'close_cash_dates.dart';
 
 Future<Uint8List> generateCloseCashPOSTicket(Map<String, dynamic> data) async {
   final pdf = pw.Document();
@@ -22,8 +22,8 @@ Future<Uint8List> generateCloseCashPOSTicket(Map<String, dynamic> data) async {
   // Data fields
   final terminal = str(data['C_POS_ID']?['name'] ?? '---');
   final rep = str(data['SalesRep_ID']?['name'] ?? '---');
-  final String dateTrx = formatDateUI(str(data['DateTrx']));
-  final String dateFrom = formatDateUI(str(data['DateFrom']));
+  final String dateTrx = formatCloseCashDateUI(str(data['DateTrx']));
+  final String dateFrom = formatCloseCashDateUI(str(data['DateFrom']));
   final int totalOrders = (data['QtyOrders'] ?? 0) as int;
 
   final double taxBase = toDouble(data['TaxBaseAmt']);
@@ -174,12 +174,6 @@ Future<Uint8List> generateCloseCashPOSTicket(Map<String, dynamic> data) async {
               ),
               pw.SizedBox(height: 12),
             ],
-
-            // Pie de pagina (footer)
-            if (hasHeaderValue(POSPrinter.footer1)) pw.Text(POSPrinter.footer1!, textAlign: pw.TextAlign.center),
-            if (hasHeaderValue(POSPrinter.footer2)) pw.Text(POSPrinter.footer2!, textAlign: pw.TextAlign.center),
-            if (hasHeaderValue(POSPrinter.footer3)) pw.Text(POSPrinter.footer3!, textAlign: pw.TextAlign.center),
-            if (hasHeaderValue(POSPrinter.footer4)) pw.Text(POSPrinter.footer4!, textAlign: pw.TextAlign.center),
           ],
         );
       },

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 // import 'package:primware/localization/app_locale.dart';
 import '../../../shared/format_date.dart';
+import '../../../shared/document_number_barcode.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:pdf/pdf.dart';
@@ -15,30 +16,6 @@ import 'order_line_helper.dart';
 bool _hasHeaderValue(dynamic value) {
   final text = value?.toString().trim() ?? '';
   return text.isNotEmpty && text != '?';
-}
-
-pw.Widget _documentNumberBarcode(String documentNumber, {required bool isPOS}) {
-  final value = documentNumber.trim();
-  if (value.isEmpty) return pw.SizedBox();
-
-  return pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-    children: [
-      pw.SizedBox(height: isPOS ? 12 : 18),
-      pw.Center(
-        child: pw.BarcodeWidget(
-          data: value,
-          barcode: pw.Barcode.code128(),
-          width: isPOS ? 150 : 240,
-          height: isPOS ? 48 : 64,
-          drawText: true,
-          textPadding: isPOS ? 2 : 4,
-          textStyle: pw.TextStyle(fontSize: isPOS ? 8 : 10),
-        ),
-      ),
-      pw.SizedBox(height: isPOS ? 10 : 14),
-    ],
-  );
 }
 
 class GiftInvoiceLabels {
@@ -78,7 +55,7 @@ Future<Uint8List> _generateGiftInvoice(Map<String, dynamic> order, {required Gif
   final lines = (order['C_OrderLine'] as List?) ?? const [];
   String str(dynamic value) => value?.toString() ?? '';
   final docNo = str(order['DocumentNo']);
-  final date = formatDateUI(str(order['DateOrdered']));
+  final date = formatIdempiereDateUI(str(order['DateOrdered']));
   final servedBy = str(order['SalesRep_ID']?['name']);
   final taxID = str(order['bpartner']?['taxID']);
   final phone = str(order['bpartner']?['phone']);
@@ -147,7 +124,7 @@ Future<Uint8List> _generateGiftInvoice(Map<String, dynamic> order, {required Gif
         cellAlignments: {0: pw.Alignment.centerLeft, 1: pw.Alignment.centerRight},
       ),
     pw.SizedBox(height: 14),
-    _documentNumberBarcode(docNo, isPOS: isPOS),
+    documentNumberBarcode(docNo, isPOS: isPOS),
     ...footer(),
     if (isPOS) pw.SizedBox(height: 56),
   ];
@@ -186,7 +163,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
   bool hasHeaderValue(dynamic value) => _hasHeaderValue(value);
   String docTypename = order['doctypetarget']?['name'] ?? '';
   final docNo = str(order['DocumentNo']);
-  final date = formatDateUI(str(order['DateOrdered']));
+  final date = formatIdempiereDateUI(str(order['DateOrdered']));
   final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
   final taxID = str(order['bpartner']?['taxID'] ?? '');
   final phone = str(order['bpartner']?['phone'] ?? '');
@@ -308,7 +285,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order) async {
           pw.Text(feInfo['url'] ?? '', style: pw.TextStyle(fontSize: 8)),
           pw.SizedBox(height: 6),
         ],
-        _documentNumberBarcode(docNo, isPOS: false),
+        documentNumberBarcode(docNo, isPOS: false),
         if (hasHeaderValue(POSPrinter.footer1)) pw.Text(POSPrinter.footer1!, textAlign: pw.TextAlign.center),
         if (hasHeaderValue(POSPrinter.footer2)) pw.Text(POSPrinter.footer2!, textAlign: pw.TextAlign.center),
         if (hasHeaderValue(POSPrinter.footer3)) pw.Text(POSPrinter.footer3!, textAlign: pw.TextAlign.center),
@@ -386,7 +363,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
 
   // Order fields (safe access)
   final docNo = str(order['DocumentNo']);
-  final date = formatDateUI(str(order['DateOrdered']));
+  final date = formatIdempiereDateUI(str(order['DateOrdered']));
   final servedBy = str(order['SalesRep_ID']?['name'] ?? '');
   final taxID = str(order['bpartner']['taxID'] ?? '');
   final phone = str(order['bpartner']['phone'] ?? '');
@@ -562,7 +539,7 @@ Future<Uint8List> generatePOSTicket(Map<String, dynamic> order) async {
               pw.SizedBox(height: 10),
             ],
 
-            _documentNumberBarcode(docNo, isPOS: true),
+            documentNumberBarcode(docNo, isPOS: true),
 
             // Footer
             if (hasHeaderValue(POSPrinter.footer1)) pw.Text(POSPrinter.footer1!, textAlign: pw.TextAlign.center),

@@ -20,7 +20,6 @@ import 'login_view.dart';
 import 'loading_dialog.dart';
 import '../Home/order/product_selection_popup.dart';
 import '../Home/product/product_sync_controller.dart';
-import 'dart:ui';
 import '../../shared/glass_switch.dart';
 
 class ConfigPage extends StatefulWidget {

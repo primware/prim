@@ -504,8 +504,29 @@ class _MenuDrawerState extends State<MenuDrawer> {
     // Verificar si ya hay un cierre de caja abierto
     int? closeCashId = await currentCloseCash();
     if (closeCashId != null) {
-      await updateCloseCashDateTrx(cdsCloseCashID: closeCashId);
-      await refreshCloseCash(cdsCloseCashID: closeCashId);
+      final updateResult = await updateCloseCashDateTrx(cdsCloseCashID: closeCashId);
+      if (updateResult['success'] != true) {
+        if (!mounted) return;
+        setState(() => _isCreatingCloseCash = false);
+        ToastMessage.show(
+          context: context,
+          message: updateResult['message']?.toString() ?? 'No se pudo actualizar la fecha del cierre de caja.',
+          type: ToastType.failure,
+        );
+        return;
+      }
+
+      final processResult = await refreshCloseCash(cdsCloseCashID: closeCashId);
+      if (processResult['success'] != true) {
+        if (!mounted) return;
+        setState(() => _isCreatingCloseCash = false);
+        ToastMessage.show(
+          context: context,
+          message: processResult['message']?.toString() ?? 'No se pudo calcular el cierre de caja.',
+          type: ToastType.failure,
+        );
+        return;
+      }
 
       if (!mounted) return;
       setState(() => _isCreatingCloseCash = false);
@@ -525,7 +546,11 @@ class _MenuDrawerState extends State<MenuDrawer> {
       if (result['success'] == true) {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: result)));
       } else {
-        ToastMessage.show(context: context, message: 'No se pudo crear el cierre de caja', type: ToastType.failure);
+        ToastMessage.show(
+          context: context,
+          message: result['message']?.toString() ?? 'No se pudo crear el cierre de caja.',
+          type: ToastType.failure,
+        );
       }
     } catch (e) {
       if (!mounted) return;

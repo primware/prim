@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import '../../../API/endpoint.dart';
+import 'close_cash_dates.dart';
 import '../../../API/token.api.dart';
 import '../../../API/user.api.dart';
 import '../../Auth/auth_funtions.dart';
@@ -13,7 +14,10 @@ Future<List<Map<String, dynamic>>> fetchRecords({required BuildContext context, 
 
     filter = onlyMyRecords == true ? 'SalesRep_ID eq ${UserData.id}' : '';
 
-    final response = await get(Uri.parse('${EndPoints.cdsCloseCash}?\$filter=$filter&\$orderby=DateTrx desc&\$expand=CDS_CloseCash_Line'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse('${EndPoints.cdsCloseCash}?\$filter=$filter&\$orderby=DateTrx desc&\$expand=CDS_CloseCash_Line'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
@@ -48,7 +52,10 @@ Future<Map<String, dynamic>?> fetchCloseCash({required BuildContext context, req
   try {
     await usuarioAuth(context: context);
 
-    final response = await get(Uri.parse('${EndPoints.cdsCloseCash}?\$filter=id eq $closeCashId&\$orderby=DateTrx desc&\$expand=CDS_CloseCash_Line'), headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
+    final response = await get(
+      Uri.parse('${EndPoints.cdsCloseCash}?\$filter=id eq $closeCashId&\$orderby=DateTrx desc&\$expand=CDS_CloseCash_Line'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!},
+    );
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
@@ -61,7 +68,8 @@ Future<Map<String, dynamic>?> fetchCloseCash({required BuildContext context, req
       final record = records.first as Map<String, dynamic>;
 
       // Fallback de vendedor: si no viene SalesRep_ID, usamos CreatedBy
-      final Map<String, dynamic>? salesRep = (record['SalesRep_ID'] as Map<String, dynamic>?) ?? (record['CreatedBy'] as Map<String, dynamic>?);
+      final Map<String, dynamic>? salesRep =
+          (record['SalesRep_ID'] as Map<String, dynamic>?) ?? (record['CreatedBy'] as Map<String, dynamic>?);
 
       final List<dynamic> lines = (record['CDS_CloseCash_Line'] ?? []) as List;
 
@@ -124,10 +132,15 @@ Future<Map<String, dynamic>?> fetchCloseCash({required BuildContext context, req
   }
 }
 
-Future<Map<String, dynamic>> postNewCloseCash({int? salesRepID, required int terminalID, required String dateTrx, required BuildContext context}) async {
+Future<Map<String, dynamic>> postNewCloseCash({
+  int? salesRepID,
+  required int terminalID,
+  required String dateTrx,
+  required BuildContext context,
+}) async {
   try {
     await usuarioAuth(context: context);
-    final String dateTrxIso = _toIsoUtcZ(dateTrx);
+    final String dateTrxIso = formatCloseCashDateForApi(dateTrx);
 
     final Map<String, dynamic> data = {
       if (salesRepID != null) "SalesRep_ID": {"id": salesRepID},
@@ -135,7 +148,11 @@ Future<Map<String, dynamic>> postNewCloseCash({int? salesRepID, required int ter
       "DateTrx": dateTrxIso,
     };
 
-    final response = await post(Uri.parse(EndPoints.cdsCloseCash), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(data));
+    final response = await post(
+      Uri.parse(EndPoints.cdsCloseCash),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+      body: jsonEncode(data),
+    );
 
     if (response.statusCode != 201) {
       CurrentLogMessage.add('Error al crear y completar el cierre de caja: ${response.body}', level: 'ERROR', tag: 'postInvoice');
@@ -143,10 +160,22 @@ Future<Map<String, dynamic>> postNewCloseCash({int? salesRepID, required int ter
       return {'success': false, 'message': 'Error al crear y completar el cierre de caja.'};
     }
 
-    Map<String, dynamic> jsonData = jsonDecode(response.body);
-    await refreshCloseCash(cdsCloseCashID: jsonData['id']);
+    final Map<String, dynamic> jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+    final int? closeCashId = jsonData['id'] as int?;
+    if (closeCashId == null) {
+      return {'success': false, 'message': 'El servidor creó el cierre sin devolver su identificador.'};
+    }
 
-    return {'success': true, 'Record_ID': jsonData['id']};
+    final processResult = await refreshCloseCash(cdsCloseCashID: closeCashId);
+    if (processResult['success'] != true) {
+      return {
+        'success': false,
+        'Record_ID': closeCashId,
+        'message': processResult['message'] ?? 'El cierre fue creado, pero no se pudo calcular.',
+      };
+    }
+
+    return {'success': true, 'Record_ID': closeCashId};
   } catch (e) {
     CurrentLogMessage.add('Excepción general: $e', level: 'ERROR', tag: 'postNewCloseCash');
     return {'success': false, 'message': 'Excepción inesperada: $e'};
@@ -155,50 +184,76 @@ Future<Map<String, dynamic>> postNewCloseCash({int? salesRepID, required int ter
 
 Future<Map<String, dynamic>> refreshCloseCash({required int cdsCloseCashID}) async {
   try {
-    final Map<String, dynamic> data = {"CDS_CloseCash_ID": cdsCloseCashID};
+    // CloseCash.java carga el encabezado mediante CDS_CloseCash_ID y obtiene
+    // desde ese registro C_POS_ID, SalesRep_ID, DateTrx y los demás datos.
+    final Map<String, dynamic> data = {'CDS_CloseCash_ID': cdsCloseCashID};
 
-    final response = await post(Uri.parse(Processes.cdsCloseCashProcess), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(data));
+    final response = await post(
+      Uri.parse(Processes.cdsCloseCashProcess),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+      body: jsonEncode(data),
+    );
 
-    if (response.statusCode != 200) {
-      CurrentLogMessage.add('Error al actualizar el cierre de caja: ${response.body}', level: 'ERROR', tag: 'refreshCloseCash');
-
-      return {'success': false, 'message': 'Error al actualizar el cierre de caja.'};
+    Map<String, dynamic>? responseData;
+    try {
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is Map<String, dynamic>) responseData = decoded;
+    } catch (_) {
+      // El status HTTP todavía permite informar una respuesta no JSON.
     }
 
-    return {'success': true};
+    final bool processFailed = responseData?['isError'] == true;
+    if (response.statusCode != 200 || processFailed) {
+      final message = _processErrorMessage(
+        responseData,
+        fallback: response.statusCode == 200
+            ? 'El proceso no pudo calcular el cierre de caja.'
+            : 'Error al ejecutar el proceso de cierre de caja (HTTP ${response.statusCode}).',
+      );
+      CurrentLogMessage.add('Error al actualizar el cierre de caja: ${response.body}', level: 'ERROR', tag: 'refreshCloseCash');
+
+      return {'success': false, 'message': message};
+    }
+
+    return {'success': true, 'message': responseData?['summary']};
   } catch (e) {
     CurrentLogMessage.add('Excepción general: $e', level: 'ERROR', tag: 'refreshCloseCash');
     return {'success': false, 'message': 'Excepción inesperada: $e'};
   }
 }
 
-String _toIsoUtcZ(String input) {
-  final s = input.trim();
-  if (s.isEmpty) return s;
+String _processErrorMessage(Map<String, dynamic>? data, {required String fallback}) {
+  if (data == null) return fallback;
 
-  if (RegExp(r"Z$").hasMatch(s) && s.contains('T')) return s;
-
-  DateTime dt;
-  try {
-    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) {
-      dt = DateFormat('yyyy-MM-dd').parseStrict(s);
-    } else if (RegExp(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$').hasMatch(s)) {
-      dt = DateFormat('yyyy-MM-dd HH:mm:ss').parseStrict(s);
-    } else {
-      dt = DateFormat('yyyy-MM-dd HH:mm').parseStrict(s);
-    }
-  } catch (e) {
-    throw FormatException('Formato de fecha no soportado: $s');
+  for (final key in ['summary', 'message', 'error']) {
+    final value = data[key]?.toString().trim();
+    if (value != null && value.isNotEmpty) return value;
   }
 
-  return DateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(dt.toLocal());
+  final logs = data['logs'];
+  if (logs is List) {
+    for (final rawLog in logs.reversed) {
+      if (rawLog is Map) {
+        for (final key in ['message', 'msg', 'summary']) {
+          final value = rawLog[key]?.toString().trim();
+          if (value != null && value.isNotEmpty) return value;
+        }
+      }
+    }
+  }
+
+  return fallback;
 }
 
 Future<Map<String, dynamic>> updateCloseCashStatus({required int cdsCloseCashID}) async {
   try {
     final Map<String, dynamic> data = {"DocStatus": 'CO', "Processed": true};
 
-    final response = await put(Uri.parse('${EndPoints.cdsCloseCash}/$cdsCloseCashID'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(data));
+    final response = await put(
+      Uri.parse('${EndPoints.cdsCloseCash}/$cdsCloseCashID'),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+      body: jsonEncode(data),
+    );
 
     if (response.statusCode != 200) {
       CurrentLogMessage.add('Error al cerrar el cierre de caja: ${response.body}', level: 'ERROR', tag: 'updateCloseCashStatus');
@@ -216,10 +271,14 @@ Future<Map<String, dynamic>> updateCloseCashStatus({required int cdsCloseCashID}
 Future<Map<String, dynamic>> updateCloseCashDateTrx({required int cdsCloseCashID}) async {
   try {
     final String nowText = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-    final String dateTrxIso = _toIsoUtcZ(nowText);
+    final String dateTrxIso = formatCloseCashDateForApi(nowText);
     final Map<String, dynamic> data = {"DateTrx": dateTrxIso};
 
-    final response = await put(Uri.parse('${EndPoints.cdsCloseCash}/$cdsCloseCashID'), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!}, body: jsonEncode(data));
+    final response = await put(
+      Uri.parse('${EndPoints.cdsCloseCash}/$cdsCloseCashID'),
+      headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+      body: jsonEncode(data),
+    );
 
     if (response.statusCode != 200) {
       CurrentLogMessage.add('Error al cerrar el cierre de caja: ${response.body}', level: 'ERROR', tag: 'updateCloseCashStatus');
@@ -235,7 +294,10 @@ Future<Map<String, dynamic>> updateCloseCashDateTrx({required int cdsCloseCashID
 }
 
 Future<int?> currentCloseCash() async {
-  final response = await get(Uri.parse("${EndPoints.cdsCloseCash}?\$filter=DocStatus eq 'DR' and SalesRep_ID eq ${UserData.id}"), headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!});
+  final response = await get(
+    Uri.parse("${EndPoints.cdsCloseCash}?\$filter=DocStatus eq 'DR' and SalesRep_ID eq ${UserData.id}"),
+    headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
+  );
 
   if (response.statusCode == 200) {
     final data = json.decode(response.body);

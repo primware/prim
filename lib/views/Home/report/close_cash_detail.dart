@@ -12,7 +12,7 @@ import '../../../shared/loading_container.dart';
 import 'report_funtions.dart';
 import 'close_cash_print_pos_funtions.dart';
 import 'close_cash_print_carta_funtions.dart';
-import '../../../shared/format_date.dart';
+import 'close_cash_dates.dart';
 import 'package:printing/printing.dart';
 
 class CloseCashDetailPage extends StatefulWidget {
@@ -144,8 +144,8 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
 
     final terminal = (data['C_POS_ID']?['name'] ?? '---').toString();
     final rep = (data['SalesRep_ID']?['name'] ?? '---').toString();
-    final String dateTrx = formatDateUI((data['DateTrx'] ?? '').toString());
-    final String dateFrom = formatDateUI((data['DateFrom'] ?? '').toString());
+    final String dateTrx = formatCloseCashDateUI((data['DateTrx'] ?? '').toString());
+    final String dateFrom = formatCloseCashDateUI((data['DateFrom'] ?? '').toString());
     final int totalOrders = (data['QtyOrders'] ?? 0) as int;
 
     final double taxBase = _toDouble(data['TaxBaseAmt'] ?? 0);

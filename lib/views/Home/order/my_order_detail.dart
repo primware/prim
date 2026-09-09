@@ -960,7 +960,7 @@ class OrderDetailPage extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
             ),
             const SizedBox(height: 4),
-            Text(formatDateUI(order['Created']?.toString() ?? ''), style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+            Text(formatIdempiereDateUI(order['Created']?.toString() ?? ''), style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
 
             const SizedBox(height: 8),
             Wrap(
