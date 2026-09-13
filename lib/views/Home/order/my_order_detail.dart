@@ -1091,20 +1091,20 @@ class OrderDetailPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            color: const Color(0xff494371).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
+            border: Border.all(color: const Color(0xff494371).withOpacity(0.3)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 AppLocale.finalTotal.getString(context).toUpperCase(),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).primaryColor),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xff494371)),
               ),
               Text(
                 "\$${grandTotal.toStringAsFixed(2)}",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Theme.of(context).primaryColor),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Color(0xff494371)),
               ),
             ],
           ),

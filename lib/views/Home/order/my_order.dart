@@ -29,6 +29,8 @@ import '../invoice/invoice_payment_print_generator.dart';
 import '../invoice/invoice_payment_receipt.dart';
 import 'history_search_criteria.dart';
 import 'order_history_repository.dart';
+import '../../../shared/glass_switch.dart';
+
 
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
@@ -599,12 +601,14 @@ class _OrderListPageState extends State<OrderListPage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      SwitchListTile.adaptive(
+                      ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(AppLocale.onlyMyMovements.getString(context)),
                         subtitle: Text(AppLocale.onlyMyMovementsSubtitle.getString(context)),
-                        value: criteria.onlyMyMovements,
-                        onChanged: (value) => _stageCriteria(criteria.copyWith(onlyMyMovements: value)),
+                        trailing: GlassSwitch(
+                          value: criteria.onlyMyMovements,
+                          onChanged: (value) => _stageCriteria(criteria.copyWith(onlyMyMovements: value)),
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -803,28 +807,27 @@ class _OrderListPageState extends State<OrderListPage> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 10),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
-                icon: const Icon(Icons.chevron_left),
-                label: Text(AppLocale.previous.getString(context)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton.filledTonal(
+              tooltip: AppLocale.previous.getString(context),
+              onPressed: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                _localized(AppLocale.pageOf, {'page': _currentPage + 1, 'total': totalPages}),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(_localized(AppLocale.pageOf, {'page': _currentPage + 1, 'total': totalPages})),
-              ),
-              OutlinedButton.icon(
-                onPressed: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
-                iconAlignment: IconAlignment.end,
-                icon: const Icon(Icons.chevron_right),
-                label: Text(AppLocale.next.getString(context)),
-              ),
-            ],
-          ),
+            ),
+            IconButton.filledTonal(
+              tooltip: AppLocale.next.getString(context),
+              onPressed: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ],
         ),
       ],
     );
