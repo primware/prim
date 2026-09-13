@@ -293,6 +293,9 @@ Future<bool> usuarioAuth({
       await _loadChartIDs();
       POSTenderType.isMultiPayment = await _posTenderExists();
       await _loadAppVersion();
+      if (success) {
+        await UserData.saveToCache();
+      }
       return success;
     } else {
       await _clearLastTokenGeneratedAt();

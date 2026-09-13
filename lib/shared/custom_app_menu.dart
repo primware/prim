@@ -241,6 +241,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     UserData.imageBytes = null;
     UserData.rolName = null;
     UserData.organizations = [];
+    UserData.clearCache(); // Limpiar caché persistente
 
     // Limpiar datos POS
     POS.priceListID = null;
@@ -423,7 +424,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       onTap: () async {
                         switcher.changeTheme(
                           theme: isDark ? AppThemes.lightTheme : AppThemes.darkTheme,
-                          isReversed: isDark,
                         );
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.setBool('isDarkMode', !isDark);

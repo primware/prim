@@ -11,6 +11,7 @@ import 'API/endpoint.dart';
 import 'package:app_links/app_links.dart';
 import 'package:protocol_handler/protocol_handler.dart';
 import 'dart:async';
+import 'package:primware/API/user.api.dart';
 import 'views/Home/product/product_repository.dart';
 import 'views/Home/product/product_sync_overlay.dart';
 import 'views/Home/order/order_history_repository.dart';
@@ -32,6 +33,8 @@ Future<void> main() async {
   await ProductRepository.instance.initialize();
   await OrderHistoryRepository.instance.initialize();
   await BPartnerRepository.instance.initialize();
+  
+  await UserData.loadFromCache();
   
   final prefs = await SharedPreferences.getInstance();
   final isDarkMode = prefs.getBool('isDarkMode') ?? false;
@@ -123,27 +126,31 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemeProvider(
-      initTheme: widget.initialIsDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
-      builder: (context, myTheme) {
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          debugShowCheckedModeBanner: false,
-          title: Base.title,
-          theme: myTheme,
-          supportedLocales: _localization.supportedLocales,
-          localizationsDelegates: _localization.localizationsDelegates,
-          locale: _localization.currentLocale,
-          home: const LoginPage(),
-          builder: (context, child) => Stack(
-            children: [
-              if (child != null) child,
-              const ProductSyncOverlay(),
-              const BPartnerSyncOverlay(),
-            ],
-          ),
-        );
-      },
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
+      title: Base.title,
+      // Pass the initial theme statically; ThemeProvider will override it below.
+      theme: widget.initialIsDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
+      supportedLocales: _localization.supportedLocales,
+      localizationsDelegates: _localization.localizationsDelegates,
+      locale: _localization.currentLocale,
+      home: const LoginPage(),
+      builder: (context, child) => ThemeProvider(
+        initTheme: widget.initialIsDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
+        builder: (context, myTheme) {
+          return Theme(
+            data: myTheme,
+            child: Stack(
+              children: [
+                if (child != null) child,
+                const ProductSyncOverlay(),
+                const BPartnerSyncOverlay(),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
