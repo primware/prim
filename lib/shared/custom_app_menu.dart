@@ -472,11 +472,15 @@ class _MenuDrawerState extends State<MenuDrawer> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor,
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? const Color(0xff494371) // Mismo morado oscuro del modo claro
+            : Theme.of(context).primaryColor,
         borderRadius: const BorderRadius.only(bottomRight: Radius.circular(40)),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? const Color(0xff494371).withOpacity(0.3) 
+                : Theme.of(context).primaryColor.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
