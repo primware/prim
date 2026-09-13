@@ -12,6 +12,8 @@ import '../dashboard/dashboard_view.dart';
 import 'bpartner_details.dart';
 import 'bpartner_new.dart';
 import 'bpartner_repository.dart';
+import '../../../shared/toast_message.dart';
+import '../../../shared/custom_pagination.dart';
 import 'bpartner_sync_controller.dart';
 
 class BPartnerListPage extends StatefulWidget {
@@ -289,37 +291,15 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                             itemCount: _getFilteredPartners().length + 1,
                             itemBuilder: (context, index) {
                               if (index == _getFilteredPartners().length) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      IconButton.filledTonal(
-                                        tooltip: AppLocale.previous.getString(context),
-                                        onPressed: _currentPage > 0 && !isSearchLoading
-                                            ? () => _loadBPartner(showLoadingIndicator: true, page: _currentPage - 1)
-                                            : null,
-                                        icon: const Icon(Icons.chevron_left),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        child: Text(
-                                          AppLocale.pageOf
-                                              .getString(context)
-                                              .replaceAll('{page}', '${_currentPage + 1}')
-                                              .replaceAll('{total}', '$_totalPages'),
-                                          style: const TextStyle(fontWeight: FontWeight.w700),
-                                        ),
-                                      ),
-                                      IconButton.filledTonal(
-                                        tooltip: AppLocale.next.getString(context),
-                                        onPressed: _currentPage + 1 < _totalPages && !isSearchLoading
-                                            ? () => _loadBPartner(showLoadingIndicator: true, page: _currentPage + 1)
-                                            : null,
-                                        icon: const Icon(Icons.chevron_right),
-                                      ),
-                                    ],
-                                  ),
+                                return CustomPagination(
+                                  currentPage: _currentPage,
+                                  totalPages: _totalPages,
+                                  onPrevious: _currentPage > 0 && !isSearchLoading
+                                      ? () => _loadBPartner(showLoadingIndicator: true, page: _currentPage - 1)
+                                      : null,
+                                  onNext: _currentPage + 1 < _totalPages && !isSearchLoading
+                                      ? () => _loadBPartner(showLoadingIndicator: true, page: _currentPage + 1)
+                                      : null,
                                 );
                               }
                               final record = _getFilteredPartners()[index];

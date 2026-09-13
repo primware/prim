@@ -30,7 +30,7 @@ import '../invoice/invoice_payment_receipt.dart';
 import 'history_search_criteria.dart';
 import 'order_history_repository.dart';
 import '../../../shared/glass_switch.dart';
-
+import '../../../shared/custom_pagination.dart';
 
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
@@ -807,27 +807,11 @@ class _OrderListPageState extends State<OrderListPage> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton.filledTonal(
-              tooltip: AppLocale.previous.getString(context),
-              onPressed: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
-              icon: const Icon(Icons.chevron_left),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                _localized(AppLocale.pageOf, {'page': _currentPage + 1, 'total': totalPages}),
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            IconButton.filledTonal(
-              tooltip: AppLocale.next.getString(context),
-              onPressed: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ],
+        CustomPagination(
+          currentPage: _currentPage,
+          totalPages: totalPages,
+          onPrevious: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
+          onNext: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
         ),
       ],
     );
