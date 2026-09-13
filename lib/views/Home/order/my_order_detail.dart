@@ -270,14 +270,14 @@ class OrderDetailPage extends StatelessWidget {
 
     // Colores para el "Ticket"
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color ticketBgColor = isDark ? const Color(0xFF1E1E2C) : Colors.white;
-    final Color textColor = isDark ? Colors.grey.shade300 : Colors.black87;
+    final Color ticketBgColor = Colors.white;
+    final Color textColor = Colors.black87;
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF0F2F5), // Fondo de la app (gris claro/oscuro)
       appBar: AppBar(
-        backgroundColor: (isReturn) ? Colors.red : Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: (isReturn) ? Colors.red : (isDark ? null : Theme.of(context).primaryColor),
+        foregroundColor: isDark ? null : Colors.white,
         elevation: 0,
         title: Text('${order['doctypetarget']['name']} #${order['DocumentNo']}'),
         actions: [

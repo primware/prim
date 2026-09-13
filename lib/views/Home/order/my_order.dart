@@ -803,25 +803,28 @@ class _OrderListPageState extends State<OrderListPage> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            OutlinedButton.icon(
-              onPressed: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
-              icon: const Icon(Icons.chevron_left),
-              label: Text(AppLocale.previous.getString(context)),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(_localized(AppLocale.pageOf, {'page': _currentPage + 1, 'total': totalPages})),
-            ),
-            OutlinedButton.icon(
-              onPressed: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
-              iconAlignment: IconAlignment.end,
-              icon: const Icon(Icons.chevron_right),
-              label: Text(AppLocale.next.getString(context)),
-            ),
-          ],
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
+                icon: const Icon(Icons.chevron_left),
+                label: Text(AppLocale.previous.getString(context)),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(_localized(AppLocale.pageOf, {'page': _currentPage + 1, 'total': totalPages})),
+              ),
+              OutlinedButton.icon(
+                onPressed: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
+                iconAlignment: IconAlignment.end,
+                icon: const Icon(Icons.chevron_right),
+                label: Text(AppLocale.next.getString(context)),
+              ),
+            ],
+          ),
         ),
       ],
     );

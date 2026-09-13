@@ -14,9 +14,13 @@ class ShimmerList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color baseColor = isDark ? Colors.grey.shade800 : Colors.grey[300]!;
+    final Color highlightColor = isDark ? Colors.grey.shade700 : Colors.grey[100]!;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: baseColor,
+      highlightColor: highlightColor,
       child: Column(
         children: List.generate(count ?? 5, (index) {
           return Padding(

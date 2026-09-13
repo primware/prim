@@ -330,18 +330,23 @@ class _GraphicBarMetricCardState extends State<GraphicBarMetricCard> {
             SizedBox(
               height: 300,
               child: (isLoading && rawChartData.isEmpty)
-                  ? Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!.withOpacity(0.5),
-                      highlightColor: Colors.grey[100]!.withOpacity(0.5),
-                      child: Container(
-                        width: double.infinity,
-                        height: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                  ? Builder(builder: (ctx) {
+                      final bool isDark = Theme.of(ctx).brightness == Brightness.dark;
+                      final Color baseColor = isDark ? Colors.grey.shade800 : Colors.grey[300]!;
+                      final Color highlightColor = isDark ? Colors.grey.shade700 : Colors.grey[100]!;
+                      return Shimmer.fromColors(
+                        baseColor: baseColor.withOpacity(0.5),
+                        highlightColor: highlightColor.withOpacity(0.5),
+                        child: Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.black : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                    )
+                      );
+                    })
                   : rawChartData.isEmpty
                   ? const Center(
                       child: EmptyMetricState(
@@ -936,18 +941,23 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
             SizedBox(
               height: 340,
               child: (isLoading && rawChartData.isEmpty)
-                  ? Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!.withOpacity(0.5),
-                      highlightColor: Colors.grey[100]!.withOpacity(0.5),
-                      child: Container(
-                        width: double.infinity,
-                        height: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                  ? Builder(builder: (ctx) {
+                      final bool isDark = Theme.of(ctx).brightness == Brightness.dark;
+                      final Color baseColor = isDark ? Colors.grey.shade800 : Colors.grey[300]!;
+                      final Color highlightColor = isDark ? Colors.grey.shade700 : Colors.grey[100]!;
+                      return Shimmer.fromColors(
+                        baseColor: baseColor.withOpacity(0.5),
+                        highlightColor: highlightColor.withOpacity(0.5),
+                        child: Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.black : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                    )
+                      );
+                    })
                   : rows.isEmpty
                   ? const Center(
                       child: EmptyMetricState(
