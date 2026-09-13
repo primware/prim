@@ -38,7 +38,10 @@ class DocTypeChip extends StatelessWidget {
       baseColor = HSLColor.fromAHSL(1.0, h, 0.7, 0.45).toColor();
     }
 
-    final Color bgColor = baseColor.withOpacity(0.12);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color finalBaseColor = isDark ? Color.alphaBlend(Colors.white.withOpacity(0.4), baseColor) : baseColor;
+    
+    final Color bgColor = finalBaseColor.withOpacity(0.12);
     final IconData icon = isReturn ? Icons.undo : Icons.description_outlined;
 
     return Container(
@@ -46,16 +49,16 @@ class DocTypeChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: baseColor, width: 1),
+        border: Border.all(color: finalBaseColor, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: baseColor),
+          Icon(icon, size: 14, color: finalBaseColor),
           const SizedBox(width: 6),
           Text(
             name,
-            style: TextStyle(fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 12, color: finalBaseColor, fontWeight: FontWeight.w600),
           ),
         ],
       ),

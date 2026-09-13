@@ -525,7 +525,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  UserData.rolName ?? 'LIRION ERP',
+                  UserData.rolName ?? 'Rol no asignado',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
                     fontSize: 13,
