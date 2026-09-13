@@ -286,42 +286,46 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                           )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),
-                            itemCount: _getFilteredPartners().length,
+                            itemCount: _getFilteredPartners().length + 1,
                             itemBuilder: (context, index) {
+                              if (index == _getFilteredPartners().length) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton.filledTonal(
+                                        tooltip: AppLocale.previous.getString(context),
+                                        onPressed: _currentPage > 0 && !isSearchLoading
+                                            ? () => _loadBPartner(showLoadingIndicator: true, page: _currentPage - 1)
+                                            : null,
+                                        icon: const Icon(Icons.chevron_left),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          AppLocale.pageOf
+                                              .getString(context)
+                                              .replaceAll('{page}', '${_currentPage + 1}')
+                                              .replaceAll('{total}', '$_totalPages'),
+                                          style: const TextStyle(fontWeight: FontWeight.w700),
+                                        ),
+                                      ),
+                                      IconButton.filledTonal(
+                                        tooltip: AppLocale.next.getString(context),
+                                        onPressed: _currentPage + 1 < _totalPages && !isSearchLoading
+                                            ? () => _loadBPartner(showLoadingIndicator: true, page: _currentPage + 1)
+                                            : null,
+                                        icon: const Icon(Icons.chevron_right),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
                               final record = _getFilteredPartners()[index];
                               return _buildPartnerCard(record);
                             },
                           ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton.filledTonal(
-                        tooltip: AppLocale.previous.getString(context),
-                        onPressed: _currentPage > 0 && !isSearchLoading
-                            ? () => _loadBPartner(showLoadingIndicator: true, page: _currentPage - 1)
-                            : null,
-                        icon: const Icon(Icons.chevron_left),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          AppLocale.pageOf
-                              .getString(context)
-                              .replaceAll('{page}', '${_currentPage + 1}')
-                              .replaceAll('{total}', '$_totalPages'),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      IconButton.filledTonal(
-                        tooltip: AppLocale.next.getString(context),
-                        onPressed: _currentPage + 1 < _totalPages && !isSearchLoading
-                            ? () => _loadBPartner(showLoadingIndicator: true, page: _currentPage + 1)
-                            : null,
-                        icon: const Icon(Icons.chevron_right),
-                      ),
-                    ],
                   ),
                 ],
               ),

@@ -715,50 +715,54 @@ class _ProductListPageState extends State<ProductListPage> {
                           )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),
-                            itemCount: _getFilteredOrders().length,
+                            itemCount: _getFilteredOrders().length + 1,
                             itemBuilder: (context, index) {
+                              if (index == _getFilteredOrders().length) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton.filledTonal(
+                                        tooltip: AppLocale.previous.getString(context),
+                                        onPressed: _currentPage > 0 && !isProductSearchLoading
+                                            ? () => _loadProduct(
+                                                showLoadingIndicator: true,
+                                                page: _currentPage - 1,
+                                              )
+                                            : null,
+                                        icon: const Icon(Icons.chevron_left),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: Text(
+                                          AppLocale.pageOf
+                                              .getString(context)
+                                              .replaceAll('{page}', '${_currentPage + 1}')
+                                              .replaceAll('{total}', '$_totalPages'),
+                                          style: const TextStyle(fontWeight: FontWeight.w700),
+                                        ),
+                                      ),
+                                      IconButton.filledTonal(
+                                        tooltip: AppLocale.next.getString(context),
+                                        onPressed:
+                                            _currentPage + 1 < _totalPages &&
+                                                !isProductSearchLoading
+                                            ? () => _loadProduct(
+                                                showLoadingIndicator: true,
+                                                page: _currentPage + 1,
+                                              )
+                                            : null,
+                                        icon: const Icon(Icons.chevron_right),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
                               final record = _getFilteredOrders()[index];
                               return _buildProductCard(record);
                             },
                           ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton.filledTonal(
-                        tooltip: AppLocale.previous.getString(context),
-                        onPressed: _currentPage > 0 && !isProductSearchLoading
-                            ? () => _loadProduct(
-                                showLoadingIndicator: true,
-                                page: _currentPage - 1,
-                              )
-                            : null,
-                        icon: const Icon(Icons.chevron_left),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          AppLocale.pageOf
-                              .getString(context)
-                              .replaceAll('{page}', '${_currentPage + 1}')
-                              .replaceAll('{total}', '$_totalPages'),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      IconButton.filledTonal(
-                        tooltip: AppLocale.next.getString(context),
-                        onPressed:
-                            _currentPage + 1 < _totalPages &&
-                                !isProductSearchLoading
-                            ? () => _loadProduct(
-                                showLoadingIndicator: true,
-                                page: _currentPage + 1,
-                              )
-                            : null,
-                        icon: const Icon(Icons.chevron_right),
-                      ),
-                    ],
                   ),
                 ],
               ),

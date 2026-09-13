@@ -7,8 +7,9 @@ class Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Image.asset(
-      'assets/img/logo.png',
+      isDark ? 'assets/img/logoBlanco.png' : 'assets/img/logo.png',
       width: width,
     );
   }
