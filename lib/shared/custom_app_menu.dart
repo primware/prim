@@ -33,6 +33,8 @@ import '../views/Home/report/report_funtions.dart';
 import 'package:primware/views/Home/settings/settings_view.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
+import 'package:animated_theme_switcher/animated_theme_switcher.dart';
+import 'package:primware/theme/theme.dart';
 
 class CustomAppMenu extends StatelessWidget {
   const CustomAppMenu({super.key});
@@ -411,15 +413,23 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 const SizedBox(height: CustomSpacer.medium),
                 _buildSectionTitle(context, 'SISTEMA'),
 
-                // BOTÓN MODO OSCURO
-                _buildMenuItem(
-                  context,
-                  icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
-                  title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-                  onTap: () {
-                    ThemeManager.themeNotifier.toggleTheme();
-                    _loadTheme();
-                  },
+                ThemeSwitcher.withTheme(
+                  builder: (switcherContext, switcher, theme) {
+                    final bool isDark = theme.brightness == Brightness.dark;
+                    return _buildMenuItem(
+                      context,
+                      icon: isDark ? Icons.sunny : Icons.nightlight,
+                      title: isDark ? 'Modo claro' : 'Modo oscuro',
+                      onTap: () async {
+                        switcher.changeTheme(
+                          theme: isDark ? AppThemes.lightTheme : AppThemes.darkTheme,
+                          isReversed: isDark,
+                        );
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('isDarkMode', !isDark);
+                      },
+                    );
+                  }
                 ),
                 _buildMenuItem(
                   context,

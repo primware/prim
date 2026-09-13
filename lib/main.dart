@@ -16,6 +16,7 @@ import 'views/Home/product/product_sync_overlay.dart';
 import 'views/Home/order/order_history_repository.dart';
 import 'views/Home/bpartner/bpartner_repository.dart';
 import 'views/Home/bpartner/bpartner_sync_overlay.dart';
+import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -31,7 +32,11 @@ Future<void> main() async {
   await ProductRepository.instance.initialize();
   await OrderHistoryRepository.instance.initialize();
   await BPartnerRepository.instance.initialize();
-  runApp(const MainApp());
+  
+  final prefs = await SharedPreferences.getInstance();
+  final isDarkMode = prefs.getBool('isDarkMode') ?? false;
+  
+  runApp(MainApp(initialIsDarkMode: isDarkMode));
 }
 
 class MyHttpOverrides extends HttpOverrides {
@@ -44,36 +49,22 @@ class MyHttpOverrides extends HttpOverrides {
 }
 
 class MainApp extends StatefulWidget {
-  const MainApp({super.key});
+  final bool initialIsDarkMode;
+  const MainApp({super.key, required this.initialIsDarkMode});
 
   @override
   State<MainApp> createState() => _MainAppState();
 }
 
-class ThemeManager {
-  static late _MainAppState themeNotifier;
-}
-
 class _MainAppState extends State<MainApp> {
-  bool _isDarkMode = false;
   final FlutterLocalization _localization = FlutterLocalization.instance;
 
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
-  Future<void> toggleTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-      prefs.setBool('isDarkMode', _isDarkMode);
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    ThemeManager.themeNotifier = this;
-    _loadThemePreference();
 
     _localization.init(
       mapLocales: [
@@ -130,31 +121,29 @@ class _MainAppState extends State<MainApp> {
     setState(() {});
   }
 
-  Future<void> _loadThemePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      title: Base.title,
-      theme: _isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
-      supportedLocales: _localization.supportedLocales,
-      localizationsDelegates: _localization.localizationsDelegates,
-      locale: _localization.currentLocale,
-      home: const LoginPage(),
-      builder: (context, child) => Stack(
-        children: [
-          if (child != null) child,
-          const ProductSyncOverlay(),
-          const BPartnerSyncOverlay(),
-        ],
-      ),
+    return ThemeProvider(
+      initTheme: widget.initialIsDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
+      builder: (context, myTheme) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: Base.title,
+          theme: myTheme,
+          supportedLocales: _localization.supportedLocales,
+          localizationsDelegates: _localization.localizationsDelegates,
+          locale: _localization.currentLocale,
+          home: const LoginPage(),
+          builder: (context, child) => Stack(
+            children: [
+              if (child != null) child,
+              const ProductSyncOverlay(),
+              const BPartnerSyncOverlay(),
+            ],
+          ),
+        );
+      },
     );
   }
 }
