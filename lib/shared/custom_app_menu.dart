@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
+import 'package:primware/main.dart';
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
 import 'package:flutter/material.dart';
@@ -410,16 +411,16 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 const SizedBox(height: CustomSpacer.medium),
                 _buildSectionTitle(context, 'SISTEMA'),
 
-                //! BOTÓN MODO OSCURO
-                // _buildMenuItem(
-                //   context,
-                //   icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
-                //   title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-                //   onTap: () {
-                //     ThemeManager.themeNotifier.toggleTheme();
-                //     _loadTheme();
-                //   },
-                // ),
+                // BOTÓN MODO OSCURO
+                _buildMenuItem(
+                  context,
+                  icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
+                  title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
+                  onTap: () {
+                    ThemeManager.themeNotifier.toggleTheme();
+                    _loadTheme();
+                  },
+                ),
                 _buildMenuItem(
                   context,
                   icon: Icons.settings_outlined,

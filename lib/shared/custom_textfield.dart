@@ -81,7 +81,10 @@ class _TextfieldThemeState extends State<TextfieldTheme> {
         hintText: widget.pista,
         hintStyle: TextStyle(color: Colors.grey),
         filled: true, // Habilita el relleno del fondo
-        fillColor: widget.fillColor ?? Theme.of(context).cardColor,
+        fillColor: widget.fillColor ?? 
+            (Theme.of(context).brightness == Brightness.dark 
+                ? Colors.white.withOpacity(0.05) 
+                : Theme.of(context).cardColor),
         hoverColor: Theme.of(context).primaryColor.withAlpha(40),
         focusedBorder: OutlineInputBorder(
           //Cuando estoy en el control
