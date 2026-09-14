@@ -885,7 +885,7 @@ class _GraphicPieMetricCardState extends State<GraphicPieMetricCard> {
                 ),
                 if (currentOffset != 0)
                   IconButton(
-                    tooltip: AppLocale.thisMonth.getString(context),
+                    tooltip: AppLocale.today.getString(context),
                     icon: Icon(
                       Icons.today_rounded,
                       color: Theme.of(context).colorScheme.primary,
