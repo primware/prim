@@ -8,6 +8,9 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:primware/theme/theme.dart';
+import 'package:primware/main.dart';
 
 /// Clave global para que [ThemeSwitcherController] pueda capturar la pantalla.
 final GlobalKey repaintKey = GlobalKey();
@@ -174,4 +177,47 @@ class _CircularRevealClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(_CircularRevealClipper old) =>
       old.progress != progress || old.origin != origin;
+}
+
+/// Un botón (IconButton) que puedes colocar en cualquier AppBar.
+/// Captura su posición global y dispara la animación de cambio de tema.
+class ThemeToggleIconButton extends StatefulWidget {
+  const ThemeToggleIconButton({super.key});
+
+  @override
+  State<ThemeToggleIconButton> createState() => _ThemeToggleIconButtonState();
+}
+
+class _ThemeToggleIconButtonState extends State<ThemeToggleIconButton> {
+  final GlobalKey _buttonKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeData>(
+      valueListenable: appThemeNotifier,
+      builder: (context, theme, _) {
+        final bool isDark = theme.brightness == Brightness.dark;
+        return IconButton(
+          key: _buttonKey,
+          icon: Icon(isDark ? Icons.sunny : Icons.nightlight),
+          tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
+          onPressed: () async {
+            final RenderBox? box =
+                _buttonKey.currentContext?.findRenderObject() as RenderBox?;
+            final Offset origin = box != null
+                ? box.localToGlobal(box.size.center(Offset.zero))
+                : const Offset(0, 0);
+
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('isDarkMode', !isDark);
+
+            appThemeNotifier.value =
+                isDark ? AppThemes.lightTheme : AppThemes.darkTheme;
+
+            await ThemeSwitcherController.instance.trigger(origin: origin);
+          },
+        );
+      },
+    );
+  }
 }

@@ -1,6 +1,5 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
-import 'package:primware/main.dart';
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +18,6 @@ import 'package:primware/views/Home/product/product_sync_controller.dart';
 import 'package:primware/views/Home/bpartner/bpartner_sync_controller.dart';
 import 'package:primware/views/Home/report/close_cash_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../shared/toast_message.dart';
 import '../API/endpoint.dart';
 import '../API/pos.api.dart';
@@ -33,8 +31,6 @@ import '../views/Home/report/report_funtions.dart';
 import 'package:primware/views/Home/settings/settings_view.dart';
 import 'custom_flat_button.dart';
 import 'logo.dart';
-import 'package:primware/theme/theme.dart';
-import 'package:primware/shared/theme_switcher_controller.dart';
 
 class CustomAppMenu extends StatelessWidget {
   const CustomAppMenu({super.key});
@@ -406,7 +402,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 const SizedBox(height: CustomSpacer.medium),
                 _buildSectionTitle(context, 'SISTEMA'),
 
-                _ThemeToggleMenuItem(),
                 _buildMenuItem(
                   context,
                   icon: Icons.settings_outlined,
@@ -711,74 +706,5 @@ class _MenuDrawerState extends State<MenuDrawer> {
         type: ToastType.failure,
       );
     }
-  }
-}
-
-/// Botón de cambio de tema que dispara la animación de "circular reveal".
-/// Utiliza un [GlobalKey] propio para obtener sus coordenadas absolutas en pantalla
-/// y se las pasa al [ThemeSwitcherController] para que la onda parta desde aquí.
-class _ThemeToggleMenuItem extends StatefulWidget {
-  const _ThemeToggleMenuItem();
-
-  @override
-  State<_ThemeToggleMenuItem> createState() => _ThemeToggleMenuItemState();
-}
-
-class _ThemeToggleMenuItemState extends State<_ThemeToggleMenuItem> {
-  final GlobalKey _buttonKey = GlobalKey();
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeData>(
-      valueListenable: appThemeNotifier,
-      builder: (context, theme, _) {
-        final bool isDark = theme.brightness == Brightness.dark;
-        return Container(
-          key: _buttonKey,
-          margin: const EdgeInsets.only(bottom: 2),
-          child: ListTile(
-            dense: true,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            leading: Icon(
-              isDark ? Icons.sunny : Icons.nightlight,
-              color: Theme.of(context).primaryColor.withOpacity(0.8),
-            ),
-            title: Text(
-              isDark ? 'Modo claro' : 'Modo oscuro',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-            onTap: () async {
-              // 1. Calcular el centro del botón en coordenadas globales de pantalla
-              final RenderBox? box =
-                  _buttonKey.currentContext?.findRenderObject() as RenderBox?;
-              final Offset origin = box != null
-                  ? box.localToGlobal(box.size.center(Offset.zero))
-                  : const Offset(0, 0);
-
-              // 2. Persistir preferencia
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('isDarkMode', !isDark);
-
-              // 3. Cerrar el menú lateral para que la animación se vea en la pantalla principal.
-              if (context.mounted) Navigator.of(context).pop();
-
-              // 4. Pequeña pausa para que el Drawer termine de cerrarse.
-              await Future.delayed(const Duration(milliseconds: 150));
-
-              // 5. Cambiar el tema (el nuevo tema se pinta debajo mientras capturamos).
-              appThemeNotifier.value =
-                  isDark ? AppThemes.lightTheme : AppThemes.darkTheme;
-
-              // 6. Disparar la animación circular desde donde estaba el botón.
-              await ThemeSwitcherController.instance.trigger(origin: origin);
-            },
-          ),
-        );
-      },
-    );
   }
 }

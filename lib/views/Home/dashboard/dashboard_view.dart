@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/shared/custom_container.dart';
+import 'package:primware/shared/theme_switcher_controller.dart';
 import 'package:primware/shared/logo.dart';
 import 'package:primware/views/Home/dashboard/dashboard_skeleton.dart';
 import '../../../API/endpoint.dart';
@@ -124,6 +125,7 @@ class _DashboardPageState extends State<DashboardPage> {
         appBar: AppBar(
           title: Text(AppLocale.dashboard.getString(context)),
           actions: [
+            const ThemeToggleIconButton(),
             !isMobile
                 ? Padding(
                     padding: const EdgeInsets.only(right: CustomSpacer.medium),
