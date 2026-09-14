@@ -51,7 +51,9 @@ class _ButtonPrimaryState extends State<ButtonPrimary> {
                     fit: BoxFit.scaleDown,
                     child: Text(
                       widget.texto!,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.surface),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -102,7 +104,11 @@ class _ButtonSecondaryState extends State<ButtonSecondary> {
                   fit: BoxFit.scaleDown,
                   child: Text(
                     widget.texto!,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).primaryColor),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Theme.of(context).brightness == Brightness.dark 
+                          ? Colors.white 
+                          : Theme.of(context).primaryColor,
+                    ),
                   ),
                 ),
               ),
