@@ -17,9 +17,13 @@ import 'views/Home/product/product_sync_overlay.dart';
 import 'views/Home/order/order_history_repository.dart';
 import 'views/Home/bpartner/bpartner_repository.dart';
 import 'views/Home/bpartner/bpartner_sync_overlay.dart';
-import 'package:animated_theme_switcher/animated_theme_switcher.dart';
+import 'shared/theme_switcher_controller.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+// ─── Estado global del tema ──────────────────────────────────────────────────
+// Una ValueNotifier simple para manejar el tema sin paquetes externos.
+final ValueNotifier<ThemeData> appThemeNotifier = ValueNotifier(AppThemes.lightTheme);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +42,7 @@ Future<void> main() async {
   
   final prefs = await SharedPreferences.getInstance();
   final isDarkMode = prefs.getBool('isDarkMode') ?? false;
+  appThemeNotifier.value = isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme;
   
   runApp(MainApp(initialIsDarkMode: isDarkMode));
 }
@@ -78,8 +83,14 @@ class _MainAppState extends State<MainApp> {
     );
     _localization.onTranslatedLanguage = _onLanguageChanged;
 
+    // Escuchamos el notifier de tema para actualizar el MaterialApp
+    // sin recrearlo (así el Navigator no se reinicia).
+    appThemeNotifier.addListener(_onThemeChanged);
+
     _initDeepLinks();
   }
+
+  void _onThemeChanged() => setState(() {});
 
   Future<void> _initDeepLinks() async {
     _appLinks = AppLinks();
@@ -116,6 +127,7 @@ class _MainAppState extends State<MainApp> {
 
   @override
   void dispose() {
+    appThemeNotifier.removeListener(_onThemeChanged);
     _linkSubscription?.cancel();
     super.dispose();
   }
@@ -126,27 +138,26 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemeProvider(
-      initTheme: widget.initialIsDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
-      builder: (themeContext, myTheme) {
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          debugShowCheckedModeBanner: false,
-          title: Base.title,
-          theme: myTheme,
-          supportedLocales: _localization.supportedLocales,
-          localizationsDelegates: _localization.localizationsDelegates,
-          locale: _localization.currentLocale,
-          home: const LoginPage(),
-          builder: (context, child) => Stack(
-            children: [
-              if (child != null) child,
-              const ProductSyncOverlay(),
-              const BPartnerSyncOverlay(),
-            ],
-          ),
-        );
-      },
+    return CircularRevealOverlay(
+      child: MaterialApp(
+        navigatorKey: navigatorKey,
+        debugShowCheckedModeBanner: false,
+        title: Base.title,
+        // Leemos el tema directamente del notifier; al cambiar solo se
+        // actualiza esta propiedad, el Navigator no se reinicia.
+        theme: appThemeNotifier.value,
+        supportedLocales: _localization.supportedLocales,
+        localizationsDelegates: _localization.localizationsDelegates,
+        locale: _localization.currentLocale,
+        home: const LoginPage(),
+        builder: (context, child) => Stack(
+          children: [
+            if (child != null) child,
+            const ProductSyncOverlay(),
+            const BPartnerSyncOverlay(),
+          ],
+        ),
+      ),
     );
   }
 }
