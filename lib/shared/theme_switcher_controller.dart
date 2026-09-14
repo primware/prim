@@ -32,8 +32,8 @@ class ThemeSwitcherController {
 
   /// Llama a este método para disparar la animación.
   /// [origin] es la posición global (en coordenadas de pantalla) donde se originará el círculo.
-  Future<void> trigger({required Offset origin}) async {
-    await _overlayState?.trigger(origin: origin);
+  Future<void> trigger({required Offset origin, bool isReversed = false}) async {
+    await _overlayState?.trigger(origin: origin, isReversed: isReversed);
   }
 }
 
@@ -57,6 +57,8 @@ class _CircularRevealOverlayState extends State<CircularRevealOverlay>
   Offset _origin = Offset.zero;
   bool _isAnimating = false;
 
+  bool _isReversed = false;
+
   @override
   void initState() {
     super.initState();
@@ -65,7 +67,7 @@ class _CircularRevealOverlayState extends State<CircularRevealOverlay>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         setState(() {
@@ -84,7 +86,7 @@ class _CircularRevealOverlayState extends State<CircularRevealOverlay>
     super.dispose();
   }
 
-  Future<void> trigger({required Offset origin}) async {
+  Future<void> trigger({required Offset origin, bool isReversed = false}) async {
     if (_isAnimating) return;
 
     // 1. Capturamos la pantalla CON el tema actual (antes del cambio).
@@ -98,41 +100,62 @@ class _CircularRevealOverlayState extends State<CircularRevealOverlay>
     setState(() {
       _snapshot = image;
       _origin = origin;
+      _isReversed = isReversed;
       _isAnimating = true;
     });
 
     // 2. Damos un frame para que el nuevo tema se pinte debajo.
     await Future.delayed(const Duration(milliseconds: 32));
 
-    // 3. Iniciamos la animación que expande el círculo.
+    // 3. Iniciamos la animación.
     _controller.forward(from: 0.0);
   }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
-      textDirection: TextDirection.ltr, // Soluciona "No Directionality widget found"
+      textDirection: TextDirection.ltr,
       children: [
-        // La app normal con el nuevo tema (visible debajo del overlay).
-        RepaintBoundary(
-          key: repaintKey,
-          child: widget.child,
-        ),
+        // Fondo: Si NO está invertido, mostramos la foto vieja intacta al fondo.
+        if (_isAnimating && !_isReversed && _snapshot != null)
+          RawImage(image: _snapshot, fit: BoxFit.cover),
 
-        // Overlay: captura del tema viejo recortada por un círculo que crece.
-        if (_isAnimating && _snapshot != null)
+        // Capa Principal (App en vivo)
+        if (_isAnimating && !_isReversed && _snapshot != null)
+          // Efecto Normal: La app nueva (abajo) CRECE desde el botón, cubriendo la foto vieja.
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              return ClipPath(
+                clipper: _CircularRevealClipper(
+                  origin: _origin,
+                  progress: _animation.value, // Crece 0 -> 1
+                ),
+                child: child,
+              );
+            },
+            child: RepaintBoundary(
+              key: repaintKey,
+              child: widget.child,
+            ),
+          )
+        else
+          // Efecto Invertido o Sin Animación: La app nueva se muestra normal.
+          RepaintBoundary(
+            key: repaintKey,
+            child: widget.child,
+          ),
+
+        // Capa Superior (Solo para Invertido)
+        if (_isAnimating && _isReversed && _snapshot != null)
+          // Efecto Invertido: La foto vieja (arriba) se ENCOGE hacia el botón.
           AnimatedBuilder(
             animation: _animation,
             builder: (context, _) {
               return ClipPath(
                 clipper: _CircularRevealClipper(
                   origin: _origin,
-                  // El radio crece desde 0 hasta cubrir la diagonal completa de la pantalla.
-                  // Al ir de 1 → 0 vemos cómo el círculo se ENCOGE (efecto revela el nuevo).
-                  // Al ir de 0 → 1 vemos cómo el círculo CRECE revelando el nuevo tema.
-                  // Usamos reveal desde 0→1: el nuevo tema queda debajo y el viejo (snapshot)
-                  // encima. El clipper recorta el snapshot en un círculo que se ENCOGE.
-                  progress: 1.0 - _animation.value,
+                  progress: 1.0 - _animation.value, // Encoge 1 -> 0
                 ),
                 child: RawImage(image: _snapshot, fit: BoxFit.cover),
               );
@@ -214,7 +237,16 @@ class _ThemeToggleIconButtonState extends State<ThemeToggleIconButton> {
             appThemeNotifier.value =
                 isDark ? AppThemes.lightTheme : AppThemes.darkTheme;
 
-            await ThemeSwitcherController.instance.trigger(origin: origin);
+            // Si cambiamos a modo oscuro (!isDark porque isDark es el estado VIEJO):
+            // isDark == false (actual es claro, vamos a oscuro):
+            //   Queremos que la oscuridad cubra todo (la foto clara se ENCOGE). -> isReversed = true.
+            // isDark == true (actual es oscuro, vamos a claro):
+            //   Queremos que la luz separe (la app clara CRECE). -> isReversed = false.
+            final bool goingToDark = !isDark;
+            await ThemeSwitcherController.instance.trigger(
+              origin: origin,
+              isReversed: goingToDark,
+            );
           },
         );
       },
