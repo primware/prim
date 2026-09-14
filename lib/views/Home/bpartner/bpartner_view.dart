@@ -214,9 +214,17 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                       const SizedBox(width: CustomSpacer.small),
                       Container(
                         height: 55,
-                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).floatingActionButtonTheme.backgroundColor ?? 
+                                 Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         child: IconButton(
-                          icon: const Icon(Icons.search, color: Colors.white),
+                          icon: Icon(
+                            Icons.search,
+                            color: Theme.of(context).floatingActionButtonTheme.foregroundColor ??
+                                   Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
                           onPressed: () => _loadBPartner(showLoadingIndicator: true),
                         ),
                       ),

@@ -530,11 +530,16 @@ class _ProductListPageState extends State<ProductListPage> {
                       Container(
                         height: 55,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).floatingActionButtonTheme.backgroundColor ?? 
+                                 Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.search, color: Colors.white),
+                          icon: Icon(
+                            Icons.search,
+                            color: Theme.of(context).floatingActionButtonTheme.foregroundColor ??
+                                   Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
                           tooltip: 'Buscar',
                           onPressed: () =>
                               _loadProduct(showLoadingIndicator: true),
