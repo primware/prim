@@ -20,7 +20,7 @@ class CustomContainer extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: maxWidthContainer),
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(

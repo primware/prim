@@ -18,6 +18,7 @@ import 'product_funtions.dart';
 import '../../../shared/toast_message.dart';
 import 'product_repository.dart';
 import 'product_sync_controller.dart';
+import '../../../shared/custom_pagination.dart';
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({super.key});
@@ -529,11 +530,16 @@ class _ProductListPageState extends State<ProductListPage> {
                       Container(
                         height: 55,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).floatingActionButtonTheme.backgroundColor ?? 
+                                 Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.search, color: Colors.white),
+                          icon: Icon(
+                            Icons.search,
+                            color: Theme.of(context).floatingActionButtonTheme.foregroundColor ??
+                                   Theme.of(context).colorScheme.onPrimaryContainer,
+                          ),
                           tooltip: 'Buscar',
                           onPressed: () =>
                               _loadProduct(showLoadingIndicator: true),
@@ -715,50 +721,30 @@ class _ProductListPageState extends State<ProductListPage> {
                           )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),
-                            itemCount: _getFilteredOrders().length,
+                            itemCount: _getFilteredOrders().length + 1,
                             itemBuilder: (context, index) {
+                              if (index == _getFilteredOrders().length) {
+                                return CustomPagination(
+                                  currentPage: _currentPage,
+                                  totalPages: _totalPages,
+                                  onPrevious: _currentPage > 0 && !isProductSearchLoading
+                                      ? () => _loadProduct(
+                                          showLoadingIndicator: true,
+                                          page: _currentPage - 1,
+                                        )
+                                      : null,
+                                  onNext: _currentPage + 1 < _totalPages && !isProductSearchLoading
+                                      ? () => _loadProduct(
+                                          showLoadingIndicator: true,
+                                          page: _currentPage + 1,
+                                        )
+                                      : null,
+                                );
+                              }
                               final record = _getFilteredOrders()[index];
                               return _buildProductCard(record);
                             },
                           ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton.filledTonal(
-                        tooltip: AppLocale.previous.getString(context),
-                        onPressed: _currentPage > 0 && !isProductSearchLoading
-                            ? () => _loadProduct(
-                                showLoadingIndicator: true,
-                                page: _currentPage - 1,
-                              )
-                            : null,
-                        icon: const Icon(Icons.chevron_left),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          AppLocale.pageOf
-                              .getString(context)
-                              .replaceAll('{page}', '${_currentPage + 1}')
-                              .replaceAll('{total}', '$_totalPages'),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      IconButton.filledTonal(
-                        tooltip: AppLocale.next.getString(context),
-                        onPressed:
-                            _currentPage + 1 < _totalPages &&
-                                !isProductSearchLoading
-                            ? () => _loadProduct(
-                                showLoadingIndicator: true,
-                                page: _currentPage + 1,
-                              )
-                            : null,
-                        icon: const Icon(Icons.chevron_right),
-                      ),
-                    ],
                   ),
                 ],
               ),

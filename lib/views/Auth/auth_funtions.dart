@@ -23,7 +23,11 @@ Future<void> handle401(BuildContext context) async {
   claveController.clear();
   await _clearLastTokenGeneratedAt();
 
-  Navigator.push(context, MaterialPageRoute(builder: (context) => MainApp()));
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (context) => const LoginPage()),
+    (route) => false,
+  );
   ToastMessage.show(
     context: context,
     message: "Por su seguridad la sesión a expirado",
@@ -289,6 +293,9 @@ Future<bool> usuarioAuth({
       await _loadChartIDs();
       POSTenderType.isMultiPayment = await _posTenderExists();
       await _loadAppVersion();
+      if (success) {
+        await UserData.saveToCache();
+      }
       return success;
     } else {
       await _clearLastTokenGeneratedAt();

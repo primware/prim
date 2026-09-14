@@ -29,6 +29,8 @@ import '../invoice/invoice_payment_print_generator.dart';
 import '../invoice/invoice_payment_receipt.dart';
 import 'history_search_criteria.dart';
 import 'order_history_repository.dart';
+import '../../../shared/glass_switch.dart';
+import '../../../shared/custom_pagination.dart';
 
 class OrderListPage extends StatefulWidget {
   const OrderListPage({super.key});
@@ -599,12 +601,14 @@ class _OrderListPageState extends State<OrderListPage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      SwitchListTile.adaptive(
+                      ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(AppLocale.onlyMyMovements.getString(context)),
                         subtitle: Text(AppLocale.onlyMyMovementsSubtitle.getString(context)),
-                        value: criteria.onlyMyMovements,
-                        onChanged: (value) => _stageCriteria(criteria.copyWith(onlyMyMovements: value)),
+                        trailing: GlassSwitch(
+                          value: criteria.onlyMyMovements,
+                          onChanged: (value) => _stageCriteria(criteria.copyWith(onlyMyMovements: value)),
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -720,6 +724,11 @@ class _OrderListPageState extends State<OrderListPage> {
                     padding: const EdgeInsets.only(right: 8),
                     child: FilterChip(
                       label: Text(AppLocale.all.getString(context)),
+                      labelStyle: TextStyle(
+                        color: selectedDocTypeFilter == null
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
                       selected: selectedDocTypeFilter == null,
                       selectedColor: Theme.of(context).primaryColor,
                       checkmarkColor: Theme.of(context).colorScheme.onPrimary,
@@ -734,6 +743,11 @@ class _OrderListPageState extends State<OrderListPage> {
                       child: FilterChip(
                         avatar: const Icon(Icons.payments_outlined, size: 17),
                         label: Text(AppLocale.invoicePayments.getString(context)),
+                        labelStyle: TextStyle(
+                          color: selectedDocTypeFilter == _paymentFilterValue
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                         selected: selectedDocTypeFilter == _paymentFilterValue,
                         selectedColor: Theme.of(context).colorScheme.secondaryContainer,
                         onSelected: (selected) {
@@ -752,6 +766,11 @@ class _OrderListPageState extends State<OrderListPage> {
                           padding: const EdgeInsets.only(right: 8),
                           child: FilterChip(
                             label: Text(docName),
+                            labelStyle: TextStyle(
+                              color: selectedDocTypeFilter == docName
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
                             selected: selectedDocTypeFilter == docName,
                             selectedColor: Theme.of(context).primaryColor,
                             checkmarkColor: Theme.of(context).colorScheme.onPrimary,
@@ -788,25 +807,11 @@ class _OrderListPageState extends State<OrderListPage> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            OutlinedButton.icon(
-              onPressed: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
-              icon: const Icon(Icons.chevron_left),
-              label: Text(AppLocale.previous.getString(context)),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(_localized(AppLocale.pageOf, {'page': _currentPage + 1, 'total': totalPages})),
-            ),
-            OutlinedButton.icon(
-              onPressed: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
-              iconAlignment: IconAlignment.end,
-              icon: const Icon(Icons.chevron_right),
-              label: Text(AppLocale.next.getString(context)),
-            ),
-          ],
+        CustomPagination(
+          currentPage: _currentPage,
+          totalPages: totalPages,
+          onPrevious: _currentPage > 0 && !isSearchLoading ? () => _loadHistory(page: _currentPage - 1) : null,
+          onNext: _currentPage + 1 < totalPages && !isSearchLoading ? () => _loadHistory(page: _currentPage + 1) : null,
         ),
       ],
     );
@@ -838,25 +843,30 @@ class _OrderListPageState extends State<OrderListPage> {
       Colors.green.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.12 : 0.07),
       Theme.of(context).cardColor,
     );
-    Widget chip(String label, IconData icon, Color color) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: color),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
+    Widget chip(String label, IconData icon, Color rawColor) {
+      final bool isDark = Theme.of(context).brightness == Brightness.dark;
+      final Color color = isDark ? Color.alphaBlend(Colors.white.withOpacity(0.4), rawColor) : rawColor;
+      
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(50),
+          border: Border.all(color: color),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    }
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -1171,7 +1181,8 @@ class _OrderListPageState extends State<OrderListPage> {
   }
 
   Widget _buildCreditMemoPill() {
-    final Color baseColor = Colors.red;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color baseColor = isDark ? Colors.red.shade300 : Colors.red;
     final Color bgColor = baseColor.withOpacity(0.12);
     final String label = AppLocale.refundGenerated.getString(context);
     final IconData icon = Icons.receipt_long_outlined;
@@ -1206,7 +1217,9 @@ class _OrderListPageState extends State<OrderListPage> {
     final meta =
         _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
-    final Color baseColor = meta['color'] as Color;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color rawColor = meta['color'] as Color;
+    final Color baseColor = isDark ? Color.alphaBlend(Colors.white.withOpacity(0.4), rawColor) : rawColor;
     final Color bgColor = baseColor.withOpacity(0.12);
     final String label = (meta['label'] as String).getString(context);
     final IconData icon = meta['icon'] as IconData;
@@ -1247,12 +1260,15 @@ class _OrderListPageState extends State<OrderListPage> {
               children: [
                 TextSpan(
                   text: '$label: ',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade700, 
+                    fontWeight: FontWeight.w500
+                  ),
                 ),
                 TextSpan(
                   text: value,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: highlight ? accentColor : Theme.of(context).textTheme.bodyMedium?.color,
+                    color: highlight ? accentColor : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade200 : Theme.of(context).textTheme.bodyMedium?.color),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1441,11 +1457,11 @@ class _OrderListPageState extends State<OrderListPage> {
                         ).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w700),
                       ),
                       const Spacer(),
-                      Icon(Icons.calendar_today_outlined, color: Colors.grey.shade500, size: 16),
+                      Icon(Icons.calendar_today_outlined, color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade400 : Colors.grey.shade500, size: 16),
                       const SizedBox(width: 6),
                       Text(
                         formatIdempiereDateUI(order['Created']?.toString() ?? ''),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade300 : Colors.grey.shade600),
                       ),
                     ],
                   ),

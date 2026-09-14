@@ -68,7 +68,24 @@ class SearchableDropdown<T> extends StatelessWidget {
           labelStyle: Theme.of(context).textTheme.bodyMedium,
           contentPadding: const EdgeInsets.all(16),
           filled: true,
-          fillColor: Theme.of(context).cardColor,
+          fillColor: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.transparent 
+              : Theme.of(context).cardColor,
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              width: 2,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Theme.of(context).brightness == Brightness.dark 
+                  ? Theme.of(context).dividerColor 
+                  : Theme.of(context).primaryColor,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
           border: OutlineInputBorder(
             borderSide: BorderSide(color: Theme.of(context).primaryColor),
             borderRadius: BorderRadius.circular(8),
@@ -172,7 +189,24 @@ class DropdownCustom<T> extends StatelessWidget {
         labelStyle: Theme.of(context).textTheme.bodyMedium,
         contentPadding: const EdgeInsets.all(16),
         filled: true,
-        fillColor: Theme.of(context).cardColor,
+        fillColor: Theme.of(context).brightness == Brightness.dark 
+            ? Colors.transparent 
+            : Theme.of(context).cardColor,
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            width: 2,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? Theme.of(context).dividerColor 
+                : Theme.of(context).primaryColor,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(color: Theme.of(context).primaryColor),
           borderRadius: BorderRadius.circular(8),

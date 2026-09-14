@@ -18,7 +18,6 @@ import 'package:primware/views/Home/product/product_sync_controller.dart';
 import 'package:primware/views/Home/bpartner/bpartner_sync_controller.dart';
 import 'package:primware/views/Home/report/close_cash_view.dart';
 import 'package:primware/views/Home/settings/degub_view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../shared/toast_message.dart';
 import '../API/endpoint.dart';
 import '../API/pos.api.dart';
@@ -161,7 +160,7 @@ class MenuDrawer extends StatefulWidget {
 }
 
 class _MenuDrawerState extends State<MenuDrawer> {
-  bool _isDarkMode = false, _isCreatingCloseCash = false, _isNavigating = false;
+  bool _isCreatingCloseCash = false, _isNavigating = false;
 
   Future<void> _runInternalNavigation(Future<void> Function() action) async {
     if (_isNavigating) return;
@@ -182,15 +181,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
   @override
   void initState() {
     super.initState();
-    _loadTheme();
     HeldTicketStore.instance.refresh();
-  }
-
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    });
   }
 
   Future<bool?> _showLogoutConfirmation(BuildContext context) {
@@ -238,6 +229,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     UserData.imageBytes = null;
     UserData.rolName = null;
     UserData.organizations = [];
+    UserData.clearCache(); // Limpiar caché persistente
 
     // Limpiar datos POS
     POS.priceListID = null;
@@ -410,16 +402,6 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 const SizedBox(height: CustomSpacer.medium),
                 _buildSectionTitle(context, 'SISTEMA'),
 
-                //! BOTÓN MODO OSCURO
-                // _buildMenuItem(
-                //   context,
-                //   icon: _isDarkMode ? Icons.nightlight : Icons.sunny,
-                //   title: _isDarkMode ? 'Modo oscuro' : 'Modo claro',
-                //   onTap: () {
-                //     ThemeManager.themeNotifier.toggleTheme();
-                //     _loadTheme();
-                //   },
-                // ),
                 _buildMenuItem(
                   context,
                   icon: Icons.settings_outlined,
@@ -471,11 +453,15 @@ class _MenuDrawerState extends State<MenuDrawer> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor,
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? const Color(0xff494371) // Mismo morado oscuro del modo claro
+            : Theme.of(context).primaryColor,
         borderRadius: const BorderRadius.only(bottomRight: Radius.circular(40)),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? const Color(0xff494371).withOpacity(0.3) 
+                : Theme.of(context).primaryColor.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -520,7 +506,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  UserData.rolName ?? 'LIRION ERP',
+                  UserData.rolName ?? 'Rol no asignado',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
                     fontSize: 13,

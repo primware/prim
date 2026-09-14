@@ -324,7 +324,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.black.withOpacity(0.2)
+                              ? Colors.white.withOpacity(0.05)
                               : Colors.white.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(

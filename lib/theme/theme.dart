@@ -51,32 +51,42 @@ class AppThemes {
 
   static ThemeData get darkTheme {
     final colorScheme = MaterialTheme.darkScheme();
+    // Tonos más claros y azulados en lugar de negro puro
+    final darkBackground = const Color(0xFF1A1A24); 
+    final surfaceColor = const Color(0xFF262636);
 
     return ThemeData(
       useMaterial3: true,
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: colorScheme.surfaceDim,
+      colorScheme: colorScheme.copyWith(
+        surface: surfaceColor,
+        onSurface: Colors.white,
+      ),
+      primaryColor: colorScheme.primary, // EXPLICIT PRIMARY COLOR
+      scaffoldBackgroundColor: darkBackground,
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.secondary,
-        foregroundColor: colorScheme.onSecondary,
-        elevation: 0,
+        backgroundColor: surfaceColor,
+        foregroundColor: Colors.white,
+        elevation: 1, // Leve sombra
         centerTitle: true,
       ),
       drawerTheme: DrawerThemeData(
-        backgroundColor: colorScheme.onPrimary,
-        shape: RoundedRectangleBorder(
+        backgroundColor: surfaceColor,
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
         ),
       ),
       textTheme: GoogleFonts.poppinsTextTheme().apply(
-        bodyColor: colorScheme.onSurface,
-        displayColor: colorScheme.onSurface,
+        bodyColor: Colors.grey.shade300, // Texto secundario más claro
+        displayColor: Colors.white,     // Títulos blancos
       ),
-      cardColor: colorScheme.surface,
-      dividerColor: colorScheme.outline,
+      cardColor: surfaceColor,
+      dividerColor: Colors.white.withOpacity(0.15),
       listTileTheme: ListTileThemeData(
-        textColor: colorScheme.onSurface,
-        iconColor: colorScheme.onSurfaceVariant,
+        textColor: Colors.white,
+        iconColor: Colors.white70,
+      ),
+      iconTheme: const IconThemeData(
+        color: Colors.white70,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
