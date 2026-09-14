@@ -422,11 +422,18 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       icon: isDark ? Icons.sunny : Icons.nightlight,
                       title: isDark ? 'Modo claro' : 'Modo oscuro',
                       onTap: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('isDarkMode', !isDark);
+                        
+                        // Cerramos el menú lateral primero para evitar que el redibujado
+                        // de la aplicación completa ahogue al motor y pierda fotogramas.
+                        Navigator.of(context).pop();
+                        
+                        await Future.delayed(const Duration(milliseconds: 250));
+                        
                         switcher.changeTheme(
                           theme: isDark ? AppThemes.lightTheme : AppThemes.darkTheme,
                         );
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('isDarkMode', !isDark);
                       },
                     );
                   }

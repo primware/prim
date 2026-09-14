@@ -138,10 +138,12 @@ class _ConfigPageState extends State<ConfigPage> {
         setState(() {
           organizations = _cachedOrgs[cacheKey]!;
           UserData.organizations = List<Map<String, dynamic>>.from(organizations);
-          if (organizations.length == 1) {
-            selectedOrganizationId = organizations[0]['id'];
-            _onOrganizationSelected(selectedOrganizationId);
-          }
+        });
+      } else if (UserData.organizations.isNotEmpty && UserData.rolName == roles.firstWhere((r) => r['id'] == roleId, orElse: () => {})['name']) {
+        // Fast load from UserData cache if it matches the role
+        setState(() {
+          organizations = List<Map<String, dynamic>>.from(UserData.organizations);
+          _cachedOrgs[cacheKey] = organizations;
         });
       } else {
         final fetchedOrganizations = await getOrganizations(selectedClientId!, roleId, context);

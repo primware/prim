@@ -126,31 +126,27 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      title: Base.title,
-      // Pass the initial theme statically; ThemeProvider will override it below.
-      theme: widget.initialIsDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
-      supportedLocales: _localization.supportedLocales,
-      localizationsDelegates: _localization.localizationsDelegates,
-      locale: _localization.currentLocale,
-      home: const LoginPage(),
-      builder: (context, child) => ThemeProvider(
-        initTheme: widget.initialIsDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
-        builder: (context, myTheme) {
-          return Theme(
-            data: myTheme,
-            child: Stack(
-              children: [
-                if (child != null) child,
-                const ProductSyncOverlay(),
-                const BPartnerSyncOverlay(),
-              ],
-            ),
-          );
-        },
-      ),
+    return ThemeProvider(
+      initTheme: widget.initialIsDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
+      builder: (themeContext, myTheme) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: Base.title,
+          theme: myTheme,
+          supportedLocales: _localization.supportedLocales,
+          localizationsDelegates: _localization.localizationsDelegates,
+          locale: _localization.currentLocale,
+          home: const LoginPage(),
+          builder: (context, child) => Stack(
+            children: [
+              if (child != null) child,
+              const ProductSyncOverlay(),
+              const BPartnerSyncOverlay(),
+            ],
+          ),
+        );
+      },
     );
   }
 }
