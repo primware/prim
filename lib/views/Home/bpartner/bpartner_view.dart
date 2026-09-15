@@ -12,7 +12,6 @@ import '../dashboard/dashboard_view.dart';
 import 'bpartner_details.dart';
 import 'bpartner_new.dart';
 import 'bpartner_repository.dart';
-import '../../../shared/toast_message.dart';
 import '../../../shared/custom_pagination.dart';
 import 'bpartner_sync_controller.dart';
 
@@ -49,10 +48,7 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
   }
 
   Future<void> _onRepositoryChanged() async {
-    final page = await BPartnerRepository.instance.readCachedPage(
-      searchTerm: searchController.text.trim(),
-      pageIndex: _currentPage,
-    );
+    final page = await BPartnerRepository.instance.readCachedPage(searchTerm: searchController.text.trim(), pageIndex: _currentPage);
     if (!mounted || page == null) return;
     setState(() {
       _bpartners = page.records;
@@ -152,14 +148,18 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.secondary.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                         child: Text(
                           record['TaxID'] ?? 'Sin ID',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (record['dv'] != null) Text('DV: ${record['dv']}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                      if (record['dv'] != null)
+                        Text('DV: ${record['dv']}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
                     ],
                   ),
                   if (record['LCO_TaxIdTypeName'] != null)
@@ -209,21 +209,27 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: TextfieldTheme(texto: AppLocale.searchCustomer.getString(context), controlador: searchController, pista: AppLocale.taxIDOrName.getString(context), onSubmitted: (_) => _loadBPartner(showLoadingIndicator: true)),
+                        child: TextfieldTheme(
+                          texto: AppLocale.searchCustomer.getString(context),
+                          controlador: searchController,
+                          pista: AppLocale.taxIDOrName.getString(context),
+                          onSubmitted: (_) => _loadBPartner(showLoadingIndicator: true),
+                        ),
                       ),
                       const SizedBox(width: CustomSpacer.small),
                       Container(
                         height: 55,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).floatingActionButtonTheme.backgroundColor ?? 
-                                 Theme.of(context).colorScheme.primaryContainer,
+                          color:
+                              Theme.of(context).floatingActionButtonTheme.backgroundColor ?? Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: IconButton(
                           icon: Icon(
                             Icons.search,
-                            color: Theme.of(context).floatingActionButtonTheme.foregroundColor ??
-                                   Theme.of(context).colorScheme.onPrimaryContainer,
+                            color:
+                                Theme.of(context).floatingActionButtonTheme.foregroundColor ??
+                                Theme.of(context).colorScheme.onPrimaryContainer,
                           ),
                           onPressed: () => _loadBPartner(showLoadingIndicator: true),
                         ),
@@ -292,7 +298,10 @@ class _BPartnerListPageState extends State<BPartnerListPage> {
                         ? ShimmerList(separation: CustomSpacer.medium)
                         : _getFilteredPartners().isEmpty
                         ? Center(
-                            child: Text(AppLocale.noProductsFound.getString(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey)),
+                            child: Text(
+                              AppLocale.noProductsFound.getString(context),
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                            ),
                           )
                         : ListView.builder(
                             physics: const BouncingScrollPhysics(),
