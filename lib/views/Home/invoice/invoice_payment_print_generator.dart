@@ -39,7 +39,6 @@ List<pw.Widget> _header(InvoicePaymentReceipt receipt, {required bool compact}) 
   if (receipt.customerAddress.isNotEmpty) pw.Text('Dirección: ${receipt.customerAddress}'),
   if (receipt.customerPhone.isNotEmpty) pw.Text('Teléfono: ${receipt.customerPhone}'),
   pw.Text('Representante: ${receipt.salesRepName}'),
-  if (receipt.posName.isNotEmpty || receipt.posId != null) pw.Text('POS: ${receipt.posName.isNotEmpty ? receipt.posName : receipt.posId}'),
 ];
 
 pw.Widget _invoiceTable(InvoicePaymentReceipt receipt, {required bool compact}) => pw.Table.fromTextArray(
