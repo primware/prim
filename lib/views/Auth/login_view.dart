@@ -15,6 +15,7 @@ import '../../shared/logo.dart';
 import '../../shared/custom_textfield.dart';
 import '../../shared/toast_message.dart';
 import '../../theme/colors.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'auth_funtions.dart';
 import 'config_view.dart';
 
@@ -34,6 +35,7 @@ class _LoginPageState extends State<LoginPage> {
       cPosController = TextEditingController();
   bool rememberUser = false;
   String version = '';
+  String appVersion = '';
 
   @override
   void initState() {
@@ -73,8 +75,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _checkVersion() async {
     String checkVersion = await fetchAppVersion();
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
     setState(() {
       version = checkVersion;
+      appVersion = packageInfo.version;
     });
   }
 
@@ -422,11 +426,39 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                 ),
-                if (version != 'No es web') ...[
-                  const SizedBox(
-                    height: CustomSpacer.xlarge + CustomSpacer.medium,
+                if (appVersion.isNotEmpty) ...[
+                  const SizedBox(height: CustomSpacer.xlarge),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: Theme.of(context).textTheme.labelMedium?.color?.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Versión $appVersion',
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Text(version, style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: CustomSpacer.medium),
                 ],
               ],
             ),
