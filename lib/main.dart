@@ -154,7 +154,9 @@ class _MainAppState extends State<MainApp> {
         home: const LoginPage(),
         builder: (context, child) => CustomUpgradeAlert(
           navigatorKey: navigatorKey,
-          upgrader: Upgrader(),
+          upgrader: Upgrader(
+            languageCode: _localization.currentLocale?.languageCode ?? 'es',
+          ),
           child: Stack(
             children: [
               if (child != null) child,
