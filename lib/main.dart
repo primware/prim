@@ -18,6 +18,8 @@ import 'views/Home/order/order_history_repository.dart';
 import 'views/Home/bpartner/bpartner_repository.dart';
 import 'views/Home/bpartner/bpartner_sync_overlay.dart';
 import 'shared/theme_switcher_controller.dart';
+import 'package:upgrader/upgrader.dart';
+import 'shared/custom_upgrade_alert.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -150,12 +152,18 @@ class _MainAppState extends State<MainApp> {
         localizationsDelegates: _localization.localizationsDelegates,
         locale: _localization.currentLocale,
         home: const LoginPage(),
-        builder: (context, child) => Stack(
-          children: [
-            if (child != null) child,
-            const ProductSyncOverlay(),
-            const BPartnerSyncOverlay(),
-          ],
+        builder: (context, child) => CustomUpgradeAlert(
+          navigatorKey: navigatorKey,
+          upgrader: Upgrader(
+            languageCode: _localization.currentLocale?.languageCode ?? 'es',
+          ),
+          child: Stack(
+            children: [
+              if (child != null) child,
+              const ProductSyncOverlay(),
+              const BPartnerSyncOverlay(),
+            ],
+          ),
         ),
       ),
     );
