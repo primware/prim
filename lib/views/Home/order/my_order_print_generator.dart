@@ -1,3 +1,4 @@
+import 'package:primware/shared/format_amount.dart';
 import 'dart:convert';
 import 'package:primware/localization/app_locale.dart';
 import 'package:flutter_localization/flutter_localization.dart';
@@ -149,16 +150,22 @@ Future<Uint8List> _generateGiftInvoice(Map<String, dynamic> order, {required Gif
   return pdf.save();
 }
 
-Future<Uint8List> generateOrderTicket(Map<String, dynamic> order, {required BuildContext context}) async {
+Future<Uint8List> generateOrderTicket(
+  Map<String, dynamic> order, {
+  required BuildContext context,
+  Map<String, dynamic>? electronicInvoiceInfo,
+}) async {
   // Currency formatter
-  final NumberFormat nf = NumberFormat.currency(locale: 'es_PA', symbol: 'B/.');
+  final NumberFormat nf = NumberFormat.currency(locale: 'en_US', symbol: 'B/.', decimalDigits: 2);
 
   // Fetch FE info if order['id'] exists
-  Map<String, dynamic>? feInfo;
-  if (order['id'] != null) {
+  Map<String, dynamic>? feInfo = electronicInvoiceInfo;
+  if (feInfo == null && order['id'] != null) {
     feInfo = await fetchElectronicInvoiceInfo(orderId: order['id']);
   }
 
+  final showFE = hasPrintableFE(feInfo);
+  final dgi = showFE ? (await rootBundle.load('assets/img/dgi.png')).buffer.asUint8List() : null;
   final pdf = pw.Document();
   final List lines = (order['C_OrderLine'] as List?) ?? const [];
 
@@ -177,6 +184,26 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order, {required Buil
   pdf.addPage(
     pw.MultiPage(
       build: (pdfContext) => <pw.Widget>[
+        if (dgi != null) ...[
+          pw.Center(child: pw.Image(pw.MemoryImage(dgi), width: 50, fit: pw.BoxFit.contain)),
+          pw.SizedBox(height: 4),
+          pw.Center(
+            child: pw.Text(
+              AppLocale.es[AppLocale.ticketElectronicInvoiceAuxiliaryTitle] as String,
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+          if (Localizations.localeOf(context).languageCode == 'en')
+            pw.Center(
+              child: pw.Text(
+                AppLocale.ticketElectronicInvoiceAuxiliaryTitle.getString(context),
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 9),
+              ),
+            ),
+          pw.SizedBox(height: 10),
+        ],
         // Header + General info with QR at top-right (if FE exists)
         pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -226,24 +253,12 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order, {required Buil
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Text(
-                      AppLocale.ticketElectronicInvoiceQRCodeLabel.getString(context),
-                      style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
-                    ),
-                    pw.SizedBox(height: 6),
                     pw.BarcodeWidget(
                       data: feInfo?['url'] ?? '',
                       barcode: pw.Barcode.qrCode(errorCorrectLevel: pw.BarcodeQRCorrectionLevel.medium),
                       width: 120,
                       height: 120,
                     ),
-                    pw.SizedBox(height: 6),
-                    if ((feInfo?['protocolo'] ?? '').toString().isNotEmpty)
-                      pw.Text(
-                        '${AppLocale.ticketProtocolShortLabel.getString(context)}: ${feInfo?['protocolo']}',
-                        textAlign: pw.TextAlign.right,
-                        style: pw.TextStyle(fontSize: 8),
-                      ),
                   ],
                 ),
               ),
@@ -304,7 +319,6 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order, {required Buil
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13),
         ),
         pw.SizedBox(height: 16),
-        if (hasPrintableFE(feInfo)) ...buildFEFields(feInfo!, context),
         // FE footer note (QR is shown at top-right)
         if (hasPrintableFE(feInfo)) ...[
           pw.Divider(),
@@ -315,6 +329,11 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order, {required Buil
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
           ),
           pw.SizedBox(height: 4),
+          if (_hasHeaderValue(feInfo?['protocolo']))
+            pw.Text(
+              '${AppLocale.ticketAuthorizationProtocolLabel.getString(context)}: ${feInfo?['protocolo']}',
+              style: pw.TextStyle(fontSize: 8),
+            ),
           pw.Text(AppLocale.ticketInvoiceAccessKeyConsultation.getString(context), style: pw.TextStyle(fontSize: 8)),
           pw.Text('https://dgi-fep.mef.gob.pa/Consultas/FacturasPorCUFE', style: pw.TextStyle(fontSize: 8)),
           if (electronicInvoiceCUFE(feInfo!).isNotEmpty) ...[
@@ -336,9 +355,7 @@ Future<Uint8List> generateOrderTicket(Map<String, dynamic> order, {required Buil
 
 Future<Map<String, dynamic>?> fetchElectronicInvoiceInfo({required int orderId}) async {
   try {
-    final uri = Uri.parse(
-      '${EndPoints.cInvoice}?\$filter=C_Order_ID eq $orderId&\$expand=FE_InvoiceResponseLog,C_DocType_ID,C_InvoiceLine(\$expand=M_Product_ID,C_UOM_ID,C_Tax_ID)',
-    );
+    final uri = Uri.parse('${EndPoints.cInvoice}?\$filter=C_Order_ID eq $orderId&\$expand=FE_InvoiceResponseLog');
     final response = await get(uri, headers: {'Content-Type': 'application/json; charset=UTF-8', 'Authorization': Token.auth!});
 
     if (response.statusCode != 200) {
@@ -407,7 +424,7 @@ Future<Uint8List> generatePOSTicket(
   // Helpers
   String str(dynamic v) => v?.toString() ?? '';
   bool hasHeaderValue(dynamic value) => _hasHeaderValue(value);
-  String money(num? v) => 'B/.${(v ?? 0).toDouble().toStringAsFixed(2)}';
+  String money(num? v) => 'B/.${formatAmount(v)}';
 
   String docTypename = order['doctypetarget']?['name'] ?? '';
 
@@ -422,6 +439,7 @@ Future<Uint8List> generatePOSTicket(
 
   // Lines & taxes
   final List lines = (order['C_OrderLine'] as List?) ?? const [];
+  final payments = (order['payments'] as List?) ?? const [];
   final taxSummary = _calculateTaxSummary([order]);
 
   final double taxTotal = taxSummary.values.map((e) => e['tax'] as double).fold(0.0, (a, b) => a + b);
@@ -569,20 +587,16 @@ Future<Uint8List> generatePOSTicket(
               pw.Text('${AppLocale.ticketItemCountLabel.getString(context)}: ${lines.length}'),
               pw.SizedBox(height: 12),
             ],
-            pw.Text(
-              '${AppLocale.ticketTotalLabel.getString(context)}: ${money(grandTotal)}',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
-            ),
-            pw.SizedBox(height: 10),
-
             // Formas de pago
-            pw.Text(AppLocale.ticketPaymentMethodsLabel.getString(context), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-            ...?order['payments']?.map<pw.Widget>((payment) {
-              final payType = payment['C_POSTenderType_ID']?['identifier'] ?? AppLocale.ticketOtherPaymentMethod.getString(context);
-              final amount = (payment['PayAmt'] as num?)?.toDouble() ?? 0.0;
-              return pw.Text('- $payType: ${money(amount)}');
-            }),
-            pw.SizedBox(height: 10),
+            if (payments.isNotEmpty) ...[
+              pw.Text(AppLocale.ticketPaymentMethodsLabel.getString(context), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              ...payments.map<pw.Widget>((payment) {
+                final payType = payment['C_POSTenderType_ID']?['identifier'] ?? AppLocale.ticketOtherPaymentMethod.getString(context);
+                final amount = (payment['PayAmt'] as num?)?.toDouble() ?? 0.0;
+                return pw.Text('- $payType: ${money(amount)}');
+              }),
+              pw.SizedBox(height: 10),
+            ],
 
             // Impuestos
             pw.Text(
@@ -592,8 +606,13 @@ Future<Uint8List> generatePOSTicket(
             pw.Text('ITBMS: ${money(taxTotal)}'),
             pw.SizedBox(height: 12),
 
+            pw.Text(
+              '${AppLocale.ticketTotalLabel.getString(context)}: ${money(grandTotal)}',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+            ),
+            pw.SizedBox(height: 10),
+
             // Electronic invoice data
-            if (showFE) ...buildFEFields(feInfo!, context),
             if (hasPrintableFE(feInfo)) ...[
               pw.Divider(),
               pw.SizedBox(height: 8),
@@ -699,49 +718,6 @@ List<String> buildPACFooter(BuildContext context) {
   }
 
   return [legend(spanish: true), if (Localizations.localeOf(context).languageCode == 'en') legend(spanish: false)];
-}
-
-List<pw.Widget> buildFEFields(Map<String, dynamic> info, BuildContext context) {
-  final invoice = (info['invoice'] as Map?) ?? {};
-  final cufe = electronicInvoiceCUFE(info);
-  final number = invoice['FE_numeroDocumentoFiscal'];
-  final point = invoice['FE_puntoFacturacionFiscal'];
-  final date = invoice['DateInvoiced'];
-  final missing = [
-    if (cufe.isEmpty) 'CUFE',
-    if (!_hasHeaderValue(number)) 'FE number',
-    if (!_hasHeaderValue(point)) 'Billing point',
-    if (!_hasHeaderValue(date)) 'Issue date',
-    'Authorization timestamp / transmission deadline',
-    if (invoice['DiscountAmt'] == null) 'Fiscal total discount',
-    if (invoice['TotalPaid'] == null) 'Fiscal paid amount',
-    if (invoice['ChangeAmt'] == null) 'Fiscal change',
-  ];
-  CurrentLogMessage.add('CAFE unverified requirements: ${missing.join(', ')}', level: 'WARNING', tag: 'FE');
-  final invoiceLines = (invoice['C_InvoiceLine'] as List?) ?? [];
-  if (invoiceLines.isEmpty) CurrentLogMessage.add('CAFE invoice line details unavailable', level: 'WARNING', tag: 'FE');
-  return [
-    if (_hasHeaderValue(invoice['C_DocType_ID']?['Name'])) pw.Text(invoice['C_DocType_ID']['Name'].toString()),
-    for (final line in invoiceLines) ...[
-      if (_hasHeaderValue(line['M_Product_ID']?['Value']))
-        pw.Text('${AppLocale.ticketProductCodeLabel.getString(context)}: ${line['M_Product_ID']['Value']}'),
-      if (_hasHeaderValue(line['C_UOM_ID']?['identifier']))
-        pw.Text('${AppLocale.ticketUnitOfMeasureLabel.getString(context)}: ${line['C_UOM_ID']['identifier']}'),
-      if (line['QtyInvoiced'] != null) pw.Text('${AppLocale.ticketQuantityLabel.getString(context)}: ${line['QtyInvoiced']}'),
-      if (line['PriceActual'] != null) pw.Text('${AppLocale.ticketUnitPriceLabel.getString(context)}: ${line['PriceActual']}'),
-      if (line['TaxAmt'] != null) pw.Text('ITBMS: ${line['TaxAmt']}'),
-      if (line['LineNetAmt'] != null) pw.Text('${AppLocale.ticketItemAmountLabel.getString(context)}: ${line['LineNetAmt']}'),
-    ],
-    if (_hasHeaderValue(number)) pw.Text('${AppLocale.ticketElectronicInvoiceNumberLabel.getString(context)}: $number'),
-    if (_hasHeaderValue(point)) pw.Text('${AppLocale.ticketFiscalBillingPointLabel.getString(context)}: $point'),
-    if (_hasHeaderValue(date))
-      pw.Text(
-        '${AppLocale.ticketInvoiceIssueDateLabel.getString(context)}: ${DateTime.tryParse(date.toString()) == null ? date.toString() : DateFormat('dd/MM/yyyy').format(DateTime.parse(date.toString()))}',
-      ),
-    if (invoice['DiscountAmt'] != null) pw.Text('${AppLocale.ticketTotalDiscountLabel.getString(context)}: ${invoice['DiscountAmt']}'),
-    if (invoice['TotalPaid'] != null) pw.Text('${AppLocale.ticketAmountPaidLabel.getString(context)}: ${invoice['TotalPaid']}'),
-    if (invoice['ChangeAmt'] != null) pw.Text('${AppLocale.ticketChangeAmountLabel.getString(context)}: ${invoice['ChangeAmt']}'),
-  ];
 }
 
 String electronicInvoiceCUFE(Map<String, dynamic> info) {

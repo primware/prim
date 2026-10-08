@@ -157,6 +157,8 @@ Future<void> main() async {
       final context = await localizedContext(tester, english ? 'en' : 'es');
       final bytes = await generatePOSTicket(order, context: context, electronicInvoiceInfo: info);
       expect(bytes.length, greaterThan(1000));
+      final sheet = await generateOrderTicket({...order, 'TotalLines': 10}, context: context, electronicInvoiceInfo: info);
+      await tester.runAsync(() => File('/private/tmp/fe-sheet-${english ? 'en' : 'es'}.pdf').writeAsBytes(sheet));
       await tester.runAsync(() => File('/private/tmp/fe-ticket-${english ? 'en' : 'es'}.pdf').writeAsBytes(bytes));
     }
     final bytes = await generatePOSTicket(order, context: await localizedContext(tester, 'es'), electronicInvoiceInfo: {'url': ''});
