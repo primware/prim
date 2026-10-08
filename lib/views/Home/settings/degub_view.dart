@@ -1,3 +1,4 @@
+import 'package:primware/API/fe.api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/API/endpoint.dart';
@@ -397,6 +398,14 @@ class _DebugPageState extends State<DebugPage> {
                           title: AppLocale.printingParameters.getString(context),
                           icon: Icons.print_outlined,
                           children: [
+                            _buildInfoRow('hasFEConfig', FESession.hasFEConfig.toString()),
+                            _buildInfoRow('FE_PAC_Config_ID', _value(FESession.configId)),
+                            _buildInfoRow('FE AD_Org_ID', _value(FESession.organizationId)),
+                            _buildInfoRow('FE_PAC_ID', _value(FESession.pacId)),
+                            _buildInfoRow('FE_LegalName', _value(FESession.legalName)),
+                            _buildInfoRow('PAC TaxID', _value(FESession.taxId)),
+                            _buildInfoRow('FE_Resolution', _value(FESession.resolution)),
+                            _buildInfoRow('FE_ResolutionDate', _value(FESession.resolutionDate)),
                             _buildInfoRow(AppLocale.printerName.getString(context), _value(POSPrinter.headerName)),
                             _buildInfoRow(AppLocale.printerAddress.getString(context), _value(POSPrinter.headerAddress)),
                             _buildInfoRow(AppLocale.printerTaxId.getString(context), _value(POSPrinter.headerTaxID)),

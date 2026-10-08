@@ -286,7 +286,7 @@ class OrderDetailPage extends StatelessWidget {
               final bool isMobileVertical = MediaQuery.of(context).size.width < 600;
 
               void actionShare() async {
-                final pdfBytes = await generateOrderTicket(order);
+                final pdfBytes = await generateOrderTicket(order, context: context);
                 await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
               }
 
@@ -453,7 +453,7 @@ class OrderDetailPage extends StatelessWidget {
                 final bool? confirmPrintTicket = await _printTicketConfirmation(context);
                 if (confirmPrintTicket == true) {
                   try {
-                    final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order) : await generateOrderTicket(order);
+                    final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order, context: context) : await generateOrderTicket(order, context: context);
                     try {
                       final printers = await Printing.listPrinters();
                       final defaultPrinter = printers.firstWhere(
@@ -471,7 +471,7 @@ class OrderDetailPage extends StatelessWidget {
                     }
                   } catch (e) {
                     try {
-                      final pdfBytes = await generateOrderTicket(order);
+                      final pdfBytes = await generateOrderTicket(order, context: context);
                       await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
                     } catch (_) {}
                   }

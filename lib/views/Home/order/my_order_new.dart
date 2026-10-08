@@ -1848,7 +1848,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
           if (!mounted) return;
           if (confirmPrintTicket == true) {
             try {
-              final pdfBytes = await generatePOSTicket(order);
+              final pdfBytes = await generatePOSTicket(order, context: context);
 
               try {
                 final printers = await Printing.listPrinters();
@@ -1868,7 +1868,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
               }
             } catch (e) {
               try {
-                final pdfBytes = await generatePOSTicket(order);
+                final pdfBytes = await generatePOSTicket(order, context: context);
                 await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
               } catch (_) {}
             }

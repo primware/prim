@@ -1,4 +1,5 @@
 // ignore_for_file: deprecated_member_use
+import 'package:primware/API/fe.api.dart';
 import 'dart:async';
 import 'package:primware/views/Auth/config_view.dart';
 import 'package:primware/views/Auth/auth_funtions.dart';
@@ -212,6 +213,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
     claveController.clear();
 
     // Limpiar tokens
+    FESession.reset();
     Token.auth = null;
     Token.preAuth = null;
     Token.superAuth = null;

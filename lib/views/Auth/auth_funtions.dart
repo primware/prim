@@ -1,5 +1,6 @@
 // ignore_for_file: unused_local_variable, unused_element, deprecated_member_use, use_build_context_synchronously, avoid_print, depend_on_referenced_packages
 
+import 'package:primware/API/fe.api.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,7 @@ import '../../API/user.api.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 Future<void> handle401(BuildContext context) async {
+  FESession.reset();
   Token.auth = null;
   Token.adOrgInfoUU = null;
   POS.bankAccountID = null;
@@ -199,6 +201,7 @@ Future<bool> usuarioAuth({required BuildContext context, bool forceNewToken = fa
       UserData.id = json.decode(response.body)["userId"];
       await _saveLastTokenGeneratedAt();
       bool success = await _loadUserData(context);
+      await loadFESession();
       await _loadPOSData(context);
       await _loadPOSPrinterData();
       await _loadChartIDs();

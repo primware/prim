@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:primware/API/fe.api.dart';
 import 'package:flutter/material.dart';
 import 'package:primware/views/Home/order/my_order_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -207,6 +208,7 @@ class _ConfigPageState extends State<ConfigPage> {
     if (selectedClientId != null && selectedRoleId != null && selectedOrganizationId != null) {
       Token.client = selectedClientId!;
       Token.rol = selectedRoleId;
+      FESession.reset();
       Token.organitation = selectedOrganizationId!;
 
       setState(() {
