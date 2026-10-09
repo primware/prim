@@ -1,3 +1,4 @@
+import 'package:primware/shared/format_amount.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:primware/theme/colors.dart';
@@ -286,7 +287,7 @@ class OrderDetailPage extends StatelessWidget {
               final bool isMobileVertical = MediaQuery.of(context).size.width < 600;
 
               void actionShare() async {
-                final pdfBytes = await generateOrderTicket(order);
+                final pdfBytes = await generateOrderTicket(order, context: context);
                 await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
               }
 
@@ -453,7 +454,7 @@ class OrderDetailPage extends StatelessWidget {
                 final bool? confirmPrintTicket = await _printTicketConfirmation(context);
                 if (confirmPrintTicket == true) {
                   try {
-                    final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order) : await generateOrderTicket(order);
+                    final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order, context: context) : await generateOrderTicket(order, context: context);
                     try {
                       final printers = await Printing.listPrinters();
                       final defaultPrinter = printers.firstWhere(
@@ -471,7 +472,7 @@ class OrderDetailPage extends StatelessWidget {
                     }
                   } catch (e) {
                     try {
-                      final pdfBytes = await generateOrderTicket(order);
+                      final pdfBytes = await generateOrderTicket(order, context: context);
                       await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
                     } catch (_) {}
                   }
@@ -753,7 +754,7 @@ class OrderDetailPage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    "${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)} x \$${price.toStringAsFixed(2)}",
+                                    "${qty.toStringAsFixed(qty % 1 == 0 ? 0 : 2)} x \$${formatAmount(price)}",
                                     style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                                   ),
                                   if (discountPct > 0.0)
@@ -770,7 +771,7 @@ class OrderDetailPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    "\$${total.toStringAsFixed(2)}",
+                                    "\$${formatAmount(total)}",
                                     style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
                                   ),
                                   const SizedBox(height: 4),
@@ -812,7 +813,7 @@ class OrderDetailPage extends StatelessWidget {
                             children: [
                               Text(tenderName, style: TextStyle(color: textColor)),
                               Text(
-                                "\$${payAmt.toStringAsFixed(2)}",
+                                "\$${formatAmount(payAmt)}",
                                 style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
                               ),
                             ],
@@ -1055,7 +1056,7 @@ class OrderDetailPage extends StatelessWidget {
           children: [
             Text(AppLocale.grossTotal.getString(context), style: TextStyle(color: Colors.grey.shade600)),
             Text(
-              "\$${totalNeto.toStringAsFixed(2)}",
+              "\$${formatAmount(totalNeto)}",
               style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
             ),
           ],
@@ -1069,7 +1070,7 @@ class OrderDetailPage extends StatelessWidget {
               children: [
                 Text(entry.key, style: TextStyle(color: Colors.grey.shade600)),
                 Text(
-                  "\$${entry.value['tax']!.toStringAsFixed(2)}",
+                  "\$${formatAmount(entry.value['tax']!)}",
                   style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
                 ),
               ],
@@ -1082,7 +1083,7 @@ class OrderDetailPage extends StatelessWidget {
             children: [
               Text(AppLocale.taxTotal.getString(context), style: TextStyle(color: Colors.grey.shade600)),
               Text(
-                "\$${totalImpuesto.toStringAsFixed(2)}",
+                "\$${formatAmount(totalImpuesto)}",
                 style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
               ),
             ],
@@ -1103,7 +1104,7 @@ class OrderDetailPage extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xff494371)),
               ),
               Text(
-                "\$${grandTotal.toStringAsFixed(2)}",
+                "\$${formatAmount(grandTotal)}",
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Color(0xff494371)),
               ),
             ],

@@ -1,3 +1,4 @@
+import 'package:primware/shared/format_amount.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
@@ -191,7 +192,7 @@ class _OrderListPageState extends State<OrderListPage> {
     final bool? confirm = await _printTicketConfirmation(context);
     if (confirm == true) {
       try {
-        final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order) : await generateOrderTicket(order);
+        final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order, context: context) : await generateOrderTicket(order, context: context);
 
         try {
           final printers = await Printing.listPrinters();
@@ -207,7 +208,7 @@ class _OrderListPageState extends State<OrderListPage> {
       } catch (e) {
         // Último fallback silencioso: intentar compartir PDF genérico
         try {
-          final pdfBytes = await generateOrderTicket(order);
+          final pdfBytes = await generateOrderTicket(order, context: context);
           await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
         } catch (_) {}
       }
@@ -979,7 +980,7 @@ class _OrderListPageState extends State<OrderListPage> {
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: contentColor, fontWeight: FontWeight.w500),
                       ),
                       Text(
-                        'B/.${receipt.totalApplied.toStringAsFixed(2)}',
+                        'B/.${formatAmount(receipt.totalApplied)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: contentColor, fontWeight: FontWeight.w800),
                       ),
                     ],
@@ -1504,17 +1505,17 @@ class _OrderListPageState extends State<OrderListPage> {
                     children: [
                       _buildAmountItem(
                         label: AppLocale.subtotal.getString(context),
-                        value: totalLines.toStringAsFixed(2),
+                        value: formatAmount(totalLines),
                         icon: Icons.receipt_long_outlined,
                       ),
                       _buildAmountItem(
                         label: AppLocale.taxes.getString(context),
-                        value: taxAmount.toStringAsFixed(2),
+                        value: formatAmount(taxAmount),
                         icon: Icons.account_balance_wallet_outlined,
                       ),
                       _buildAmountItem(
                         label: AppLocale.total.getString(context),
-                        value: grandTotal.toStringAsFixed(2),
+                        value: formatAmount(grandTotal),
                         icon: Icons.payments_rounded,
                         highlight: true,
                       ),

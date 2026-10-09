@@ -7,6 +7,8 @@ class Base {
 }
 
 class EndPoints {
+  static String get fePACConfig => '${Base.baseURL}/api/v1/models/FE_PAC_Config';
+  static String get fePAC => '${Base.baseURL}/api/v1/models/FE_PAC';
   static String get postUserAuth => '${Base.baseURL}/api/v1/auth/tokens';
 
   static String get adUser => '${Base.baseURL}/api/v1/models/AD_User';
