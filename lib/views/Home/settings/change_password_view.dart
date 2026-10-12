@@ -39,20 +39,11 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
   }
 
   void _validatePassword() {
-    if (newPasswordController.text.length > 8) {
-      newPasswordController.text = newPasswordController.text.substring(0, 8);
-      newPasswordController.selection = TextSelection.fromPosition(TextPosition(offset: 8));
-    }
-    if (confirmPasswordController.text.length > 8) {
-      confirmPasswordController.text = confirmPasswordController.text.substring(0, 8);
-      confirmPasswordController.selection = TextSelection.fromPosition(TextPosition(offset: 8));
-    }
-
     final pass = newPasswordController.text;
     final confirm = confirmPasswordController.text;
 
     setState(() {
-      hasMinLength = pass.length == 8;
+      hasMinLength = pass.length >= 5;
       hasUppercase = pass.contains(RegExp(r'[A-Z]'));
       hasLowercase = pass.contains(RegExp(r'[a-z]'));
       isNotSameAsUser = pass != usuarioController.text && pass.isNotEmpty;
@@ -208,7 +199,7 @@ class _ChangePasswordCardState extends State<ChangePasswordCard> {
             const SizedBox(height: 24),
             LinearProgressIndicator(value: newPasswordController.text.isEmpty ? 0 : _passwordStrength / 3, color: _strengthColor),
             const SizedBox(height: 24),
-            _buildRequirementRow(AppLocale.exactly8Chars.getString(context), hasMinLength),
+            _buildRequirementRow(AppLocale.atLeast5Chars.getString(context), hasMinLength),
             _buildRequirementRow(AppLocale.atLeastOneUppercase.getString(context), hasUppercase),
             _buildRequirementRow(AppLocale.atLeastOneLowercase.getString(context), hasLowercase),
             const SizedBox(height: 28),
