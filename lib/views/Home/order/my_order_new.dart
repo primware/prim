@@ -973,6 +973,44 @@ class _OrderNewPageState extends State<OrderNewPage> {
     }
   }
 
+  String _normalizeSearchText(String text) {
+    var result = text.trim().toLowerCase();
+    const withAccents = 'áéíóúüñ';
+    const withoutAccents = 'aeiouun';
+    for (int i = 0; i < withAccents.length; i++) {
+      result = result.replaceAll(withAccents[i], withoutAccents[i]);
+    }
+    return result;
+  }
+
+  Future<List<int>> _findMatchingCategoryIDs(String query) async {
+    final cleanQuery = _normalizeSearchText(query);
+    if (cleanQuery.length < 3) return <int>[];
+
+    if (categpryOptions.isEmpty) {
+      final loaded = await fetchProductCategory();
+      if (loaded.isNotEmpty) {
+        categpryOptions = loaded;
+      }
+    }
+
+    final matchedIDs = <int>[];
+    for (final cat in categpryOptions) {
+      final name = cat['name']?.toString() ?? '';
+      final cleanName = _normalizeSearchText(name);
+      if (cleanName.isEmpty) continue;
+
+      if (cleanName.contains(cleanQuery) || cleanQuery.contains(cleanName)) {
+        final id = cat['id'];
+        final intId = id is int ? id : int.tryParse(id?.toString() ?? '');
+        if (intId != null && !matchedIDs.contains(intId)) {
+          matchedIDs.add(intId);
+        }
+      }
+    }
+    return matchedIDs;
+  }
+
   Future<void> _loadProduct({bool showLoadingIndicator = false, bool requestFieldFocus = true}) async {
     if (showLoadingIndicator) {
       setState(() {
@@ -984,14 +1022,47 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
     final searchTerm = productController.text.trim();
     final filtered = searchTerm.isNotEmpty || selectedCategories.isNotEmpty;
-    final page = await fetchProductPage(
-      categoryID: selectedCategories.toList(),
-      searchTerm: searchTerm,
-      priceListID: bpartnerPriceListID,
-      preferCache: !filtered,
-      waitForStock: filtered,
-    );
-    final product = page.records;
+    final matchingCategories = selectedCategories.isEmpty && searchTerm.isNotEmpty
+        ? await _findMatchingCategoryIDs(searchTerm)
+        : <int>[];
+
+    final futures = <Future<ProductPage>>[
+      fetchProductPage(
+        categoryID: selectedCategories.toList(),
+        searchTerm: searchTerm,
+        priceListID: bpartnerPriceListID,
+        preferCache: !filtered,
+        waitForStock: filtered,
+      ),
+    ];
+
+    if (matchingCategories.isNotEmpty) {
+      futures.add(
+        fetchProductPage(
+          categoryID: matchingCategories,
+          searchTerm: '',
+          priceListID: bpartnerPriceListID,
+          preferCache: false,
+          waitForStock: filtered,
+        ),
+      );
+    }
+
+    final pages = await Future.wait(futures);
+    final Set<int> seenIds = {};
+    final List<Map<String, dynamic>> combined = [];
+
+    for (final page in pages) {
+      for (final item in page.records) {
+        final id = item['id'];
+        final intId = id is int ? id : int.tryParse(id?.toString() ?? '');
+        if (intId != null && seenIds.add(intId)) {
+          combined.add(item);
+        }
+      }
+    }
+
+    final product = combined;
 
     if (!mounted) return;
     setState(() {
@@ -1022,14 +1093,51 @@ class _OrderNewPageState extends State<OrderNewPage> {
   }
 
   Future<List<Map<String, dynamic>>> _searchProductSuggestions(String query) async {
-    final page = await fetchProductPage(
-      categoryID: selectedCategories.toList(),
-      searchTerm: query.trim(),
-      priceListID: bpartnerPriceListID,
-      preferCache: false,
-      waitForStock: true,
-    );
-    return page.records;
+    final term = query.trim();
+    if (term.isEmpty) return <Map<String, dynamic>>[];
+
+    final categoryFilter = selectedCategories.toList();
+    final matchingCategories = selectedCategories.isEmpty
+        ? await _findMatchingCategoryIDs(term)
+        : <int>[];
+
+    final futures = <Future<ProductPage>>[
+      fetchProductPage(
+        categoryID: categoryFilter,
+        searchTerm: term,
+        priceListID: bpartnerPriceListID,
+        preferCache: false,
+        waitForStock: true,
+      ),
+    ];
+
+    if (matchingCategories.isNotEmpty) {
+      futures.add(
+        fetchProductPage(
+          categoryID: matchingCategories,
+          searchTerm: '',
+          priceListID: bpartnerPriceListID,
+          preferCache: false,
+          waitForStock: true,
+        ),
+      );
+    }
+
+    final pages = await Future.wait(futures);
+    final Set<int> seenIds = {};
+    final List<Map<String, dynamic>> combined = [];
+
+    for (final page in pages) {
+      for (final item in page.records) {
+        final id = item['id'];
+        final intId = id is int ? id : int.tryParse(id?.toString() ?? '');
+        if (intId != null && seenIds.add(intId)) {
+          combined.add(item);
+        }
+      }
+    }
+
+    return combined;
   }
 
   Future<void> _showProductSelectionPopup() async {

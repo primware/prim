@@ -89,9 +89,13 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
     List<Map<String, dynamic>> results;
     if (widget.onSearch != null && normalized.length >= 2) {
       await Future<void>.delayed(const Duration(milliseconds: 300));
-      if (generation != _searchGeneration) return const [];
-      results = await widget.onSearch!(query);
-      if (generation != _searchGeneration) return const [];
+      if (generation != _searchGeneration) return <SearchFieldListItem<Map<String, dynamic>>>[];
+      try {
+        results = await widget.onSearch!(query);
+      } catch (_) {
+        results = <Map<String, dynamic>>[];
+      }
+      if (generation != _searchGeneration) return <SearchFieldListItem<Map<String, dynamic>>>[];
     } else {
       results = widget.options.where((item) {
         final name = (item['name'] ?? '').toString().toLowerCase();
@@ -108,12 +112,12 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
             child: widget.itemBuilder != null ? widget.itemBuilder!(item) : _defaultItemBuilder(item),
           ),
         )
-        .toList();
+        .toList(growable: true);
     if (suggestions.isEmpty && widget.showCreateButtonIfNotFound && _controller.text.trim().isNotEmpty) {
       suggestions.add(
         SearchFieldListItem<Map<String, dynamic>>(
           _controller.text,
-          item: {},
+          item: <String, dynamic>{},
           child: GestureDetector(
             onTap: () => widget.onCreate?.call(_controller.text),
             child: Container(
@@ -141,7 +145,7 @@ class _CustomSearchFieldState extends State<CustomSearchField> {
         ),
       );
     }
-    return suggestions;
+    return suggestions.toList(growable: true);
   }
 
   Widget _defaultItemBuilder(Map<String, dynamic> item) {
