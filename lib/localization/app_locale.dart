@@ -434,6 +434,7 @@ class AppLocale {
   static const String newPassword = 'newPassword';
   static const String confirmPassword = 'confirmPassword';
   static const String exactly8Chars = 'exactly8Chars';
+  static const String atLeast5Chars = 'atLeast5Chars';
   static const String atLeastOneUppercase = 'atLeastOneUppercase';
   static const String atLeastOneLowercase = 'atLeastOneLowercase';
   static const String accountSecurity = 'accountSecurity';
@@ -987,6 +988,7 @@ class AppLocale {
     newPassword: 'New Password',
     confirmPassword: 'Confirm Password',
     exactly8Chars: 'Exactly 8 characters',
+    atLeast5Chars: 'At least 5 characters',
     atLeastOneUppercase: 'At least one uppercase letter',
     atLeastOneLowercase: 'At least one lowercase letter',
     accountSecurity: 'Account\nSecurity',
@@ -1495,6 +1497,7 @@ class AppLocale {
     newPassword: 'Nueva Contraseña',
     confirmPassword: 'Confirmar Contraseña',
     exactly8Chars: 'Exactamente 8 caracteres',
+    atLeast5Chars: 'Al menos 5 caracteres',
     atLeastOneUppercase: 'Al menos una letra Mayúscula',
     atLeastOneLowercase: 'Al menos una letra minúscula',
     accountSecurity: 'Seguridad de la\nCuenta',

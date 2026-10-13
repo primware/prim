@@ -222,6 +222,44 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup> with Sing
     await prefs.setStringList(favoriteKey, _favoriteIDs.map((id) => id.toString()).toList());
   }
 
+  String _normalizeSearchText(String text) {
+    var result = text.trim().toLowerCase();
+    const withAccents = 'áéíóúüñ';
+    const withoutAccents = 'aeiouun';
+    for (int i = 0; i < withAccents.length; i++) {
+      result = result.replaceAll(withAccents[i], withoutAccents[i]);
+    }
+    return result;
+  }
+
+  Future<List<int>> _findMatchingCategoryIDs(String query) async {
+    final cleanQuery = _normalizeSearchText(query);
+    if (cleanQuery.length < 3) return <int>[];
+
+    if (_categories.isEmpty) {
+      final loaded = await fetchProductCategory();
+      if (loaded.isNotEmpty) {
+        _categories = loaded;
+      }
+    }
+
+    final matchedIDs = <int>[];
+    for (final cat in _categories) {
+      final name = cat['name']?.toString() ?? '';
+      final cleanName = _normalizeSearchText(name);
+      if (cleanName.isEmpty) continue;
+
+      if (cleanName.contains(cleanQuery) || cleanQuery.contains(cleanName)) {
+        final id = cat['id'];
+        final intId = id is int ? id : int.tryParse(id?.toString() ?? '');
+        if (intId != null && !matchedIDs.contains(intId)) {
+          matchedIDs.add(intId);
+        }
+      }
+    }
+    return matchedIDs;
+  }
+
   Future<void> _loadFirstPage() async {
     final generation = ++_queryGeneration;
     final searchTerm = _searchController.text.trim();
@@ -235,21 +273,54 @@ class _ProductSelectionPopupState extends State<ProductSelectionPopup> with Sing
     }
     try {
       final filtered = searchTerm.isNotEmpty || categoryIDs.isNotEmpty;
-      final page = await fetchProductPage(
-        categoryID: categoryIDs,
-        searchTerm: searchTerm,
-        priceListID: widget.priceListID,
-        preferCache: !filtered,
-        waitForStock: filtered,
-      );
+      final matchingCategories = categoryIDs.isEmpty && searchTerm.isNotEmpty
+          ? await _findMatchingCategoryIDs(searchTerm)
+          : <int>[];
+
+      final futures = <Future<ProductPage>>[
+        fetchProductPage(
+          categoryID: categoryIDs,
+          searchTerm: searchTerm,
+          priceListID: widget.priceListID,
+          preferCache: !filtered,
+          waitForStock: filtered,
+        ),
+      ];
+
+      if (matchingCategories.isNotEmpty) {
+        futures.add(
+          fetchProductPage(
+            categoryID: matchingCategories,
+            searchTerm: '',
+            priceListID: widget.priceListID,
+            preferCache: false,
+            waitForStock: filtered,
+          ),
+        );
+      }
+
+      final pages = await Future.wait(futures);
+      final Set<int> seenIds = {};
+      final List<Map<String, dynamic>> combined = [];
+
+      for (final page in pages) {
+        for (final item in page.records) {
+          final id = item['id'];
+          final intId = id is int ? id : int.tryParse(id?.toString() ?? '');
+          if (intId != null && seenIds.add(intId)) {
+            combined.add(item);
+          }
+        }
+      }
+
       if (!mounted || generation != _queryGeneration) return;
       setState(() {
         _products
           ..clear()
-          ..addAll(page.records);
+          ..addAll(combined);
         _pageIndex = 0;
-        _rowCount = page.rowCount;
-        _hasMore = page.hasMore;
+        _rowCount = combined.length;
+        _hasMore = matchingCategories.isNotEmpty ? false : pages.first.hasMore;
       });
     } catch (exception) {
       if (mounted && generation == _queryGeneration) {
