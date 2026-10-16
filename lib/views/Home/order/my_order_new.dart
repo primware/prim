@@ -1956,8 +1956,7 @@ class _OrderNewPageState extends State<OrderNewPage> {
           if (!mounted) return;
           if (confirmPrintTicket == true) {
             try {
-              final ticket = await generatePOSTicketDocument(order, context: context);
-              final pdfBytes = ticket.bytes;
+              final pdfBytes = await generatePOSTicket(order, context: context);
 
               try {
                 final printers = await Printing.listPrinters();
@@ -1968,9 +1967,8 @@ class _OrderNewPageState extends State<OrderNewPage> {
 
                 await Printing.directPrintPdf(
                   printer: defaultPrinter,
-                  format: ticket.format,
-                  usePrinterSettings: false,
-                  dynamicLayout: false,
+                  usePrinterSettings: true,
+                  dynamicLayout: true,
                   onLayout: (_) => pdfBytes,
                 );
               } catch (e) {

@@ -406,21 +406,7 @@ Future<Map<String, dynamic>?> fetchElectronicInvoiceInfo({required int orderId})
   }
 }
 
-/// A rendered roll ticket and its finite paper size, in PDF points.
-class POSTicketDocument {
-  const POSTicketDocument({required this.bytes, required this.format});
-
-  final Uint8List bytes;
-  final PdfPageFormat format;
-}
-
 Future<Uint8List> generatePOSTicket(
-  Map<String, dynamic> order, {
-  required BuildContext context,
-  Map<String, dynamic>? electronicInvoiceInfo,
-}) async => (await generatePOSTicketDocument(order, context: context, electronicInvoiceInfo: electronicInvoiceInfo)).bytes;
-
-Future<POSTicketDocument> generatePOSTicketDocument(
   Map<String, dynamic> order, {
   required BuildContext context,
   Map<String, dynamic>? electronicInvoiceInfo,
@@ -677,13 +663,7 @@ Future<POSTicketDocument> generatePOSTicketDocument(
     ),
   );
 
-  // Saving lays out the roll and resolves its initially infinite height.
-  final bytes = await pdf.save();
-  final page = pdf.document.pdfPageList.pages.single.pageFormat;
-  if (!page.width.isFinite || !page.height.isFinite || page.width <= 0 || page.height <= 0) {
-    throw StateError('Invalid POS ticket paper size');
-  }
-  return POSTicketDocument(bytes: bytes, format: PdfPageFormat(page.width, page.height));
+  return pdf.save();
 }
 
 Map<String, Map<String, double>> _calculateTaxSummary(List<dynamic> records) {
