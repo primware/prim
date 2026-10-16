@@ -1,3 +1,4 @@
+import 'package:pdf/pdf.dart';
 import 'package:primware/shared/format_amount.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
@@ -454,7 +455,8 @@ class OrderDetailPage extends StatelessWidget {
                 final bool? confirmPrintTicket = await _printTicketConfirmation(context);
                 if (confirmPrintTicket == true) {
                   try {
-                    final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order, context: context) : await generateOrderTicket(order, context: context);
+                    final ticket = POS.isPOS == true ? await generatePOSTicketDocument(order, context: context) : null;
+                    final pdfBytes = ticket?.bytes ?? await generateOrderTicket(order, context: context);
                     try {
                       final printers = await Printing.listPrinters();
                       final defaultPrinter = printers.firstWhere(
@@ -463,8 +465,9 @@ class OrderDetailPage extends StatelessWidget {
                       );
                       await Printing.directPrintPdf(
                         printer: defaultPrinter,
-                        usePrinterSettings: true,
-                        dynamicLayout: true,
+                        format: ticket?.format ?? PdfPageFormat.standard,
+                        usePrinterSettings: ticket == null,
+                        dynamicLayout: ticket == null,
                         onLayout: (_) => pdfBytes,
                       );
                     } catch (e) {

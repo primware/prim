@@ -1,3 +1,4 @@
+import 'package:pdf/pdf.dart';
 import 'package:primware/shared/format_amount.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -192,7 +193,8 @@ class _OrderListPageState extends State<OrderListPage> {
     final bool? confirm = await _printTicketConfirmation(context);
     if (confirm == true) {
       try {
-        final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order, context: context) : await generateOrderTicket(order, context: context);
+        final ticket = POS.isPOS == true ? await generatePOSTicketDocument(order, context: context) : null;
+        final pdfBytes = ticket?.bytes ?? await generateOrderTicket(order, context: context);
 
         try {
           final printers = await Printing.listPrinters();
@@ -201,7 +203,13 @@ class _OrderListPageState extends State<OrderListPage> {
             orElse: () => printers.isNotEmpty ? printers.first : throw Exception(AppLocale.noPrintersAvailable.getString(context)),
           );
 
-          await Printing.directPrintPdf(printer: defaultPrinter, usePrinterSettings: true, dynamicLayout: true, onLayout: (_) => pdfBytes);
+          await Printing.directPrintPdf(
+            printer: defaultPrinter,
+            format: ticket?.format ?? PdfPageFormat.standard,
+            usePrinterSettings: ticket == null,
+            dynamicLayout: ticket == null,
+            onLayout: (_) => pdfBytes,
+          );
         } catch (e) {
           await Printing.sharePdf(bytes: pdfBytes, filename: 'Order_${order['DocumentNo']}.pdf');
         }

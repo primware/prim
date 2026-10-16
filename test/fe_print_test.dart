@@ -155,7 +155,18 @@ Future<void> main() async {
     };
     for (final english in [false, true]) {
       final context = await localizedContext(tester, english ? 'en' : 'es');
-      final bytes = await generatePOSTicket(order, context: context, electronicInvoiceInfo: info);
+      final ticket = await generatePOSTicketDocument(order, context: context, electronicInvoiceInfo: info);
+      final bytes = ticket.bytes;
+      expect(ticket.format.width, closeTo(75 * 72 / 25.4, 0.001));
+      expect(ticket.format.height.isFinite, isTrue);
+      expect(ticket.format.height, greaterThan(0));
+      final longTicket = await generatePOSTicketDocument(
+        {...order, 'C_OrderLine': List.generate(60, (_) => (order['C_OrderLine'] as List).first)},
+        context: context,
+        electronicInvoiceInfo: info,
+      );
+      expect(longTicket.format.width, ticket.format.width);
+      expect(longTicket.format.height, greaterThan(ticket.format.height));
       expect(bytes.length, greaterThan(1000));
       final sheet = await generateOrderTicket({...order, 'TotalLines': 10}, context: context, electronicInvoiceInfo: info);
       await tester.runAsync(() => File('/private/tmp/fe-sheet-${english ? 'en' : 'es'}.pdf').writeAsBytes(sheet));
