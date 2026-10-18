@@ -240,8 +240,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
     POS.cPaymentTermID = null;
     POS.docTypeID = null;
     POS.docTypeName = null;
+    POS.docTypeFEName = null;
     POS.docSubType = null;
     POS.docTypeRefundName = null;
+    POS.docTypeRefundFEName = null;
     POS.docSubTypeRefund = null;
     POS.templatePartnerID = null;
     POS.templatePartnerName = null;

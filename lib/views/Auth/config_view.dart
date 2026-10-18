@@ -227,8 +227,10 @@ class _ConfigPageState extends State<ConfigPage> {
       POS.cPaymentTermID = null;
       POS.docTypeID = null;
       POS.docTypeName = null;
+      POS.docTypeFEName = null;
       POS.docSubType = null;
       POS.docTypeRefundName = null;
+      POS.docTypeRefundFEName = null;
       POS.docSubTypeRefund = null;
       POS.templatePartnerID = null;
       POS.templatePartnerName = null;

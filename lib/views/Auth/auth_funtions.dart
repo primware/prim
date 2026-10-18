@@ -387,6 +387,8 @@ Future<void> _loadPOSData(BuildContext context) async {
     POS.warehouseID = null;
     POS.templatePartnerID = null;
     POS.templatePartnerName = null;
+    POS.docTypeFEName = null;
+    POS.docTypeRefundFEName = null;
     POS.docTypeRefundID = null;
     POS.docTypeRefundName = null;
     POS.docSubTypeRefund = null;
@@ -419,9 +421,11 @@ Future<void> _loadPOSData(BuildContext context) async {
       POS.priceListID = posData['M_PriceList_ID']?['id'];
       POS.docTypeID = posData['C_DocType_ID']?['id'];
       POS.docTypeName = posData['C_DocType_ID']?['Name'];
+      POS.docTypeFEName = posData['C_DocType_ID']?['FE_tipoDocumento']?['identifier'];
       POS.docSubType = posData['C_DocType_ID']?['DocSubTypeSO']?['id'];
       POS.docTypeRefundID = posData['C_DocTypeRefund_ID']?['id'];
       POS.docTypeRefundName = posData['C_DocTypeRefund_ID']?['Name'];
+      POS.docTypeRefundFEName = posData['C_DocTypeRefund_ID']?['FE_tipoDocumento']?['identifier'];
       POS.docSubTypeRefund = posData['C_DocTypeRefund_ID']?['DocSubTypeSO']?['id'];
       POS.templatePartnerID = posData['C_BPartnerCashTrx_ID']?['id'];
       POS.templatePartnerName = posData['C_BPartnerCashTrx_ID']?['identifier'];
@@ -452,9 +456,20 @@ Future<void> _loadPOSData(BuildContext context) async {
 
       // Cargamos los tipos de documentos disponibles para el POS
       POS.docTypesComplete = [
-        if (POS.docTypeID != null) {'id': POS.docTypeID.toString(), 'name': POS.docTypeName ?? '', 'DocSubTypeSO': POS.docSubType ?? ''},
+        if (POS.docTypeID != null)
+          {
+            'id': POS.docTypeID.toString(),
+            'name': POS.docTypeName ?? '',
+            'DocSubTypeSO': POS.docSubType ?? '',
+            'FE_tipoDocumento': POS.docTypeFEName,
+          },
         if (POS.docTypeRefundID != null)
-          {'id': POS.docTypeRefundID.toString(), 'name': POS.docTypeRefundName ?? '', 'DocSubTypeSO': POS.docSubTypeRefund ?? ''},
+          {
+            'id': POS.docTypeRefundID.toString(),
+            'name': POS.docTypeRefundName ?? '',
+            'DocSubTypeSO': POS.docSubTypeRefund ?? '',
+            'FE_tipoDocumento': POS.docTypeRefundFEName,
+          },
       ];
     } else {
       CurrentLogMessage.add(
@@ -618,7 +633,7 @@ Future<int?> _getcPaymentTermID() async {
 Future<int?> _getCDocTypeComplete() async {
   try {
     final response = await get(
-      Uri.parse('${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name,DocSubTypeSO'),
+      Uri.parse('${EndPoints.cDocType}?\$filter=DocBaseType eq \'SOO\'&\$orderby=Name&\$select=Name,DocSubTypeSO,FE_tipoDocumento'),
       headers: {'Content-Type': 'application/json', 'Authorization': Token.auth!},
     );
 
@@ -626,7 +641,12 @@ Future<int?> _getCDocTypeComplete() async {
       final responseData = json.decode(response.body);
       final records = responseData['records'] as List;
       POS.docTypesComplete = records
-          .map((r) => {'id': r['id'].toString(), 'name': r['Name'] ?? '', 'DocSubTypeSO': r['DocSubTypeSO']['id'] ?? ''})
+          .map((r) => {
+            'id': r['id'].toString(),
+            'name': r['Name'] ?? '',
+            'DocSubTypeSO': r['DocSubTypeSO']?['id'] ?? '',
+            'FE_tipoDocumento': r['FE_tipoDocumento']?['identifier'],
+          })
           .toList();
     } else {
       CurrentLogMessage.add(

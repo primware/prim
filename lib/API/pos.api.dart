@@ -8,9 +8,11 @@ class POS {
   static int? priceListVersionID;
   static int? docTypeID;
   static String? docTypeName;
+  static String? docTypeFEName;
   static String? docSubType;
   static int? docTypeRefundID;
   static String? docTypeRefundName;
+  static String? docTypeRefundFEName;
   static String? docSubTypeRefund;
   static int? warehouseID;
   static int? discountChargeID;

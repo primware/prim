@@ -394,6 +394,7 @@ Future<Map<String, dynamic>?> fetchOrderById({
         },
         'doctypetarget': {
           'id': record['C_DocTypeTarget_ID']?['id'],
+        'FE_tipoDocumento': record['C_DocTypeTarget_ID']?['FE_tipoDocumento']?['identifier'],
           'name':
               record['C_DocTypeTarget_ID']?['Name'] ??
               record['C_DocTypeTarget_ID']?['identifier'],
@@ -779,6 +780,7 @@ Future<PagedResult<Map<String, dynamic>>> fetchOrdersPage({
       },
       'doctypetarget': {
         'id': record['C_DocTypeTarget_ID']?['id'],
+        'FE_tipoDocumento': record['C_DocTypeTarget_ID']?['FE_tipoDocumento']?['identifier'],
         'name': record['C_DocTypeTarget_ID']?['Name'],
         'subtype':
             record['C_DocTypeTarget_ID']?['DocSubTypeSO'], // WR orden de venta
