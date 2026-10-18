@@ -9,6 +9,9 @@ import '../../../shared/custom_spacer.dart';
 import '../../../shared/footer.dart';
 import '../../../shared/shimmer_list.dart';
 import 'close_cash_detail.dart';
+import 'close_cash_dates.dart';
+import '../../../shared/format_amount.dart';
+import '../../../API/pos.api.dart';
 import 'report_funtions.dart';
 
 class CloseCashPage extends StatefulWidget {
@@ -25,46 +28,14 @@ class _CloseCashPageState extends State<CloseCashPage> {
   // Mapa de estados de documento (DocStatus) a nombre en español y color
   final Map<String, Map<String, dynamic>> _docStatusMap = {
     'DR': {'label': 'Borrador', 'color': Colors.grey, 'icon': Icons.edit_note},
-    'CO': {
-      'label': 'Completado',
-      'color': Colors.green,
-      'icon': Icons.check_circle_outline,
-    },
-    'CL': {
-      'label': 'Cerrado',
-      'color': Colors.blueGrey,
-      'icon': Icons.lock_outline,
-    },
-    'VO': {
-      'label': 'Anulado',
-      'color': Colors.red,
-      'icon': Icons.cancel_outlined,
-    },
-    'IP': {
-      'label': 'En proceso',
-      'color': Colors.orange,
-      'icon': Icons.hourglass_bottom,
-    },
-    'PR': {
-      'label': 'Preparado',
-      'color': Colors.orange,
-      'icon': Icons.hourglass_bottom,
-    },
-    'WC': {
-      'label': 'Esperando completar',
-      'color': Colors.orangeAccent,
-      'icon': Icons.hourglass_top,
-    },
-    'AP': {
-      'label': 'Aprobado',
-      'color': Colors.blue,
-      'icon': Icons.thumb_up_outlined,
-    },
-    'RJ': {
-      'label': 'Rechazado',
-      'color': Colors.redAccent,
-      'icon': Icons.thumb_down_outlined,
-    },
+    'CO': {'label': 'Completado', 'color': Colors.green, 'icon': Icons.check_circle_outline},
+    'CL': {'label': 'Cerrado', 'color': Colors.blueGrey, 'icon': Icons.lock_outline},
+    'VO': {'label': 'Anulado', 'color': Colors.red, 'icon': Icons.cancel_outlined},
+    'IP': {'label': 'En proceso', 'color': Colors.orange, 'icon': Icons.hourglass_bottom},
+    'PR': {'label': 'Preparado', 'color': Colors.orange, 'icon': Icons.hourglass_bottom},
+    'WC': {'label': 'Esperando completar', 'color': Colors.orangeAccent, 'icon': Icons.hourglass_top},
+    'AP': {'label': 'Aprobado', 'color': Colors.blue, 'icon': Icons.thumb_up_outlined},
+    'RJ': {'label': 'Rechazado', 'color': Colors.redAccent, 'icon': Icons.thumb_down_outlined},
   };
 
   // Pill que muestra el estado del documento (DocStatus) en español
@@ -75,12 +46,7 @@ class _CloseCashPageState extends State<CloseCashPage> {
     }
 
     final meta =
-        _docStatusMap[statusCode] ??
-        {
-          'label': statusCode,
-          'color': Theme.of(context).colorScheme.primary,
-          'icon': Icons.flag_outlined,
-        };
+        _docStatusMap[statusCode] ?? {'label': statusCode, 'color': Theme.of(context).colorScheme.primary, 'icon': Icons.flag_outlined};
 
     final Color baseColor = meta['color'] as Color;
     final Color bgColor = baseColor.withOpacity(0.12);
@@ -101,11 +67,7 @@ class _CloseCashPageState extends State<CloseCashPage> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: baseColor,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 12, color: baseColor, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -120,12 +82,7 @@ class _CloseCashPageState extends State<CloseCashPage> {
       children: records.map((record) {
         return GestureDetector(
           onTap: () async {
-            final refreshed = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => CloseCashDetailPage(record: record),
-              ),
-            );
+            final refreshed = await Navigator.push(context, MaterialPageRoute(builder: (_) => CloseCashDetailPage(record: record)));
 
             if (refreshed == true) {
               _fetchRecords();
@@ -137,66 +94,125 @@ class _CloseCashPageState extends State<CloseCashPage> {
               color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.3),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: ListTile(
-              title: Row(
-                children: [
-                  Icon(
-                    Icons.person_outline,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: CustomSpacer.small),
-                  Expanded(
-                    child: Text(
-                      '${record['SalesRep_ID']['name'] ?? ''} - ${record['C_POS_ID']['name']} (# ${record['TotalOrders']})',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-              subtitle: Column(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  _recordField(
+                    Icons.point_of_sale_outlined,
+                    AppLocale.terminal.getString(context),
+                    record['C_POS_ID']?['name']?.toString() ?? '---',
+                    prominent: true,
+                  ),
+                  const SizedBox(height: 10),
+                  _recordField(
+                    Icons.person_outline,
+                    AppLocale.user.getString(context),
+                    record['SalesRep_ID']?['name']?.toString() ?? '---',
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final from = _dateBlock(AppLocale.closeCashFrom.getString(context), record['DateFrom']);
+                      final until = _dateBlock(AppLocale.closeCashUntil.getString(context), record['DateTrx']);
+                      if (constraints.maxWidth < 420) {
+                        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [from, const SizedBox(height: 8), until]);
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: from),
+                          const SizedBox(width: 12),
+                          Expanded(child: until),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Icon(
-                        Icons.attach_money_rounded,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: CustomSpacer.small),
-                      Expanded(
-                        child: Text(
-                          record['GrandTotal'].toString(),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
+                      _buildDocStatusPill(record),
+                      Text(
+                        '${AppLocale.orders.getString(context)}: ${record['TotalOrders'] ?? 0}',
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),
-                  Row(
+                  const SizedBox(height: 8),
+                  const Divider(),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Icon(
-                        Icons.calendar_month_outlined,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: CustomSpacer.small),
-                      Expanded(
-                        child: Text(
-                          '${record['DateTrx'] ?? ''} /  ${record['DateFrom'] ?? ''}',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                        ),
+                      Text(AppLocale.total.getString(context), style: Theme.of(context).textTheme.titleSmall),
+                      Text(
+                        '${POS.currencySymbol ?? '\$'}${formatAmount(num.tryParse(record['GrandTotal']?.toString() ?? ''))}',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  _buildDocStatusPill(record),
                 ],
               ),
             ),
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _recordField(IconData icon, String label, String value, {bool prominent = false}) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: theme.textTheme.bodySmall),
+              Text(
+                value,
+                style: (prominent ? theme.textTheme.titleMedium : theme.textTheme.bodyMedium)?.copyWith(
+                  fontWeight: prominent ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _dateBlock(String label, dynamic value) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withOpacity(0.65),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(formatCloseCashDateUI(value?.toString() ?? ''), style: theme.textTheme.bodyMedium),
+        ],
+      ),
     );
   }
 
@@ -209,10 +225,7 @@ class _CloseCashPageState extends State<CloseCashPage> {
   Future<void> _fetchRecords() async {
     setState(() => _isLoading = true);
 
-    final result = await fetchRecords(
-      context: context,
-      onlyMyRecords: onlyMyRecords,
-    );
+    final result = await fetchRecords(context: context, onlyMyRecords: onlyMyRecords);
     setState(() {
       _records = result;
       _isLoading = false;
@@ -223,10 +236,7 @@ class _CloseCashPageState extends State<CloseCashPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const DashboardPage()));
         return Future.value(false);
       },
       child: Scaffold(
@@ -243,7 +253,10 @@ class _CloseCashPageState extends State<CloseCashPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(AppLocale.onlyMyRecords.getString(context), style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      Text(
+                        AppLocale.onlyMyRecords.getString(context),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
                       GlassSwitch(
                         value: onlyMyRecords,
                         onChanged: (newValue) {
@@ -256,9 +269,7 @@ class _CloseCashPageState extends State<CloseCashPage> {
                     ],
                   ),
                   const SizedBox(height: CustomSpacer.medium),
-                  _isLoading
-                      ? ShimmerList(separation: CustomSpacer.medium)
-                      : _buildRecordsList(_records),
+                  _isLoading ? ShimmerList(separation: CustomSpacer.medium) : _buildRecordsList(_records),
                 ],
               ),
             ),

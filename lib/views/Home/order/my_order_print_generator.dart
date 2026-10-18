@@ -18,6 +18,26 @@ import 'order_line_helper.dart';
 
 bool hasPrintableFE(Map<String, dynamic>? info) => FESession.hasFEConfig && (info?['url']?.toString().trim().isNotEmpty ?? false);
 
+/// Uses the document type belonging to this order, including historical orders.
+String orderRollTicketTitle(Map<String, dynamic> order) {
+  final docType = order['doctypetarget'];
+  final feName = docType?['FE_tipoDocumento'];
+  if (feName != null) return feName.toString();
+
+  // Older callers may only carry the document type ID and its normal name.
+  final id = docType?['id'];
+  if (id != null && !(docType as Map).containsKey('FE_tipoDocumento')) {
+    for (final doc in POS.docTypesComplete) {
+      if (doc['id']?.toString() == id.toString()) {
+        final name = doc['FE_tipoDocumento'];
+        if (name != null) return name.toString();
+        break;
+      }
+    }
+  }
+  return docType?['name']?.toString() ?? '';
+}
+
 bool _hasHeaderValue(dynamic value) {
   final text = value?.toString().trim() ?? '';
   return text.isNotEmpty && text != '?';
@@ -426,7 +446,7 @@ Future<Uint8List> generatePOSTicket(
   bool hasHeaderValue(dynamic value) => _hasHeaderValue(value);
   String money(num? v) => 'B/.${formatAmount(v)}';
 
-  String docTypename = order['doctypetarget']?['name'] ?? '';
+  final docTypename = orderRollTicketTitle(order);
 
   // Order fields (safe access)
   final docNo = str(order['DocumentNo']);
