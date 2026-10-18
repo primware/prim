@@ -6,7 +6,7 @@ import 'close_cash_dates.dart';
 
 Future<Uint8List> generateCloseCashPOSTicket(Map<String, dynamic> data) async {
   final pdf = pw.Document();
-  final pageFormat = PdfPageFormat.roll80;
+  final pageFormat = PdfPageFormat.roll80.copyWith(width: 75 * PdfPageFormat.mm);
 
   // Helpers
   String str(dynamic v) => v?.toString() ?? '';

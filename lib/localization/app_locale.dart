@@ -150,6 +150,8 @@ class AppLocale {
   static const String register = 'register';
   static const String noAccount = 'noAccount';
   static const String closeCash = 'closeCash';
+  static const String closeCashFrom = 'closeCashFrom';
+  static const String closeCashUntil = 'closeCashUntil';
   static const String mycloseCashs = 'mycloseCashs';
 
   static const String confirmCreateCustomer = 'confirmCreateCustomer';
@@ -824,6 +826,8 @@ class AppLocale {
     login: 'Login',
     user: 'User',
     pass: 'Password',
+    closeCashFrom: 'From',
+    closeCashUntil: 'Until',
     mycloseCashs: 'My Close Cashs',
     onlyMyRecords: 'Only My Records',
     rememberMe: 'Remember Me',
@@ -1337,6 +1341,8 @@ class AppLocale {
     role: 'Rol',
     reports: 'Reportes',
     upc: 'UPC',
+    closeCashFrom: 'Desde',
+    closeCashUntil: 'Hasta',
     mycloseCashs: 'Mis Cierres de Caja',
     organization: 'Organización',
     selectCompanyRoleOrganization: 'Seleccione una empresa, rol y organización',

@@ -192,7 +192,9 @@ class _OrderListPageState extends State<OrderListPage> {
     final bool? confirm = await _printTicketConfirmation(context);
     if (confirm == true) {
       try {
-        final pdfBytes = POS.isPOS == true ? await generatePOSTicket(order, context: context) : await generateOrderTicket(order, context: context);
+        final pdfBytes = POS.isPOS == true
+            ? await generatePOSTicket(order, context: context)
+            : await generateOrderTicket(order, context: context);
 
         try {
           final printers = await Printing.listPrinters();

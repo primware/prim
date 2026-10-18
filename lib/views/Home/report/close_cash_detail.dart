@@ -363,10 +363,26 @@ class _CloseCashDetailPageState extends State<CloseCashDetailPage> {
                                         if (!mounted) return;
                                         final Map<String, dynamic> data = _detail ?? widget.record;
                                         final ticketBytes = await generateCloseCashPOSTicket(data);
-                                        await Printing.sharePdf(
-                                          bytes: ticketBytes,
-                                          filename: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf',
-                                        );
+                                        try {
+                                          final printers = await Printing.listPrinters();
+                                          final defaultPrinter = printers.firstWhere(
+                                            (printer) => printer.isDefault,
+                                            orElse: () =>
+                                                printers.isNotEmpty ? printers.first : throw StateError('No hay impresoras disponibles'),
+                                          );
+                                          final printed = await Printing.directPrintPdf(
+                                            printer: defaultPrinter,
+                                            usePrinterSettings: true,
+                                            dynamicLayout: true,
+                                            onLayout: (_) => ticketBytes,
+                                          );
+                                          if (!printed) throw StateError('No se pudo imprimir el cierre de caja');
+                                        } catch (_) {
+                                          await Printing.sharePdf(
+                                            bytes: ticketBytes,
+                                            filename: 'Cierre de Caja_${widget.record['id'] ?? widget.record['Record_ID']}.pdf',
+                                          );
+                                        }
                                       }
                                     },
                                   ),
