@@ -8,6 +8,7 @@ import '../../../API/user.api.dart';
 import '../invoice/invoice_payment_receipt.dart';
 import '../product/product_cache_file_size.dart';
 import 'history_search_criteria.dart';
+import '../../../shared/local_cache_storage.dart';
 
 class CachedOrderHistoryPage {
   const CachedOrderHistoryPage({required this.orders, required this.receipts, required this.totalCount, required this.pageIndex});
@@ -30,10 +31,11 @@ class OrderHistoryRepository extends ChangeNotifier {
 
   Box<dynamic>? _box;
 
-  Future<void> initialize() async {
-    if (_box != null) return;
-    await Hive.initFlutter();
-    _box = await Hive.openBox<dynamic>(_boxName);
+  Future<void>? _initialization;
+  Future<void> initialize() => _initialization ??= _initialize().timeout(const Duration(seconds: 30));
+
+  Future<void> _initialize() async {
+    _box = await LocalCacheStorage.instance.openBox(_boxName);
   }
 
   Future<int?> cacheSizeBytes() async {
