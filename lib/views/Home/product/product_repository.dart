@@ -10,6 +10,7 @@ import '../../../API/pos.api.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 import 'product_cache_file_size.dart';
+import '../../../shared/local_cache_storage.dart';
 
 const int productPageSize = 100;
 
@@ -57,10 +58,11 @@ class ProductRepository extends ChangeNotifier {
   bool? _viewAvailable;
   int _cacheGeneration = 0;
 
-  Future<void> initialize() async {
-    if (_box != null) return;
-    await Hive.initFlutter();
-    _box = await Hive.openBox<dynamic>(_boxName);
+  Future<void>? _initialization;
+  Future<void> initialize() => _initialization ??= _initialize().timeout(const Duration(seconds: 30));
+
+  Future<void> _initialize() async {
+    _box = await LocalCacheStorage.instance.openBox(_boxName);
     await _migrateCachedStock();
     await _cleanupExpired();
   }

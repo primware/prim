@@ -1,4 +1,8 @@
 class AppLocale {
+  static const startupLoading = 'startupLoading';
+  static const startupFailed = 'startupFailed';
+  static const startupHelp = 'startupHelp';
+  static const startupLog = 'startupLog';
   static const String ticketUsingCUFE = 'ticketUsingCUFE';
   static const String pacResolutionDate = 'pacResolutionDate';
   static const String pacResolutionNumber = 'pacResolutionNumber';
@@ -509,6 +513,10 @@ class AppLocale {
   static const String returnValidationError = 'returnValidationError';
 
   static const Map<String, dynamic> en = {
+    startupLoading: 'Starting application…',
+    startupFailed: 'Primware could not finish starting.',
+    startupHelp: 'Close the application and contact support with the startup log. Your local data has not been deleted.',
+    startupLog: 'Startup log:',
     ticketUsingCUFE: 'using the CUFE:',
     pacResolutionDate: 'dated {date}',
     pacResolutionNumber: 'Resolution No. {resolution}',
@@ -1020,6 +1028,10 @@ class AppLocale {
   };
 
   static const Map<String, dynamic> es = {
+    startupLoading: 'Iniciando la aplicación…',
+    startupFailed: 'Primware no pudo completar el inicio.',
+    startupHelp: 'Cierra la aplicación y contacta a soporte con el registro de inicio. Tus datos locales no se han eliminado.',
+    startupLog: 'Registro de inicio:',
     ticketUsingCUFE: 'usando el CUFE:',
     pacResolutionDate: 'de {date}',
     pacResolutionNumber: 'Resolución No. {resolution}',

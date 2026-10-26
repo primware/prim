@@ -11,40 +11,54 @@ import 'package:app_links/app_links.dart';
 import 'package:protocol_handler/protocol_handler.dart';
 import 'dart:async';
 import 'package:primware/API/user.api.dart';
-import 'views/Home/product/product_repository.dart';
 import 'views/Home/product/product_sync_overlay.dart';
-import 'views/Home/order/order_history_repository.dart';
-import 'views/Home/bpartner/bpartner_repository.dart';
 import 'views/Home/bpartner/bpartner_sync_overlay.dart';
 import 'shared/theme_switcher_controller.dart';
 import 'package:upgrader/upgrader.dart';
 import 'shared/custom_upgrade_alert.dart';
+import 'shared/startup_app.dart';
+import 'shared/startup_diagnostics.dart';
+import 'shared/local_cache_storage.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final ValueNotifier<ThemeData> appThemeNotifier = ValueNotifier(AppThemes.lightTheme);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final diagnostics = StartupDiagnostics()..start();
+  final previousFlutterError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    diagnostics.record('FLUTTER_ERROR: ${details.exceptionAsString()}\n${details.stack}');
+    previousFlutterError?.call(details);
+  };
+  final dispatcher = WidgetsBinding.instance.platformDispatcher;
+  final previousPlatformError = dispatcher.onError;
+  dispatcher.onError = (error, stack) {
+    diagnostics.record('UNHANDLED_ERROR: $error\n$stack');
+    return previousPlatformError?.call(error, stack) ?? false;
+  };
+  runApp(StartupApp(initialize: _initializeApp, diagnostics: diagnostics));
+}
 
+Future<Widget> _initializeApp(StartupDiagnostics diagnostics) async {
   if (!kIsWeb) {
     if (Platform.isWindows || Platform.isMacOS) {
-      await protocolHandler.register('primware');
+      await diagnostics.optional<void>('protocol.register', () => protocolHandler.register('primware'), null);
     }
     HttpOverrides.global = MyHttpOverrides();
   }
 
-  await FlutterLocalization.instance.ensureInitialized();
-  await ProductRepository.instance.initialize();
-  await OrderHistoryRepository.instance.initialize();
-  await BPartnerRepository.instance.initialize();
+  await diagnostics.run('localization.initialize', FlutterLocalization.instance.ensureInitialized);
+  // Repositories initialize lazily: a cache failure must not block the login.
+  await diagnostics.optional<void>('user.loadFromCache', UserData.loadFromCache, null);
 
-  await UserData.loadFromCache();
-
-  final prefs = await SharedPreferences.getInstance();
-  final isDarkMode = prefs.getBool('isDarkMode') ?? false;
+  final isDarkMode = await diagnostics.optional<bool>('preferences.theme', () async {
+    final prefs = await SharedPreferences.getInstance().timeout(const Duration(seconds: 20));
+    return prefs.getBool('isDarkMode') ?? false;
+  }, false);
   appThemeNotifier.value = isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme;
 
-  runApp(MainApp(initialIsDarkMode: isDarkMode));
+  return MainApp(initialIsDarkMode: isDarkMode);
 }
 
 class MyHttpOverrides extends HttpOverrides {
@@ -80,6 +94,12 @@ class _MainAppState extends State<MainApp> {
     appThemeNotifier.addListener(_onThemeChanged);
 
     _initDeepLinks();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Prepare/migrate storage after the login frame, without blocking it.
+      unawaited(LocalCacheStorage.instance.initialize().catchError((Object error, StackTrace stack) {
+        StartupDiagnostics.active?.record('CACHE_PREPARE_ERROR: $error\n$stack');
+      }));
+    });
   }
 
   void _onThemeChanged() => setState(() {});
