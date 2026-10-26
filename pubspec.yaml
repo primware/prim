@@ -13,6 +13,8 @@ dependencies:
   google_fonts: ^8.0.2
   shared_preferences: ^2.5.3
   hive_ce_flutter: ^2.3.4
+  path: ^1.9.1
+  path_provider: ^2.1.5
   top_snackbar_flutter: ^3.2.0
   intl: ^0.20.2
   dropdown_search: ^6.0.2

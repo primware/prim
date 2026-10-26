@@ -9,6 +9,7 @@ import '../../../API/endpoint.dart';
 import '../../../API/token.api.dart';
 import '../../Auth/auth_funtions.dart';
 import '../product/product_cache_file_size.dart';
+import '../../../shared/local_cache_storage.dart';
 
 const int bPartnerPageSize = 100;
 const String _bPartnerSelect =
@@ -44,10 +45,11 @@ class BPartnerRepository extends ChangeNotifier {
   Box<dynamic>? _box;
   final Map<String, Future<BPartnerPage>> _inFlight = {};
 
-  Future<void> initialize() async {
-    if (_box != null) return;
-    await Hive.initFlutter();
-    _box = await Hive.openBox<dynamic>(_boxName);
+  Future<void>? _initialization;
+  Future<void> initialize() => _initialization ??= _initialize().timeout(const Duration(seconds: 30));
+
+  Future<void> _initialize() async {
+    _box = await LocalCacheStorage.instance.openBox(_boxName);
   }
 
   String get _clientNamespace => 'client:${Token.client ?? 0}';
